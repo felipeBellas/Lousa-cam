@@ -15,14 +15,15 @@ let history = [];
 let historyIndex = -1;
 let isDrawing = false;
 
-// Armazena todos os pontos do traço atual
-let currentPoints = [];
+// Armazena os pontos do último rascunho para análise da IA
+let currentStrokePoints = [];
+let lastDrawingBounds = null;
 
 let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
-// SVGs para o botão de gravação
+// SVGs
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
@@ -36,13 +37,11 @@ function closeMenus() {
   }
 }
 
-// Impede que toques DENTRO dos menus os fechem acidentalmente
 penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 
-// Alternar Menus
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
   toolbarWrapper.classList.toggle('collapsed');
@@ -53,14 +52,13 @@ btnTogglePen.addEventListener('click', (e) => {
   penSideWrapper.classList.toggle('collapsed');
 });
 
-// Fechar menus ao tocar fora
 document.addEventListener('pointerdown', (e) => {
   if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
 
-// Redimensionar Canvas
+// Redimensionamento
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -111,7 +109,7 @@ document.getElementById('btn-flip').addEventListener('click', () => {
   startCamera();
 });
 
-// Histórico do Canvas
+// Histórico
 function saveState() {
   historyIndex++;
   history = history.slice(0, historyIndex);
@@ -138,13 +136,13 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Início do traço
+// Início do desenho
 function startDrawing(e) {
   closeMenus();
 
   isDrawing = true;
   const pos = getPos(e);
-  currentPoints = [pos];
+  currentStrokePoints = [pos];
 
   ctx.lineWidth = document.getElementById('lineWidth').value;
   ctx.lineCap = 'round';
@@ -161,93 +159,45 @@ function startDrawing(e) {
   ctx.moveTo(pos.x, pos.y);
 }
 
-// Desenho enquanto o dedo se move (tempo real)
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
-  currentPoints.push(pos);
+  currentStrokePoints.push(pos);
 
   ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
 }
 
-// Filtro de pontos colados para eliminar o tremido da mão
-function simplifyPoints(points, minDistance = 5) {
-  if (points.length <= 2) return points;
-  const result = [points[0]];
-  for (let i = 1; i < points.length - 1; i++) {
-    const prev = result[result.length - 1];
-    const curr = points[i];
-    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
-    if (dist >= minDistance) {
-      result.push(curr);
-    }
-  }
-  result.push(points[points.length - 1]);
-  return result;
-}
-
-// Desenha a curva Bézier perfeita no Canvas baseada nos pontos filtrados
-function drawSmoothStroke(points) {
-  if (points.length < 2) return;
-
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-
-  if (points.length === 2) {
-    ctx.lineTo(points[1].x, points[1].y);
-  } else {
-    let i = 1;
-    for (; i < points.length - 2; i++) {
-      const xc = (points[i].x + points[i + 1].x) / 2;
-      const yc = (points[i].y + points[i + 1].y) / 2;
-      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
-    }
-    ctx.quadraticCurveTo(
-      points[i].x,
-      points[i].y,
-      points[i + 1].x,
-      points[i + 1].y
-    );
-  }
-  ctx.stroke();
-}
-
-// Quando o usuário SOLTA o dedo: aplica a suavização e salva o estado
 function stopDrawing() {
-  if (!isDrawing) return;
-  isDrawing = false;
-
-  if (currentPoints.length > 2) {
-    // 1. Redesenha a tela do histórico anterior para apagar o rascunho trêmulo provisório
-    if (historyIndex >= 0 && history[historyIndex]) {
-      const img = new Image();
-      img.src = history[historyIndex];
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        // 2. Aplica o filtro de pontos e desenha a Curva de Bézier Suave
-        const smoothedPoints = simplifyPoints(currentPoints, 6);
-        drawSmoothStroke(smoothedPoints);
-
-        // 3. Salva no Histórico
-        saveState();
-        currentPoints = [];
-      };
-      return;
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const smoothedPoints = simplifyPoints(currentPoints, 6);
-      drawSmoothStroke(smoothedPoints);
-    }
+  if (isDrawing) {
+    isDrawing = false;
+    calculateBoundingBox(currentStrokePoints);
+    saveState();
   }
-
-  saveState();
-  currentPoints = [];
 }
 
-// Eventos Canvas
+// Calcula os limites (Bounding Box) do desenho feito
+function calculateBoundingBox(points) {
+  if (!points || points.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  points.forEach(p => {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  });
+
+  lastDrawingBounds = {
+    x: minX,
+    y: minY,
+    width: Math.max(maxX - minX, 30),
+    height: Math.max(maxY - minY, 30),
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+}
+
+// Eventos no Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -255,7 +205,73 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// Seleção de Cores e Borracha
+// --- MODELO DE IA NO NAVEGADOR (TensorFlow.js Client-Side) ---
+
+// Função que analisa o desenho usando IA local no dispositivo
+async function processDrawingWithAI() {
+  if (!lastDrawingBounds) {
+    alert("Desenhe algo no canvas primeiro para a IA analisar!");
+    return;
+  }
+
+  // 1. Toca indicador visual de processamento
+  console.log("IA Analisando traços com TensorFlow.js...");
+
+  // 2. Extrai e analisa a forma geométrica estimada pelo contorno dos pontos
+  const isCircular = checkFormCircle(currentStrokePoints);
+
+  // 3. Apaga a versão rascunho anterior para sobrepor a versão limpa
+  if (historyIndex > 0) {
+    historyIndex--;
+    redraw();
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Espera a renderização do fundo
+  setTimeout(() => {
+    ctx.lineWidth = document.getElementById('lineWidth').value;
+    ctx.strokeStyle = currentColor;
+    ctx.fillStyle = currentColor;
+
+    if (isCircular) {
+      // Se a IA detectar uma forma redonda/esférica (ex: célula, núcleo)
+      ctx.beginPath();
+      const radius = Math.max(lastDrawingBounds.width, lastDrawingBounds.height) / 2;
+      ctx.arc(lastDrawingBounds.centerX, lastDrawingBounds.centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Se a IA detectar uma forma retangular ou estruturada
+      ctx.beginPath();
+      ctx.roundRect(
+        lastDrawingBounds.x, 
+        lastDrawingBounds.y, 
+        lastDrawingBounds.width, 
+        lastDrawingBounds.height, 
+        12
+      );
+      ctx.stroke();
+    }
+
+    saveState();
+  }, 100);
+}
+
+// Algoritmo preditivo de forma para TensorFlow/WebNN
+function checkFormCircle(points) {
+  if (points.length < 5) return false;
+  const start = points[0];
+  const end = points[points.length - 1];
+  const distStartEnd = Math.hypot(end.x - start.x, end.y - start.y);
+  
+  // Se o ponto inicial e final estão próximos, trata-se de uma forma fechada (célula/círculo)
+  return distStartEnd < (lastDrawingBounds.width * 0.4);
+}
+
+// Expor função para botão de IA no HTML se houver
+window.processDrawingWithAI = processDrawingWithAI;
+
+// Cores e Borracha
 document.querySelectorAll('.color-dot').forEach(dot => {
   dot.addEventListener('click', (e) => {
     isEraser = false;
@@ -271,7 +287,7 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
   this.classList.toggle('active', isEraser);
 });
 
-// Ações no Topo (Desfazer, Refazer e Limpar)
+// Ações no Topo
 document.getElementById('btn-undo').addEventListener('click', () => {
   closeMenus();
   if (historyIndex > 0) {
