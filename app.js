@@ -1,199 +1,142 @@
-// Chave da API Gemini configurada
 const GEMINI_API_KEY = "AQ.Ab8RN6K4pLl-FwWMQYnSJB5PofhhsmYERkLn4_OFgpl9kptYoA";
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const startOverlay = document.getElementById('start-overlay');
+const btnStart = document.getElementById('btn-start-app');
 
-const toolbarWrapper = document.getElementById('toolbarWrapper');
-const btnToggleMenu = document.getElementById('btn-toggle-menu');
-
-const penSideWrapper = document.getElementById('penSideWrapper');
-const btnTogglePen = document.getElementById('btn-toggle-pen');
-
-const aiPanel = document.getElementById('ai-response-panel');
-const aiResponseText = document.getElementById('ai-response-text');
-
-let currentFacingMode = 'user';
-let currentColor = '#ffffff';
-let isEraser = false;
-let history = [];
-let historyIndex = -1;
+const colors = ['#ffffff', '#ff3b30', '#ffcc00', '#34c759', '#007aff'];
+let colorIndex = 0;
 let isDrawing = false;
 
-let mediaRecorder;
-let recordedChunks = [];
-let audioStream;
-
-const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
-const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
-
-function closeMenus() {
-  if (toolbarWrapper) toolbarWrapper.classList.add('collapsed');
-  if (penSideWrapper) penSideWrapper.classList.add('collapsed');
-}
-
-function closeMenusExcept(wrapper) {
-  [toolbarWrapper, penSideWrapper].forEach(w => {
-    if (w && w !== wrapper) w.classList.add('collapsed');
-  });
-}
-
-[penSideWrapper, toolbarWrapper].forEach(el => {
-  if (el) {
-    el.addEventListener('pointerdown', (e) => e.stopPropagation());
-    el.addEventListener('touchstart', (e) => e.stopPropagation());
-  }
-});
-
-if (btnToggleMenu) {
-  btnToggleMenu.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeMenusExcept(toolbarWrapper);
-    toolbarWrapper.classList.toggle('collapsed');
-  });
-}
-
-if (btnTogglePen) {
-  btnTogglePen.addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeMenusExcept(penSideWrapper);
-    penSideWrapper.classList.toggle('collapsed');
-  });
-}
-
-document.addEventListener('pointerdown', (e) => {
-  if (penSideWrapper && toolbarWrapper && btnToggleMenu) {
-    if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
-      closeMenus();
-    }
-  }
-});
-
-function resizeCanvas() {
+// Redimensionamento do Canvas
+function setupCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  redraw();
+  ctx.strokeStyle = colors[colorIndex];
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
 }
 
-window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+window.addEventListener('resize', setupCanvas);
 
-async function startCamera() {
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-  }
-
+// Inicialização por Gesto do Usuário
+btnStart.addEventListener('click', async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { 
-        facingMode: currentFacingMode,
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: true
+      video: { facingMode: 'user' },
+      audio: false
     });
     
     video.srcObject = stream;
-    audioStream = stream;
-
-    if (currentFacingMode === 'environment') {
-      video.classList.add('rear-camera');
-    } else {
-      video.classList.remove('rear-camera');
-    }
+    await video.play();
+    
+    startOverlay.style.display = 'none';
+    setupCanvas();
   } catch (err) {
-    console.warn("Câmera indisponível ou permissão negada. O aplicativo funcionará no modo Lousa Escura.", err);
-    document.getElementById('app-container').style.backgroundColor = '#1e1e1e';
+    alert("Erro ao acessar a câmera. Certifique-se de estar usando HTTPS ou Localhost e que concedeu permissão.");
+    console.error(err);
+    startOverlay.style.display = 'none';
+    setupCanvas();
   }
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  resizeCanvas();
-  startCamera();
 });
 
-const btnFlip = document.getElementById('btn-flip');
-if (btnFlip) {
-  btnFlip.addEventListener('click', () => {
-    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-    startCamera();
-  });
-}
-
-function saveState() {
-  historyIndex++;
-  history = history.slice(0, historyIndex);
-  history.push(canvas.toDataURL());
-}
-
-function redraw() {
-  if (historyIndex >= 0 && history[historyIndex]) {
-    const img = new Image();
-    img.src = history[historyIndex];
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-    };
-  } else {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-}
-
+// Lógica Simples de Desenho
 function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: clientX - rect.left, y: clientY - rect.top };
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const y = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x, y };
 }
 
-function startDrawing(e) {
-  closeMenus();
-
+function startDraw(e) {
   isDrawing = true;
-  const pos = getPos(e);
-
-  ctx.lineWidth = document.getElementById('lineWidth').value;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  if (isEraser) {
-    ctx.globalCompositeOperation = 'destination-out';
-  } else {
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = currentColor;
-  }
-
+  const { x, y } = getPos(e);
   ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y);
+  ctx.moveTo(x, y);
 }
 
 function draw(e) {
   if (!isDrawing) return;
-  const pos = getPos(e);
-  ctx.lineTo(pos.x, pos.y);
+  const { x, y } = getPos(e);
+  ctx.lineTo(x, y);
   ctx.stroke();
 }
 
-function stopDrawing() {
-  if (isDrawing) {
-    isDrawing = false;
-    saveState();
-  }
+function stopDraw() {
+  isDrawing = false;
 }
 
-canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousedown', startDraw);
 canvas.addEventListener('mousemove', draw);
-canvas.addEventListener('mouseup', stopDrawing);
-canvas.addEventListener('touchstart', startDrawing);
-canvas.addEventListener('touchmove', draw);
-canvas.addEventListener('touchend', stopDrawing);
+canvas.addEventListener('mouseup', stopDraw);
 
-document.querySelectorAll('.color-dot').forEach(dot => {
-  dot.addEventListener('click', (e) => {
-    isEraser = false;
-    const btnEraser = document.getElementById('btn-eraser');
-    if (btnEraser) btnEraser.classList.remove('active');
-    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-    e.target.classList.add('active');
-    currentColor =
+canvas.addEventListener('touchstart', startDraw);
+canvas.addEventListener('touchmove', draw);
+canvas.addEventListener('touchend', stopDraw);
+
+// Botões
+document.getElementById('btn-clear').addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+document.getElementById('btn-color').addEventListener('click', () => {
+  colorIndex = (colorIndex + 1) % colors.length;
+  ctx.strokeStyle = colors[colorIndex];
+});
+
+// Integração IA
+const aiPanel = document.getElementById('ai-panel');
+const aiText = document.getElementById('ai-text');
+
+document.getElementById('btn-ai').addEventListener('click', async () => {
+  aiPanel.classList.add('visible');
+  aiText.innerText = "Processando imagem com Gemini Flash...";
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tCtx = tempCanvas.getContext('2d');
+
+  if (video.readyState >= 2) {
+    tCtx.save();
+    tCtx.translate(tempCanvas.width, 0);
+    tCtx.scale(-1, 1);
+    tCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+    tCtx.restore();
+  } else {
+    tCtx.fillStyle = "#1a1a1a";
+    tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  }
+
+  tCtx.drawImage(canvas, 0, 0);
+  const base64Image = tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "Descreva e resolva didaticamente o conteúdo desenhado nesta tela." },
+            { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      aiText.innerText = data.candidates[0].content.parts[0].text;
+    } else if (data.error) {
+      aiText.innerText = "Erro na API: " + data.error.message;
+    }
+  } catch (err) {
+    aiText.innerText = "Erro de conexão ao acessar o Gemini.";
+  }
+});
+
+document.getElementById('btn-close-ai').addEventListener('click', () => {
+  aiPanel.classList.remove('visible');
+});
