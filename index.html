@@ -3,191 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#121212" />
-  <title>Lousa Cam - PWA</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    #app-container {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Vídeo da Câmera */
-    #video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform: scaleX(-1);
-      z-index: 1;
-    }
-
-    #video.rear-camera {
-      transform: scaleX(1);
-    }
-
-    /* Canvas para Desenho */
-    #canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      touch-action: none;
-    }
-
-    /* Botões Flutuantes / Menus */
-    .floating-btn {
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      outline: none;
-      transition: transform 0.2s, background 0.2s;
-    }
-
-    .floating-btn:active {
-      transform: scale(0.92);
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    .floating-btn svg {
-      width: 22px;
-      height: 22px;
-      fill: currentColor;
-    }
-
-    /* Barra Superior */
-    #top-bar {
-      position: absolute;
-      top: max(12px, env(safe-area-inset-top));
-      left: 12px;
-      right: 12px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #toolbarWrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    #toolbarWrapper.collapsed {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateX(-10px);
-    }
-
-    /* Barra Lateral de Canetas e Formas */
-    #penSideWrapper, #svgSideWrapper {
-      position: absolute;
-      right: 12px;
-      top: 70px;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 12px;
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    #penSideWrapper.collapsed, #svgSideWrapper.collapsed {
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-10px);
-    }
-
-    .color-dot {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform 0.2s;
-    }
-
-    .color-dot.active {
-      border-color: #fff;
-      transform: scale(1.15);
-    }
-
-    #lineWidth {
-      width: 80px;
-      accent-color: #ffffff;
-      transform: rotate(-90deg);
-      margin: 30px 0;
-    }
-
-    /* Botão de Gravação Ativa */
-    #btn-record.recording {
-      background: rgba(255, 59, 48, 0.8);
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-
-    /* Item SVG Didático no Submenu */
-    .svg-item-btn {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: white;
-    }
-
-    .svg-item-btn:active {
-      background: rgba(255, 255, 255, 0.4);
-    }
-  </style>
+  <title>Lousa Cam</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -198,74 +15,40 @@
     <!-- Canvas para Desenho -->
     <canvas id="canvas"></canvas>
 
-    <!-- Barra de Ferramentas Superior -->
-    <div id="top-bar">
-      <button id="btn-toggle-menu" class="floating-btn" title="Menu">
-        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-      </button>
+    <!-- Botões de Alternância dos Menus -->
+    <button id="btn-toggle-menu" class="floating-btn menu-toggle" title="Menu Principal">☰</button>
+    <button id="btn-toggle-pen" class="floating-btn pen-toggle" title="Ferramentas de Desenho">✏️</button>
 
-      <div id="toolbarWrapper" class="collapsed">
-        <!-- Desfazer -->
-        <button id="btn-undo" class="floating-btn" title="Desfazer">
-          <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-        </button>
-
-        <!-- Refazer -->
-        <button id="btn-redo" class="floating-btn" title="Refazer">
-          <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22l2.37.78c1.05-3.19 4.06-5.5 7.6-5.5 1.96 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
-        </button>
-
-        <!-- Limpar Tudo -->
-        <button id="btn-clear-all" class="floating-btn" title="Limpar Tudo">
-          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-        </button>
-
-        <!-- Alternar Câmera -->
-        <button id="btn-flip" class="floating-btn" title="Inverter Câmera">
-          <svg viewBox="0 0 24 24"><path d="M9.37 5.51A7 7 0 004 12h3l-4 4-4-4h3a9 9 0 0110.15-8.87l-.78 2.38zM12 19a7 7 0 01-5.37-2.51l-.78 2.38A9 9 0 0016 20h3l-4-4-4 4h3z"/></svg>
-        </button>
-      </div>
-
-      <!-- Botões Fixos da Direita Superior -->
-      <div style="margin-left: auto; display: flex; gap: 8px;">
-        <button id="btn-toggle-svg" class="floating-btn" title="Inserir Formas Didáticas">
-          <!-- Ícone de Célula/Formas -->
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-        </button>
-
-        <button id="btn-record" class="floating-btn" title="Gravar Vídeo">
+    <!-- Barra de Ferramentas Principal (Topo) -->
+    <div id="toolbarWrapper" class="toolbar-wrapper collapsed">
+      <div class="toolbar">
+        <button id="btn-undo" class="btn-icon" title="Desfazer">↩️</button>
+        <button id="btn-redo" class="btn-icon" title="Refazer">↪️</button>
+        <button id="btn-clear-all" class="btn-icon" title="Limpar Tudo">🗑️</button>
+        <button id="btn-flip" class="btn-icon" title="Inverter Câmera">🔄</button>
+        <button id="btn-record" class="btn-icon" title="Gravar">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>
         </button>
-
-        <button id="btn-toggle-pen" class="floating-btn" title="Opções de Caneta">
-          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-        </button>
       </div>
     </div>
 
-    <!-- Painel Lateral de SVGs Didáticos -->
-    <div id="svgSideWrapper" class="collapsed">
-      <button class="svg-item-btn" onclick="insertSVG('cell')" title="Célula Completa">🧬</button>
-      <button class="svg-item-btn" onclick="insertSVG('nucleus')" title="Núcleo Celular">⚪</button>
-      <button class="svg-item-btn" onclick="insertSVG('mitochondria')" title="Mitocôndria">💊</button>
-      <button class="svg-item-btn" onclick="insertSVG('arrow')" title="Seta Indicativa">➔</button>
-    </div>
+    <!-- Painel Lateral de Canetas e Cores -->
+    <div id="penSideWrapper" class="pen-side-wrapper collapsed">
+      <div class="pen-side-panel">
+        <label class="label-title">Espessura</label>
+        <input type="range" id="lineWidth" min="1" max="30" value="4" />
 
-    <!-- Painel Lateral de Caneta / Cor / Borracha -->
-    <div id="penSideWrapper" class="collapsed">
-      <div class="color-dot active" style="background-color: #ffffff;" data-color="#ffffff"></div>
-      <div class="color-dot" style="background-color: #ff3b30;" data-color="#ff3b30"></div>
-      <div class="color-dot" style="background-color: #ffcc00;" data-color="#ffcc00"></div>
-      <div class="color-dot" style="background-color: #34c759;" data-color="#34c759"></div>
-      <div class="color-dot" style="background-color: #007aff;" data-color="#007aff"></div>
+        <label class="label-title">Cores</label>
+        <div class="color-palette">
+          <div class="color-dot active" data-color="#ffffff" style="background: #ffffff;"></div>
+          <div class="color-dot" data-color="#ff3b30" style="background: #ff3b30;"></div>
+          <div class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"></div>
+          <div class="color-dot" data-color="#34c759" style="background: #34c759;"></div>
+          <div class="color-dot" data-color="#007aff" style="background: #007aff;"></div>
+        </div>
 
-      <!-- Espessura do Traço -->
-      <input type="range" id="lineWidth" min="2" max="30" value="4" />
-
-      <!-- Borracha -->
-      <button id="btn-eraser" class="floating-btn" title="Borracha">
-        <svg viewBox="0 0 24 24"><path d="M15.14 3c-.4 0-.8.15-1.11.45l-10 10c-.62.62-.62 1.62 0 2.24l5.28 5.28c.3.3.71.45 1.11.45h7.58v-2h-5.17l8.28-8.28c.62-.62.62-1.62 0-2.24l-4.86-4.86c-.3-.3-.71-.45-1.11-.45zm-1.11 3.27L17.73 10 12 15.73 8.27 12l5.76-5.73z"/></svg>
-      </button>
+        <button id="btn-eraser" class="btn-eraser" title="Borracha">🧹 Borracha</button>
+      </div>
     </div>
   </div>
 
