@@ -100,7 +100,10 @@ async function startCamera() {
   }
 }
 
-startCamera();
+// Inicializa a câmera assim que a estrutura do DOM estiver pronta
+window.addEventListener('DOMContentLoaded', () => {
+  startCamera();
+});
 
 // Alternar Câmera
 document.getElementById('btn-flip').addEventListener('click', () => {
