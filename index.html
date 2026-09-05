@@ -59,19 +59,22 @@
       touch-action: none;
     }
 
-    /* BARRA SUPERIOR (TOP 13%, GAP: 5VW) */
+    /* BARRA SUPERIOR CENTRALIZADA (TOP 11%, GAP 5VW) */
     .top-action-bar {
       position: absolute;
-      top: 13%;
-      right: 5%;
+      top: 11%;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 10;
       display: flex;
       flex-direction: row;
       align-items: center;
+      justify-content: center;
       gap: 5vw;
+      width: max-content;
     }
 
-    /* BOTÕES SUPERIORES SEM FUNDO AZUL */
+    /* BOTÕES SUPERIORES */
     .btn-top {
       width: clamp(42px, 10.5vw, 50px);
       height: clamp(42px, 10.5vw, 50px);
@@ -115,7 +118,7 @@
       border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
-    /* FAIXA CONTÍNUA PRETA NA PARTE INFERIOR */
+    /* FAIXA CONTÍNUA PRETA INFERIOR */
     .bottom-bar-bg {
       position: absolute;
       bottom: 0;
@@ -127,7 +130,7 @@
       z-index: 9;
     }
 
-    /* MENU CANETA (AGORA NO CANTO DIREITO) */
+    /* MENU CANETA (DIREITA) */
     .pen-side-wrapper {
       position: absolute;
       top: 50%;
@@ -195,40 +198,23 @@
       transform: scale(1.15);
     }
 
-    /* MENU PRINCIPAL (AGORA NO CANTO ESQUERDO) */
+    /* PAINEL FLUTUANTE DO MENU PRINCIPAL */
     .toolbar-wrapper {
       position: absolute;
-      bottom: clamp(6vh, 10vh, 12vh);
-      left: clamp(8px, 2vw, 16px);
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 10;
-      display: flex;
-      flex-direction: column-reverse;
-      align-items: flex-start;
-      gap: 8px;
-      max-height: 80vh;
     }
 
     .toolbar-wrapper.collapsed .toolbar-content {
       display: none;
     }
 
-    .toggle-btn {
-      background: rgba(20, 20, 20, 0.85);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #fff;
-      padding: clamp(10px, 2vh, 14px) clamp(16px, 4vw, 22px);
-      border-radius: 22px;
-      font-size: clamp(14px, 3.8vw, 18px);
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-    }
-
     .toolbar-content {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       gap: clamp(8px, 1.5vh, 12px);
       background: rgba(20, 20, 20, 0.85);
       backdrop-filter: blur(10px);
@@ -238,7 +224,7 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
       max-height: 60vh;
       overflow-y: auto;
-      width: clamp(120px, 32vw, 160px);
+      width: clamp(140px, 35vw, 180px);
     }
 
     input[type="range"] { 
@@ -251,13 +237,21 @@
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
-    <!-- BARRA SUPERIOR -->
+    <!-- BARRA SUPERIOR CENTRALIZADA -->
     <div class="top-action-bar">
+      <button class="btn-top" id="btn-toggle-menu" title="Menu">⚙️</button>
       <button class="btn-top" id="btn-record" title="Gravar">🔴</button>
       <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
       <button class="btn-top" id="btn-undo" title="Desfazer">↩️</button>
       <button class="btn-top" id="btn-redo" title="Refazer">↪️</button>
       <button class="btn-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
+    </div>
+
+    <!-- CONTEÚDO DO MENU PRINCIPAL -->
+    <div class="toolbar-wrapper collapsed" id="toolbarWrapper">
+      <div class="toolbar-content">
+        <p style="color: #aaa; font-size: 12px; text-align: center;">Menu Principal</p>
+      </div>
     </div>
 
     <!-- MENU CANETA (DIREITA) -->
@@ -281,15 +275,6 @@
 
     <!-- FAIXA CONTÍNUA PRETA INFERIOR -->
     <div class="bottom-bar-bg"></div>
-
-    <!-- MENU PRINCIPAL (ESQUERDA) -->
-    <div class="toolbar-wrapper collapsed" id="toolbarWrapper">
-      <button class="toggle-btn" id="btn-toggle-menu">⚙️ MENU</button>
-      
-      <div class="toolbar-content">
-        <p style="color: #aaa; font-size: 12px; text-align: center;">Menu Principal</p>
-      </div>
-    </div>
   </div>
 
   <script src="app.js"></script>
