@@ -1,0 +1,21 @@
+{
+  "name": "Lousa Cam",
+  "short_name": "LousaCam",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192.png?text=LousaCam",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512.png?text=LousaCam",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
