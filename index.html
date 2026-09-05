@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Lousa Cam PWA V2</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      transform: scaleX(-1);
+      z-index: 1;
+      background-color: #000;
+    }
+    video.rear-camera {
+      transform: scaleX(1);
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      touch-action: none;
+    }
+
+    /* BOTÃO NOVO: LIMPAR TUDO (CANTO SUPERIOR DIREITO) */
+    .btn-clear-top {
+      position: absolute;
+      top: clamp(12px, 3vh, 24px);
+      right: clamp(12px, 3vw, 24px);
+      z-index: 10;
+      width: clamp(40px, 10vw, 48px);
+      height: clamp(40px, 10vw, 48px);
+      border-radius: 50%;
+      background: rgba(20, 20, 20, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: clamp(18px, 4vw, 22px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-clear-top:active {
+      background: rgba(255, 59, 48, 0.4);
+      transform: scale(0.92);
+    }
+
+    /* ESTILOS COMUNS DE BOTÕES */
+    .btn {
+      background: #2a2a2a;
+      border: none;
+      color: #fff;
+      padding: clamp(8px, 1.5vh, 12px);
+      width: 100%;
+      border-radius: 12px;
+      font-size: clamp(13px, 3.5vw, 15px);
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .btn:active { background: #444; }
+    .btn.active { background: #007aff; }
+
+    /* MENU CANETA RESPONSIVO (ESQUERDA 50% VERTICAL) */
+    .pen-side-wrapper {
+      position: absolute;
+      top: 50%;
+      left: clamp(8px, 2vw, 16px);
+      transform: translateY(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-height: 85vh;
+    }
+
+    .pen-side-toggle {
+      background: rgba(20, 20, 20, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: clamp(10px, 2vh, 14px) clamp(8px, 1.5vw, 12px);
+      border-radius: 16px;
+      font-size: clamp(12px, 3.2vw, 15px);
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 2px;
+      flex-shrink: 0;
+    }
+
+    .pen-side-content {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 1.8vh, 12px);
+      background: rgba(20, 20, 20, 0.85);
+      backdrop-filter: blur(10px);
+      padding: clamp(10px, 2vw, 14px);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      width: clamp(110px, 30vw, 140px);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .pen-side-wrapper.collapsed .pen-side-content {
+      display: none;
+    }
+
+    .color-picker { 
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(6px, 1.5vw, 10px);
+      justify-items: center;
+    }
+    .color-dot {
+      width: clamp(22px, 5vw, 28px);
+      height: clamp(22px, 5vw, 28px);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+    }
+    .color-dot.active {
+      border-color: #ffffff;
+      transform: scale(1.15);
+    }
+
+    /* MENU PRINCIPAL RESPONSIVO (INFERIOR DIREITO ~10%) */
+    .toolbar-wrapper {
+      position: absolute;
+      bottom: clamp(6vh, 10vh, 12vh);
+      right: clamp(8px, 2vw, 16px);
+      z-index: 10;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: flex-end;
+      gap: 8px;
+      max-height: 80vh;
+    }
+
+    .toolbar-wrapper.collapsed .toolbar-content {
+      display: none;
+    }
+
+    .toggle-btn {
+      background: rgba(20, 20, 20, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: clamp(10px, 2vh, 14px) clamp(16px, 4vw, 22px);
+      border-radius: 22px;
+      font-size: clamp(14px, 3.8vw, 18px);
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    .toolbar-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: clamp(8px, 1.5vh, 12px);
+      background: rgba(20, 20, 20, 0.85);
+      backdrop-filter: blur(10px);
+      padding: clamp(10px, 2vw, 14px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      max-height: 60vh;
+      overflow-y: auto;
+      width: clamp(120px, 32vw, 160px);
+    }
+
+    .action-group {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+    }
+    .action-group .btn {
+      padding: clamp(6px, 1.2vh, 10px);
+    }
+
+    input[type="range"] { 
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+
+    <!-- 1b. BOTÃO DISCRETO PARA LIMPAR TUDO (CANTO SUPERIOR DIREITO) -->
+    <button class="btn-clear-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
+
+    <!-- MENU CANETA -->
+    <div class="pen-side-wrapper collapsed" id="penSideWrapper">
+      <button class="pen-side-toggle" id="btn-toggle-pen">CANETA</button>
+      
+      <div class="pen-side-content">
+        <button id="btn-eraser" class="btn">✏️ Borracha</button>
+        
+        <div class="color-picker">
+          <div class="color-dot active" style="background: #ffffff;" data-color="#ffffff"></div>
+          <div class="color-dot" style="background: #000000;" data-color="#000000"></div>
+          <div class="color-dot" style="background: #ff3b30;" data-color="#ff3b30"></div>
+          <div class="color-dot" style="background: #ffcc00;" data-color="#ffcc00"></div>
+          <div class="color-dot" style="background: #34c759;" data-color="#34c759"></div>
+          <div class="color-dot" style="background: #007aff;" data-color="#007aff"></div>
+        </div>
+        <input type="range" id="lineWidth" min="2" max="30" value="5">
+      </div>
+    </div>
+
+    <!-- 1a. MENU PRINCIPAL (SEM O BOTÃO DE LIMPAR) -->
+    <div class="toolbar-wrapper collapsed" id="toolbarWrapper">
+      <button class="toggle-btn" id="btn-toggle-menu">⚙️ MENU</button>
+      
+      <div class="toolbar-content">
+        <button id="btn-flip" class="btn">🔄 Cam</button>
+
+        <div class="action-group">
+          <button id="btn-undo" class="btn">↩️</button>
+          <button id="btn-redo" class="btn">↪️</button>
+        </div>
+
+        <button id="btn-record" class="btn" style="background: #ff3b30;">🔴 Gravar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
