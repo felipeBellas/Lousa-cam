@@ -59,27 +59,28 @@
       touch-action: none;
     }
 
-    /* BARRA DE AÇÕES SUPERIOR (20% DO TOPO, 5% DA ESQUERDA/DIREITA E DISTÂNCIA DE 3%) */
+    /* BARRA DE AÇÕES SUPERIOR (17% DO TOPO - SUBIU 3%, 5% DA DIREITA E DISTÂNCIA DE 3%) */
     .top-action-bar {
       position: absolute;
-      top: 20%;
+      top: 17%;
       right: 5%;
       z-index: 10;
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 3vw; /* Distância de 3% da largura da tela */
+      gap: 3vw;
     }
 
+    /* BOTÕES SUPERIORES AUMENTADOS EM 5% E SEM FUNDO AZUL */
     .btn-top {
-      width: clamp(40px, 10vw, 48px);
-      height: clamp(40px, 10vw, 48px);
+      width: clamp(42px, 10.5vw, 50px);
+      height: clamp(42px, 10.5vw, 50px);
       border-radius: 50%;
       background: rgba(20, 20, 20, 0.6);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: clamp(16px, 3.8vw, 20px);
+      font-size: clamp(17px, 4vw, 21px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -177,7 +178,7 @@
       transform: scale(1.15);
     }
 
-    /* MENU PRINCIPAL (SIMPLIFICADO) */
+    /* MENU PRINCIPAL */
     .toolbar-wrapper {
       position: absolute;
       bottom: clamp(6vh, 10vh, 12vh);
@@ -233,8 +234,9 @@
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
-    <!-- BARRA DE AÇÕES SUPERIOR (CAM, UNDO, REDO, CLEAR) -->
+    <!-- BARRA SUPERIOR (RECORD, CAM, UNDO, REDO, CLEAR) -->
     <div class="top-action-bar">
+      <button class="btn-top" id="btn-record" title="Gravar">🔴</button>
       <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
       <button class="btn-top" id="btn-undo" title="Desfazer">↩️</button>
       <button class="btn-top" id="btn-redo" title="Refazer">↪️</button>
@@ -265,7 +267,7 @@
       <button class="toggle-btn" id="btn-toggle-menu">⚙️ MENU</button>
       
       <div class="toolbar-content">
-        <button id="btn-record" class="btn" style="background: #ff3b30;">🔴 Gravar</button>
+        <p style="color: #aaa; font-size: 12px; text-align: center;">Menu Principal</p>
       </div>
     </div>
   </div>
