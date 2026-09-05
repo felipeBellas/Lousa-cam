@@ -15,7 +15,7 @@ let history = [];
 let historyIndex = -1;
 let isDrawing = false;
 
-// Armazena os pontos do traço atual para calcular a curva suave de Bézier
+// Armazena todos os pontos do traço atual
 let currentPoints = [];
 
 let mediaRecorder;
@@ -26,7 +26,7 @@ let audioStream;
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
-// Função dedicada para fechar todos os menus abertos
+// Fechar menus
 function closeMenus() {
   if (!penSideWrapper.classList.contains('collapsed')) {
     penSideWrapper.classList.add('collapsed');
@@ -42,26 +42,25 @@ penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 
-// Alternar Menu Principal
+// Alternar Menus
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
   toolbarWrapper.classList.toggle('collapsed');
 });
 
-// Alternar Menu Caneta
 btnTogglePen.addEventListener('click', (e) => {
   e.stopPropagation();
   penSideWrapper.classList.toggle('collapsed');
 });
 
-// Fechar menus ao clicar/tocar em qualquer área neutra fora dos painéis
+// Fechar menus ao tocar fora
 document.addEventListener('pointerdown', (e) => {
   if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
 
-// Redimensionamento do Canvas
+// Redimensionar Canvas
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -103,18 +102,16 @@ async function startCamera() {
   }
 }
 
-// Inicializa a câmera assim que a estrutura do DOM estiver pronta
 window.addEventListener('DOMContentLoaded', () => {
   startCamera();
 });
 
-// Alternar Câmera
 document.getElementById('btn-flip').addEventListener('click', () => {
   currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
   startCamera();
 });
 
-// Canvas e Desenhos
+// Histórico do Canvas
 function saveState() {
   historyIndex++;
   history = history.slice(0, historyIndex);
@@ -141,7 +138,7 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Início do desenho/escrita
+// Início do traço
 function startDrawing(e) {
   closeMenus();
 
@@ -159,55 +156,98 @@ function startDrawing(e) {
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = currentColor;
   }
+
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
 }
 
-// Desenho em tempo real com algoritmo de Curva de Bézier Suavizada
+// Desenho enquanto o dedo se move (tempo real)
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
   currentPoints.push(pos);
 
-  // Precisa de pelo menos 2 pontos para começar a curvar
-  if (currentPoints.length < 2) return;
-
-  ctx.beginPath();
-
-  if (currentPoints.length === 2) {
-    // Para apenas 2 pontos, desenha uma linha direta simples
-    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-    ctx.lineTo(currentPoints[1].x, currentPoints[1].y);
-  } else {
-    // Aplica a aproximação por Curvas de Bézier para criar um traço orgânico e sem tremilhões
-    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-
-    let i = 1;
-    for (; i < currentPoints.length - 2; i++) {
-      const xc = (currentPoints[i].x + currentPoints[i + 1].x) / 2;
-      const yc = (currentPoints[i].y + currentPoints[i + 1].y) / 2;
-      ctx.quadraticCurveTo(currentPoints[i].x, currentPoints[i].y, xc, yc);
-    }
-
-    // Liga o penúltimo e o último ponto
-    ctx.quadraticCurveTo(
-      currentPoints[i].x,
-      currentPoints[i].y,
-      currentPoints[i + 1].x,
-      currentPoints[i + 1].y
-    );
-  }
-
+  ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
 }
 
-function stopDrawing() {
-  if (isDrawing) {
-    isDrawing = false;
-    currentPoints = [];
-    saveState();
+// Filtro de pontos colados para eliminar o tremido da mão
+function simplifyPoints(points, minDistance = 5) {
+  if (points.length <= 2) return points;
+  const result = [points[0]];
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = result[result.length - 1];
+    const curr = points[i];
+    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    if (dist >= minDistance) {
+      result.push(curr);
+    }
   }
+  result.push(points[points.length - 1]);
+  return result;
 }
 
-// Eventos no Canvas
+// Desenha a curva Bézier perfeita no Canvas baseada nos pontos filtrados
+function drawSmoothStroke(points) {
+  if (points.length < 2) return;
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  if (points.length === 2) {
+    ctx.lineTo(points[1].x, points[1].y);
+  } else {
+    let i = 1;
+    for (; i < points.length - 2; i++) {
+      const xc = (points[i].x + points[i + 1].x) / 2;
+      const yc = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+    }
+    ctx.quadraticCurveTo(
+      points[i].x,
+      points[i].y,
+      points[i + 1].x,
+      points[i + 1].y
+    );
+  }
+  ctx.stroke();
+}
+
+// Quando o usuário SOLTA o dedo: aplica a suavização e salva o estado
+function stopDrawing() {
+  if (!isDrawing) return;
+  isDrawing = false;
+
+  if (currentPoints.length > 2) {
+    // 1. Redesenha a tela do histórico anterior para apagar o rascunho trêmulo provisório
+    if (historyIndex >= 0 && history[historyIndex]) {
+      const img = new Image();
+      img.src = history[historyIndex];
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        // 2. Aplica o filtro de pontos e desenha a Curva de Bézier Suave
+        const smoothedPoints = simplifyPoints(currentPoints, 6);
+        drawSmoothStroke(smoothedPoints);
+
+        // 3. Salva no Histórico
+        saveState();
+        currentPoints = [];
+      };
+      return;
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const smoothedPoints = simplifyPoints(currentPoints, 6);
+      drawSmoothStroke(smoothedPoints);
+    }
+  }
+
+  saveState();
+  currentPoints = [];
+}
+
+// Eventos Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
