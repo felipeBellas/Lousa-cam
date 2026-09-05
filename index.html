@@ -9,17 +9,13 @@
 <body>
 
   <div id="app-container">
-    <!-- Câmera de Fundo -->
     <video id="video" autoplay playsinline muted></video>
 
-    <!-- Canvas para Desenho -->
     <canvas id="canvas"></canvas>
 
-    <!-- Botões de Alternância dos Menus -->
     <button id="btn-toggle-menu" class="floating-btn menu-toggle" title="Menu Principal">☰</button>
     <button id="btn-toggle-pen" class="floating-btn pen-toggle" title="Ferramentas de Desenho">✏️</button>
 
-    <!-- Barra de Ferramentas Principal (Topo) -->
     <div id="toolbarWrapper" class="toolbar-wrapper collapsed">
       <div class="toolbar">
         <button id="btn-undo" class="btn-icon" title="Desfazer">↩️</button>
@@ -32,7 +28,6 @@
       </div>
     </div>
 
-    <!-- Painel Lateral de Canetas e Cores -->
     <div id="penSideWrapper" class="pen-side-wrapper collapsed">
       <div class="pen-side-panel">
         <label class="label-title">Espessura</label>
@@ -40,11 +35,18 @@
 
         <label class="label-title">Cores</label>
         <div class="color-palette">
-          <div class="color-dot active" data-color="#ffffff" style="background: #ffffff;"></div>
-          <div class="color-dot" data-color="#ff3b30" style="background: #ff3b30;"></div>
-          <div class="color-dot" data-color="#ffcc00" style="background: #ffcc00;"></div>
-          <div class="color-dot" data-color="#34c759" style="background: #34c759;"></div>
-          <div class="color-dot" data-color="#007aff" style="background: #007aff;"></div>
+          <div class="color-dot active" data-color="#ffffff" style="background: #ffffff;" title="Branco"></div>
+          <div class="color-dot" data-color="#000000" style="background: #000000; border: 1px solid #555;" title="Preto"></div>
+          <div class="color-dot" data-color="#ff3b30" style="background: #ff3b30;" title="Vermelho"></div>
+          <div class="color-dot" data-color="#ff9500" style="background: #ff9500;" title="Laranja"></div>
+          <div class="color-dot" data-color="#ffcc00" style="background: #ffcc00;" title="Amarelo"></div>
+          <div class="color-dot" data-color="#34c759" style="background: #34c759;" title="Verde"></div>
+          <div class="color-dot" data-color="#00c7be" style="background: #00c7be;" title="Ciano"></div>
+          <div class="color-dot" data-color="#30b0c7" style="background: #30b0c7;" title="Azul Claro"></div>
+          <div class="color-dot" data-color="#007aff" style="background: #007aff;" title="Azul"></div>
+          <div class="color-dot" data-color="#5856d6" style="background: #5856d6;" title="Roxo"></div>
+          <div class="color-dot" data-color="#af52de" style="background: #af52de;" title="Violeta"></div>
+          <div class="color-dot" data-color="#ff2d55" style="background: #ff2d55;" title="Rosa"></div>
         </div>
 
         <button id="btn-eraser" class="btn-eraser" title="Borracha">🧹 Borracha</button>
