@@ -74,26 +74,44 @@
       width: max-content;
     }
 
-    /* BOTÕES SUPERIORES */
+    /* BOTÕES SUPERIORES COM SVG */
     .btn-top {
       width: clamp(42px, 10.5vw, 50px);
       height: clamp(42px, 10.5vw, 50px);
       border-radius: 50%;
-      background: rgba(20, 20, 20, 0.6);
-      backdrop-filter: blur(8px);
+      background: rgba(20, 20, 20, 0.65);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: clamp(17px, 4vw, 21px);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       transition: background 0.2s, transform 0.1s;
+      padding: 0;
+    }
+    .btn-top svg {
+      width: 50%;
+      height: 50%;
+      fill: currentColor;
     }
     .btn-top:active, .btn-top.active {
       background: rgba(255, 255, 255, 0.3) !important;
       transform: scale(0.92);
+    }
+
+    /* BOTÃO GRAVANDO (ESTADO ATIVO) */
+    .btn-top.recording {
+      background: rgba(255, 59, 48, 0.8) !important;
+      border-color: #ff3b30;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+      70% { box-shadow: 0 0 0 12px rgba(255, 59, 48, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
     }
 
     /* ESTILO GERAL DE BOTÕES */
@@ -111,6 +129,12 @@
       align-items: center;
       justify-content: center;
       white-space: nowrap;
+      gap: 8px;
+    }
+    .btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
     }
     .btn:active { background: #444; }
     .btn.active { 
@@ -239,12 +263,35 @@
 
     <!-- BARRA SUPERIOR CENTRALIZADA -->
     <div class="top-action-bar">
-      <button class="btn-top" id="btn-toggle-menu" title="Menu">⚙️</button>
-      <button class="btn-top" id="btn-record" title="Gravar">🔴</button>
-      <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
-      <button class="btn-top" id="btn-undo" title="Desfazer">↩️</button>
-      <button class="btn-top" id="btn-redo" title="Refazer">↪️</button>
-      <button class="btn-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
+      <!-- Menu -->
+      <button class="btn-top" id="btn-toggle-menu" title="Menu">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+
+      <!-- Gravar / Parar -->
+      <button class="btn-top" id="btn-record" title="Gravar">
+        <svg id="icon-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>
+      </button>
+
+      <!-- Alternar Câmera -->
+      <button class="btn-top" id="btn-flip" title="Alternar Câmera">
+        <svg viewBox="0 0 24 24"><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>
+      </button>
+
+      <!-- Desfazer -->
+      <button class="btn-top" id="btn-undo" title="Desfazer">
+        <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+      </button>
+
+      <!-- Refazer -->
+      <button class="btn-top" id="btn-redo" title="Refazer">
+        <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+      </button>
+
+      <!-- Limpar Tela -->
+      <button class="btn-top" id="btn-clear-all" title="Limpar Tela">
+        <svg viewBox="0 0 24 24"><path d="M15 16h4v2h-4zm0-8h7v2h-7zm0 4h6v2h-6zM3 18c0 1.1.9 2 2 2h6c1.1 0 2-.9 2-2V8H3v10zM14 5h-3l-1-1H6L5 5H2v2h12z"/></svg>
+      </button>
     </div>
 
     <!-- CONTEÚDO DO MENU PRINCIPAL -->
@@ -259,7 +306,10 @@
       <button class="pen-side-toggle" id="btn-toggle-pen">CANETA</button>
       
       <div class="pen-side-content">
-        <button id="btn-eraser" class="btn">✏️ Borracha</button>
+        <button id="btn-eraser" class="btn">
+          <svg viewBox="0 0 24 24"><path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.78-.78 2.05 0 2.83L6.44 21.4c.39.39.9.59 1.41.59H19v-2h-3.56l4.96-4.96c.78-.78.78-2.05 0-2.83l-3.85-3.85c-.39-.39-.9-.59-1.41-.59zM14 16.59L9.41 12 15.14 6.27 19.73 10.86 14 16.59z"/></svg>
+          Borracha
+        </button>
         
         <div class="color-picker">
           <div class="color-dot active" style="background: #ffffff;" data-color="#ffffff"></div>
