@@ -59,7 +59,7 @@
       touch-action: none;
     }
 
-    /* BARRA SUPERIOR (13% DO TOPO - SUBIU +4%, 5% DA DIREITA, GAP AUMENTADO DE 3% PARA 5%) */
+    /* BARRA SUPERIOR (TOP 13%, GAP: 5VW) */
     .top-action-bar {
       position: absolute;
       top: 13%;
@@ -68,7 +68,7 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 5vw; /* Aumentado em 2% */
+      gap: 5vw;
     }
 
     /* BOTÕES SUPERIORES SEM FUNDO AZUL */
@@ -93,7 +93,7 @@
       transform: scale(0.92);
     }
 
-    /* ESTILO GERAL DE BOTÕES (SEM COR AZUL PADRÃO) */
+    /* ESTILO GERAL DE BOTÕES */
     .btn {
       background: #2a2a2a;
       border: none;
@@ -115,14 +115,27 @@
       border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
-    /* MENU CANETA */
+    /* FAIXA CONTÍNUA PRETA NA PARTE INFERIOR */
+    .bottom-bar-bg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: clamp(50px, 8vh, 70px);
+      background: #000000;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 9;
+    }
+
+    /* MENU CANETA (AGORA NO CANTO DIREITO) */
     .pen-side-wrapper {
       position: absolute;
       top: 50%;
-      left: clamp(8px, 2vw, 16px);
+      right: clamp(8px, 2vw, 16px);
       transform: translateY(-50%);
       z-index: 10;
       display: flex;
+      flex-direction: row-reverse;
       align-items: center;
       gap: 8px;
       max-height: 85vh;
@@ -182,15 +195,15 @@
       transform: scale(1.15);
     }
 
-    /* MENU PRINCIPAL */
+    /* MENU PRINCIPAL (AGORA NO CANTO ESQUERDO) */
     .toolbar-wrapper {
       position: absolute;
       bottom: clamp(6vh, 10vh, 12vh);
-      right: clamp(8px, 2vw, 16px);
+      left: clamp(8px, 2vw, 16px);
       z-index: 10;
       display: flex;
       flex-direction: column-reverse;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 8px;
       max-height: 80vh;
     }
@@ -215,7 +228,7 @@
     .toolbar-content {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: clamp(8px, 1.5vh, 12px);
       background: rgba(20, 20, 20, 0.85);
       backdrop-filter: blur(10px);
@@ -238,7 +251,7 @@
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
-    <!-- BARRA SUPERIOR (POSIÇÃO: TOP 13%, GAP: 5VW) -->
+    <!-- BARRA SUPERIOR -->
     <div class="top-action-bar">
       <button class="btn-top" id="btn-record" title="Gravar">🔴</button>
       <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
@@ -247,7 +260,7 @@
       <button class="btn-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
     </div>
 
-    <!-- MENU CANETA -->
+    <!-- MENU CANETA (DIREITA) -->
     <div class="pen-side-wrapper collapsed" id="penSideWrapper">
       <button class="pen-side-toggle" id="btn-toggle-pen">CANETA</button>
       
@@ -266,7 +279,10 @@
       </div>
     </div>
 
-    <!-- MENU PRINCIPAL -->
+    <!-- FAIXA CONTÍNUA PRETA INFERIOR -->
+    <div class="bottom-bar-bg"></div>
+
+    <!-- MENU PRINCIPAL (ESQUERDA) -->
     <div class="toolbar-wrapper collapsed" id="toolbarWrapper">
       <button class="toggle-btn" id="btn-toggle-menu">⚙️ MENU</button>
       
