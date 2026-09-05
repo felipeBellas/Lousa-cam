@@ -59,12 +59,19 @@
       touch-action: none;
     }
 
-    /* BOTÃO NOVO: LIMPAR TUDO (CANTO SUPERIOR DIREITO) */
-    .btn-clear-top {
+    /* BARRA DE AÇÕES SUPERIOR (20% DO TOPO, 5% DA ESQUERDA/DIREITA E DISTÂNCIA DE 3%) */
+    .top-action-bar {
       position: absolute;
-      top: clamp(12px, 3vh, 24px);
-      right: clamp(12px, 3vw, 24px);
+      top: 20%;
+      right: 5%;
       z-index: 10;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 3vw; /* Distância de 3% da largura da tela */
+    }
+
+    .btn-top {
       width: clamp(40px, 10vw, 48px);
       height: clamp(40px, 10vw, 48px);
       border-radius: 50%;
@@ -72,7 +79,7 @@
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      font-size: clamp(18px, 4vw, 22px);
+      font-size: clamp(16px, 3.8vw, 20px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -80,12 +87,11 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       transition: background 0.2s, transform 0.1s;
     }
-    .btn-clear-top:active {
-      background: rgba(255, 59, 48, 0.4);
+    .btn-top:active {
+      background: rgba(255, 255, 255, 0.25);
       transform: scale(0.92);
     }
 
-    /* ESTILOS COMUNS DE BOTÕES */
     .btn {
       background: #2a2a2a;
       border: none;
@@ -104,7 +110,7 @@
     .btn:active { background: #444; }
     .btn.active { background: #007aff; }
 
-    /* MENU CANETA RESPONSIVO (ESQUERDA 50% VERTICAL) */
+    /* MENU CANETA */
     .pen-side-wrapper {
       position: absolute;
       top: 50%;
@@ -171,7 +177,7 @@
       transform: scale(1.15);
     }
 
-    /* MENU PRINCIPAL RESPONSIVO (INFERIOR DIREITO ~10%) */
+    /* MENU PRINCIPAL (SIMPLIFICADO) */
     .toolbar-wrapper {
       position: absolute;
       bottom: clamp(6vh, 10vh, 12vh);
@@ -217,15 +223,6 @@
       width: clamp(120px, 32vw, 160px);
     }
 
-    .action-group {
-      display: flex;
-      gap: 6px;
-      width: 100%;
-    }
-    .action-group .btn {
-      padding: clamp(6px, 1.2vh, 10px);
-    }
-
     input[type="range"] { 
       width: 100%;
     }
@@ -236,8 +233,13 @@
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
-    <!-- 1b. BOTÃO DISCRETO PARA LIMPAR TUDO (CANTO SUPERIOR DIREITO) -->
-    <button class="btn-clear-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
+    <!-- BARRA DE AÇÕES SUPERIOR (CAM, UNDO, REDO, CLEAR) -->
+    <div class="top-action-bar">
+      <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
+      <button class="btn-top" id="btn-undo" title="Desfazer">↩️</button>
+      <button class="btn-top" id="btn-redo" title="Refazer">↪️</button>
+      <button class="btn-top" id="btn-clear-all" title="Limpar Tela">🗑️</button>
+    </div>
 
     <!-- MENU CANETA -->
     <div class="pen-side-wrapper collapsed" id="penSideWrapper">
@@ -258,18 +260,11 @@
       </div>
     </div>
 
-    <!-- 1a. MENU PRINCIPAL (SEM O BOTÃO DE LIMPAR) -->
+    <!-- MENU PRINCIPAL -->
     <div class="toolbar-wrapper collapsed" id="toolbarWrapper">
       <button class="toggle-btn" id="btn-toggle-menu">⚙️ MENU</button>
       
       <div class="toolbar-content">
-        <button id="btn-flip" class="btn">🔄 Cam</button>
-
-        <div class="action-group">
-          <button id="btn-undo" class="btn">↩️</button>
-          <button id="btn-redo" class="btn">↪️</button>
-        </div>
-
         <button id="btn-record" class="btn" style="background: #ff3b30;">🔴 Gravar</button>
       </div>
     </div>
