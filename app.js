@@ -74,7 +74,7 @@ async function startCamera() {
 
 startCamera();
 
-// Alternar Câmera (Agora no topo)
+// Alternar Câmera
 document.getElementById('btn-flip').addEventListener('click', () => {
   currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
   startCamera();
@@ -185,7 +185,7 @@ document.getElementById('btn-clear-all').addEventListener('click', () => {
   saveState();
 });
 
-// Gravação de Vídeo
+// Gravação de Vídeo (Botão Superior)
 const btnRecord = document.getElementById('btn-record');
 let isRecording = false;
 
@@ -248,15 +248,13 @@ async function startRecording() {
   mediaRecorder.onstop = exportVideo;
 
   mediaRecorder.start();
-  btnRecord.textContent = '⏹️ Parar';
-  btnRecord.style.background = '#ff3b30';
+  btnRecord.textContent = '⏹️';
 }
 
 function stopRecording() {
   isRecording = false;
   mediaRecorder.stop();
-  btnRecord.textContent = '🔴 Gravar';
-  btnRecord.style.background = '#ff3b30';
+  btnRecord.textContent = '🔴';
 }
 
 async function exportVideo() {
