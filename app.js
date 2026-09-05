@@ -30,7 +30,7 @@ btnTogglePen.addEventListener('click', () => {
   penSideWrapper.classList.toggle('collapsed');
 });
 
-// Ajuste dinâmico responsivo do Canvas
+// Redimensionamento do Canvas
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -43,7 +43,7 @@ window.addEventListener('orientationchange', () => {
 });
 resizeCanvas();
 
-// Inicialização da Câmera
+// Câmera
 async function startCamera() {
   if (video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
@@ -74,7 +74,7 @@ async function startCamera() {
 
 startCamera();
 
-// Alternar Câmera
+// Alternar Câmera (Agora no topo)
 document.getElementById('btn-flip').addEventListener('click', () => {
   currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
   startCamera();
@@ -162,6 +162,7 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
   this.classList.toggle('active', isEraser);
 });
 
+// Ações no Topo (Desfazer, Refazer e Limpar)
 document.getElementById('btn-undo').addEventListener('click', () => {
   if (historyIndex > 0) {
     historyIndex--;
@@ -179,7 +180,6 @@ document.getElementById('btn-redo').addEventListener('click', () => {
   }
 });
 
-// Ação do Botão Superior Limpar
 document.getElementById('btn-clear-all').addEventListener('click', () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   saveState();
