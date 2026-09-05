@@ -3,11 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Lousa Cam - Desenho por Gestos (MediaPipe)</title>
-
-  <!-- Bibliotecas do MediaPipe via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <title>Lousa Cam - Traço Suave</title>
 
   <style>
     * {
@@ -51,7 +47,7 @@
     }
 
     #btn-start {
-      background: #34c759;
+      background: #007aff;
       color: #fff;
       border: none;
       padding: 16px 32px;
@@ -60,7 +56,7 @@
       border-radius: 30px;
       margin-top: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
     }
 
     #video {
@@ -81,21 +77,7 @@
       width: 100%;
       height: 100%;
       z-index: 2;
-    }
-
-    /* Feedback visual da ponta do dedo */
-    #pointer-indicator {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 3px solid #ffffff;
-      background: rgba(255, 59, 48, 0.6);
-      z-index: 10;
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      display: none;
-      transition: background 0.1s;
+      touch-action: none;
     }
 
     .top-controls {
@@ -103,9 +85,10 @@
       top: 16px;
       left: 16px;
       right: 16px;
-      z-index: 20;
+      z-index: 10;
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .action-btn {
@@ -121,28 +104,8 @@
       cursor: pointer;
     }
 
-    #status-badge {
-      margin-left: auto;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ff3b30;
-    }
-
-    .dot.active {
-      background: #34c759;
+    .action-btn:active {
+      background: rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
@@ -150,25 +113,17 @@
 
   <div id="app-container">
     <div id="start-overlay">
-      <h2>Lousa Cam - Desenho no Ar</h2>
-      <p style="margin-top: 10px; max-width: 400px; line-height: 1.5;">
-        • <strong>Mova o indicador:</strong> Controla o cursor na tela.<br/>
-        • <strong>Junte Polegar + Indicador (Pinch):</strong> Ativa a caneta para desenhar.
-      </p>
-      <button id="btn-start">Iniciar MediaPipe</button>
+      <h2>Lousa Cam</h2>
+      <p style="margin-top: 8px;">Desenho com suavização de linhas e texto</p>
+      <button id="btn-start">Iniciar Câmera e Lousa</button>
     </div>
 
-    <video id="video" playsinline muted></video>
+    <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
-    <div id="pointer-indicator"></div>
 
     <div class="top-controls">
       <button class="action-btn" id="btn-clear">Limpar Tela</button>
       <button class="action-btn" id="btn-color">Mudar Cor</button>
-      <div id="status-badge">
-        <div class="dot" id="status-dot"></div>
-        <span id="status-text">Procurando Mão...</span>
-      </div>
     </div>
   </div>
 
