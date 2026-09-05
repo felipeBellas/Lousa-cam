@@ -23,6 +23,22 @@ let audioStream;
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
+// Função dedicada para fechar todos os menus abertos
+function closeMenus() {
+  if (!penSideWrapper.classList.contains('collapsed')) {
+    penSideWrapper.classList.add('collapsed');
+  }
+  if (!toolbarWrapper.classList.contains('collapsed')) {
+    toolbarWrapper.classList.add('collapsed');
+  }
+}
+
+// Impede que toques DENTRO dos menus os fechem acidentalmente
+penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+
 // Alternar Menu Principal
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -35,13 +51,10 @@ btnTogglePen.addEventListener('click', (e) => {
   penSideWrapper.classList.toggle('collapsed');
 });
 
-// FECHAR O MENU CANETA AO TOCAR EM QUALQUER PARTE DA TELA FORA DO MENU
+// Fechar menus ao clicar/tocar em qualquer área neutra fora dos painéis
 document.addEventListener('pointerdown', (e) => {
-  if (!penSideWrapper.contains(e.target)) {
-    penSideWrapper.classList.add('collapsed');
-  }
-  if (!toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
-    toolbarWrapper.classList.add('collapsed');
+  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+    closeMenus();
   }
 });
 
@@ -123,6 +136,9 @@ function getPos(e) {
 }
 
 function startDrawing(e) {
+  // Fecha o menu de caneta/ferramentas imediatamente no toque inicial
+  closeMenus();
+
   isDrawing = true;
   const pos = getPos(e);
   ctx.beginPath();
@@ -154,6 +170,7 @@ function stopDrawing() {
   }
 }
 
+// Eventos no Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -179,6 +196,7 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
 
 // Ações no Topo (Desfazer, Refazer e Limpar)
 document.getElementById('btn-undo').addEventListener('click', () => {
+  closeMenus();
   if (historyIndex > 0) {
     historyIndex--;
     redraw();
@@ -189,6 +207,7 @@ document.getElementById('btn-undo').addEventListener('click', () => {
 });
 
 document.getElementById('btn-redo').addEventListener('click', () => {
+  closeMenus();
   if (historyIndex < history.length - 1) {
     historyIndex++;
     redraw();
@@ -196,6 +215,7 @@ document.getElementById('btn-redo').addEventListener('click', () => {
 });
 
 document.getElementById('btn-clear-all').addEventListener('click', () => {
+  closeMenus();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   saveState();
 });
@@ -205,6 +225,7 @@ const btnRecord = document.getElementById('btn-record');
 let isRecording = false;
 
 btnRecord.addEventListener('click', async () => {
+  closeMenus();
   if (!isRecording) {
     startRecording();
   } else {
