@@ -10,7 +10,6 @@ const btnTogglePen = document.getElementById('btn-toggle-pen');
 
 const svgSideWrapper = document.getElementById('svgSideWrapper');
 const btnToggleSvg = document.getElementById('btn-toggle-svg');
-const svgScaleInput = document.getElementById('svgScale');
 
 let currentFacingMode = 'user';
 let currentColor = '#ffffff';
@@ -23,25 +22,29 @@ let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
+// SVGs
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
+// Fechar menus
 function closeMenus() {
-  toolbarWrapper.classList.add('collapsed');
-  penSideWrapper.classList.add('collapsed');
-  svgSideWrapper.classList.add('collapsed');
+  if (!penSideWrapper.classList.contains('collapsed')) {
+    penSideWrapper.classList.add('collapsed');
+  }
+  if (!toolbarWrapper.classList.contains('collapsed')) {
+    toolbarWrapper.classList.add('collapsed');
+  }
+  if (!svgSideWrapper.classList.contains('collapsed')) {
+    svgSideWrapper.classList.add('collapsed');
+  }
 }
 
-function closeMenusExcept(wrapper) {
-  [toolbarWrapper, penSideWrapper, svgSideWrapper].forEach(w => {
-    if (w !== wrapper) w.classList.add('collapsed');
-  });
-}
-
-[penSideWrapper, toolbarWrapper, svgSideWrapper].forEach(el => {
-  el.addEventListener('pointerdown', (e) => e.stopPropagation());
-  el.addEventListener('touchstart', (e) => e.stopPropagation());
-});
+penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+svgSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+svgSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -61,12 +64,19 @@ btnToggleSvg.addEventListener('click', (e) => {
   svgSideWrapper.classList.toggle('collapsed');
 });
 
+function closeMenusExcept(wrapper) {
+  [toolbarWrapper, penSideWrapper, svgSideWrapper].forEach(w => {
+    if (w !== wrapper) w.classList.add('collapsed');
+  });
+}
+
 document.addEventListener('pointerdown', (e) => {
   if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !svgSideWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
 
+// Redimensionamento
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -74,9 +84,12 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+window.addEventListener('orientationchange', () => {
+  setTimeout(resizeCanvas, 200);
+});
 resizeCanvas();
 
+// Câmera
 async function startCamera() {
   if (video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
@@ -101,17 +114,20 @@ async function startCamera() {
       video.classList.remove('rear-camera');
     }
   } catch (err) {
-    console.error("Erro na câmera: ", err);
+    console.error("Erro ao acessar câmera/mic: ", err);
   }
 }
 
-window.addEventListener('DOMContentLoaded', startCamera);
+window.addEventListener('DOMContentLoaded', () => {
+  startCamera();
+});
 
 document.getElementById('btn-flip').addEventListener('click', () => {
   currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
   startCamera();
 });
 
+// Histórico
 function saveState() {
   historyIndex++;
   history = history.slice(0, historyIndex);
@@ -138,6 +154,7 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
+// Desenho no Canvas
 function startDrawing(e) {
   closeMenus();
 
@@ -162,6 +179,7 @@ function startDrawing(e) {
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
+
   ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
 }
@@ -173,6 +191,7 @@ function stopDrawing() {
   }
 }
 
+// Eventos no Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -180,52 +199,53 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// Inserção com controle de escala
+// --- INSERÇÃO DE VETORES DIDÁTICOS (SVG) ---
 function insertSVG(type) {
   closeMenus();
   
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const scale = parseFloat(svgScaleInput.value) || 1.0;
 
   ctx.save();
-  ctx.translate(centerX, centerY);
-  ctx.scale(scale, scale);
-
   ctx.strokeStyle = currentColor;
   ctx.fillStyle = currentColor;
-  ctx.lineWidth = 3 / scale; // Mantém a espessura do traço proporcional
+  ctx.lineWidth = 3;
 
   if (type === 'cell') {
+    // Célula Animal (Membrana + Núcleo)
     ctx.beginPath();
-    ctx.ellipse(0, 0, 120, 90, 0, 0, Math.PI * 2);
+    ctx.ellipse(centerX, centerY, 120, 90, 0, 0, Math.PI * 2);
     ctx.stroke();
 
+    // Núcleo
     ctx.beginPath();
-    ctx.arc(-20, -10, 30, 0, Math.PI * 2);
+    ctx.arc(centerX - 20, centerY - 10, 30, 0, Math.PI * 2);
     ctx.stroke();
   } else if (type === 'nucleus') {
+    // Núcleo isolado
     ctx.beginPath();
-    ctx.arc(0, 0, 50, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
     ctx.stroke();
   } else if (type === 'mitochondria') {
+    // Mitocôndria
     ctx.beginPath();
-    ctx.roundRect(-50, -25, 100, 50, 25);
+    ctx.roundRect(centerX - 50, centerY - 25, 100, 50, 25);
     ctx.stroke();
-
+    // Cristas mitocondriais internas
     ctx.beginPath();
-    ctx.moveTo(-30, -15);
-    ctx.lineTo(-10, 15);
-    ctx.lineTo(10, -15);
-    ctx.lineTo(30, 15);
+    ctx.moveTo(centerX - 30, centerY - 15);
+    ctx.lineTo(centerX - 10, centerY + 15);
+    ctx.lineTo(centerX + 10, centerY - 15);
+    ctx.lineTo(centerX + 30, centerY + 15);
     ctx.stroke();
   } else if (type === 'arrow') {
+    // Seta Indicativa
     ctx.beginPath();
-    ctx.moveTo(-60, 0);
-    ctx.lineTo(40, 0);
-    ctx.lineTo(20, -15);
-    ctx.moveTo(40, 0);
-    ctx.lineTo(20, 15);
+    ctx.moveTo(centerX - 60, centerY);
+    ctx.lineTo(centerX + 40, centerY);
+    ctx.lineTo(centerX + 20, centerY - 15);
+    ctx.moveTo(centerX + 40, centerY);
+    ctx.lineTo(centerX + 20, centerY + 15);
     ctx.stroke();
   }
 
@@ -235,6 +255,7 @@ function insertSVG(type) {
 
 window.insertSVG = insertSVG;
 
+// Cores e Borracha
 document.querySelectorAll('.color-dot').forEach(dot => {
   dot.addEventListener('click', (e) => {
     isEraser = false;
@@ -250,6 +271,7 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
   this.classList.toggle('active', isEraser);
 });
 
+// Ações no Topo
 document.getElementById('btn-undo').addEventListener('click', () => {
   closeMenus();
   if (historyIndex > 0) {
