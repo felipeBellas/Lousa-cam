@@ -19,14 +19,30 @@ let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
-// Menu Principal
-btnToggleMenu.addEventListener('click', () => {
+// SVGs para o botão de gravação
+const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
+const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
+
+// Alternar Menu Principal
+btnToggleMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
   toolbarWrapper.classList.toggle('collapsed');
 });
 
-// Menu Caneta
-btnTogglePen.addEventListener('click', () => {
+// Alternar Menu Caneta
+btnTogglePen.addEventListener('click', (e) => {
+  e.stopPropagation();
   penSideWrapper.classList.toggle('collapsed');
+});
+
+// FECHAR O MENU CANETA AO TOCAR EM QUALQUER PARTE DA TELA FORA DO MENU
+document.addEventListener('pointerdown', (e) => {
+  if (!penSideWrapper.contains(e.target)) {
+    penSideWrapper.classList.add('collapsed');
+  }
+  if (!toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+    toolbarWrapper.classList.add('collapsed');
+  }
 });
 
 // Redimensionamento do Canvas
@@ -247,13 +263,17 @@ async function startRecording() {
   mediaRecorder.onstop = exportVideo;
 
   mediaRecorder.start();
-  btnRecord.textContent = '⏹️';
+  btnRecord.classList.add('recording');
+  btnRecord.innerHTML = svgStop;
+  btnRecord.title = "Parar Gravação";
 }
 
 function stopRecording() {
   isRecording = false;
   mediaRecorder.stop();
-  btnRecord.textContent = '🔴';
+  btnRecord.classList.remove('recording');
+  btnRecord.innerHTML = svgRecord;
+  btnRecord.title = "Gravar";
 }
 
 async function exportVideo() {
