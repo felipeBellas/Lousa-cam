@@ -8,9 +8,6 @@ const btnToggleMenu = document.getElementById('btn-toggle-menu');
 const penSideWrapper = document.getElementById('penSideWrapper');
 const btnTogglePen = document.getElementById('btn-toggle-pen');
 
-const svgSideWrapper = document.getElementById('svgSideWrapper');
-const btnToggleSvg = document.getElementById('btn-toggle-svg');
-
 let currentFacingMode = 'user';
 let currentColor = '#ffffff';
 let isEraser = false;
@@ -18,11 +15,14 @@ let history = [];
 let historyIndex = -1;
 let isDrawing = false;
 
+// Armazena todos os pontos do traço atual
+let currentPoints = [];
+
 let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
-// SVGs
+// SVGs para o botão de gravação
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
@@ -34,49 +34,33 @@ function closeMenus() {
   if (!toolbarWrapper.classList.contains('collapsed')) {
     toolbarWrapper.classList.add('collapsed');
   }
-  if (!svgSideWrapper.classList.contains('collapsed')) {
-    svgSideWrapper.classList.add('collapsed');
-  }
 }
 
+// Impede que toques DENTRO dos menus os fechem acidentalmente
 penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
-svgSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-svgSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 
+// Alternar Menus
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
-  closeMenusExcept(toolbarWrapper);
   toolbarWrapper.classList.toggle('collapsed');
 });
 
 btnTogglePen.addEventListener('click', (e) => {
   e.stopPropagation();
-  closeMenusExcept(penSideWrapper);
   penSideWrapper.classList.toggle('collapsed');
 });
 
-btnToggleSvg.addEventListener('click', (e) => {
-  e.stopPropagation();
-  closeMenusExcept(svgSideWrapper);
-  svgSideWrapper.classList.toggle('collapsed');
-});
-
-function closeMenusExcept(wrapper) {
-  [toolbarWrapper, penSideWrapper, svgSideWrapper].forEach(w => {
-    if (w !== wrapper) w.classList.add('collapsed');
-  });
-}
-
+// Fechar menus ao tocar fora
 document.addEventListener('pointerdown', (e) => {
-  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !svgSideWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
 
-// Redimensionamento
+// Redimensionar Canvas
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -127,7 +111,7 @@ document.getElementById('btn-flip').addEventListener('click', () => {
   startCamera();
 });
 
-// Histórico
+// Histórico do Canvas
 function saveState() {
   historyIndex++;
   history = history.slice(0, historyIndex);
@@ -154,12 +138,13 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Desenho no Canvas
+// Início do traço
 function startDrawing(e) {
   closeMenus();
 
   isDrawing = true;
   const pos = getPos(e);
+  currentPoints = [pos];
 
   ctx.lineWidth = document.getElementById('lineWidth').value;
   ctx.lineCap = 'round';
@@ -176,22 +161,93 @@ function startDrawing(e) {
   ctx.moveTo(pos.x, pos.y);
 }
 
+// Desenho enquanto o dedo se move (tempo real)
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
+  currentPoints.push(pos);
 
   ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
 }
 
-function stopDrawing() {
-  if (isDrawing) {
-    isDrawing = false;
-    saveState();
+// Filtro de pontos colados para eliminar o tremido da mão
+function simplifyPoints(points, minDistance = 5) {
+  if (points.length <= 2) return points;
+  const result = [points[0]];
+  for (let i = 1; i < points.length - 1; i++) {
+    const prev = result[result.length - 1];
+    const curr = points[i];
+    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    if (dist >= minDistance) {
+      result.push(curr);
+    }
   }
+  result.push(points[points.length - 1]);
+  return result;
 }
 
-// Eventos no Canvas
+// Desenha a curva Bézier perfeita no Canvas baseada nos pontos filtrados
+function drawSmoothStroke(points) {
+  if (points.length < 2) return;
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  if (points.length === 2) {
+    ctx.lineTo(points[1].x, points[1].y);
+  } else {
+    let i = 1;
+    for (; i < points.length - 2; i++) {
+      const xc = (points[i].x + points[i + 1].x) / 2;
+      const yc = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+    }
+    ctx.quadraticCurveTo(
+      points[i].x,
+      points[i].y,
+      points[i + 1].x,
+      points[i + 1].y
+    );
+  }
+  ctx.stroke();
+}
+
+// Quando o usuário SOLTA o dedo: aplica a suavização e salva o estado
+function stopDrawing() {
+  if (!isDrawing) return;
+  isDrawing = false;
+
+  if (currentPoints.length > 2) {
+    // 1. Redesenha a tela do histórico anterior para apagar o rascunho trêmulo provisório
+    if (historyIndex >= 0 && history[historyIndex]) {
+      const img = new Image();
+      img.src = history[historyIndex];
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        // 2. Aplica o filtro de pontos e desenha a Curva de Bézier Suave
+        const smoothedPoints = simplifyPoints(currentPoints, 6);
+        drawSmoothStroke(smoothedPoints);
+
+        // 3. Salva no Histórico
+        saveState();
+        currentPoints = [];
+      };
+      return;
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const smoothedPoints = simplifyPoints(currentPoints, 6);
+      drawSmoothStroke(smoothedPoints);
+    }
+  }
+
+  saveState();
+  currentPoints = [];
+}
+
+// Eventos Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -199,63 +255,7 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// --- INSERÇÃO DE VETORES DIDÁTICOS (SVG) ---
-function insertSVG(type) {
-  closeMenus();
-  
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  ctx.save();
-  ctx.strokeStyle = currentColor;
-  ctx.fillStyle = currentColor;
-  ctx.lineWidth = 3;
-
-  if (type === 'cell') {
-    // Célula Animal (Membrana + Núcleo)
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY, 120, 90, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Núcleo
-    ctx.beginPath();
-    ctx.arc(centerX - 20, centerY - 10, 30, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (type === 'nucleus') {
-    // Núcleo isolado
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (type === 'mitochondria') {
-    // Mitocôndria
-    ctx.beginPath();
-    ctx.roundRect(centerX - 50, centerY - 25, 100, 50, 25);
-    ctx.stroke();
-    // Cristas mitocondriais internas
-    ctx.beginPath();
-    ctx.moveTo(centerX - 30, centerY - 15);
-    ctx.lineTo(centerX - 10, centerY + 15);
-    ctx.lineTo(centerX + 10, centerY - 15);
-    ctx.lineTo(centerX + 30, centerY + 15);
-    ctx.stroke();
-  } else if (type === 'arrow') {
-    // Seta Indicativa
-    ctx.beginPath();
-    ctx.moveTo(centerX - 60, centerY);
-    ctx.lineTo(centerX + 40, centerY);
-    ctx.lineTo(centerX + 20, centerY - 15);
-    ctx.moveTo(centerX + 40, centerY);
-    ctx.lineTo(centerX + 20, centerY + 15);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-  saveState();
-}
-
-window.insertSVG = insertSVG;
-
-// Cores e Borracha
+// Seleção de Cores e Borracha
 document.querySelectorAll('.color-dot').forEach(dot => {
   dot.addEventListener('click', (e) => {
     isEraser = false;
@@ -271,7 +271,7 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
   this.classList.toggle('active', isEraser);
 });
 
-// Ações no Topo
+// Ações no Topo (Desfazer, Refazer e Limpar)
 document.getElementById('btn-undo').addEventListener('click', () => {
   closeMenus();
   if (historyIndex > 0) {
