@@ -8,16 +8,15 @@ const btnToggleMenu = document.getElementById('btn-toggle-menu');
 const penSideWrapper = document.getElementById('penSideWrapper');
 const btnTogglePen = document.getElementById('btn-toggle-pen');
 
+const svgSideWrapper = document.getElementById('svgSideWrapper');
+const btnToggleSvg = document.getElementById('btn-toggle-svg');
+
 let currentFacingMode = 'user';
 let currentColor = '#ffffff';
 let isEraser = false;
 let history = [];
 let historyIndex = -1;
 let isDrawing = false;
-
-// Armazena os pontos do último rascunho para análise da IA
-let currentStrokePoints = [];
-let lastDrawingBounds = null;
 
 let mediaRecorder;
 let recordedChunks = [];
@@ -35,25 +34,44 @@ function closeMenus() {
   if (!toolbarWrapper.classList.contains('collapsed')) {
     toolbarWrapper.classList.add('collapsed');
   }
+  if (!svgSideWrapper.classList.contains('collapsed')) {
+    svgSideWrapper.classList.add('collapsed');
+  }
 }
 
 penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
 toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+svgSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+svgSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
 
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
+  closeMenusExcept(toolbarWrapper);
   toolbarWrapper.classList.toggle('collapsed');
 });
 
 btnTogglePen.addEventListener('click', (e) => {
   e.stopPropagation();
+  closeMenusExcept(penSideWrapper);
   penSideWrapper.classList.toggle('collapsed');
 });
 
+btnToggleSvg.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeMenusExcept(svgSideWrapper);
+  svgSideWrapper.classList.toggle('collapsed');
+});
+
+function closeMenusExcept(wrapper) {
+  [toolbarWrapper, penSideWrapper, svgSideWrapper].forEach(w => {
+    if (w !== wrapper) w.classList.add('collapsed');
+  });
+}
+
 document.addEventListener('pointerdown', (e) => {
-  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !svgSideWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
@@ -136,13 +154,12 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Início do desenho
+// Desenho no Canvas
 function startDrawing(e) {
   closeMenus();
 
   isDrawing = true;
   const pos = getPos(e);
-  currentStrokePoints = [pos];
 
   ctx.lineWidth = document.getElementById('lineWidth').value;
   ctx.lineCap = 'round';
@@ -162,7 +179,6 @@ function startDrawing(e) {
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
-  currentStrokePoints.push(pos);
 
   ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
@@ -171,30 +187,8 @@ function draw(e) {
 function stopDrawing() {
   if (isDrawing) {
     isDrawing = false;
-    calculateBoundingBox(currentStrokePoints);
     saveState();
   }
-}
-
-// Calcula os limites (Bounding Box) do desenho feito
-function calculateBoundingBox(points) {
-  if (!points || points.length === 0) return;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  points.forEach(p => {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  });
-
-  lastDrawingBounds = {
-    x: minX,
-    y: minY,
-    width: Math.max(maxX - minX, 30),
-    height: Math.max(maxY - minY, 30),
-    centerX: (minX + maxX) / 2,
-    centerY: (minY + maxY) / 2
-  };
 }
 
 // Eventos no Canvas
@@ -205,71 +199,61 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// --- MODELO DE IA NO NAVEGADOR (TensorFlow.js Client-Side) ---
-
-// Função que analisa o desenho usando IA local no dispositivo
-async function processDrawingWithAI() {
-  if (!lastDrawingBounds) {
-    alert("Desenhe algo no canvas primeiro para a IA analisar!");
-    return;
-  }
-
-  // 1. Toca indicador visual de processamento
-  console.log("IA Analisando traços com TensorFlow.js...");
-
-  // 2. Extrai e analisa a forma geométrica estimada pelo contorno dos pontos
-  const isCircular = checkFormCircle(currentStrokePoints);
-
-  // 3. Apaga a versão rascunho anterior para sobrepor a versão limpa
-  if (historyIndex > 0) {
-    historyIndex--;
-    redraw();
-  } else {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  // Espera a renderização do fundo
-  setTimeout(() => {
-    ctx.lineWidth = document.getElementById('lineWidth').value;
-    ctx.strokeStyle = currentColor;
-    ctx.fillStyle = currentColor;
-
-    if (isCircular) {
-      // Se a IA detectar uma forma redonda/esférica (ex: célula, núcleo)
-      ctx.beginPath();
-      const radius = Math.max(lastDrawingBounds.width, lastDrawingBounds.height) / 2;
-      ctx.arc(lastDrawingBounds.centerX, lastDrawingBounds.centerY, radius, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      // Se a IA detectar uma forma retangular ou estruturada
-      ctx.beginPath();
-      ctx.roundRect(
-        lastDrawingBounds.x, 
-        lastDrawingBounds.y, 
-        lastDrawingBounds.width, 
-        lastDrawingBounds.height, 
-        12
-      );
-      ctx.stroke();
-    }
-
-    saveState();
-  }, 100);
-}
-
-// Algoritmo preditivo de forma para TensorFlow/WebNN
-function checkFormCircle(points) {
-  if (points.length < 5) return false;
-  const start = points[0];
-  const end = points[points.length - 1];
-  const distStartEnd = Math.hypot(end.x - start.x, end.y - start.y);
+// --- INSERÇÃO DE VETORES DIDÁTICOS (SVG) ---
+function insertSVG(type) {
+  closeMenus();
   
-  // Se o ponto inicial e final estão próximos, trata-se de uma forma fechada (célula/círculo)
-  return distStartEnd < (lastDrawingBounds.width * 0.4);
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  ctx.save();
+  ctx.strokeStyle = currentColor;
+  ctx.fillStyle = currentColor;
+  ctx.lineWidth = 3;
+
+  if (type === 'cell') {
+    // Célula Animal (Membrana + Núcleo)
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, 120, 90, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Núcleo
+    ctx.beginPath();
+    ctx.arc(centerX - 20, centerY - 10, 30, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (type === 'nucleus') {
+    // Núcleo isolado
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (type === 'mitochondria') {
+    // Mitocôndria
+    ctx.beginPath();
+    ctx.roundRect(centerX - 50, centerY - 25, 100, 50, 25);
+    ctx.stroke();
+    // Cristas mitocondriais internas
+    ctx.beginPath();
+    ctx.moveTo(centerX - 30, centerY - 15);
+    ctx.lineTo(centerX - 10, centerY + 15);
+    ctx.lineTo(centerX + 10, centerY - 15);
+    ctx.lineTo(centerX + 30, centerY + 15);
+    ctx.stroke();
+  } else if (type === 'arrow') {
+    // Seta Indicativa
+    ctx.beginPath();
+    ctx.moveTo(centerX - 60, centerY);
+    ctx.lineTo(centerX + 40, centerY);
+    ctx.lineTo(centerX + 20, centerY - 15);
+    ctx.moveTo(centerX + 40, centerY);
+    ctx.lineTo(centerX + 20, centerY + 15);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+  saveState();
 }
 
-// Expor função para botão de IA no HTML se houver
-window.processDrawingWithAI = processDrawingWithAI;
+window.insertSVG = insertSVG;
 
 // Cores e Borracha
 document.querySelectorAll('.color-dot').forEach(dot => {
