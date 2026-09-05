@@ -4,11 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#121212" />
-  <title>Lousa Cam PWA</title>
-
-  <!-- TensorFlow.js para IA no Navegador -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handwriting"></script>
+  <title>Lousa Cam - PWA</title>
 
   <style>
     * {
@@ -43,12 +39,12 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Espelhado para câmera frontal por padrão */
+      transform: scaleX(-1);
       z-index: 1;
     }
 
     #video.rear-camera {
-      transform: scaleX(1); /* Não espelha a câmera traseira */
+      transform: scaleX(1);
     }
 
     /* Canvas para Desenho */
@@ -116,33 +112,8 @@
       transform: translateX(-10px);
     }
 
-    /* Botão com Texto (ex: Botão IA) */
-    .text-btn {
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-      border-radius: 22px;
-      padding: 0 14px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: transform 0.2s, background 0.2s;
-    }
-
-    .text-btn:active {
-      transform: scale(0.95);
-      background: rgba(255, 255, 255, 0.4);
-    }
-
-    /* Barra Lateral de Canetas */
-    #penSideWrapper {
+    /* Barra Lateral de Canetas e Formas */
+    #penSideWrapper, #svgSideWrapper {
       position: absolute;
       right: 12px;
       top: 70px;
@@ -151,7 +122,7 @@
       flex-direction: column;
       align-items: center;
       gap: 12px;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 12px;
@@ -160,7 +131,7 @@
       transition: opacity 0.3s, transform 0.3s;
     }
 
-    #penSideWrapper.collapsed {
+    #penSideWrapper.collapsed, #svgSideWrapper.collapsed {
       opacity: 0;
       pointer-events: none;
       transform: translateY(-10px);
@@ -198,6 +169,24 @@
       50% { transform: scale(1.08); }
       100% { transform: scale(1); }
     }
+
+    /* Item SVG Didático no Submenu */
+    .svg-item-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+    }
+
+    .svg-item-btn:active {
+      background: rgba(255, 255, 255, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -206,7 +195,7 @@
     <!-- Câmera de Fundo -->
     <video id="video" autoplay playsinline muted></video>
 
-    <!-- Canvas Transparente para Desenho -->
+    <!-- Canvas para Desenho -->
     <canvas id="canvas"></canvas>
 
     <!-- Barra de Ferramentas Superior -->
@@ -235,15 +224,15 @@
         <button id="btn-flip" class="floating-btn" title="Inverter Câmera">
           <svg viewBox="0 0 24 24"><path d="M9.37 5.51A7 7 0 004 12h3l-4 4-4-4h3a9 9 0 0110.15-8.87l-.78 2.38zM12 19a7 7 0 01-5.37-2.51l-.78 2.38A9 9 0 0016 20h3l-4-4-4 4h3z"/></svg>
         </button>
-
-        <!-- Botão Auto-Fix com IA -->
-        <button id="btn-ai-fix" class="text-btn" onclick="processDrawingWithAI()" title="Aprimorar desenho com IA">
-          ✨ Auto-Fix IA
-        </button>
       </div>
 
       <!-- Botões Fixos da Direita Superior -->
       <div style="margin-left: auto; display: flex; gap: 8px;">
+        <button id="btn-toggle-svg" class="floating-btn" title="Inserir Formas Didáticas">
+          <!-- Ícone de Célula/Formas -->
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        </button>
+
         <button id="btn-record" class="floating-btn" title="Gravar Vídeo">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>
         </button>
@@ -252,6 +241,14 @@
           <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
         </button>
       </div>
+    </div>
+
+    <!-- Painel Lateral de SVGs Didáticos -->
+    <div id="svgSideWrapper" class="collapsed">
+      <button class="svg-item-btn" onclick="insertSVG('cell')" title="Célula Completa">🧬</button>
+      <button class="svg-item-btn" onclick="insertSVG('nucleus')" title="Núcleo Celular">⚪</button>
+      <button class="svg-item-btn" onclick="insertSVG('mitochondria')" title="Mitocôndria">💊</button>
+      <button class="svg-item-btn" onclick="insertSVG('arrow')" title="Seta Indicativa">➔</button>
     </div>
 
     <!-- Painel Lateral de Caneta / Cor / Borracha -->
