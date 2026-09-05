@@ -59,19 +59,19 @@
       touch-action: none;
     }
 
-    /* BARRA DE AÇÕES SUPERIOR (17% DO TOPO - SUBIU 3%, 5% DA DIREITA E DISTÂNCIA DE 3%) */
+    /* BARRA SUPERIOR (13% DO TOPO - SUBIU +4%, 5% DA DIREITA, GAP AUMENTADO DE 3% PARA 5%) */
     .top-action-bar {
       position: absolute;
-      top: 17%;
+      top: 13%;
       right: 5%;
       z-index: 10;
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 3vw;
+      gap: 5vw; /* Aumentado em 2% */
     }
 
-    /* BOTÕES SUPERIORES AUMENTADOS EM 5% E SEM FUNDO AZUL */
+    /* BOTÕES SUPERIORES SEM FUNDO AZUL */
     .btn-top {
       width: clamp(42px, 10.5vw, 50px);
       height: clamp(42px, 10.5vw, 50px);
@@ -88,11 +88,12 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       transition: background 0.2s, transform 0.1s;
     }
-    .btn-top:active {
-      background: rgba(255, 255, 255, 0.25);
+    .btn-top:active, .btn-top.active {
+      background: rgba(255, 255, 255, 0.3) !important;
       transform: scale(0.92);
     }
 
+    /* ESTILO GERAL DE BOTÕES (SEM COR AZUL PADRÃO) */
     .btn {
       background: #2a2a2a;
       border: none;
@@ -109,7 +110,10 @@
       white-space: nowrap;
     }
     .btn:active { background: #444; }
-    .btn.active { background: #007aff; }
+    .btn.active { 
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
 
     /* MENU CANETA */
     .pen-side-wrapper {
@@ -234,7 +238,7 @@
     <video id="video" autoplay playsinline muted></video>
     <canvas id="canvas"></canvas>
 
-    <!-- BARRA SUPERIOR (RECORD, CAM, UNDO, REDO, CLEAR) -->
+    <!-- BARRA SUPERIOR (POSIÇÃO: TOP 13%, GAP: 5VW) -->
     <div class="top-action-bar">
       <button class="btn-top" id="btn-record" title="Gravar">🔴</button>
       <button class="btn-top" id="btn-flip" title="Alternar Câmera">🔄</button>
