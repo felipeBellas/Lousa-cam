@@ -22,7 +22,6 @@ let audioStream;
 // Menu Principal
 btnToggleMenu.addEventListener('click', () => {
   toolbarWrapper.classList.toggle('collapsed');
-  btnToggleMenu.textContent = toolbarWrapper.classList.contains('collapsed') ? '⚙️ MENU' : '❌ FECHAR';
 });
 
 // Menu Caneta
