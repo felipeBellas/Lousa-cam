@@ -3,58 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Lousa Cam // IDE</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Lousa Cam - Traço Suave</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: #1a1a1a;
+    }
+
+    #start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #btn-start {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 30px;
+      margin-top: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+    }
+
+    #video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      z-index: 1;
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      touch-action: none;
+    }
+
+    .top-controls {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      border-radius: 20px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
 </head>
 <body>
 
   <div id="app-container">
-    <video id="video" autoplay playsinline muted></video>
-
-    <canvas id="canvas"></canvas>
-
-    <button id="btn-toggle-menu" class="floating-btn menu-toggle" title="Terminal Menu">&lt;/&gt;</button>
-    <button id="btn-toggle-pen" class="floating-btn pen-toggle" title="Tool Config">#</button>
-
-    <div id="toolbarWrapper" class="toolbar-wrapper collapsed">
-      <div class="toolbar">
-        <span class="code-tag">&lt;actions&gt;</span>
-        <button id="btn-undo" class="btn-icon" title="Undo [Ctrl+Z]">UNDO</button>
-        <button id="btn-redo" class="btn-icon" title="Redo [Ctrl+Y]">REDO</button>
-        <button id="btn-clear-all" class="btn-icon btn-danger" title="Clear Canvas">CLEAR</button>
-        <button id="btn-flip" class="btn-icon" title="Flip Camera">CAM</button>
-        <button id="btn-record" class="btn-icon btn-rec" title="Record Screen">
-          REC
-        </button>
-        <span class="code-tag">&lt;/actions&gt;</span>
-      </div>
+    <div id="start-overlay">
+      <h2>Lousa Cam</h2>
+      <p style="margin-top: 8px;">Desenho com suavização de linhas e texto</p>
+      <button id="btn-start">Iniciar Câmera e Lousa</button>
     </div>
 
-    <div id="penSideWrapper" class="pen-side-wrapper collapsed">
-      <div class="pen-side-panel">
-        <div class="panel-header">// DEV_TOOLS</div>
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
 
-        <div class="config-group">
-          <label class="label-title">VAR strokeWidth =</label>
-          <input type="range" id="lineWidth" min="1" max="30" value="4" />
-        </div>
-
-        <div class="config-group">
-          <label class="label-title">CONST color =</label>
-          <div class="color-palette">
-            <div class="color-dot active" data-color="#ffffff" style="background: #ffffff;" title="#FFFFFF"></div>
-            <div class="color-dot" data-color="#00ff66" style="background: #00ff66;" title="#00FF66"></div>
-            <div class="color-dot" data-color="#00e5ff" style="background: #00e5ff;" title="#00E5FF"></div>
-            <div class="color-dot" data-color="#ff0055" style="background: #ff0055;" title="#FF0055"></div>
-            <div class="color-dot" data-color="#ffb700" style="background: #ffb700;" title="#FFB700"></div>
-            <div class="color-dot" data-color="#9d00ff" style="background: #9d00ff;" title="#9D00FF"></div>
-            <div class="color-dot" data-color="#000000" style="background: #000000; border: 1px solid #00ff66;" title="#000000"></div>
-            <div class="color-dot" data-color="#708090" style="background: #708090;" title="#708090"></div>
-          </div>
-        </div>
-
-        <button id="btn-eraser" class="btn-eraser" title="Nullify/Erase">NULL (Eraser)</button>
-      </div>
+    <div class="top-controls">
+      <button class="action-btn" id="btn-clear">Limpar Tela</button>
+      <button class="action-btn" id="btn-color">Mudar Cor</button>
     </div>
   </div>
 
