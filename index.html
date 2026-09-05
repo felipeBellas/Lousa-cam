@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Lousa Cam</title>
+  <title>Lousa Cam - Desenho por Gestos (MediaPipe)</title>
+
+  <!-- Bibliotecas do MediaPipe via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
   <style>
     * {
@@ -29,7 +33,6 @@
       background: #1a1a1a;
     }
 
-    /* Tela de Início Obrigatória */
     #start-overlay {
       position: absolute;
       top: 0;
@@ -47,8 +50,8 @@
       padding: 20px;
     }
 
-    #btn-start-app {
-      background: #007aff;
+    #btn-start {
+      background: #34c759;
       color: #fff;
       border: none;
       padding: 16px 32px;
@@ -57,7 +60,7 @@
       border-radius: 30px;
       margin-top: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,122,255,0.4);
+      box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
     }
 
     #video {
@@ -78,7 +81,21 @@
       width: 100%;
       height: 100%;
       z-index: 2;
-      touch-action: none;
+    }
+
+    /* Feedback visual da ponta do dedo */
+    #pointer-indicator {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      background: rgba(255, 59, 48, 0.6);
+      z-index: 10;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      display: none;
+      transition: background 0.1s;
     }
 
     .top-controls {
@@ -86,10 +103,9 @@
       top: 16px;
       left: 16px;
       right: 16px;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
     }
 
     .action-btn {
@@ -105,56 +121,54 @@
       cursor: pointer;
     }
 
-    .action-btn:active {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    #ai-panel {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 40px);
-      max-width: 500px;
-      background: rgba(0, 0, 0, 0.9);
+    #status-badge {
+      margin-left: auto;
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      padding: 16px;
       color: #fff;
-      z-index: 20;
-      display: none;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    #ai-panel.visible {
-      display: block;
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff3b30;
+    }
+
+    .dot.active {
+      background: #34c759;
     }
   </style>
 </head>
 <body>
 
   <div id="app-container">
-    <!-- Overlay que força a permissão no clique -->
     <div id="start-overlay">
-      <h2>Lousa Cam</h2>
-      <p>Clique no botão abaixo para permitir a câmera e iniciar a lousa.</p>
-      <button id="btn-start-app">Iniciar Câmera e Lousa</button>
+      <h2>Lousa Cam - Desenho no Ar</h2>
+      <p style="margin-top: 10px; max-width: 400px; line-height: 1.5;">
+        • <strong>Mova o indicador:</strong> Controla o cursor na tela.<br/>
+        • <strong>Junte Polegar + Indicador (Pinch):</strong> Ativa a caneta para desenhar.
+      </p>
+      <button id="btn-start">Iniciar MediaPipe</button>
     </div>
 
-    <video id="video" autoplay playsinline muted></video>
+    <video id="video" playsinline muted></video>
     <canvas id="canvas"></canvas>
+    <div id="pointer-indicator"></div>
 
     <div class="top-controls">
       <button class="action-btn" id="btn-clear">Limpar Tela</button>
       <button class="action-btn" id="btn-color">Mudar Cor</button>
-      <button class="action-btn" id="btn-ai" style="background: #5856d6;">🧠 Analisar com IA</button>
-    </div>
-
-    <div id="ai-panel">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-        <strong>Resultado da IA:</strong>
-        <button id="btn-close-ai" style="background: none; border: none; color: #fff; cursor: pointer;">✕</button>
+      <div id="status-badge">
+        <div class="dot" id="status-dot"></div>
+        <span id="status-text">Procurando Mão...</span>
       </div>
-      <div id="ai-text">Aguardando...</div>
     </div>
   </div>
 
