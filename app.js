@@ -185,7 +185,7 @@ document.getElementById('btn-clear-all').addEventListener('click', () => {
   saveState();
 });
 
-// Gravação de Vídeo (Botão Superior)
+// Gravação de Vídeo
 const btnRecord = document.getElementById('btn-record');
 let isRecording = false;
 
