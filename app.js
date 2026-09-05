@@ -1,3 +1,6 @@
+// INSIRA SUA CHAVE DA API GEMINI AQUI:
+const GEMINI_API_KEY = AQ.Ab8RN6K4pLl-FwWMQYnSJB5PofhhsmYERkLn4_OFgpl9kptYoA;
+
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -8,8 +11,8 @@ const btnToggleMenu = document.getElementById('btn-toggle-menu');
 const penSideWrapper = document.getElementById('penSideWrapper');
 const btnTogglePen = document.getElementById('btn-toggle-pen');
 
-const svgSideWrapper = document.getElementById('svgSideWrapper');
-const btnToggleSvg = document.getElementById('btn-toggle-svg');
+const aiPanel = document.getElementById('ai-response-panel');
+const aiResponseText = document.getElementById('ai-response-text');
 
 let currentFacingMode = 'user';
 let currentColor = '#ffffff';
@@ -22,29 +25,24 @@ let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
-// SVGs
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
-// Fechar menus
 function closeMenus() {
-  if (!penSideWrapper.classList.contains('collapsed')) {
-    penSideWrapper.classList.add('collapsed');
-  }
-  if (!toolbarWrapper.classList.contains('collapsed')) {
-    toolbarWrapper.classList.add('collapsed');
-  }
-  if (!svgSideWrapper.classList.contains('collapsed')) {
-    svgSideWrapper.classList.add('collapsed');
-  }
+  toolbarWrapper.classList.add('collapsed');
+  penSideWrapper.classList.add('collapsed');
 }
 
-penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
-toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
-svgSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-svgSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+function closeMenusExcept(wrapper) {
+  [toolbarWrapper, penSideWrapper].forEach(w => {
+    if (w !== wrapper) w.classList.add('collapsed');
+  });
+}
+
+[penSideWrapper, toolbarWrapper].forEach(el => {
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+  el.addEventListener('touchstart', (e) => e.stopPropagation());
+});
 
 btnToggleMenu.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -58,25 +56,12 @@ btnTogglePen.addEventListener('click', (e) => {
   penSideWrapper.classList.toggle('collapsed');
 });
 
-btnToggleSvg.addEventListener('click', (e) => {
-  e.stopPropagation();
-  closeMenusExcept(svgSideWrapper);
-  svgSideWrapper.classList.toggle('collapsed');
-});
-
-function closeMenusExcept(wrapper) {
-  [toolbarWrapper, penSideWrapper, svgSideWrapper].forEach(w => {
-    if (w !== wrapper) w.classList.add('collapsed');
-  });
-}
-
 document.addEventListener('pointerdown', (e) => {
-  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !svgSideWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
     closeMenus();
   }
 });
 
-// Redimensionamento
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -84,12 +69,9 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => {
-  setTimeout(resizeCanvas, 200);
-});
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 resizeCanvas();
 
-// Câmera
 async function startCamera() {
   if (video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
@@ -114,20 +96,17 @@ async function startCamera() {
       video.classList.remove('rear-camera');
     }
   } catch (err) {
-    console.error("Erro ao acessar câmera/mic: ", err);
+    console.error("Erro na câmera: ", err);
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  startCamera();
-});
+window.addEventListener('DOMContentLoaded', startCamera);
 
 document.getElementById('btn-flip').addEventListener('click', () => {
   currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
   startCamera();
 });
 
-// Histórico
 function saveState() {
   historyIndex++;
   history = history.slice(0, historyIndex);
@@ -154,7 +133,6 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Desenho no Canvas
 function startDrawing(e) {
   closeMenus();
 
@@ -179,7 +157,6 @@ function startDrawing(e) {
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
-
   ctx.lineTo(pos.x, pos.y);
   ctx.stroke();
 }
@@ -191,7 +168,6 @@ function stopDrawing() {
   }
 }
 
-// Eventos no Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -199,63 +175,6 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// --- INSERÇÃO DE VETORES DIDÁTICOS (SVG) ---
-function insertSVG(type) {
-  closeMenus();
-  
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-
-  ctx.save();
-  ctx.strokeStyle = currentColor;
-  ctx.fillStyle = currentColor;
-  ctx.lineWidth = 3;
-
-  if (type === 'cell') {
-    // Célula Animal (Membrana + Núcleo)
-    ctx.beginPath();
-    ctx.ellipse(centerX, centerY, 120, 90, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Núcleo
-    ctx.beginPath();
-    ctx.arc(centerX - 20, centerY - 10, 30, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (type === 'nucleus') {
-    // Núcleo isolado
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
-    ctx.stroke();
-  } else if (type === 'mitochondria') {
-    // Mitocôndria
-    ctx.beginPath();
-    ctx.roundRect(centerX - 50, centerY - 25, 100, 50, 25);
-    ctx.stroke();
-    // Cristas mitocondriais internas
-    ctx.beginPath();
-    ctx.moveTo(centerX - 30, centerY - 15);
-    ctx.lineTo(centerX - 10, centerY + 15);
-    ctx.lineTo(centerX + 10, centerY - 15);
-    ctx.lineTo(centerX + 30, centerY + 15);
-    ctx.stroke();
-  } else if (type === 'arrow') {
-    // Seta Indicativa
-    ctx.beginPath();
-    ctx.moveTo(centerX - 60, centerY);
-    ctx.lineTo(centerX + 40, centerY);
-    ctx.lineTo(centerX + 20, centerY - 15);
-    ctx.moveTo(centerX + 40, centerY);
-    ctx.lineTo(centerX + 20, centerY + 15);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-  saveState();
-}
-
-window.insertSVG = insertSVG;
-
-// Cores e Borracha
 document.querySelectorAll('.color-dot').forEach(dot => {
   dot.addEventListener('click', (e) => {
     isEraser = false;
@@ -271,7 +190,6 @@ document.getElementById('btn-eraser').addEventListener('click', function() {
   this.classList.toggle('active', isEraser);
 });
 
-// Ações no Topo
 document.getElementById('btn-undo').addEventListener('click', () => {
   closeMenus();
   if (historyIndex > 0) {
@@ -295,6 +213,82 @@ document.getElementById('btn-clear-all').addEventListener('click', () => {
   closeMenus();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   saveState();
+});
+
+// --- INTEGRAÇÃO COM GEMINI 1.5 FLASH VIA API ---
+
+function showAIPanel(text) {
+  aiResponseText.innerText = text;
+  aiPanel.classList.add('active');
+}
+
+function hideAIPanel() {
+  aiPanel.classList.remove('active');
+}
+window.hideAIPanel = hideAIPanel;
+
+document.getElementById('btn-gemini-ai').addEventListener('click', async () => {
+  closeMenus();
+
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === "SUA_CHAVE_API_AQUI") {
+    showAIPanel("Por favor, adicione sua chave de API do Gemini no arquivo app.js na variável GEMINI_API_KEY.");
+    return;
+  }
+
+  showAIPanel("Analisando imagem com o Gemini Flash IA... Aguarde!");
+
+  // Capturar quadro atual (Câmera + Canvas)
+  const captureCanvas = document.createElement('canvas');
+  captureCanvas.width = canvas.width;
+  captureCanvas.height = canvas.height;
+  const captureCtx = captureCanvas.getContext('2d');
+
+  // Desenhar Vídeo
+  captureCtx.save();
+  if (currentFacingMode === 'user') {
+    captureCtx.translate(captureCanvas.width, 0);
+    captureCtx.scale(-1, 1);
+  }
+  captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+  captureCtx.restore();
+
+  // Desenhar Canvas por cima
+  captureCtx.drawImage(canvas, 0, 0);
+
+  // Converter para Base64 (JPEG)
+  const base64Image = captureCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "Você é um assistente pedagógico. Analise o rascunho/desenho na lousa e a imagem ao fundo. Explique de forma didática e concisa o que está representado (se for um cálculo, resolva; se for um diagrama biológico ou físico, descreva as partes e a função)." },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: base64Image
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      showAIPanel(data.candidates[0].content.parts[0].text);
+    } else {
+      showAIPanel("Não foi possível analisar a imagem. Tente desenhar algo mais visível.");
+    }
+
+  } catch (error) {
+    console.error("Erro na requisição da IA:", error);
+    showAIPanel("Erro ao conectar à API do Gemini. Verifique sua conexão ou a chave de API.");
+  }
 });
 
 // Gravação de Vídeo
