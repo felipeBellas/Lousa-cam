@@ -14,49 +14,54 @@ let isEraser = false;
 let history = [];
 let historyIndex = -1;
 let isDrawing = false;
-
-// Armazena todos os pontos do traço atual
 let currentPoints = [];
 
 let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
 
-// SVGs para o botão de gravação
 const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
 const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
 
 // Fechar menus
 function closeMenus() {
-  if (!penSideWrapper.classList.contains('collapsed')) {
+  if (penSideWrapper && !penSideWrapper.classList.contains('collapsed')) {
     penSideWrapper.classList.add('collapsed');
   }
-  if (!toolbarWrapper.classList.contains('collapsed')) {
+  if (toolbarWrapper && !toolbarWrapper.classList.contains('collapsed')) {
     toolbarWrapper.classList.add('collapsed');
   }
 }
 
-// Impede que toques DENTRO dos menus os fechem acidentalmente
-penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
-toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
-toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+// Eventos de clique para abrir/fechar menus
+if (penSideWrapper) {
+  penSideWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+  penSideWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+}
+if (toolbarWrapper) {
+  toolbarWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+  toolbarWrapper.addEventListener('touchstart', (e) => e.stopPropagation());
+}
 
-// Alternar Menus
-btnToggleMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toolbarWrapper.classList.toggle('collapsed');
-});
+if (btnToggleMenu) {
+  btnToggleMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toolbarWrapper.classList.toggle('collapsed');
+  });
+}
 
-btnTogglePen.addEventListener('click', (e) => {
-  e.stopPropagation();
-  penSideWrapper.classList.toggle('collapsed');
-});
+if (btnTogglePen) {
+  btnTogglePen.addEventListener('click', (e) => {
+    e.stopPropagation();
+    penSideWrapper.classList.toggle('collapsed');
+  });
+}
 
-// Fechar menus ao tocar fora
 document.addEventListener('pointerdown', (e) => {
-  if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
-    closeMenus();
+  if (penSideWrapper && toolbarWrapper && btnToggleMenu) {
+    if (!penSideWrapper.contains(e.target) && !toolbarWrapper.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+      closeMenus();
+    }
   }
 });
 
@@ -68,12 +73,9 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => {
-  setTimeout(resizeCanvas, 200);
-});
-resizeCanvas();
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
-// Câmera
+// Inicialização da Câmera sem travar o microfone
 async function startCamera() {
   if (video.srcObject) {
     video.srcObject.getTracks().forEach(track => track.stop());
@@ -83,33 +85,54 @@ async function startCamera() {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { 
         facingMode: currentFacingMode,
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       },
-      audio: true
+      audio: false // Desativado na abertura para evitar bloqueio do navegador
     });
     
     video.srcObject = stream;
-    audioStream = stream;
+    await video.play();
 
     if (currentFacingMode === 'environment') {
       video.classList.add('rear-camera');
     } else {
       video.classList.remove('rear-camera');
     }
+
+    // Esconde a tela do botão azul caso ela exista
+    const startOverlay = document.getElementById('start-overlay');
+    if (startOverlay) {
+      startOverlay.style.display = 'none';
+    }
+
   } catch (err) {
-    console.error("Erro ao acessar câmera/mic: ", err);
+    console.error("Erro ao acessar câmera: ", err);
+    alert("Erro ao abrir a câmera. Verifique se deu permissão no navegador ou se está rodando via Localhost/HTTPS.");
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  startCamera();
-});
+// Suporte para acionar pelo botão azul "Iniciar Câmera e Lousa" se ele existir
+const btnStartOverlay = document.getElementById('btn-start');
+if (btnStartOverlay) {
+  btnStartOverlay.addEventListener('click', () => {
+    resizeCanvas();
+    startCamera();
+  });
+} else {
+  window.addEventListener('DOMContentLoaded', () => {
+    resizeCanvas();
+    startCamera();
+  });
+}
 
-document.getElementById('btn-flip').addEventListener('click', () => {
-  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-  startCamera();
-});
+const btnFlip = document.getElementById('btn-flip');
+if (btnFlip) {
+  btnFlip.addEventListener('click', () => {
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+    startCamera();
+  });
+}
 
 // Histórico do Canvas
 function saveState() {
@@ -138,7 +161,7 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-// Início do traço
+// Lógica de Desenho com Suavização (Curva de Bézier)
 function startDrawing(e) {
   closeMenus();
 
@@ -146,7 +169,8 @@ function startDrawing(e) {
   const pos = getPos(e);
   currentPoints = [pos];
 
-  ctx.lineWidth = document.getElementById('lineWidth').value;
+  const lineWidthInput = document.getElementById('lineWidth');
+  ctx.lineWidth = lineWidthInput ? lineWidthInput.value : 4;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
@@ -161,7 +185,6 @@ function startDrawing(e) {
   ctx.moveTo(pos.x, pos.y);
 }
 
-// Desenho enquanto o dedo se move (tempo real)
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
@@ -171,7 +194,6 @@ function draw(e) {
   ctx.stroke();
 }
 
-// Filtro de pontos colados para eliminar o tremido da mão
 function simplifyPoints(points, minDistance = 5) {
   if (points.length <= 2) return points;
   const result = [points[0]];
@@ -187,7 +209,6 @@ function simplifyPoints(points, minDistance = 5) {
   return result;
 }
 
-// Desenha a curva Bézier perfeita no Canvas baseada nos pontos filtrados
 function drawSmoothStroke(points) {
   if (points.length < 2) return;
 
@@ -213,13 +234,11 @@ function drawSmoothStroke(points) {
   ctx.stroke();
 }
 
-// Quando o usuário SOLTA o dedo: aplica a suavização e salva o estado
 function stopDrawing() {
   if (!isDrawing) return;
   isDrawing = false;
 
   if (currentPoints.length > 2) {
-    // 1. Redesenha a tela do histórico anterior para apagar o rascunho trêmulo provisório
     if (historyIndex >= 0 && history[historyIndex]) {
       const img = new Image();
       img.src = history[historyIndex];
@@ -227,11 +246,9 @@ function stopDrawing() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
 
-        // 2. Aplica o filtro de pontos e desenha a Curva de Bézier Suave
         const smoothedPoints = simplifyPoints(currentPoints, 6);
         drawSmoothStroke(smoothedPoints);
 
-        // 3. Salva no Histórico
         saveState();
         currentPoints = [];
       };
@@ -247,7 +264,6 @@ function stopDrawing() {
   currentPoints = [];
 }
 
-// Eventos Canvas
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
@@ -255,142 +271,56 @@ canvas.addEventListener('touchstart', startDrawing);
 canvas.addEventListener('touchmove', draw);
 canvas.addEventListener('touchend', stopDrawing);
 
-// Seleção de Cores e Borracha
+// Eventos dos Controles
 document.querySelectorAll('.color-dot').forEach(dot => {
   dot.addEventListener('click', (e) => {
     isEraser = false;
-    document.getElementById('btn-eraser').classList.remove('active');
+    const btnEraser = document.getElementById('btn-eraser');
+    if (btnEraser) btnEraser.classList.remove('active');
     document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
     e.target.classList.add('active');
     currentColor = e.target.getAttribute('data-color');
   });
 });
 
-document.getElementById('btn-eraser').addEventListener('click', function() {
-  isEraser = !isEraser;
-  this.classList.toggle('active', isEraser);
-});
+const btnEraser = document.getElementById('btn-eraser');
+if (btnEraser) {
+  btnEraser.addEventListener('click', function() {
+    isEraser = !isEraser;
+    this.classList.toggle('active', isEraser);
+  });
+}
 
-// Ações no Topo (Desfazer, Refazer e Limpar)
-document.getElementById('btn-undo').addEventListener('click', () => {
-  closeMenus();
-  if (historyIndex > 0) {
-    historyIndex--;
-    redraw();
-  } else if (historyIndex === 0) {
-    historyIndex = -1;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-});
-
-document.getElementById('btn-redo').addEventListener('click', () => {
-  closeMenus();
-  if (historyIndex < history.length - 1) {
-    historyIndex++;
-    redraw();
-  }
-});
-
-document.getElementById('btn-clear-all').addEventListener('click', () => {
-  closeMenus();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  saveState();
-});
-
-// Gravação de Vídeo
-const btnRecord = document.getElementById('btn-record');
-let isRecording = false;
-
-btnRecord.addEventListener('click', async () => {
-  closeMenus();
-  if (!isRecording) {
-    startRecording();
-  } else {
-    stopRecording();
-  }
-});
-
-async function startRecording() {
-  recordedChunks = [];
-  
-  const renderCanvas = document.createElement('canvas');
-  renderCanvas.width = window.innerWidth;
-  renderCanvas.height = window.innerHeight;
-  const renderCtx = renderCanvas.getContext('2d');
-
-  function drawFrame() {
-    if (!isRecording) return;
-    
-    renderCtx.save();
-    if (currentFacingMode === 'user') {
-      renderCtx.translate(renderCanvas.width, 0);
-      renderCtx.scale(-1, 1);
+const btnUndo = document.getElementById('btn-undo');
+if (btnUndo) {
+  btnUndo.addEventListener('click', () => {
+    closeMenus();
+    if (historyIndex > 0) {
+      historyIndex--;
+      redraw();
+    } else if (historyIndex === 0) {
+      historyIndex = -1;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-
-    const hRatio = renderCanvas.width / (video.videoWidth || renderCanvas.width);
-    const vRatio = renderCanvas.height / (video.videoHeight || renderCanvas.height);
-    const ratio = Math.min(hRatio, vRatio);
-    const centerShiftX = (renderCanvas.width - (video.videoWidth || renderCanvas.width) * ratio) / 2;
-    const centerShiftY = (renderCanvas.height - (video.videoHeight || renderCanvas.height) * ratio) / 2;
-
-    renderCtx.drawImage(
-      video, 
-      0, 0, video.videoWidth || renderCanvas.width, video.videoHeight || renderCanvas.height,
-      centerShiftX, centerShiftY, (video.videoWidth || renderCanvas.width) * ratio, (video.videoHeight || renderCanvas.height) * ratio
-    );
-    renderCtx.restore();
-
-    renderCtx.drawImage(canvas, 0, 0, renderCanvas.width, renderCanvas.height);
-    requestAnimationFrame(drawFrame);
-  }
-  
-  isRecording = true;
-  drawFrame();
-
-  const streamToRecord = renderCanvas.captureStream(30);
-  if (audioStream && audioStream.getAudioTracks().length > 0) {
-    streamToRecord.addTrack(audioStream.getAudioTracks()[0]);
-  }
-
-  const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
-    ? 'video/mp4;codecs=avc1'
-    : 'video/webm';
-
-  mediaRecorder = new MediaRecorder(streamToRecord, { mimeType });
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-  mediaRecorder.onstop = exportVideo;
-
-  mediaRecorder.start();
-  btnRecord.classList.add('recording');
-  btnRecord.innerHTML = svgStop;
-  btnRecord.title = "Parar Gravação";
+  });
 }
 
-function stopRecording() {
-  isRecording = false;
-  mediaRecorder.stop();
-  btnRecord.classList.remove('recording');
-  btnRecord.innerHTML = svgRecord;
-  btnRecord.title = "Gravar";
+const btnRedo = document.getElementById('btn-redo');
+if (btnRedo) {
+  btnRedo.addEventListener('click', () => {
+    closeMenus();
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      redraw();
+    }
+  });
 }
 
-async function exportVideo() {
-  const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
-  const file = new File([blob], 'lousa-cam.mp4', { type: blob.type });
-
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: 'Lousa Cam',
-        text: 'Gravado via Lousa Cam PWA'
-      });
-    } catch (e) { console.log('Compartilhamento cancelado.'); }
-  } else {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'lousa-cam.mp4';
-    a.click();
-  }
+const btnClearAll = document.getElementById('btn-clear-all');
+if (btnClearAll) {
+  btnClearAll.addEventListener('click', () => {
+    closeMenus();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    saveState();
+  });
 }
