@@ -15,6 +15,9 @@ let history = [];
 let historyIndex = -1;
 let isDrawing = false;
 
+// Armazena os pontos do traço atual para calcular a curva suave de Bézier
+let currentPoints = [];
+
 let mediaRecorder;
 let recordedChunks = [];
 let audioStream;
@@ -138,19 +141,14 @@ function getPos(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
+// Início do desenho/escrita
 function startDrawing(e) {
-  // Fecha o menu de caneta/ferramentas imediatamente no toque inicial
   closeMenus();
 
   isDrawing = true;
   const pos = getPos(e);
-  ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y);
-}
+  currentPoints = [pos];
 
-function draw(e) {
-  if (!isDrawing) return;
-  const pos = getPos(e);
   ctx.lineWidth = document.getElementById('lineWidth').value;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -161,14 +159,50 @@ function draw(e) {
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = currentColor;
   }
+}
 
-  ctx.lineTo(pos.x, pos.y);
+// Desenho em tempo real com algoritmo de Curva de Bézier Suavizada
+function draw(e) {
+  if (!isDrawing) return;
+  const pos = getPos(e);
+  currentPoints.push(pos);
+
+  // Precisa de pelo menos 2 pontos para começar a curvar
+  if (currentPoints.length < 2) return;
+
+  ctx.beginPath();
+
+  if (currentPoints.length === 2) {
+    // Para apenas 2 pontos, desenha uma linha direta simples
+    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+    ctx.lineTo(currentPoints[1].x, currentPoints[1].y);
+  } else {
+    // Aplica a aproximação por Curvas de Bézier para criar um traço orgânico e sem tremilhões
+    ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+
+    let i = 1;
+    for (; i < currentPoints.length - 2; i++) {
+      const xc = (currentPoints[i].x + currentPoints[i + 1].x) / 2;
+      const yc = (currentPoints[i].y + currentPoints[i + 1].y) / 2;
+      ctx.quadraticCurveTo(currentPoints[i].x, currentPoints[i].y, xc, yc);
+    }
+
+    // Liga o penúltimo e o último ponto
+    ctx.quadraticCurveTo(
+      currentPoints[i].x,
+      currentPoints[i].y,
+      currentPoints[i + 1].x,
+      currentPoints[i + 1].y
+    );
+  }
+
   ctx.stroke();
 }
 
 function stopDrawing() {
   if (isDrawing) {
     isDrawing = false;
+    currentPoints = [];
     saveState();
   }
 }
