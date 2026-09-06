@@ -7,13 +7,11 @@
 
   <meta
     name="viewport"
-    content="
-      width=device-width,
-      initial-scale=1,
-      maximum-scale=1,
-      user-scalable=no,
-      viewport-fit=cover
-    "
+    content="width=device-width,
+             initial-scale=1,
+             maximum-scale=1,
+             user-scalable=no,
+             viewport-fit=cover"
   >
 
   <meta name="theme-color" content="#000000">
@@ -82,12 +80,10 @@
 
       color: #fff;
 
-      touch-action: none;
-
-      overscroll-behavior: none;
-
       -webkit-user-select: none;
       user-select: none;
+
+      overscroll-behavior: none;
     }
 
 
@@ -105,7 +101,7 @@
 
 
     /* =====================================================
-       ÁREA PRINCIPAL
+       APLICAÇÃO
     ===================================================== */
 
     #app {
@@ -145,6 +141,19 @@
       transform: scaleX(1);
 
       -webkit-transform: scaleX(1);
+    }
+
+
+    /*
+       O app.js aplica a classe mirror
+       quando estiver usando a câmera frontal.
+    */
+
+    #video.mirror {
+
+      transform: scaleX(-1);
+
+      -webkit-transform: scaleX(-1);
     }
 
 
@@ -192,23 +201,10 @@
       gap: 10px;
 
       padding:
-
-        calc(
-          10px +
-          env(safe-area-inset-top, 0px)
-        )
-
-        calc(
-          12px +
-          env(safe-area-inset-right, 0px)
-        )
-
+        calc(10px + env(safe-area-inset-top, 0px))
+        calc(12px + env(safe-area-inset-right, 0px))
         10px
-
-        calc(
-          12px +
-          env(safe-area-inset-left, 0px)
-        );
+        calc(12px + env(safe-area-inset-left, 0px));
 
       pointer-events: none;
     }
@@ -228,7 +224,7 @@
 
 
     /* =====================================================
-       BOTÕES
+       BOTÕES SUPERIORES
     ===================================================== */
 
     .topButton {
@@ -243,7 +239,7 @@
       border-radius: 14px;
 
       background:
-        rgba(20,20,20,.72);
+        rgba(18,18,18,.78);
 
       color: #fff;
 
@@ -255,16 +251,16 @@
 
       cursor: pointer;
 
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+
+      -webkit-backdrop-filter: blur(14px);
 
       box-shadow:
-        0 4px 15px rgba(0,0,0,.25);
+        0 5px 18px rgba(0,0,0,.25);
 
       transition:
-        transform .15s ease,
-        background .15s ease,
-        border-color .15s ease;
+        transform .12s ease,
+        background .12s ease;
 
       touch-action: manipulation;
     }
@@ -272,7 +268,7 @@
 
     .topButton:active {
 
-      transform: scale(.92);
+      transform: scale(.91);
 
       background:
         rgba(255,255,255,.18);
@@ -299,30 +295,30 @@
 
 
     /* =====================================================
-       ÍCONE PROFISSIONAL DE TROCA DE CÂMERA
+       BOTÃO TROCAR CÂMERA
     ===================================================== */
-
-    #flip svg {
-
-      width: 26px;
-      height: 26px;
-
-      stroke-width: 2.1;
-    }
-
-
-    /*
-      Pequeno destaque visual para o botão
-      de troca de câmera
-    */
 
     #flip {
 
-      border-color:
-        rgba(255,255,255,.28);
+      width: 48px;
+      height: 48px;
+
+      border-radius: 15px;
 
       background:
-        rgba(15,15,15,.78);
+        rgba(12,12,12,.84);
+
+      border-color:
+        rgba(255,255,255,.28);
+    }
+
+
+    #flip svg {
+
+      width: 29px;
+      height: 29px;
+
+      stroke-width: 1.9;
     }
 
 
@@ -334,11 +330,11 @@
 
       position: absolute;
 
-      z-index: 25;
+      z-index: 30;
 
       top:
         calc(
-          66px +
+          68px +
           env(safe-area-inset-top, 0px)
         );
 
@@ -348,22 +344,26 @@
           env(safe-area-inset-left, 0px)
         );
 
-      width: min(300px, calc(100vw - 24px));
+      width: min(
+        290px,
+        calc(100vw - 24px)
+      );
 
-      padding: 14px;
+      padding: 16px;
 
       border:
-        1px solid rgba(255,255,255,.14);
+        1px solid rgba(255,255,255,.15);
 
       border-radius: 18px;
 
       background:
-        rgba(18,18,18,.94);
+        rgba(18,18,18,.96);
 
       box-shadow:
-        0 15px 45px rgba(0,0,0,.45);
+        0 18px 50px rgba(0,0,0,.55);
 
       backdrop-filter: blur(18px);
+
       -webkit-backdrop-filter: blur(18px);
 
       display: none;
@@ -377,37 +377,206 @@
 
 
     /* =====================================================
-       FERRAMENTAS
+       CONTEÚDO DO MENU
+    ===================================================== */
+
+    .menuTitle {
+
+      font-size: 15px;
+
+      font-weight: 700;
+
+      margin-bottom: 10px;
+    }
+
+
+    .menuText {
+
+      font-size: 12px;
+
+      line-height: 1.45;
+
+      color:
+        rgba(255,255,255,.62);
+    }
+
+
+    /* =====================================================
+       PAINEL DE FERRAMENTAS
     ===================================================== */
 
     #tools {
 
-      display: flex;
+      position: absolute;
+
+      z-index: 31;
+
+      top:
+        calc(
+          68px +
+          env(safe-area-inset-top, 0px)
+        );
+
+      right:
+        calc(
+          12px +
+          env(safe-area-inset-right, 0px)
+        );
+
+      width: min(
+        300px,
+        calc(100vw - 24px)
+      );
+
+      padding: 16px;
+
+      border:
+        1px solid rgba(255,255,255,.15);
+
+      border-radius: 18px;
+
+      background:
+        rgba(18,18,18,.96);
+
+      box-shadow:
+        0 18px 50px rgba(0,0,0,.55);
+
+      backdrop-filter: blur(18px);
+
+      -webkit-backdrop-filter: blur(18px);
+
+      display: none;
 
       flex-wrap: wrap;
 
       align-items: center;
 
-      gap: 8px;
+      gap: 9px;
     }
 
 
-    #tools button {
+    #tools.open {
+
+      display: flex;
+    }
+
+
+    /* =====================================================
+       NOME DA FERRAMENTA
+    ===================================================== */
+
+    #toolName {
+
+      width: 100%;
+
+      margin-bottom: 2px;
+
+      font-size: 13px;
+
+      font-weight: 700;
+
+      color:
+        rgba(255,255,255,.82);
+    }
+
+
+    /* =====================================================
+       CORES
+    ===================================================== */
+
+    #tools .color {
+
+      width: 42px;
 
       min-width: 42px;
+
       height: 42px;
 
-      padding: 0 12px;
-
-      border: 1px solid rgba(255,255,255,.15);
+      padding: 0;
 
       border-radius: 12px;
 
-      background: #252525;
+      cursor: pointer;
+
+      touch-action: manipulation;
+
+      border:
+        2px solid rgba(255,255,255,.25);
+
+      box-shadow:
+        0 2px 8px rgba(0,0,0,.25);
+    }
+
+
+    #tools .color.active {
+
+      outline:
+        2px solid #fff;
+
+      outline-offset: 2px;
+    }
+
+
+    /* =====================================================
+       CONTROLE DE ESPESSURA
+    ===================================================== */
+
+    .widthRow {
+
+      width: 100%;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+
+      margin-top: 4px;
+
+      font-size: 13px;
+
+      color:
+        rgba(255,255,255,.8);
+    }
+
+
+    #width {
+
+      flex: 1;
+
+      min-width: 100px;
+
+      height: 28px;
+
+      accent-color: #fff;
+    }
+
+
+    /* =====================================================
+       BOTÕES DO PAINEL
+    ===================================================== */
+
+    #tools button:not(.color) {
+
+      min-width: 90px;
+
+      height: 42px;
+
+      padding: 0 13px;
+
+      border:
+        1px solid rgba(255,255,255,.15);
+
+      border-radius: 12px;
+
+      background:
+        #252525;
 
       color: #fff;
 
-      font-size: 14px;
+      font-size: 13px;
+
+      font-weight: 600;
 
       cursor: pointer;
 
@@ -415,7 +584,7 @@
     }
 
 
-    #tools button:active {
+    #tools button:not(.color):active {
 
       transform: scale(.95);
     }
@@ -443,41 +612,53 @@
           env(safe-area-inset-bottom, 0px)
         );
 
-      min-width: 100px;
+      min-width: 105px;
 
       height: 44px;
 
-      padding: 0 16px;
+      padding: 0 17px;
 
-      border: 1px solid rgba(255,255,255,.2);
+      border:
+        1px solid rgba(255,255,255,.22);
 
       border-radius: 22px;
 
       background:
-        rgba(20,20,20,.82);
+        rgba(18,18,18,.82);
 
       color: #fff;
 
-      font-weight: 600;
+      font-size: 14px;
 
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      font-weight: 700;
 
       cursor: pointer;
+
+      backdrop-filter: blur(14px);
+
+      -webkit-backdrop-filter: blur(14px);
 
       touch-action: manipulation;
     }
 
 
+    #record.recording {
+
+      background: #b00020;
+
+      border-color: #ff4d67;
+    }
+
+
     /* =====================================================
-       STATUS
+       STATUS / TOAST
     ===================================================== */
 
     #status {
 
       position: absolute;
 
-      z-index: 20;
+      z-index: 40;
 
       left: 50%;
 
@@ -487,50 +668,63 @@
           env(safe-area-inset-bottom, 0px)
         );
 
-      transform: translateX(-50%);
+      transform:
+        translateX(-50%);
 
-      max-width: calc(100vw - 240px);
+      max-width:
+        calc(100vw - 240px);
 
-      padding: 7px 12px;
+      padding:
+        8px 13px;
 
       border-radius: 12px;
 
       background:
-        rgba(0,0,0,.55);
+        rgba(0,0,0,.72);
 
-      color: rgba(255,255,255,.9);
+      color:
+        rgba(255,255,255,.94);
 
       font-size: 12px;
 
       text-align: center;
 
       pointer-events: none;
+
+      opacity: 0;
+
+      transition:
+        opacity .2s ease;
+    }
+
+
+    #status.show {
+
+      opacity: 1;
     }
 
 
     /* =====================================================
-       TELA INICIAL / PERMISSÃO
+       TELA INICIAL
+       CORREÇÃO DEFINITIVA PARA IPHONE
     ===================================================== */
 
     #startOverlay {
 
       position: fixed;
 
-      z-index: 100;
+      z-index: 1000;
 
       inset: 0;
 
       width: 100%;
 
-      /*
-        Importante para iPhone:
-        usa a altura dinâmica real da viewport.
-      */
-
       height: 100vh;
+
       height: 100dvh;
 
       min-height: 100vh;
+
       min-height: 100dvh;
 
       display: flex;
@@ -540,22 +734,18 @@
       justify-content: center;
 
       padding:
-
         calc(
           24px +
           env(safe-area-inset-top, 0px)
         )
-
         calc(
           20px +
           env(safe-area-inset-right, 0px)
         )
-
         calc(
           24px +
           env(safe-area-inset-bottom, 0px)
         )
-
         calc(
           20px +
           env(safe-area-inset-left, 0px)
@@ -578,14 +768,18 @@
 
 
     /* =====================================================
-       CARTÃO INICIAL
+       CARTÃO CENTRAL
     ===================================================== */
 
     #startCard {
 
-      position: static;
+      position: relative;
 
-      width: min(420px, 100%);
+      width:
+        min(
+          420px,
+          100%
+        );
 
       max-width: 420px;
 
@@ -593,26 +787,26 @@
 
       padding: 0;
 
+      text-align: center;
+
       transform: none;
 
       -webkit-transform: none;
-
-      text-align: center;
     }
 
 
     /* =====================================================
-       ÍCONE DA LOUSA
+       LOGO INICIAL
     ===================================================== */
 
     #startLogo {
 
-      width: 72px;
-      height: 72px;
+      width: 70px;
 
-      margin: 0 auto 18px;
+      height: 70px;
 
-      border-radius: 20px;
+      margin:
+        0 auto 18px;
 
       display: flex;
 
@@ -620,25 +814,28 @@
 
       justify-content: center;
 
+      border-radius: 20px;
+
       background:
         linear-gradient(
           145deg,
-          #242424,
-          #111
+          #252525,
+          #101010
         );
 
       border:
         1px solid rgba(255,255,255,.15);
 
       box-shadow:
-        0 12px 35px rgba(0,0,0,.35);
+        0 12px 35px rgba(0,0,0,.45);
     }
 
 
     #startLogo svg {
 
-      width: 42px;
-      height: 42px;
+      width: 43px;
+
+      height: 43px;
 
       stroke: #fff;
 
@@ -658,7 +855,8 @@
 
     #startCard h1 {
 
-      margin: 0 0 12px;
+      margin:
+        0 0 12px;
 
       font-size: 28px;
 
@@ -676,11 +874,13 @@
 
     #startCard p {
 
-      margin: 0 auto 24px;
+      margin:
+        0 auto 24px;
 
-      max-width: 360px;
+      max-width: 370px;
 
-      color: rgba(255,255,255,.72);
+      color:
+        rgba(255,255,255,.72);
 
       font-size: 16px;
 
@@ -708,7 +908,8 @@
 
       height: 52px;
 
-      padding: 0 26px;
+      padding:
+        0 26px;
 
       border: 0;
 
@@ -730,8 +931,8 @@
         0 8px 25px rgba(0,0,0,.35);
 
       transition:
-        transform .15s ease,
-        opacity .15s ease;
+        transform .12s ease,
+        opacity .12s ease;
 
       touch-action: manipulation;
     }
@@ -753,7 +954,8 @@
 
       margin-top: 14px;
 
-      color: rgba(255,255,255,.48);
+      color:
+        rgba(255,255,255,.48);
 
       font-size: 12px;
 
@@ -762,24 +964,26 @@
 
 
     /* =====================================================
-       TELAS PEQUENAS
+       IPHONE / TELAS BAIXAS
     ===================================================== */
 
     @media (max-height: 700px) {
 
       #startLogo {
 
-        width: 60px;
-        height: 60px;
+        width: 58px;
 
-        margin-bottom: 12px;
+        height: 58px;
+
+        margin-bottom: 11px;
       }
 
 
       #startLogo svg {
 
-        width: 34px;
-        height: 34px;
+        width: 35px;
+
+        height: 35px;
       }
 
 
@@ -795,6 +999,8 @@
 
         font-size: 14px;
 
+        line-height: 1.4;
+
         margin-bottom: 15px;
       }
 
@@ -803,6 +1009,8 @@
 
         height: 48px;
 
+        min-width: 235px;
+
         font-size: 15px;
       }
 
@@ -810,40 +1018,44 @@
       #permissionHint {
 
         margin-top: 9px;
+
+        font-size: 11px;
       }
 
     }
 
 
     /* =====================================================
-       IPHONE EM RETRATO
+       RETRATO
     ===================================================== */
 
     @media (orientation: portrait) {
 
       #startCard {
 
-        width: min(
-          420px,
-          calc(100vw - 32px)
-        );
+        width:
+          min(
+            420px,
+            calc(100vw - 32px)
+          );
       }
 
     }
 
 
     /* =====================================================
-       MODO PAISAGEM
+       PAISAGEM
     ===================================================== */
 
     @media (orientation: landscape) {
 
       #startCard {
 
-        width: min(
-          520px,
-          calc(100vw - 40px)
-        );
+        width:
+          min(
+            520px,
+            calc(100vw - 40px)
+          );
       }
 
     }
@@ -871,6 +1083,7 @@
 
 <body>
 
+
   <div id="app">
 
 
@@ -887,10 +1100,12 @@
 
 
     <!-- ==================================================
-         LOUSA
+         CANVAS
     ================================================== -->
 
-    <canvas id="canvas"></canvas>
+    <canvas
+      id="canvas"
+    ></canvas>
 
 
     <!-- ==================================================
@@ -899,6 +1114,8 @@
 
     <div id="topBar">
 
+
+      <!-- ESQUERDA -->
 
       <div id="topBarLeft">
 
@@ -944,7 +1161,9 @@
             aria-hidden="true"
           >
 
-            <path d="M9 14L4 9l5-5"></path>
+            <path
+              d="M9 14L4 9l5-5"
+            ></path>
 
             <path
               d="M4 9h10a6 6 0 0 1 6 6v1"
@@ -970,7 +1189,9 @@
             aria-hidden="true"
           >
 
-            <path d="M15 14l5-5-5-5"></path>
+            <path
+              d="M15 14l5-5-5-5"
+            ></path>
 
             <path
               d="M20 9H10a6 6 0 0 0-6 6v1"
@@ -983,6 +1204,8 @@
 
       </div>
 
+
+      <!-- DIREITA -->
 
       <div id="topBarRight">
 
@@ -1002,11 +1225,17 @@
             aria-hidden="true"
           >
 
-            <path d="M4 7h16"></path>
+            <path
+              d="M4 7h16"
+            ></path>
 
-            <path d="M10 11v6"></path>
+            <path
+              d="M10 11v6"
+            ></path>
 
-            <path d="M14 11v6"></path>
+            <path
+              d="M14 11v6"
+            ></path>
 
             <path
               d="M6 7l1 13h10l1-13"
@@ -1024,8 +1253,7 @@
         <!-- =================================================
              TROCAR CÂMERA
              
-             ÍCONE SVG ORIGINAL:
-             duas setas circulares + câmera
+             ÍCONE ORIGINAL SVG
         ================================================== -->
 
         <button
@@ -1041,7 +1269,7 @@
             aria-hidden="true"
           >
 
-            <!-- Corpo da câmera -->
+            <!-- Câmera -->
 
             <path
               d="
@@ -1081,7 +1309,11 @@
             ></path>
 
             <path
-              d="M20.5 5.5L23 7l-1.5 2.5"
+              d="
+                M20.5 5.5
+                L23 7
+                l-1.5 2.5
+              "
             ></path>
 
 
@@ -1095,7 +1327,11 @@
             ></path>
 
             <path
-              d="M11.5 27.5L9 26l1.5-2.5"
+              d="
+                M11.5 27.5
+                L9 26
+                l1.5-2.5
+              "
             ></path>
 
           </svg>
@@ -1109,8 +1345,8 @@
           id="settings"
           class="topButton"
           type="button"
-          aria-label="Configurações"
-          title="Configurações"
+          aria-label="Ferramentas"
+          title="Ferramentas"
         >
 
           <svg
@@ -1136,17 +1372,20 @@
                 1.7 1.7 0 0 0-1.9.3
                 l-.1.1-1.8-1.8.1-.1
                 A1.7 1.7 0 0 0 8 15
-                a1.7 1.7 0 0 0-1.5-1H6v-2.5h.5
+                a1.7 1.7 0 0 0-1.5-1H6
+                v-2.5h.5
                 A1.7 1.7 0 0 0 8 10
                 a1.7 1.7 0 0 0-.3-1.9
                 l-.1-.1 1.8-1.8.1.1
                 a1.7 1.7 0 0 0 1.9.3
-                1.7 1.7 0 0 0 1-1.5V5h2.5v.1
+                1.7 1.7 0 0 0 1-1.5V5
+                h2.5v.1
                 a1.7 1.7 0 0 0 1 1.5
                 1.7 1.7 0 0 0 1.9-.3
                 l.1-.1 1.8 1.8-.1.1
                 a1.7 1.7 0 0 0-.3 1.9
-                1.7 1.7 0 0 0 1.5 1h.1V14h-.1
+                1.7 1.7 0 0 0 1.5 1h.1
+                V14h-.1
                 a1.7 1.7 0 0 0-1.5 1z
               "
             ></path>
@@ -1162,49 +1401,146 @@
 
 
     <!-- ==================================================
-         MENU LATERAL
+         MENU PRINCIPAL
     ================================================== -->
 
-    <div id="menuPanel">
+    <div
+      id="menuPanel"
+      aria-hidden="true"
+    >
 
-      <div id="tools">
+      <div class="menuTitle">
+        Lousa Cam 2.0
+      </div>
 
-        <button
-          id="penBlack"
-          type="button"
+      <div class="menuText">
+        Utilize os controles superiores para
+        desfazer, refazer, limpar a lousa,
+        trocar a câmera e acessar as ferramentas.
+      </div>
+
+    </div>
+
+
+    <!-- ==================================================
+         FERRAMENTAS
+         
+         IMPORTANTE:
+         Estes IDs são utilizados diretamente
+         pelo app.js.
+    ================================================== -->
+
+    <div
+      id="tools"
+      aria-hidden="true"
+    >
+
+
+      <div id="toolName">
+        Caneta
+      </div>
+
+
+      <!-- BRANCO -->
+
+      <button
+        class="color active"
+        type="button"
+        data-color="#fff"
+        aria-label="Caneta branca"
+        title="Branco"
+        style="
+          background:#ffffff;
+        "
+      ></button>
+
+
+      <!-- PRETO -->
+
+      <button
+        class="color"
+        type="button"
+        data-color="#000000"
+        aria-label="Caneta preta"
+        title="Preto"
+        style="
+          background:#000000;
+        "
+      ></button>
+
+
+      <!-- VERMELHO -->
+
+      <button
+        class="color"
+        type="button"
+        data-color="#ff3b30"
+        aria-label="Caneta vermelha"
+        title="Vermelho"
+        style="
+          background:#ff3b30;
+        "
+      ></button>
+
+
+      <!-- AZUL -->
+
+      <button
+        class="color"
+        type="button"
+        data-color="#0a84ff"
+        aria-label="Caneta azul"
+        title="Azul"
+        style="
+          background:#0a84ff;
+        "
+      ></button>
+
+
+      <!-- VERDE -->
+
+      <button
+        class="color"
+        type="button"
+        data-color="#30d158"
+        aria-label="Caneta verde"
+        title="Verde"
+        style="
+          background:#30d158;
+        "
+      ></button>
+
+
+      <!-- ESPESSURA -->
+
+      <div class="widthRow">
+
+        <span>
+          Espessura
+        </span>
+
+        <input
+          id="width"
+          type="range"
+          min="1"
+          max="30"
+          value="5"
+          step="1"
+          aria-label="Espessura da caneta"
         >
-          Preto
-        </button>
-
-        <button
-          id="penWhite"
-          type="button"
-        >
-          Branco
-        </button>
-
-        <button
-          id="penRed"
-          type="button"
-        >
-          Vermelho
-        </button>
-
-        <button
-          id="penBlue"
-          type="button"
-        >
-          Azul
-        </button>
-
-        <button
-          id="eraser"
-          type="button"
-        >
-          Borracha
-        </button>
 
       </div>
+
+
+      <!-- BORRACHA -->
+
+      <button
+        id="eraser"
+        type="button"
+      >
+        Borracha
+      </button>
+
 
     </div>
 
@@ -1216,6 +1552,7 @@
     <button
       id="record"
       type="button"
+      aria-label="Iniciar gravação"
     >
       ● Gravar
     </button>
@@ -1234,10 +1571,13 @@
 
 
     <!-- ==================================================
-         TELA DE INÍCIO / PERMISSÃO
+         TELA DE PERMISSÃO
+         
+         ESTA PARTE FOI CORRIGIDA PARA IPHONE
     ================================================== -->
 
     <div id="startOverlay">
+
 
       <div id="startCard">
 
@@ -1276,16 +1616,22 @@
         </div>
 
 
+        <!-- TÍTULO -->
+
         <h1>
           Lousa Cam 2.0
         </h1>
 
+
+        <!-- DESCRIÇÃO -->
 
         <p>
           Ative a câmera e o microfone para utilizar
           a lousa digital e registrar suas aulas.
         </p>
 
+
+        <!-- BOTÃO -->
 
         <button
           id="startBtn"
@@ -1294,6 +1640,8 @@
           Ativar câmera e microfone
         </button>
 
+
+        <!-- AVISO -->
 
         <div id="permissionHint">
 
@@ -1305,6 +1653,7 @@
 
       </div>
 
+
     </div>
 
 
@@ -1312,8 +1661,8 @@
 
 
   <!-- ==================================================
-       JAVASCRIPT
-  ================================================== -->
+       JAVASCRIPT PRINCIPAL
+    ================================================== -->
 
   <script src="./app.js"></script>
 
