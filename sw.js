@@ -1,18 +1,29 @@
-const CACHE_NAME = "lousa-cam-v2";
+const CACHE_NAME =
+  "lousa-cam-v3";
 
-const FILES = [
+
+const ASSETS = [
+
   "./",
+
   "./index.html",
+
   "./app.js",
+
   "./manifest.json",
+
+  "./icons/logo.png",
+
   "./icons/icon-192.png",
+
   "./icons/icon-512.png"
+
 ];
 
 
-/* =========================================================
+/* =====================================================
    INSTALAÇÃO
-========================================================= */
+===================================================== */
 
 self.addEventListener(
   "install",
@@ -21,25 +32,30 @@ self.addEventListener(
     event.waitUntil(
 
       caches
-        .open(CACHE_NAME)
-        .then(
-          cache =>
-            cache.addAll(FILES)
+        .open(
+          CACHE_NAME
         )
         .then(
-          () =>
-            self.skipWaiting()
+          cache => {
+
+            return cache.addAll(
+              ASSETS
+            );
+
+          }
         )
 
     );
+
+    self.skipWaiting();
 
   }
 );
 
 
-/* =========================================================
+/* =====================================================
    ATIVAÇÃO
-========================================================= */
+===================================================== */
 
 self.addEventListener(
   "activate",
@@ -50,40 +66,39 @@ self.addEventListener(
       caches
         .keys()
         .then(
-          keys =>
+          keys => {
 
-            Promise.all(
+            return Promise.all(
 
               keys
-
                 .filter(
                   key =>
-                    key !== CACHE_NAME
+                    key !==
+                    CACHE_NAME
                 )
-
                 .map(
                   key =>
-                    caches.delete(key)
+                    caches.delete(
+                      key
+                    )
                 )
 
-            )
+            );
 
-        )
-
-        .then(
-          () =>
-            self.clients.claim()
+          }
         )
 
     );
+
+    self.clients.claim();
 
   }
 );
 
 
-/* =========================================================
-   REQUISIÇÕES
-========================================================= */
+/* =====================================================
+   CACHE + INTERNET
+===================================================== */
 
 self.addEventListener(
   "fetch",
@@ -105,7 +120,6 @@ self.addEventListener(
         .match(
           event.request
         )
-
         .then(
           cached => {
 
@@ -119,51 +133,28 @@ self.addEventListener(
             return fetch(
               event.request
             )
-
             .then(
               response => {
-
-                if (
-                  !response ||
-                  response.status !== 200
-                ) {
-
-                  return response;
-
-                }
-
-
-                const copy =
-                  response.clone();
-
-
-                caches
-                  .open(
-                    CACHE_NAME
-                  )
-                  .then(
-                    cache =>
-                      cache.put(
-                        event.request,
-                        copy
-                      )
-                  )
-                  .catch(
-                    () => {}
-                  );
-
 
                 return response;
 
               }
-
             )
-
             .catch(
-              () =>
-                caches.match(
-                  "./index.html"
-                )
+              () => {
+
+                if (
+                  event.request.mode ===
+                  "navigate"
+                ) {
+
+                  return caches.match(
+                    "./index.html"
+                  );
+
+                }
+
+              }
             );
 
           }
