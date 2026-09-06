@@ -1,210 +1,609 @@
-const $ = id => document.getElementById(id);
+/* =====================================================
+   LOUSA CAM 2.0
+   JAVASCRIPT PRINCIPAL
+===================================================== */
 
-const video = $("video");
-const canvas = $("canvas");
+const video =
+  document.getElementById("video");
 
-const ctx = canvas.getContext("2d", {
-  alpha: true
-});
+const canvas =
+  document.getElementById("canvas");
 
-const startOverlay = $("startOverlay");
-const startBtn = $("startBtn");
-const statusEl = $("status");
-const recordBtn = $("record");
+const ctx =
+  canvas.getContext("2d");
 
-let facingMode = "user";
+const toolbarWrapper =
+  document.getElementById("toolbarWrapper");
 
-let stream = null;
+const btnToggleMenu =
+  document.getElementById("btn-toggle-menu");
 
-let drawing = false;
+const penSideWrapper =
+  document.getElementById("penSideWrapper");
 
-let tool = "pen";
+const btnTogglePen =
+  document.getElementById("btn-toggle-pen");
 
-let color = "#fff";
+const btnFlip =
+  document.getElementById("btn-flip");
 
-let lineWidth = 5;
+const btnRecord =
+  document.getElementById("btn-record");
 
-let strokes = [];
+const startOverlay =
+  document.getElementById("startOverlay");
 
-let redoStack = [];
+const startBtn =
+  document.getElementById("startBtn");
 
-let currentStroke = null;
+const cameraError =
+  document.getElementById("cameraError");
+
+
+/* =====================================================
+   ESTADO
+===================================================== */
+
+let currentFacingMode = "user";
+
+let currentColor = "#ffffff";
+
+let isEraser = false;
+
+let history = [];
+
+let historyIndex = -1;
+
+let isDrawing = false;
 
 let mediaRecorder = null;
 
-let chunks = [];
+let recordedChunks = [];
 
-let recording = false;
+let audioStream = null;
 
-let renderCanvas = null;
-
-let renderCtx = null;
-
-let animationId = null;
-
-let wakeLock = null;
+let isRecording = false;
 
 
-/* =========================================================
-   MENSAGENS
-========================================================= */
+/* =====================================================
+   ÍCONES DE GRAVAÇÃO
+===================================================== */
 
-function toast(message, duration = 2200) {
+const svgRecord = `
+<svg viewBox="0 0 24 24">
+  <circle
+    cx="12"
+    cy="12"
+    r="8"
+    fill="#ff3b30"
+  />
+</svg>
+`;
 
-  statusEl.textContent = message;
 
-  statusEl.classList.add("show");
+const svgStop = `
+<svg viewBox="0 0 24 24">
+  <rect
+    x="6"
+    y="6"
+    width="12"
+    height="12"
+    rx="2"
+    fill="#ffffff"
+  />
+</svg>
+`;
 
-  clearTimeout(toast.timer);
 
-  toast.timer = setTimeout(() => {
+/* =====================================================
+   MENUS
+===================================================== */
 
-    statusEl.classList.remove("show");
+function closeMenus() {
 
-  }, duration);
+  toolbarWrapper.classList.add(
+    "collapsed"
+  );
+
+  penSideWrapper.classList.add(
+    "collapsed"
+  );
 
 }
 
 
-/* =========================================================
-   CANVAS
-========================================================= */
+function closeMenusExcept(wrapper) {
 
-function fitCanvas() {
+  [
+    toolbarWrapper,
+    penSideWrapper
+  ].forEach(element => {
 
-  const dpr =
-    Math.min(
-      window.devicePixelRatio || 1,
-      2
+    if (element !== wrapper) {
+
+      element.classList.add(
+        "collapsed"
+      );
+
+    }
+
+  });
+
+}
+
+
+/* =====================================================
+   MENU PRINCIPAL
+===================================================== */
+
+btnToggleMenu.addEventListener(
+  "click",
+  event => {
+
+    event.stopPropagation();
+
+    closeMenusExcept(
+      toolbarWrapper
     );
+
+    toolbarWrapper.classList.toggle(
+      "collapsed"
+    );
+
+  }
+);
+
+
+/* =====================================================
+   MENU DE CANETA
+===================================================== */
+
+btnTogglePen.addEventListener(
+  "click",
+  event => {
+
+    event.stopPropagation();
+
+    closeMenusExcept(
+      penSideWrapper
+    );
+
+    penSideWrapper.classList.toggle(
+      "collapsed"
+    );
+
+  }
+);
+
+
+[
+  toolbarWrapper,
+  penSideWrapper
+].forEach(element => {
+
+  element.addEventListener(
+    "pointerdown",
+    event => {
+
+      event.stopPropagation();
+
+    }
+  );
+
+});
+
+
+document.addEventListener(
+  "pointerdown",
+  event => {
+
+    if (
+
+      !penSideWrapper.contains(
+        event.target
+      )
+
+      &&
+
+      !toolbarWrapper.contains(
+        event.target
+      )
+
+      &&
+
+      !btnToggleMenu.contains(
+        event.target
+      )
+
+    ) {
+
+      closeMenus();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   CANVAS
+===================================================== */
+
+function resizeCanvas() {
 
   canvas.width =
-    Math.round(
-      window.innerWidth * dpr
-    );
+    window.innerWidth;
 
   canvas.height =
-    Math.round(
-      window.innerHeight * dpr
-    );
-
-  canvas.style.width =
-    window.innerWidth + "px";
-
-  canvas.style.height =
-    window.innerHeight + "px";
-
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
+    window.innerHeight;
 
   redraw();
 
 }
 
 
-/* =========================================================
-   REDESENHAR
-========================================================= */
+window.addEventListener(
+  "resize",
+  resizeCanvas
+);
+
+
+window.addEventListener(
+  "orientationchange",
+  () => {
+
+    setTimeout(
+      resizeCanvas,
+      250
+    );
+
+  }
+);
+
+
+resizeCanvas();
+
+
+/* =====================================================
+   CÂMERA
+===================================================== */
+
+async function startCamera() {
+
+  cameraError.style.display =
+    "none";
+
+  if (
+    video.srcObject
+  ) {
+
+    video.srcObject
+      .getTracks()
+      .forEach(track => {
+
+        track.stop();
+
+      });
+
+  }
+
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    showCameraError(
+      "Este navegador não permite acesso à câmera."
+    );
+
+    return false;
+
+  }
+
+
+  try {
+
+    const stream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          video: {
+
+            facingMode:
+              currentFacingMode,
+
+            width: {
+              ideal: 1920
+            },
+
+            height: {
+              ideal: 1080
+            }
+
+          },
+
+          audio: true
+
+        });
+
+
+    video.srcObject =
+      stream;
+
+    audioStream =
+      stream;
+
+
+    if (
+      currentFacingMode ===
+      "environment"
+    ) {
+
+      video.classList.add(
+        "rear-camera"
+      );
+
+    } else {
+
+      video.classList.remove(
+        "rear-camera"
+      );
+
+    }
+
+
+    try {
+
+      await video.play();
+
+    } catch (error) {
+
+      console.log(
+        "Autoplay controlado pelo navegador."
+      );
+
+    }
+
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "Erro na câmera:",
+      error
+    );
+
+    showCameraError(
+      getCameraErrorMessage(
+        error
+      )
+    );
+
+    return false;
+
+  }
+
+}
+
+
+/* =====================================================
+   MENSAGEM DE ERRO
+===================================================== */
+
+function showCameraError(
+  message
+) {
+
+  cameraError.textContent =
+    message;
+
+  cameraError.style.display =
+    "block";
+
+}
+
+
+function getCameraErrorMessage(
+  error
+) {
+
+  if (
+    error &&
+    error.name ===
+    "NotAllowedError"
+  ) {
+
+    return (
+      "Acesso negado. " +
+      "Permita câmera e microfone " +
+      "nas configurações do navegador."
+    );
+
+  }
+
+
+  if (
+    error &&
+    error.name ===
+    "NotFoundError"
+  ) {
+
+    return (
+      "Nenhuma câmera disponível " +
+      "neste dispositivo."
+    );
+
+  }
+
+
+  if (
+    error &&
+    error.name ===
+    "NotReadableError"
+  ) {
+
+    return (
+      "A câmera está sendo usada " +
+      "por outro aplicativo."
+    );
+
+  }
+
+
+  return (
+    "Não foi possível ativar " +
+    "a câmera e o microfone."
+  );
+
+}
+
+
+/* =====================================================
+   BOTÃO INICIAL
+===================================================== */
+
+startBtn.addEventListener(
+  "click",
+  async () => {
+
+    startBtn.disabled =
+      true;
+
+    startBtn.textContent =
+      "Ativando...";
+
+
+    const success =
+      await startCamera();
+
+
+    if (success) {
+
+      startOverlay.classList.add(
+        "hidden"
+      );
+
+    } else {
+
+      startBtn.disabled =
+        false;
+
+      startBtn.textContent =
+        "Tentar novamente";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   TROCA DE CÂMERA
+===================================================== */
+
+btnFlip.addEventListener(
+  "click",
+  async () => {
+
+    closeMenus();
+
+
+    currentFacingMode =
+      currentFacingMode === "user"
+        ? "environment"
+        : "user";
+
+
+    await startCamera();
+
+  }
+);
+
+
+/* =====================================================
+   DESENHO
+===================================================== */
+
+function saveState() {
+
+  history =
+    history.slice(
+      0,
+      historyIndex + 1
+    );
+
+
+  history.push(
+    canvas.toDataURL()
+  );
+
+
+  historyIndex =
+    history.length - 1;
+
+}
+
 
 function redraw() {
 
   ctx.clearRect(
     0,
     0,
-    window.innerWidth,
-    window.innerHeight
+    canvas.width,
+    canvas.height
   );
 
-  for (const stroke of strokes) {
-
-    drawStroke(
-      ctx,
-      stroke
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   DESENHO
-========================================================= */
-
-function drawStroke(c, stroke) {
-
-  if (!stroke.points.length) {
-    return;
-  }
-
-  c.save();
-
-  c.lineCap = "round";
-
-  c.lineJoin = "round";
-
-  c.lineWidth = stroke.width;
-
-  c.globalCompositeOperation =
-    stroke.tool === "eraser"
-      ? "destination-out"
-      : "source-over";
-
-  c.strokeStyle =
-    stroke.color;
-
-  c.beginPath();
-
-  c.moveTo(
-    stroke.points[0].x,
-    stroke.points[0].y
-  );
-
-  for (
-    let i = 1;
-    i < stroke.points.length;
-    i++
-  ) {
-
-    c.lineTo(
-      stroke.points[i].x,
-      stroke.points[i].y
-    );
-
-  }
 
   if (
-    stroke.points.length === 1
+    historyIndex >= 0 &&
+    history[historyIndex]
   ) {
 
-    c.lineTo(
-      stroke.points[0].x + 0.01,
-      stroke.points[0].y + 0.01
-    );
+    const image =
+      new Image();
+
+
+    image.onload =
+      () => {
+
+        ctx.clearRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+
+        ctx.drawImage(
+          image,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+      };
+
+
+    image.src =
+      history[
+        historyIndex
+      ];
 
   }
-
-  c.stroke();
-
-  c.restore();
 
 }
 
 
-/* =========================================================
-   POSIÇÃO DO TOQUE
-========================================================= */
-
-function getPointerPosition(event) {
+function getPointerPosition(
+  event
+) {
 
   const rect =
     canvas.getBoundingClientRect();
+
 
   return {
 
@@ -221,233 +620,226 @@ function getPointerPosition(event) {
 }
 
 
-/* =========================================================
-   INICIAR DESENHO
-========================================================= */
+/* =====================================================
+   INÍCIO DO DESENHO
+===================================================== */
 
-function beginDraw(event) {
+function startDrawing(event) {
 
-  if (event.target !== canvas) {
+  if (
+    event.pointerType ===
+    "mouse" &&
+    event.button !== 0
+  ) {
+
     return;
+
   }
+
+
+  closeMenus();
+
+  isDrawing = true;
+
+
+  const position =
+    getPointerPosition(
+      event
+    );
+
+
+  const lineWidth =
+    Number(
+      document.getElementById(
+        "lineWidth"
+      ).value
+    );
+
+
+  ctx.lineWidth =
+    lineWidth;
+
+  ctx.lineCap =
+    "round";
+
+  ctx.lineJoin =
+    "round";
+
+
+  if (isEraser) {
+
+    ctx.globalCompositeOperation =
+      "destination-out";
+
+  } else {
+
+    ctx.globalCompositeOperation =
+      "source-over";
+
+    ctx.strokeStyle =
+      currentColor;
+
+  }
+
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    position.x,
+    position.y
+  );
+
 
   event.preventDefault();
 
-  drawing = true;
-
-  if (canvas.setPointerCapture) {
-
-    try {
-
-      canvas.setPointerCapture(
-        event.pointerId
-      );
-
-    } catch (_) {}
-
-  }
-
-  const point =
-    getPointerPosition(event);
-
-  currentStroke = {
-
-    tool,
-
-    color,
-
-    width: lineWidth,
-
-    points: [point]
-
-  };
-
-  redoStack = [];
-
-  drawStroke(
-    ctx,
-    currentStroke
-  );
-
 }
 
 
-/* =========================================================
-   DESENHAR
-========================================================= */
+/* =====================================================
+   DESENHANDO
+===================================================== */
 
-function moveDraw(event) {
+function draw(event) {
 
-  if (
-    !drawing ||
-    !currentStroke
-  ) {
+  if (!isDrawing) {
 
     return;
 
   }
+
+
+  const position =
+    getPointerPosition(
+      event
+    );
+
+
+  ctx.lineTo(
+    position.x,
+    position.y
+  );
+
+
+  ctx.stroke();
+
 
   event.preventDefault();
 
-  const point =
-    getPointerPosition(event);
+}
 
-  const points =
-    currentStroke.points;
 
-  const last =
-    points[points.length - 1];
+/* =====================================================
+   FIM DO DESENHO
+===================================================== */
 
-  const distance =
-    Math.hypot(
-      point.x - last.x,
-      point.y - last.y
-    );
+function stopDrawing() {
 
-  if (distance < 0.8) {
+  if (!isDrawing) {
+
     return;
+
   }
 
-  points.push(point);
 
-  drawStroke(
-    ctx,
-    currentStroke
-  );
+  isDrawing = false;
+
+  ctx.closePath();
+
+  ctx.globalCompositeOperation =
+    "source-over";
+
+
+  saveState();
 
 }
 
 
-/* =========================================================
-   FINALIZAR DESENHO
-========================================================= */
-
-function endDraw(event) {
-
-  if (!drawing) {
-    return;
-  }
-
-  drawing = false;
-
-  if (
-    currentStroke &&
-    currentStroke.points.length
-  ) {
-
-    strokes.push(
-      currentStroke
-    );
-
-  }
-
-  currentStroke = null;
-
-  if (
-    event &&
-    canvas.releasePointerCapture
-  ) {
-
-    try {
-
-      if (
-        canvas.hasPointerCapture(
-          event.pointerId
-        )
-      ) {
-
-        canvas.releasePointerCapture(
-          event.pointerId
-        );
-
-      }
-
-    } catch (_) {}
-
-  }
-
-}
-
-
-/* =========================================================
+/* =====================================================
    POINTER EVENTS
-========================================================= */
+===================================================== */
 
 canvas.addEventListener(
   "pointerdown",
-  beginDraw,
-  { passive: false }
+  startDrawing
 );
+
 
 canvas.addEventListener(
   "pointermove",
-  moveDraw,
-  { passive: false }
+  draw
 );
+
 
 canvas.addEventListener(
   "pointerup",
-  endDraw
+  stopDrawing
 );
+
 
 canvas.addEventListener(
   "pointercancel",
-  endDraw
+  stopDrawing
 );
+
 
 canvas.addEventListener(
   "pointerleave",
-  event => {
-
-    if (
-      event.pointerType === "mouse" &&
-      drawing
-    ) {
-
-      endDraw(event);
-
-    }
-
-  }
+  stopDrawing
 );
 
 
-/* =========================================================
+/* =====================================================
    CORES
-========================================================= */
+===================================================== */
 
 document
-  .querySelectorAll(".color")
-  .forEach(button => {
+  .querySelectorAll(
+    ".color-dot"
+  )
+  .forEach(dot => {
 
-    button.addEventListener(
+    dot.addEventListener(
       "click",
-      () => {
+      event => {
 
-        color =
-          button.dataset.color;
+        isEraser =
+          false;
 
-        tool = "pen";
 
         document
-          .querySelectorAll(".color")
-          .forEach(item => {
+          .getElementById(
+            "btn-eraser"
+          )
+          .classList
+          .remove("active");
 
-            item.classList.remove(
-              "active"
+
+        document
+          .querySelectorAll(
+            ".color-dot"
+          )
+          .forEach(
+            other => {
+
+              other.classList
+                .remove(
+                  "active"
+                );
+
+            }
+          );
+
+
+        event.currentTarget
+          .classList
+          .add("active");
+
+
+        currentColor =
+          event.currentTarget
+            .getAttribute(
+              "data-color"
             );
-
-          });
-
-        button.classList.add(
-          "active"
-        );
-
-        $("toolName").textContent =
-          "Caneta";
-
-        $("eraser").style.outline =
-          "";
 
       }
     );
@@ -455,730 +847,150 @@ document
   });
 
 
-/* =========================================================
-   ESPESSURA
-========================================================= */
+/* =====================================================
+   BORRACHA
+===================================================== */
 
-$("width").addEventListener(
-  "input",
-  event => {
+document
+  .getElementById(
+    "btn-eraser"
+  )
+  .addEventListener(
+    "click",
+    function() {
 
-    lineWidth =
-      Number(
-        event.target.value
+      isEraser =
+        !isEraser;
+
+
+      this.classList.toggle(
+        "active",
+        isEraser
       );
 
-  }
-);
+    }
+  );
 
 
-/* =========================================================
-   BORRACHA
-========================================================= */
+/* =====================================================
+   DESFAZER
+===================================================== */
 
-$("eraser").addEventListener(
+document
+  .getElementById(
+    "btn-undo"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      closeMenus();
+
+
+      if (
+        historyIndex >= 0
+      ) {
+
+        historyIndex--;
+
+        redraw();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   REFAZER
+===================================================== */
+
+document
+  .getElementById(
+    "btn-redo"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      closeMenus();
+
+
+      if (
+        historyIndex <
+        history.length - 1
+      ) {
+
+        historyIndex++;
+
+        redraw();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   LIMPAR
+===================================================== */
+
+document
+  .getElementById(
+    "btn-clear-all"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      closeMenus();
+
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      saveState();
+
+    }
+  );
+
+
+/* =====================================================
+   GRAVAÇÃO
+===================================================== */
+
+btnRecord.addEventListener(
   "click",
-  () => {
+  async () => {
 
-    if (
-      tool === "eraser"
-    ) {
+    closeMenus();
 
-      tool = "pen";
 
-      $("toolName").textContent =
-        "Caneta";
+    if (!isRecording) {
 
-      $("eraser").style.outline =
-        "";
+      await startRecording();
 
     } else {
 
-      tool = "eraser";
-
-      $("toolName").textContent =
-        "Borracha";
-
-      $("eraser").style.outline =
-        "2px solid #fff";
+      stopRecording();
 
     }
 
   }
 );
 
-
-/* =========================================================
-   DESFAZER
-========================================================= */
-
-$("undo").addEventListener(
-  "click",
-  () => {
-
-    if (!strokes.length) {
-      return;
-    }
-
-    redoStack.push(
-      strokes.pop()
-    );
-
-    redraw();
-
-  }
-);
-
-
-/* =========================================================
-   REFAZER
-========================================================= */
-
-$("redo").addEventListener(
-  "click",
-  () => {
-
-    if (!redoStack.length) {
-      return;
-    }
-
-    strokes.push(
-      redoStack.pop()
-    );
-
-    redraw();
-
-  }
-);
-
-
-/* =========================================================
-   LIMPAR
-========================================================= */
-
-$("clear").addEventListener(
-  "click",
-  () => {
-
-    if (!strokes.length) {
-      return;
-    }
-
-    strokes = [];
-
-    redoStack = [];
-
-    redraw();
-
-    toast(
-      "Lousa limpa"
-    );
-
-  }
-);
-
-
-/* =========================================================
-   PAINÉIS
-========================================================= */
-
-function closePanels(except = null) {
-
-  [
-    "menuPanel",
-    "tools"
-  ].forEach(id => {
-
-    if (id !== except) {
-
-      const panel = $(id);
-
-      panel.classList.remove(
-        "open"
-      );
-
-      panel.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-    }
-
-  });
-
-}
-
-
-/* =========================================================
-   MENU
-========================================================= */
-
-$("menuBtn").addEventListener(
-  "click",
-  () => {
-
-    const panel =
-      $("menuPanel");
-
-    const opening =
-      !panel.classList.contains(
-        "open"
-      );
-
-    closePanels(
-      opening
-        ? "menuPanel"
-        : null
-    );
-
-    if (opening) {
-
-      panel.classList.add(
-        "open"
-      );
-
-      panel.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FERRAMENTAS
-========================================================= */
-
-$("settings").addEventListener(
-  "click",
-  () => {
-
-    const panel =
-      $("tools");
-
-    const opening =
-      !panel.classList.contains(
-        "open"
-      );
-
-    closePanels(
-      opening
-        ? "tools"
-        : null
-    );
-
-    if (opening) {
-
-      panel.classList.add(
-        "open"
-      );
-
-      panel.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FECHAR PAINÉIS
-========================================================= */
-
-document.addEventListener(
-  "pointerdown",
-  event => {
-
-    if (
-      !event.target.closest(
-        "#menuPanel"
-      ) &&
-      !event.target.closest(
-        "#menuBtn"
-      ) &&
-      !event.target.closest(
-        "#tools"
-      ) &&
-      !event.target.closest(
-        "#settings"
-      )
-    ) {
-
-      closePanels();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   CÂMERA
-========================================================= */
-
-async function startCamera() {
-
-  if (
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
-  ) {
-
-    toast(
-      "Este navegador não oferece acesso à câmera.",
-      4000
-    );
-
-    return false;
-
-  }
-
-
-  if (stream) {
-
-    stream
-      .getTracks()
-      .forEach(
-        track => track.stop()
-      );
-
-    stream = null;
-
-  }
-
-
-  try {
-
-    stream =
-      await navigator.mediaDevices
-        .getUserMedia({
-
-          video: {
-
-            facingMode: {
-              ideal: facingMode
-            },
-
-            width: {
-              ideal: 1920,
-              max: 1920
-            },
-
-            height: {
-              ideal: 1080,
-              max: 1080
-            },
-
-            frameRate: {
-              ideal: 30,
-              max: 30
-            }
-
-          },
-
-          audio: {
-
-            echoCancellation: true,
-
-            noiseSuppression: true,
-
-            autoGainControl: true
-
-          }
-
-        });
-
-
-    video.srcObject =
-      stream;
-
-
-    video.classList.toggle(
-      "mirror",
-      facingMode === "user"
-    );
-
-
-    await video.play();
-
-
-    startOverlay
-      .classList
-      .add("hidden");
-
-
-    await requestWakeLock();
-
-
-    toast(
-      "Câmera ativada"
-    );
-
-
-    return true;
-
-
-  } catch (error) {
-
-    console.error(error);
-
-
-    let message =
-      "Não foi possível iniciar a câmera.";
-
-
-    if (
-      error.name ===
-      "NotAllowedError"
-    ) {
-
-      message =
-        "Permita câmera e microfone nas configurações do Safari.";
-
-    }
-
-
-    else if (
-      error.name ===
-      "NotFoundError"
-    ) {
-
-      message =
-        "Câmera ou microfone não encontrados.";
-
-    }
-
-
-    else if (
-      error.name ===
-      "NotReadableError"
-    ) {
-
-      message =
-        "A câmera está sendo usada por outro aplicativo.";
-
-    }
-
-
-    else if (
-      error.name ===
-      "SecurityError"
-    ) {
-
-      message =
-        "O acesso à câmera foi bloqueado por segurança.";
-
-    }
-
-
-    toast(
-      message,
-      5000
-    );
-
-
-    return false;
-
-  }
-
-}
-
-
-/* =========================================================
-   TROCAR CÂMERA
-========================================================= */
-
-$("flip").addEventListener(
-  "click",
-  async () => {
-
-    facingMode =
-      facingMode === "user"
-        ? "environment"
-        : "user";
-
-    await startCamera();
-
-  }
-);
-
-
-/* =========================================================
-   WAKE LOCK
-========================================================= */
-
-async function requestWakeLock() {
-
-  try {
-
-    if (
-      "wakeLock" in navigator
-    ) {
-
-      wakeLock =
-        await navigator.wakeLock
-          .request("screen");
-
-
-      wakeLock
-        .addEventListener?.(
-          "release",
-          () => {
-
-            wakeLock = null;
-
-          }
-        );
-
-    }
-
-  } catch (error) {
-
-    console.log(
-      "Wake Lock indisponível"
-    );
-
-  }
-
-}
-
-
-/* =========================================================
-   RECUPERAR WAKE LOCK
-========================================================= */
-
-document.addEventListener(
-  "visibilitychange",
-  async () => {
-
-    if (
-      document.visibilityState ===
-        "visible" &&
-      stream
-    ) {
-
-      await requestWakeLock();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FORMATOS DE VÍDEO
-========================================================= */
-
-function getSupportedMimeType() {
-
-  const formats = [
-
-    'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
-
-    "video/mp4;codecs=avc1",
-
-    "video/mp4",
-
-    "video/webm;codecs=vp8,opus",
-
-    "video/webm"
-
-  ];
-
-
-  if (
-    !window.MediaRecorder
-  ) {
-
-    return "";
-
-  }
-
-
-  return formats.find(
-    type =>
-      MediaRecorder
-        .isTypeSupported(type)
-  ) || "";
-
-}
-
-
-/* =========================================================
-   VÍDEO COVER
-========================================================= */
-
-function drawVideoCover(
-  context,
-  videoElement,
-  width,
-  height
-) {
-
-  const videoWidth =
-    videoElement.videoWidth ||
-    width;
-
-  const videoHeight =
-    videoElement.videoHeight ||
-    height;
-
-
-  const scale =
-    Math.max(
-      width / videoWidth,
-      height / videoHeight
-    );
-
-
-  const drawWidth =
-    videoWidth * scale;
-
-  const drawHeight =
-    videoHeight * scale;
-
-
-  const x =
-    (width - drawWidth) / 2;
-
-  const y =
-    (height - drawHeight) / 2;
-
-
-  context.drawImage(
-    videoElement,
-    0,
-    0,
-    videoWidth,
-    videoHeight,
-    x,
-    y,
-    drawWidth,
-    drawHeight
-  );
-
-}
-
-
-/* =========================================================
-   RENDERIZAÇÃO DA GRAVAÇÃO
-========================================================= */
-
-function renderFrame() {
-
-  if (
-    !recording ||
-    !renderCanvas ||
-    !renderCtx
-  ) {
-
-    return;
-
-  }
-
-
-  const width =
-    renderCanvas.width;
-
-  const height =
-    renderCanvas.height;
-
-
-  renderCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-
-  renderCtx.save();
-
-
-  if (
-    facingMode === "user"
-  ) {
-
-    renderCtx.translate(
-      width,
-      0
-    );
-
-    renderCtx.scale(
-      -1,
-      1
-    );
-
-  }
-
-
-  drawVideoCover(
-    renderCtx,
-    video,
-    width,
-    height
-  );
-
-
-  renderCtx.restore();
-
-
-  renderCtx.save();
-
-
-  renderCtx.scale(
-    width /
-      Math.max(
-        1,
-        window.innerWidth
-      ),
-
-    height /
-      Math.max(
-        1,
-        window.innerHeight
-      )
-  );
-
-
-  for (
-    const stroke of strokes
-  ) {
-
-    drawStroke(
-      renderCtx,
-      stroke
-    );
-
-  }
-
-
-  renderCtx.restore();
-
-
-  animationId =
-    requestAnimationFrame(
-      renderFrame
-    );
-
-}
-
-
-/* =========================================================
-   INICIAR GRAVAÇÃO
-========================================================= */
 
 async function startRecording() {
 
-  if (!stream) {
+  if (!video.srcObject) {
 
-    toast(
-      "Ative a câmera primeiro."
+    showCameraError(
+      "Ative a câmera antes de iniciar a gravação."
     );
 
     return;
@@ -1186,111 +998,184 @@ async function startRecording() {
   }
 
 
-  if (
-    !window.MediaRecorder ||
-    !HTMLCanvasElement
-      .prototype
-      .captureStream
-  ) {
-
-    toast(
-      "Seu navegador não suporta gravação integrada.",
-      4000
-    );
-
-    return;
-
-  }
+  recordedChunks = [];
 
 
-  const mime =
-    getSupportedMimeType();
-
-
-  if (!mime) {
-
-    toast(
-      "Formato de vídeo não suportado neste navegador.",
-      4000
-    );
-
-    return;
-
-  }
-
-
-  chunks = [];
-
-
-  renderCanvas =
+  const renderCanvas =
     document.createElement(
       "canvas"
     );
 
 
-  const width = 1920;
-
-
-  const aspect =
-    window.innerWidth /
-    Math.max(
-      1,
-      window.innerHeight
-    );
-
-
   renderCanvas.width =
-    width;
-
+    window.innerWidth;
 
   renderCanvas.height =
-    Math.max(
-      1,
-      Math.round(
-        width / aspect
-      )
-    );
+    window.innerHeight;
 
 
-  renderCtx =
+  const renderCtx =
     renderCanvas.getContext(
       "2d"
     );
 
 
-  if (!renderCtx) {
+  isRecording = true;
 
-    toast(
-      "Não foi possível preparar a gravação.",
-      4000
+
+  function drawFrame() {
+
+    if (!isRecording) {
+
+      return;
+
+    }
+
+
+    renderCtx.save();
+
+
+    if (
+      currentFacingMode ===
+      "user"
+    ) {
+
+      renderCtx.translate(
+        renderCanvas.width,
+        0
+      );
+
+      renderCtx.scale(
+        -1,
+        1
+      );
+
+    }
+
+
+    const videoWidth =
+      video.videoWidth ||
+      renderCanvas.width;
+
+
+    const videoHeight =
+      video.videoHeight ||
+      renderCanvas.height;
+
+
+    const ratio =
+      Math.max(
+        renderCanvas.width /
+          videoWidth,
+
+        renderCanvas.height /
+          videoHeight
+      );
+
+
+    const drawWidth =
+      videoWidth * ratio;
+
+
+    const drawHeight =
+      videoHeight * ratio;
+
+
+    const offsetX =
+      (
+        renderCanvas.width -
+        drawWidth
+      ) / 2;
+
+
+    const offsetY =
+      (
+        renderCanvas.height -
+        drawHeight
+      ) / 2;
+
+
+    renderCtx.drawImage(
+      video,
+      offsetX,
+      offsetY,
+      drawWidth,
+      drawHeight
     );
 
-    return;
+
+    renderCtx.restore();
+
+
+    renderCtx.drawImage(
+      canvas,
+      0,
+      0,
+      renderCanvas.width,
+      renderCanvas.height
+    );
+
+
+    requestAnimationFrame(
+      drawFrame
+    );
 
   }
 
 
-  recording = true;
+  drawFrame();
 
 
-  renderFrame();
-
-
-  const outputStream =
+  const stream =
     renderCanvas.captureStream(
       30
     );
 
 
-  const audioTrack =
-    stream.getAudioTracks()[0];
+  if (
+    audioStream &&
+    audioStream.getAudioTracks()
+      .length > 0
+  ) {
 
-
-  if (audioTrack) {
-
-    outputStream.addTrack(
-      audioTrack
+    stream.addTrack(
+      audioStream
+        .getAudioTracks()[0]
     );
+
+  }
+
+
+  let mimeType =
+    "video/webm";
+
+
+  if (
+    typeof MediaRecorder !==
+    "undefined"
+  ) {
+
+    if (
+      MediaRecorder
+        .isTypeSupported(
+          "video/mp4"
+        )
+    ) {
+
+      mimeType =
+        "video/mp4";
+
+    } else if (
+      MediaRecorder
+        .isTypeSupported(
+          "video/webm;codecs=vp9"
+        )
+    ) {
+
+      mimeType =
+        "video/webm;codecs=vp9";
+
+    }
 
   }
 
@@ -1299,31 +1184,23 @@ async function startRecording() {
 
     mediaRecorder =
       new MediaRecorder(
-        outputStream,
+        stream,
         {
-
-          mimeType: mime,
-
-          videoBitsPerSecond:
-            6000000
-
+          mimeType
         }
       );
 
-
   } catch (error) {
 
-    console.error(error);
-
-    recording = false;
-
-    cancelAnimationFrame(
-      animationId
+    console.error(
+      error
     );
 
-    toast(
-      "Não foi possível iniciar a gravação.",
-      4000
+    isRecording =
+      false;
+
+    showCameraError(
+      "Este navegador não suporta a gravação de vídeo."
     );
 
     return;
@@ -1336,10 +1213,10 @@ async function startRecording() {
 
       if (
         event.data &&
-        event.data.size
+        event.data.size > 0
       ) {
 
-        chunks.push(
+        recordedChunks.push(
           event.data
         );
 
@@ -1348,60 +1225,41 @@ async function startRecording() {
     };
 
 
-  mediaRecorder.onerror =
-    event => {
-
-      console.error(event);
-
-      toast(
-        "Erro durante a gravação.",
-        4000
-      );
-
-    };
-
-
   mediaRecorder.onstop =
-    exportRecording;
+    exportVideo;
 
 
-  mediaRecorder.start(
-    1000
+  mediaRecorder.start();
+
+
+  btnRecord.classList.add(
+    "recording"
   );
 
 
-  recordBtn
-    .classList
-    .add("recording");
+  btnRecord.innerHTML =
+    svgStop;
 
 
-  toast(
-    "Gravando…"
-  );
+  btnRecord.title =
+    "Parar gravação";
 
 }
 
 
-/* =========================================================
-   PARAR GRAVAÇÃO
-========================================================= */
-
 function stopRecording() {
 
-  if (!mediaRecorder) {
+  if (
+    !mediaRecorder
+  ) {
+
     return;
+
   }
 
 
-  recording = false;
-
-
-  cancelAnimationFrame(
-    animationId
-  );
-
-
-  animationId = null;
+  isRecording =
+    false;
 
 
   if (
@@ -1414,72 +1272,62 @@ function stopRecording() {
   }
 
 
-  recordBtn
-    .classList
-    .remove("recording");
-
-
-  toast(
-    "Processando vídeo…",
-    3000
+  btnRecord.classList.remove(
+    "recording"
   );
+
+
+  btnRecord.innerHTML =
+    svgRecord;
+
+
+  btnRecord.title =
+    "Gravar vídeo";
 
 }
 
 
-/* =========================================================
-   EXPORTAR
-========================================================= */
+/* =====================================================
+   EXPORTAR VÍDEO
+===================================================== */
 
-async function exportRecording() {
+async function exportVideo() {
 
-  const type =
-    mediaRecorder?.mimeType ||
-    "video/mp4";
-
-
-  const extension =
-    type.includes("webm")
-      ? "webm"
-      : "mp4";
-
-
-  const blob =
-    new Blob(
-      chunks,
-      {
-        type
-      }
-    );
-
-
-  if (!blob.size) {
-
-    toast(
-      "A gravação ficou vazia.",
-      4000
-    );
+  if (
+    recordedChunks.length === 0
+  ) {
 
     return;
 
   }
 
 
-  const filename =
-    `lousa-cam-${new Date()
-      .toISOString()
-      .replace(
-        /[:.]/g,
-        "-"
-      )}.${extension}`;
+  const mimeType =
+    mediaRecorder.mimeType ||
+    "video/webm";
+
+
+  const blob =
+    new Blob(
+      recordedChunks,
+      {
+        type: mimeType
+      }
+    );
+
+
+  const extension =
+    mimeType.includes("mp4")
+      ? "mp4"
+      : "webm";
 
 
   const file =
     new File(
       [blob],
-      filename,
+      `lousa-cam.${extension}`,
       {
-        type
+        type: mimeType
       }
     );
 
@@ -1501,38 +1349,18 @@ async function exportRecording() {
           "Lousa Cam",
 
         text:
-          "Vídeo gravado no Lousa Cam"
+          "Gravado via Lousa Cam"
 
       });
 
 
-      toast(
-        "Vídeo compartilhado."
-      );
-
-
-      cleanupRecording();
-
-
       return;
-
 
     } catch (error) {
 
-      if (
-        error.name ===
-        "AbortError"
-      ) {
-
-        toast(
-          "Compartilhamento cancelado."
-        );
-
-        cleanupRecording();
-
-        return;
-
-      }
+      console.log(
+        "Compartilhamento cancelado."
+      );
 
     }
 
@@ -1554,13 +1382,8 @@ async function exportRecording() {
   link.href =
     url;
 
-
   link.download =
-    filename;
-
-
-  link.rel =
-    "noopener";
+    `lousa-cam.${extension}`;
 
 
   document.body.appendChild(
@@ -1575,109 +1398,22 @@ async function exportRecording() {
 
 
   setTimeout(
-    () =>
+    () => {
+
       URL.revokeObjectURL(
         url
-      ),
-    15000
+      );
+
+    },
+    1000
   );
-
-
-  toast(
-    `Vídeo salvo como ${extension.toUpperCase()}.`,
-    3500
-  );
-
-
-  cleanupRecording();
 
 }
 
 
-/* =========================================================
-   LIMPEZA DA GRAVAÇÃO
-========================================================= */
-
-function cleanupRecording() {
-
-  if (renderCanvas) {
-
-    renderCanvas.width = 1;
-
-    renderCanvas.height = 1;
-
-  }
-
-
-  renderCanvas = null;
-
-  renderCtx = null;
-
-  mediaRecorder = null;
-
-  chunks = [];
-
-}
-
-
-/* =========================================================
-   BOTÃO GRAVAR
-========================================================= */
-
-recordBtn.addEventListener(
-  "click",
-  () => {
-
-    if (recording) {
-
-      stopRecording();
-
-    } else {
-
-      startRecording();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   INICIAR
-========================================================= */
-
-startBtn.addEventListener(
-  "click",
-  startCamera
-);
-
-
-/* =========================================================
-   REDIMENSIONAMENTO
-========================================================= */
-
-window.addEventListener(
-  "resize",
-  fitCanvas
-);
-
-
-window.addEventListener(
-  "orientationchange",
-  () => {
-
-    setTimeout(
-      fitCanvas,
-      300
-    );
-
-  }
-);
-
-
-/* =========================================================
+/* =====================================================
    SERVICE WORKER
-========================================================= */
+===================================================== */
 
 if (
   "serviceWorker" in navigator
@@ -1688,19 +1424,31 @@ if (
     () => {
 
       navigator.serviceWorker
-        .register("./sw.js")
+        .register(
+          "./sw.js"
+        )
+        .then(
+          registration => {
+
+            console.log(
+              "Service Worker ativo:",
+              registration.scope
+            );
+
+          }
+        )
         .catch(
-          console.error
+          error => {
+
+            console.error(
+              "Erro no Service Worker:",
+              error
+            );
+
+          }
         );
 
     }
   );
 
 }
-
-
-/* =========================================================
-   INICIALIZAÇÃO
-========================================================= */
-
-fitCanvas();
