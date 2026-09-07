@@ -1,12 +1,11 @@
-const CACHE_NAME = "lousa-cam-v2";
+const CACHE_NAME = "lousa-cam-v3";
 
 const FILES = [
   "./",
   "./index.html",
   "./app.js",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./logo.png"
 ];
 
 self.addEventListener("install", event => {
@@ -37,10 +36,13 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request)
       .then(cached => {
-        if (cached) return cached;
+        if (cached) {
+          return cached;
+        }
 
         return fetch(event.request)
           .then(response => {
+
             if (!response || response.status !== 200) {
               return response;
             }
@@ -48,7 +50,9 @@ self.addEventListener("fetch", event => {
             const copy = response.clone();
 
             caches.open(CACHE_NAME)
-              .then(cache => cache.put(event.request, copy))
+              .then(cache => {
+                cache.put(event.request, copy);
+              })
               .catch(() => {});
 
             return response;
