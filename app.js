@@ -1,935 +1,879 @@
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+```javascript
+const $ = id => document.getElementById(id);
 
-const toolbarWrapper = document.getElementById('toolbarWrapper');
-const btnToggleMenu = document.getElementById('btn-toggle-menu');
+const video = $("video");
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d", { alpha: true });
 
-const penSideWrapper = document.getElementById('penSideWrapper');
-const btnTogglePen = document.getElementById('btn-toggle-pen');
+const startOverlay = $("startOverlay");
+const startBtn = $("startBtn");
+const statusEl = $("status");
+const recordBtn = $("record");
 
-let currentFacingMode = 'user';
-let currentColor = '#ffffff';
-let isEraser = false;
-let history = [];
-let historyIndex = -1;
-let isDrawing = false;
+let facingMode = "user";
+let stream = null;
+let drawing = false;
+let tool = "pen";
+let color = "#fff";
+let lineWidth = 5;
+let strokes = [];
+let redoStack = [];
+let currentStroke = null;
+let mediaRecorder = null;
+let chunks = [];
+let recording = false;
+let renderCanvas = null;
+let renderCtx = null;
+let animationId = null;
+let wakeLock = null;
 
-let mediaRecorder;
-let recordedChunks = [];
-let audioStream;
-
-const svgRecord = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#ff3b30"/></svg>`;
-const svgStop = `<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#ffffff"/></svg>`;
-
-
-/* =========================================================
-   MENUS
-========================================================= */
-
-function closeMenus() {
-  toolbarWrapper.classList.add('collapsed');
-  penSideWrapper.classList.add('collapsed');
+function toast(message, duration = 2200) {
+  statusEl.textContent = message;
+  statusEl.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => statusEl.classList.remove("show"), duration);
 }
 
-function closeMenusExcept(wrapper) {
-  [toolbarWrapper, penSideWrapper].forEach(w => {
-    if (w !== wrapper) {
-      w.classList.add('collapsed');
-    }
-  });
-}
+function fitCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(window.innerWidth * dpr);
+  canvas.height = Math.round(window.innerHeight * dpr);
 
-[penSideWrapper, toolbarWrapper].forEach(el => {
-  el.addEventListener('pointerdown', (e) => e.stopPropagation());
-  el.addEventListener('touchstart', (e) => e.stopPropagation());
-});
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
 
-btnToggleMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-
-  closeMenusExcept(toolbarWrapper);
-
-  toolbarWrapper.classList.toggle('collapsed');
-});
-
-btnTogglePen.addEventListener('click', (e) => {
-  e.stopPropagation();
-
-  closeMenusExcept(penSideWrapper);
-
-  penSideWrapper.classList.toggle('collapsed');
-});
-
-document.addEventListener('pointerdown', (e) => {
-  if (
-    !penSideWrapper.contains(e.target) &&
-    !toolbarWrapper.contains(e.target) &&
-    !btnToggleMenu.contains(e.target)
-  ) {
-    closeMenus();
-  }
-});
-
-
-/* =========================================================
-   CANVAS
-========================================================= */
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   redraw();
 }
 
-window.addEventListener('resize', resizeCanvas);
-
-
-/* =========================================================
-   AJUSTE DA CÂMERA DURANTE ROTAÇÃO
-========================================================= */
-
-/*
-   Mantém o vídeo ocupando exatamente a área disponível.
-
-   Isso é reforçado via JavaScript porque, no iPhone,
-   durante a rotação, o elemento <video> pode passar
-   momentaneamente por uma fase em que suas dimensões
-   ainda não foram atualizadas.
-*/
-
-function forceVideoLayout() {
-  if (!video) return;
-
-  video.style.width = '100%';
-  video.style.height = '100%';
-  video.style.objectFit = 'cover';
-  video.style.display = 'block';
-}
-
-
-/*
-   Aguarda o navegador atualizar as dimensões reais
-   fornecidas pela câmera.
-*/
-function waitForCameraDimensions(attempt = 0) {
-  if (!video) return;
-
-  forceVideoLayout();
-
-  /*
-     Quando a câmera já possui dimensões válidas,
-     garantimos que a reprodução esteja ativa.
-  */
-  if (
-    video.videoWidth > 0 &&
-    video.videoHeight > 0
-  ) {
-    video.play().catch(() => {});
-    return;
-  }
-
-  /*
-     Durante a rotação do iPhone, videoWidth/videoHeight
-     podem permanecer temporariamente zerados.
-
-     Fazemos novas tentativas rápidas em vez de esperar
-     um intervalo fixo grande.
-  */
-  if (attempt < 20) {
-    requestAnimationFrame(() => {
-      waitForCameraDimensions(attempt + 1);
-    });
-  }
-}
-
-
-/*
-   Atualiza câmera + canvas depois de uma mudança
-   de orientação/tamanho.
-*/
-function refreshCameraLayout() {
-  forceVideoLayout();
-
-  resizeCanvas();
-
-  /*
-     Primeira tentativa imediatamente.
-  */
-  waitForCameraDimensions();
-
-  /*
-     Algumas versões do Safari/iOS atualizam o
-     MediaStream alguns frames depois.
-  */
-  setTimeout(() => {
-    forceVideoLayout();
-    resizeCanvas();
-    waitForCameraDimensions();
-  }, 50);
-
-  setTimeout(() => {
-    forceVideoLayout();
-    resizeCanvas();
-    waitForCameraDimensions();
-  }, 150);
-
-  setTimeout(() => {
-    forceVideoLayout();
-    resizeCanvas();
-    waitForCameraDimensions();
-  }, 300);
-
-  setTimeout(() => {
-    forceVideoLayout();
-    resizeCanvas();
-    waitForCameraDimensions();
-  }, 500);
-}
-
-
-/*
-   Quando a janela muda de tamanho.
-*/
-window.addEventListener('resize', () => {
-  refreshCameraLayout();
-});
-
-
-/*
-   Evento específico de orientação.
-*/
-window.addEventListener('orientationchange', () => {
-  refreshCameraLayout();
-});
-
-
-/*
-   visualViewport é especialmente útil no iPhone,
-   pois acompanha mudanças da área visual disponível.
-*/
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    refreshCameraLayout();
-  });
-}
-
-
-/*
-   Quando o próprio elemento de vídeo recebe
-   novos metadados da câmera.
-*/
-video.addEventListener('loadedmetadata', () => {
-  forceVideoLayout();
-
-  video.play().catch(() => {});
-
-  resizeCanvas();
-});
-
-
-/*
-   Alguns navegadores disparam resize no vídeo
-   quando as dimensões reais do MediaStream mudam.
-*/
-video.addEventListener('resize', () => {
-  forceVideoLayout();
-
-  video.play().catch(() => {});
-
-  resizeCanvas();
-});
-
-
-/*
-   Primeira configuração.
-*/
-forceVideoLayout();
-resizeCanvas();
-
-
-/* =========================================================
-   CÂMERA
-========================================================= */
-
-async function startCamera() {
-
-  /*
-     Libera a câmera anterior quando necessário.
-  */
-  if (video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
-  }
-
-  try {
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: currentFacingMode,
-        width: {
-          ideal: 1920
-        },
-        height: {
-          ideal: 1080
-        }
-      },
-      audio: true
-    });
-
-    video.srcObject = stream;
-
-    audioStream = stream;
-
-    /*
-       Mantém o comportamento original da câmera
-       frontal/traseira.
-    */
-    if (currentFacingMode === 'environment') {
-      video.classList.add('rear-camera');
-    } else {
-      video.classList.remove('rear-camera');
-    }
-
-    /*
-       Garante o layout imediatamente após
-       receber o novo MediaStream.
-    */
-    forceVideoLayout();
-
-    await video.play().catch(() => {});
-
-    refreshCameraLayout();
-
-  } catch (err) {
-
-    console.error("Erro na câmera: ", err);
-
-  }
-}
-
-
-/*
-   Inicialização automática da câmera.
-*/
-window.addEventListener('DOMContentLoaded', startCamera);
-
-
-/* =========================================================
-   TROCAR CÂMERA
-========================================================= */
-
-document.getElementById('btn-flip').addEventListener('click', () => {
-
-  currentFacingMode =
-    currentFacingMode === 'user'
-      ? 'environment'
-      : 'user';
-
-  startCamera();
-
-});
-
-
-/* =========================================================
-   HISTÓRICO DO DESENHO
-========================================================= */
-
-function saveState() {
-
-  historyIndex++;
-
-  history = history.slice(0, historyIndex);
-
-  history.push(canvas.toDataURL());
-}
-
-
 function redraw() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  if (
-    historyIndex >= 0 &&
-    history[historyIndex]
-  ) {
-
-    const img = new Image();
-
-    img.src = history[historyIndex];
-
-    img.onload = () => {
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      ctx.drawImage(
-        img,
-        0,
-        0
-      );
-
-    };
-
-  } else {
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
+  for (const stroke of strokes) {
+    drawStroke(ctx, stroke);
   }
 }
 
+function drawStroke(c, stroke) {
+  if (!stroke.points.length) return;
+  c.save();
+  c.lineCap = "round";
+  c.lineJoin = "round";
+  c.lineWidth = stroke.width;
 
-/* =========================================================
-   POSIÇÃO DO DESENHO
-========================================================= */
+  c.globalCompositeOperation =
+    stroke.tool === "eraser" ? "destination-out" : "source-over";
 
-function getPos(e) {
+  c.strokeStyle = stroke.color;
 
+  c.beginPath();
+  c.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+  for (let i = 1; i < stroke.points.length; i++) {
+    c.lineTo(stroke.points[i].x, stroke.points[i].y);
+  }
+
+  if (stroke.points.length === 1) {
+    c.lineTo(
+      stroke.points[0].x + 0.01,
+      stroke.points[0].y + 0.01
+    );
+  }
+
+  c.stroke();
+  c.restore();
+}
+
+function getPointerPosition(event) {
   const rect = canvas.getBoundingClientRect();
 
-  const clientX =
-    e.touches
-      ? e.touches[0].clientX
-      : e.clientX;
-
-  const clientY =
-    e.touches
-      ? e.touches[0].clientY
-      : e.clientY;
-
   return {
-    x: clientX - rect.left,
-    y: clientY - rect.top
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
   };
 }
 
+function beginDraw(event) {
+  if (event.target !== canvas) return;
 
-/* =========================================================
-   DESENHO
-========================================================= */
+  event.preventDefault();
+  drawing = true;
 
-function startDrawing(e) {
-
-  closeMenus();
-
-  isDrawing = true;
-
-  const pos = getPos(e);
-
-  ctx.lineWidth =
-    document.getElementById('lineWidth').value;
-
-  ctx.lineCap = 'round';
-
-  ctx.lineJoin = 'round';
-
-  if (isEraser) {
-
-    ctx.globalCompositeOperation =
-      'destination-out';
-
-  } else {
-
-    ctx.globalCompositeOperation =
-      'source-over';
-
-    ctx.strokeStyle = currentColor;
-
+  if (canvas.setPointerCapture) {
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch (_) {}
   }
 
-  ctx.beginPath();
+  const point = getPointerPosition(event);
 
-  ctx.moveTo(
-    pos.x,
-    pos.y
-  );
+  currentStroke = {
+    tool,
+    color,
+    width: lineWidth,
+    points: [point]
+  };
+
+  redoStack = [];
+
+  drawStroke(ctx, currentStroke);
 }
 
+function moveDraw(event) {
+  if (!drawing || !currentStroke) return;
 
-function draw(e) {
+  event.preventDefault();
 
-  if (!isDrawing) return;
+  const point = getPointerPosition(event);
+  const points = currentStroke.points;
+  const last = points[points.length - 1];
 
-  const pos = getPos(e);
-
-  ctx.lineTo(
-    pos.x,
-    pos.y
+  const distance = Math.hypot(
+    point.x - last.x,
+    point.y - last.y
   );
 
-  ctx.stroke();
+  if (distance < 0.8) return;
+
+  points.push(point);
+
+  drawStroke(ctx, currentStroke);
 }
 
+function endDraw(event) {
+  if (!drawing) return;
 
-function stopDrawing() {
+  drawing = false;
 
-  if (isDrawing) {
+  if (currentStroke && currentStroke.points.length) {
+    strokes.push(currentStroke);
+  }
 
-    isDrawing = false;
+  currentStroke = null;
 
-    saveState();
-
+  if (event && canvas.releasePointerCapture) {
+    try {
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+    } catch (_) {}
   }
 }
 
-
 canvas.addEventListener(
-  'mousedown',
-  startDrawing
+  "pointerdown",
+  beginDraw,
+  { passive: false }
 );
 
 canvas.addEventListener(
-  'mousemove',
-  draw
+  "pointermove",
+  moveDraw,
+  { passive: false }
 );
 
 canvas.addEventListener(
-  'mouseup',
-  stopDrawing
+  "pointerup",
+  endDraw
 );
 
 canvas.addEventListener(
-  'touchstart',
-  startDrawing
+  "pointercancel",
+  endDraw
 );
 
 canvas.addEventListener(
-  'touchmove',
-  draw
+  "pointerleave",
+  event => {
+    if (event.pointerType === "mouse" && drawing) {
+      endDraw(event);
+    }
+  }
 );
 
-canvas.addEventListener(
-  'touchend',
-  stopDrawing
-);
+document.querySelectorAll(".color").forEach(button => {
+  button.addEventListener("click", () => {
+    color = button.dataset.color;
+    tool = "pen";
 
-
-/* =========================================================
-   CORES
-========================================================= */
-
-document
-  .querySelectorAll('.color-dot')
-  .forEach(dot => {
-
-    dot.addEventListener('click', (e) => {
-
-      isEraser = false;
-
-      document
-        .getElementById('btn-eraser')
-        .classList
-        .remove('active');
-
-      document
-        .querySelectorAll('.color-dot')
-        .forEach(d =>
-          d.classList.remove('active')
-        );
-
-      e.target.classList.add('active');
-
-      currentColor =
-        e.target.getAttribute('data-color');
-
+    document.querySelectorAll(".color").forEach(item => {
+      item.classList.remove("active");
     });
 
+    button.classList.add("active");
+
+    $("toolName").textContent = "Caneta";
+    $("eraser").style.outline = "";
   });
+});
 
-
-/* =========================================================
-   BORRACHA
-========================================================= */
-
-document
-  .getElementById('btn-eraser')
-  .addEventListener('click', function() {
-
-    isEraser = !isEraser;
-
-    this.classList.toggle(
-      'active',
-      isEraser
-    );
-
-  });
-
-
-/* =========================================================
-   DESFAZER
-========================================================= */
-
-document
-  .getElementById('btn-undo')
-  .addEventListener('click', () => {
-
-    closeMenus();
-
-    if (historyIndex > 0) {
-
-      historyIndex--;
-
-      redraw();
-
-    } else if (historyIndex === 0) {
-
-      historyIndex = -1;
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-    }
-
-  });
-
-
-/* =========================================================
-   REFAZER
-========================================================= */
-
-document
-  .getElementById('btn-redo')
-  .addEventListener('click', () => {
-
-    closeMenus();
-
-    if (
-      historyIndex <
-      history.length - 1
-    ) {
-
-      historyIndex++;
-
-      redraw();
-
-    }
-
-  });
-
-
-/* =========================================================
-   LIMPAR TUDO
-========================================================= */
-
-document
-  .getElementById('btn-clear-all')
-  .addEventListener('click', () => {
-
-    closeMenus();
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    saveState();
-
-  });
-
-
-/* =========================================================
-   GRAVAÇÃO DE VÍDEO
-========================================================= */
-
-const btnRecord =
-  document.getElementById('btn-record');
-
-let isRecording = false;
-
-
-btnRecord.addEventListener(
-  'click',
-  async () => {
-
-    closeMenus();
-
-    if (!isRecording) {
-
-      startRecording();
-
-    } else {
-
-      stopRecording();
-
-    }
-
+$("width").addEventListener(
+  "input",
+  event => {
+    lineWidth = Number(event.target.value);
   }
 );
 
+$("eraser").addEventListener(
+  "click",
+  () => {
+    if (tool === "eraser") {
+      tool = "pen";
+      $("toolName").textContent = "Caneta";
+      $("eraser").style.outline = "";
+    } else {
+      tool = "eraser";
+      $("toolName").textContent = "Borracha";
+      $("eraser").style.outline = "2px solid #fff";
+    }
+  }
+);
 
-/* =========================================================
-   INICIAR GRAVAÇÃO
-========================================================= */
+$("undo").addEventListener(
+  "click",
+  () => {
+    if (!strokes.length) return;
 
-async function startRecording() {
+    redoStack.push(strokes.pop());
 
-  recordedChunks = [];
+    redraw();
+  }
+);
 
-  const renderCanvas =
-    document.createElement('canvas');
+$("redo").addEventListener(
+  "click",
+  () => {
+    if (!redoStack.length) return;
 
-  renderCanvas.width =
-    window.innerWidth;
+    strokes.push(redoStack.pop());
 
-  renderCanvas.height =
-    window.innerHeight;
+    redraw();
+  }
+);
 
-  const renderCtx =
-    renderCanvas.getContext('2d');
+$("clear").addEventListener(
+  "click",
+  () => {
+    if (!strokes.length) return;
 
+    strokes = [];
+    redoStack = [];
 
-  function drawFrame() {
+    redraw();
 
-    if (!isRecording) return;
+    toast("Lousa limpa");
+  }
+);
 
-    renderCtx.save();
+function closePanels(except = null) {
+  ["menuPanel", "tools"].forEach(id => {
+    if (id !== except) {
+      const panel = $(id);
 
+      panel.classList.remove("open");
 
-    /*
-       Mantém o espelhamento da câmera frontal.
-    */
-    if (currentFacingMode === 'user') {
+      panel.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+    }
+  });
+}
 
-      renderCtx.translate(
-        renderCanvas.width,
-        0
+$("menuBtn").addEventListener(
+  "click",
+  () => {
+    const panel = $("menuPanel");
+
+    const opening =
+      !panel.classList.contains("open");
+
+    closePanels(
+      opening
+        ? "menuPanel"
+        : null
+    );
+
+    if (opening) {
+      panel.classList.add("open");
+
+      panel.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+    }
+  }
+);
+
+$("settings").addEventListener(
+  "click",
+  () => {
+    const panel = $("tools");
+
+    const opening =
+      !panel.classList.contains("open");
+
+    closePanels(
+      opening
+        ? "tools"
+        : null
+    );
+
+    if (opening) {
+      panel.classList.add("open");
+
+      panel.setAttribute(
+        "aria-hidden",
+        "false"
+      );
+    }
+  }
+);
+
+document.addEventListener(
+  "pointerdown",
+  event => {
+    if (
+      !event.target.closest("#menuPanel") &&
+      !event.target.closest("#menuBtn") &&
+      !event.target.closest("#tools") &&
+      !event.target.closest("#settings")
+    ) {
+      closePanels();
+    }
+  }
+);
+
+async function startCamera() {
+  if (
+    !navigator.mediaDevices?.getUserMedia
+  ) {
+    toast(
+      "Este navegador não oferece acesso à câmera.",
+      4000
+    );
+
+    return false;
+  }
+
+  if (stream) {
+    stream
+      .getTracks()
+      .forEach(
+        track => track.stop()
       );
 
-      renderCtx.scale(
-        -1,
-        1
-      );
+    stream = null;
+  }
 
+  try {
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: {
+            ideal: facingMode
+          },
+
+          width: {
+            ideal: 1920,
+            max: 1920
+          },
+
+          height: {
+            ideal: 1080,
+            max: 1080
+          },
+
+          frameRate: {
+            ideal: 30,
+            max: 30
+          }
+        },
+
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+
+    video.srcObject = stream;
+
+    video.classList.toggle(
+      "mirror",
+      facingMode === "user"
+    );
+
+    await video.play();
+
+    startOverlay.classList.add(
+      "hidden"
+    );
+
+    await requestWakeLock();
+
+    toast(
+      "Câmera ativada"
+    );
+
+    return true;
+
+  } catch (error) {
+    console.error(error);
+
+    let message =
+      "Não foi possível iniciar a câmera.";
+
+    if (
+      error.name === "NotAllowedError"
+    ) {
+      message =
+        "Permita câmera e microfone nas configurações do Safari.";
+
+    } else if (
+      error.name === "NotFoundError"
+    ) {
+      message =
+        "Câmera ou microfone não encontrados.";
+
+    } else if (
+      error.name === "NotReadableError"
+    ) {
+      message =
+        "A câmera está sendo usada por outro aplicativo.";
+
+    } else if (
+      error.name === "SecurityError"
+    ) {
+      message =
+        "O acesso à câmera foi bloqueado por segurança.";
     }
 
-
-    const hRatio =
-      renderCanvas.width /
-      (
-        video.videoWidth ||
-        renderCanvas.width
-      );
-
-
-    const vRatio =
-      renderCanvas.height /
-      (
-        video.videoHeight ||
-        renderCanvas.height
-      );
-
-
-    const ratio =
-      Math.min(
-        hRatio,
-        vRatio
-      );
-
-
-    const centerShiftX =
-      (
-        renderCanvas.width -
-        (
-          video.videoWidth ||
-          renderCanvas.width
-        ) * ratio
-      ) / 2;
-
-
-    const centerShiftY =
-      (
-        renderCanvas.height -
-        (
-          video.videoHeight ||
-          renderCanvas.height
-        ) * ratio
-      ) / 2;
-
-
-    renderCtx.drawImage(
-
-      video,
-
-      0,
-      0,
-
-      video.videoWidth ||
-        renderCanvas.width,
-
-      video.videoHeight ||
-        renderCanvas.height,
-
-      centerShiftX,
-      centerShiftY,
-
-      (
-        video.videoWidth ||
-        renderCanvas.width
-      ) * ratio,
-
-      (
-        video.videoHeight ||
-        renderCanvas.height
-      ) * ratio
-
+    toast(
+      message,
+      5000
     );
 
-
-    renderCtx.restore();
-
-
-    /*
-       Desenho da lousa por cima da câmera.
-    */
-    renderCtx.drawImage(
-      canvas,
-      0,
-      0,
-      renderCanvas.width,
-      renderCanvas.height
-    );
-
-
-    requestAnimationFrame(drawFrame);
-
+    return false;
   }
+}
 
+$("flip").addEventListener(
+  "click",
+  async () => {
+    facingMode =
+      facingMode === "user"
+        ? "environment"
+        : "user";
 
-  isRecording = true;
-
-  drawFrame();
-
-
-  const streamToRecord =
-    renderCanvas.captureStream(30);
-
-
-  if (
-    audioStream &&
-    audioStream.getAudioTracks().length > 0
-  ) {
-
-    streamToRecord.addTrack(
-      audioStream.getAudioTracks()[0]
-    );
-
+    await startCamera();
   }
+);
 
-
-  const mimeType =
-    MediaRecorder.isTypeSupported(
-      'video/mp4;codecs=avc1'
-    )
-      ? 'video/mp4;codecs=avc1'
-      : 'video/webm';
-
-
-  mediaRecorder =
-    new MediaRecorder(
-      streamToRecord,
-      {
-        mimeType
-      }
-    );
-
-
-  mediaRecorder.ondataavailable =
-    e => {
-
-      if (e.data.size > 0) {
-
-        recordedChunks.push(
-          e.data
+async function requestWakeLock() {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock =
+        await navigator.wakeLock.request(
+          "screen"
         );
 
-      }
+      wakeLock.addEventListener?.(
+        "release",
+        () => {
+          wakeLock = null;
+        }
+      );
+    }
+  } catch (error) {
+    console.log(
+      "Wake Lock indisponível"
+    );
+  }
+}
 
+document.addEventListener(
+  "visibilitychange",
+  async () => {
+    if (
+      document.visibilityState ===
+        "visible" &&
+      stream
+    ) {
+      await requestWakeLock();
+    }
+  }
+);
+
+function getSupportedMimeType() {
+  const formats = [
+    'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+    "video/mp4;codecs=avc1",
+    "video/mp4",
+    "video/webm;codecs=vp8,opus",
+    "video/webm"
+  ];
+
+  if (!window.MediaRecorder) {
+    return "";
+  }
+
+  return formats.find(
+    type =>
+      MediaRecorder.isTypeSupported(
+        type
+      )
+  ) || "";
+}
+
+function drawVideoCover(
+  context,
+  videoElement,
+  width,
+  height
+) {
+  const videoWidth =
+    videoElement.videoWidth ||
+    width;
+
+  const videoHeight =
+    videoElement.videoHeight ||
+    height;
+
+  const scale =
+    Math.max(
+      width / videoWidth,
+      height / videoHeight
+    );
+
+  const drawWidth =
+    videoWidth * scale;
+
+  const drawHeight =
+    videoHeight * scale;
+
+  const x =
+    (width - drawWidth) / 2;
+
+  const y =
+    (height - drawHeight) / 2;
+
+  context.drawImage(
+    videoElement,
+    0,
+    0,
+    videoWidth,
+    videoHeight,
+    x,
+    y,
+    drawWidth,
+    drawHeight
+  );
+}
+
+function renderFrame() {
+  if (
+    !recording ||
+    !renderCanvas ||
+    !renderCtx
+  ) {
+    return;
+  }
+
+  const width =
+    renderCanvas.width;
+
+  const height =
+    renderCanvas.height;
+
+  renderCtx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  renderCtx.save();
+
+  if (
+    facingMode === "user"
+  ) {
+    renderCtx.translate(
+      width,
+      0
+    );
+
+    renderCtx.scale(
+      -1,
+      1
+    );
+  }
+
+  drawVideoCover(
+    renderCtx,
+    video,
+    width,
+    height
+  );
+
+  renderCtx.restore();
+
+  renderCtx.save();
+
+  renderCtx.scale(
+    width /
+      Math.max(
+        1,
+        window.innerWidth
+      ),
+
+    height /
+      Math.max(
+        1,
+        window.innerHeight
+      )
+  );
+
+  for (
+    const stroke of strokes
+  ) {
+    drawStroke(
+      renderCtx,
+      stroke
+    );
+  }
+
+  renderCtx.restore();
+
+  animationId =
+    requestAnimationFrame(
+      renderFrame
+    );
+}
+
+async function startRecording() {
+  if (!stream) {
+    toast(
+      "Ative a câmera primeiro."
+    );
+
+    return;
+  }
+
+  if (
+    !window.MediaRecorder ||
+    !HTMLCanvasElement
+      .prototype
+      .captureStream
+  ) {
+    toast(
+      "Seu navegador não suporta gravação integrada.",
+      4000
+    );
+
+    return;
+  }
+
+  const mime =
+    getSupportedMimeType();
+
+  if (!mime) {
+    toast(
+      "Formato de vídeo não suportado neste navegador.",
+      4000
+    );
+
+    return;
+  }
+
+  chunks = [];
+
+  renderCanvas =
+    document.createElement(
+      "canvas"
+    );
+
+  const width = 1920;
+
+  const aspect =
+    window.innerWidth /
+    Math.max(
+      1,
+      window.innerHeight
+    );
+
+  renderCanvas.width =
+    width;
+
+  renderCanvas.height =
+    Math.max(
+      1,
+      Math.round(
+        width / aspect
+      )
+    );
+
+  renderCtx =
+    renderCanvas.getContext(
+      "2d"
+    );
+
+  if (!renderCtx) {
+    toast(
+      "Não foi possível preparar a gravação.",
+      4000
+    );
+
+    return;
+  }
+
+  recording = true;
+
+  renderFrame();
+
+  const outputStream =
+    renderCanvas.captureStream(
+      30
+    );
+
+  const audioTrack =
+    stream.getAudioTracks()[0];
+
+  if (audioTrack) {
+    outputStream.addTrack(
+      audioTrack
+    );
+  }
+
+  try {
+    mediaRecorder =
+      new MediaRecorder(
+        outputStream,
+        {
+          mimeType: mime,
+          videoBitsPerSecond:
+            6000000
+        }
+      );
+
+  } catch (error) {
+    console.error(error);
+
+    recording = false;
+
+    cancelAnimationFrame(
+      animationId
+    );
+
+    toast(
+      "Não foi possível iniciar a gravação.",
+      4000
+    );
+
+    return;
+  }
+
+  mediaRecorder.ondataavailable =
+    event => {
+      if (event.data?.size) {
+        chunks.push(
+          event.data
+        );
+      }
     };
 
+  mediaRecorder.onerror =
+    event => {
+      console.error(event);
+
+      toast(
+        "Erro durante a gravação.",
+        4000
+      );
+    };
 
   mediaRecorder.onstop =
-    exportVideo;
+    exportRecording;
 
+  mediaRecorder.start(1000);
 
-  mediaRecorder.start();
-
-
-  btnRecord.classList.add(
-    'recording'
+  recordBtn.classList.add(
+    "recording"
   );
 
-
-  btnRecord.innerHTML =
-    svgStop;
-
-
-  btnRecord.title =
-    "Parar Gravação";
-
+  toast(
+    "Gravando…"
+  );
 }
-
-
-/* =========================================================
-   PARAR GRAVAÇÃO
-========================================================= */
 
 function stopRecording() {
+  if (!mediaRecorder) return;
 
-  isRecording = false;
+  recording = false;
 
-  mediaRecorder.stop();
-
-  btnRecord.classList.remove(
-    'recording'
+  cancelAnimationFrame(
+    animationId
   );
 
-  btnRecord.innerHTML =
-    svgRecord;
+  animationId = null;
 
-  btnRecord.title =
-    "Gravar";
+  if (
+    mediaRecorder.state !==
+    "inactive"
+  ) {
+    mediaRecorder.stop();
+  }
 
+  recordBtn.classList.remove(
+    "recording"
+  );
+
+  toast(
+    "Processando vídeo…",
+    3000
+  );
 }
 
+async function exportRecording() {
+  const type =
+    mediaRecorder?.mimeType ||
+    "video/mp4";
 
-/* =========================================================
-   EXPORTAR VÍDEO
-========================================================= */
-
-async function exportVideo() {
+  const extension =
+    type.includes("webm")
+      ? "webm"
+      : "mp4";
 
   const blob =
     new Blob(
-      recordedChunks,
+      chunks,
       {
-        type:
-          mediaRecorder.mimeType
+        type
       }
     );
 
+  if (!blob.size) {
+    toast(
+      "A gravação ficou vazia.",
+      4000
+    );
+
+    return;
+  }
+
+  const filename =
+    `lousa-cam-${new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")}.${extension}`;
 
   const file =
     new File(
       [blob],
-      'lousa-cam.mp4',
+      filename,
       {
-        type: blob.type
+        type
       }
     );
-
 
   if (
     navigator.canShare &&
@@ -937,44 +881,135 @@ async function exportVideo() {
       files: [file]
     })
   ) {
-
     try {
-
       await navigator.share({
-
         files: [file],
-
-        title:
-          'Lousa Cam',
-
-        text:
-          'Gravado via Lousa Cam PWA'
-
+        title: "Lousa Cam",
+        text: "Vídeo gravado no Lousa Cam"
       });
 
-    } catch (e) {
-
-      console.log(
-        'Compartilhamento cancelado.'
+      toast(
+        "Vídeo compartilhado."
       );
 
+      cleanupRecording();
+
+      return;
+
+    } catch (error) {
+
+      if (
+        error.name ===
+        "AbortError"
+      ) {
+        toast(
+          "Compartilhamento cancelado."
+        );
+
+        cleanupRecording();
+
+        return;
+      }
     }
-
-  } else {
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const a =
-      document.createElement('a');
-
-    a.href = url;
-
-    a.download =
-      'lousa-cam.mp4';
-
-    a.click();
-
   }
 
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const link =
+    document.createElement(
+      "a"
+    );
+
+  link.href = url;
+
+  link.download =
+    filename;
+
+  link.rel =
+    "noopener";
+
+  document.body.appendChild(
+    link
+  );
+
+  link.click();
+
+  link.remove();
+
+  setTimeout(
+    () =>
+      URL.revokeObjectURL(
+        url
+      ),
+    15000
+  );
+
+  toast(
+    `Vídeo salvo como ${extension.toUpperCase()}.`,
+    3500
+  );
+
+  cleanupRecording();
 }
+
+function cleanupRecording() {
+  if (renderCanvas) {
+    renderCanvas.width = 1;
+    renderCanvas.height = 1;
+  }
+
+  renderCanvas = null;
+  renderCtx = null;
+  mediaRecorder = null;
+  chunks = [];
+}
+
+recordBtn.addEventListener(
+  "click",
+  () => {
+    if (recording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }
+);
+
+startBtn.addEventListener(
+  "click",
+  startCamera
+);
+
+window.addEventListener(
+  "resize",
+  fitCanvas
+);
+
+window.addEventListener(
+  "orientationchange",
+  () => {
+    setTimeout(
+      fitCanvas,
+      300
+    );
+  }
+);
+
+if (
+  "serviceWorker" in navigator
+) {
+  window.addEventListener(
+    "load",
+    () => {
+      navigator.serviceWorker
+        .register("./sw.js")
+        .catch(console.error);
+    }
+  );
+}
+
+fitCanvas();
+```
