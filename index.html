@@ -1,1224 +1,326 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,
-  initial-scale=1.0,
-  maximum-scale=1.0,
-  user-scalable=no,
-  viewport-fit=cover"
->
-
-<meta name="theme-color" content="#000000">
-
-<meta
-  name="apple-mobile-web-app-capable"
-  content="yes"
->
-
-<meta
-  name="apple-mobile-web-app-status-bar-style"
-  content="black"
->
-
-<meta
-  name="apple-mobile-web-app-title"
-  content="Lousa Cam"
->
-
-<link
-  rel="manifest"
-  href="./manifest.json"
->
-
-<title>Lousa Cam 2.0</title>
-
-
-<style>
-
-/* =====================================================
-   RESET
-===================================================== */
-
-* {
-
-  box-sizing: border-box;
-
-  margin: 0;
-  padding: 0;
-
-  user-select: none;
-  -webkit-user-select: none;
-
-  -webkit-touch-callout: none;
-
-}
-
-
-html,
-body {
-
-  width: 100%;
-  height: 100%;
-
-  overflow: hidden;
-
-  background: #000;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-
-}
-
-
-/* =====================================================
-   APLICAÇÃO
-===================================================== */
-
-#app-container {
-
-  position: relative;
-
-  width: 100vw;
-  height: 100vh;
-
-  height: 100dvh;
-
-  overflow: hidden;
-
-  background: #000;
-
-}
-
-
-/* =====================================================
-   CÂMERA
-===================================================== */
-
-#video {
-
-  position: absolute;
-
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-
-  transform: scaleX(-1);
-
-  z-index: 1;
-
-}
-
-
-#video.rear-camera {
-
-  transform: scaleX(1);
-
-}
-
-
-/* =====================================================
-   CANVAS
-===================================================== */
-
-#canvas {
-
-  position: absolute;
-
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  z-index: 2;
-
-  touch-action: none;
-
-}
-
-
-/* =====================================================
-   BOTÕES
-===================================================== */
-
-.floating-btn {
-
-  width: 44px;
-  height: 44px;
-
-  border-radius: 50%;
-
-  border: 1px solid
-    rgba(255,255,255,.28);
-
-  background:
-    rgba(20,20,20,.58);
-
-  backdrop-filter: blur(12px);
-
-  -webkit-backdrop-filter: blur(12px);
-
-  color: #fff;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-
-  outline: none;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
-  transition:
-    transform .15s ease,
-    background .15s ease;
-
-}
-
-
-.floating-btn:active {
-
-  transform: scale(.91);
-
-  background:
-    rgba(255,255,255,.28);
-
-}
-
-
-.floating-btn svg {
-
-  width: 22px;
-  height: 22px;
-
-  display: block;
-
-  fill: currentColor;
-
-}
-
-
-/* =====================================================
-   BARRA SUPERIOR
-===================================================== */
-
-#top-bar {
-
-  position: absolute;
-
-  top:
-    calc(
-      env(safe-area-inset-top)
-      + 12px
-    );
-
-  left: 12px;
-  right: 12px;
-
-  z-index: 10;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-}
-
-
-/* =====================================================
-   MENU DE FERRAMENTAS
-===================================================== */
-
-#toolbarWrapper {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  transition:
-    opacity .25s ease,
-    transform .25s ease;
-
-}
-
-
-#toolbarWrapper.collapsed {
-
-  opacity: 0;
-
-  pointer-events: none;
-
-  transform:
-    translateX(-12px);
-
-}
-
-
-/* =====================================================
-   PAINEL DE CANETAS
-===================================================== */
-
-#penSideWrapper {
-
-  position: absolute;
-
-  right: 12px;
-
-  top:
-    calc(
-      env(safe-area-inset-top)
-      + 70px
-    );
-
-  z-index: 10;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 12px;
-
-  padding: 12px;
-
-  border-radius: 28px;
-
-  background:
-    rgba(0,0,0,.58);
-
-  border:
-    1px solid
-    rgba(255,255,255,.20);
-
-  backdrop-filter: blur(14px);
-
-  -webkit-backdrop-filter: blur(14px);
-
-  transition:
-    opacity .25s ease,
-    transform .25s ease;
-
-}
-
-
-#penSideWrapper.collapsed {
-
-  opacity: 0;
-
-  pointer-events: none;
-
-  transform:
-    translateY(-12px);
-
-}
-
-
-/* =====================================================
-   CORES
-===================================================== */
-
-.color-dot {
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: 50%;
-
-  border:
-    2px solid
-    transparent;
-
-  cursor: pointer;
-
-  transition:
-    transform .15s ease;
-
-}
-
-
-.color-dot.active {
-
-  border-color: #fff;
-
-  transform:
-    scale(1.16);
-
-}
-
-
-/* =====================================================
-   CONTROLE DE ESPESSURA
-===================================================== */
-
-.slider-vertical {
-
-  width: 80px;
-
-  accent-color: #fff;
-
-  transform:
-    rotate(-90deg);
-
-  margin:
-    30px 0;
-
-}
-
-
-.slider-label {
-
-  color: #fff;
-
-  font-size: 10px;
-
-  font-weight: 700;
-
-  text-transform: uppercase;
-
-}
-
-
-/* =====================================================
-   GRAVAÇÃO
-===================================================== */
-
-#btn-record.recording {
-
-  background:
-    rgba(255,59,48,.85);
-
-  animation:
-    pulse 1.5s infinite;
-
-}
-
-
-@keyframes pulse {
-
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.08);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-
-}
-
-
-/* =====================================================
-   TELA DE ATIVAÇÃO
-===================================================== */
-
-#startOverlay {
-
-  position: fixed;
-
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  min-height: 100dvh;
-
-  z-index: 100;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding:
-    calc(
-      env(safe-area-inset-top)
-      + 24px
-    )
-    20px
-    calc(
-      env(safe-area-inset-bottom)
-      + 24px
-    );
-
-  background:
-    #000;
-
-  color: #fff;
-
-  text-align: center;
-
-}
-
-
-#startOverlay.hidden {
-
-  display: none;
-
-}
-
-
-/* =====================================================
-   CARTÃO INICIAL
-===================================================== */
-
-#startCard {
-
-  position: relative;
-
-  width: min(
-    420px,
-    100%
-  );
-
-  max-width: 420px;
-
-  margin: 0 auto;
-
-  padding: 10px;
-
-}
-
-
-/* =====================================================
-   LOGO
-===================================================== */
-
-#startLogo {
-
-  width: 88px;
-  height: 88px;
-
-  margin:
-    0 auto 20px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 22px;
-
-  overflow: hidden;
-
-  background: #111;
-
-  border:
-    1px solid
-    rgba(255,255,255,.16);
-
-  box-shadow:
-    0 14px 40px
-    rgba(0,0,0,.55);
-
-}
-
-
-#startLogo img {
-
-  width: 100%;
-  height: 100%;
-
-  display: block;
-
-  object-fit: contain;
-
-}
-
-
-/* =====================================================
-   TÍTULO
-===================================================== */
-
-#startCard h1 {
-
-  color: #fff;
-
-  font-size: 29px;
-
-  line-height: 1.15;
-
-  font-weight: 700;
-
-  margin-bottom: 12px;
-
-}
-
-
-/* =====================================================
-   TEXTO
-===================================================== */
-
-#startCard p {
-
-  color:
-    rgba(255,255,255,.76);
-
-  font-size: 16px;
-
-  line-height: 1.5;
-
-  margin-bottom: 24px;
-
-}
-
-
-/* =====================================================
-   BOTÃO DE ATIVAÇÃO
-===================================================== */
-
-#startBtn {
-
-  width: 100%;
-
-  max-width: 340px;
-
-  min-height: 54px;
-
-  padding:
-    0 24px;
-
-  border: none;
-
-  border-radius: 28px;
-
-  background:
-    #ffffff;
-
-  color: #000;
-
-  font-size: 16px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  -webkit-tap-highlight-color:
-    transparent;
-
-  box-shadow:
-    0 8px 30px
-    rgba(255,255,255,.12);
-
-}
-
-
-#startBtn:active {
-
-  transform: scale(.97);
-
-}
-
-
-/* =====================================================
-   AVISO
-===================================================== */
-
-#permissionHint {
-
-  margin-top: 14px;
-
-  color:
-    rgba(255,255,255,.52);
-
-  font-size: 12px;
-
-  line-height: 1.4;
-
-}
-
-
-/* =====================================================
-   ERRO
-===================================================== */
-
-#cameraError {
-
-  display: none;
-
-  margin-top: 14px;
-
-  padding: 10px;
-
-  border-radius: 10px;
-
-  background:
-    rgba(255,59,48,.12);
-
-  color:
-    rgba(255,255,255,.78);
-
-  font-size: 12px;
-
-}
-
-
-/* =====================================================
-   TELAS PEQUENAS
-===================================================== */
-
-@media (max-height: 700px) {
-
-  #startLogo {
-
-    width: 66px;
-    height: 66px;
-
-    border-radius: 17px;
-
-    margin-bottom: 12px;
-
-  }
-
-
-  #startCard h1 {
-
-    font-size: 24px;
-
-    margin-bottom: 8px;
-
-  }
-
-
-  #startCard p {
-
-    font-size: 14px;
-
-    margin-bottom: 16px;
-
-  }
-
-
-  #startBtn {
-
-    min-height: 48px;
-
-    font-size: 15px;
-
-  }
-
-
-  #permissionHint {
-
-    margin-top: 9px;
-
-  }
-
-}
-
-
-/* =====================================================
-   RETRATO
-===================================================== */
-
-@media (orientation: portrait) {
-
-  #top-bar {
-
-    gap: 6px;
-
-  }
-
-  .floating-btn {
-
-    width: 42px;
-    height: 42px;
-
-  }
-
-}
-
-
-/* =====================================================
-   ACESSIBILIDADE
-===================================================== */
-
-button {
-
-  font-family: inherit;
-
-}
-
-</style>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lousa Cam">
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+  <title>Lousa Cam 2.0</title>
+
+  <style>
+    :root { --glass: rgba(18,18,20,.68); }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body { overscroll-behavior: none; }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #video, #canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #video {
+      z-index: 1;
+      object-fit: cover;
+      background: #000;
+    }
+
+    #video.mirror { transform: scaleX(-1); }
+
+    #canvas {
+      z-index: 2;
+      touch-action: none;
+    }
+
+    #ui {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .bar {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    #top {
+      left: 12px;
+      right: 12px;
+      top: max(12px, env(safe-area-inset-top));
+      justify-content: space-between;
+    }
+
+    #left, #right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #bottom {
+      left: 12px;
+      right: 12px;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      justify-content: center;
+    }
+
+    button {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.24);
+      background: var(--glass);
+      color: #fff;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    button:active { transform: scale(.94); }
+    button:disabled { opacity: .38; }
+
+    #record {
+      width: 58px;
+      height: 58px;
+      border: 2px solid rgba(255,255,255,.8);
+    }
+
+    #record span {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #ff3b30;
+    }
+
+    #record.recording span {
+      border-radius: 5px;
+      background: #fff;
+    }
+
+    #status {
+      position: absolute;
+      left: 50%;
+      top: max(62px, calc(env(safe-area-inset-top) + 50px));
+      transform: translateX(-50%);
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: rgba(0,0,0,.55);
+      color: #fff;
+      font-size: 12px;
+      opacity: 0;
+      transition: .2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #status.show { opacity: 1; }
+
+    .panel {
+      position: absolute;
+      top: 66px;
+      right: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(15,15,17,.86);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      display: none;
+      pointer-events: auto;
+    }
+
+    .panel.open {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .colors { display: flex; gap: 10px; }
+
+    .color {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+
+    .color.active {
+      border-color: #fff;
+      transform: scale(1.12);
+    }
+
+    input[type=range] {
+      width: 130px;
+      accent-color: #fff;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    #startOverlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      background: rgba(0,0,0,.86);
+      color: #fff;
+      padding: 24px;
+      text-align: center;
+    }
+
+    #startOverlay.hidden { display: none; }
+
+    #startCard { max-width: 420px; }
+
+    #startCard h1 {
+      font-size: 28px;
+      margin: 0 0 8px;
+    }
+
+    #startCard p {
+      opacity: .78;
+      line-height: 1.45;
+      margin: 0 0 20px;
+    }
+
+    #startBtn {
+      width: auto;
+      height: 48px;
+      border-radius: 24px;
+      padding: 0 22px;
+      font-size: 16px;
+    }
+
+    #permissionHint {
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: .65;
+    }
+
+    @media (orientation: portrait) {
+      #startCard h1 { font-size: 24px; }
+    }
+  </style>
 </head>
 
-
 <body>
+<div id="app">
 
-
-<div id="app-container">
-
-
-  <!-- =================================================
-       CÂMERA
-  ================================================== -->
-
-  <video
-    id="video"
-    autoplay
-    playsinline
-    muted
-  ></video>
-
-
-  <!-- =================================================
-       ÁREA DE DESENHO
-  ================================================== -->
-
+  <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 
+  <div id="ui">
 
-  <!-- =================================================
-       BARRA SUPERIOR
-  ================================================== -->
+    <div id="top" class="bar">
+      <div id="left">
+        <button id="menuBtn" aria-label="Menu" title="Menu">☰</button>
+        <button id="undo" aria-label="Desfazer" title="Desfazer">↶</button>
+        <button id="redo" aria-label="Refazer" title="Refazer">↷</button>
+        <button id="clear" aria-label="Limpar" title="Limpar">🗑</button>
+      </div>
 
-  <div id="top-bar">
-
-
-    <!-- MENU -->
-
-    <button
-      id="btn-toggle-menu"
-      class="floating-btn"
-      title="Menu"
-      aria-label="Abrir menu"
-    >
-
-      <svg viewBox="0 0 24 24">
-
-        <path
-          d="
-          M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z
-          "
-        />
-
-      </svg>
-
-    </button>
-
-
-    <!-- FERRAMENTAS -->
-
-    <div
-      id="toolbarWrapper"
-      class="collapsed"
-    >
-
-
-      <!-- DESFAZER -->
-
-      <button
-        id="btn-undo"
-        class="floating-btn"
-        title="Desfazer"
-        aria-label="Desfazer"
-      >
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="
-            M12.5 8
-            c-2.65 0-5.05.99-6.9 2.6
-            L2 7v9h9l-3.62-3.62
-            c1.39-1.16 3.16-1.88
-            5.12-1.88
-            3.54 0 6.55 2.31
-            7.6 5.5
-            l2.37-.78
-            C21.08 11.03
-            17.15 8
-            12.5 8z
-            "
-          />
-
-        </svg>
-
-      </button>
-
-
-      <!-- REFAZER -->
-
-      <button
-        id="btn-redo"
-        class="floating-btn"
-        title="Refazer"
-        aria-label="Refazer"
-      >
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="
-            M18.4 10.6
-            C16.55 8.99
-            14.15 8
-            11.5 8
-            c-4.65 0-8.58 3.03
-            -9.96 7.22
-            l2.37.78
-            c1.05-3.19
-            4.06-5.5
-            7.6-5.5
-            1.96 0 3.73.72
-            5.12 1.88
-            L13 16h9V7
-            l-3.6 3.6z
-            "
-          />
-
-        </svg>
-
-      </button>
-
-
-      <!-- LIMPAR -->
-
-      <button
-        id="btn-clear-all"
-        class="floating-btn"
-        title="Limpar tudo"
-        aria-label="Limpar tudo"
-      >
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="
-            M6 19
-            c0 1.1.9 2 2 2h8
-            c1.1 0 2-.9 2-2V7H6v12z
-            M19 4h-3.5l-1-1h-5L8.5 4H5v2h14V4z
-            "
-          />
-
-        </svg>
-
-      </button>
-
-
-      <!-- =================================================
-           TROCA DE CÂMERA
-           ÍCONE PROFISSIONAL
-      ================================================== -->
-
-      <button
-        id="btn-flip"
-        class="floating-btn"
-        title="Trocar câmera"
-        aria-label="Trocar câmera"
-      >
-
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-
-          <path
-            d="
-            M7.5 6.5
-            A7 7 0 0 1 18 8.8
-            V6h2v7h-7v-2h3.55
-            A5 5 0 0 0 8.5 8.1
-            L7.5 6.5Z
-            "
-          />
-
-          <path
-            d="
-            M16.5 17.5
-            A7 7 0 0 1 6 15.2
-            V18H4v-7h7v2H7.45
-            A5 5 0 0 0 15.5 15.9
-            l1 1.6Z
-            "
-          />
-
-          <path
-            d="
-            M9 8.5
-            h6
-            a2 2 0 0 1 2 2v3
-            a2 2 0 0 1-2 2H9
-            a2 2 0 0 1-2-2v-3
-            a2 2 0 0 1 2-2Z
-            "
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          />
-
-          <circle
-            cx="12"
-            cy="12"
-            r="1.8"
-            fill="currentColor"
-          />
-
-        </svg>
-
-      </button>
-
-
+      <div id="right">
+        <button id="flip" aria-label="Trocar câmera" title="Trocar câmera">🔄</button>
+        <button id="settings" aria-label="Ferramentas" title="Ferramentas">✎</button>
+      </div>
     </div>
 
-
-    <!-- LADO DIREITO -->
-
-    <div
-      style="
-        margin-left:auto;
-        display:flex;
-        gap:8px;
-      "
-    >
-
-
-      <!-- GRAVAÇÃO -->
-
-      <button
-        id="btn-record"
-        class="floating-btn"
-        title="Gravar vídeo"
-        aria-label="Gravar vídeo"
-      >
-
-        <svg viewBox="0 0 24 24">
-
-          <circle
-            cx="12"
-            cy="12"
-            r="8"
-            fill="#ff3b30"
-          />
-
-        </svg>
-
-      </button>
-
-
-      <!-- CANETA -->
-
-      <button
-        id="btn-toggle-pen"
-        class="floating-btn"
-        title="Opções de caneta"
-        aria-label="Opções de caneta"
-      >
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="
-            M3 17.25V21h3.75
-            L17.81 9.94
-            l-3.75-3.75L3 17.25z
-            M20.71 7.04
-            c.39-.39.39-1.02 0-1.41
-            l-2.34-2.34
-            c-.39-.39-1.02-.39-1.41 0
-            l-1.83 1.83
-            3.75 3.75
-            1.83-1.83z
-            "
-          />
-
-        </svg>
-
-      </button>
-
-
+    <div id="menuPanel" class="panel" aria-hidden="true">
+      <div class="row">
+        <strong>Lousa Cam 2.0</strong>
+      </div>
+      <div class="row">
+        <span>Desenhe diretamente sobre a imagem.</span>
+      </div>
     </div>
 
+    <div id="tools" class="panel" aria-hidden="true">
+      <div class="colors">
+        <button class="color active" style="background:#fff" data-color="#fff" aria-label="Branco"></button>
+        <button class="color" style="background:#ff3b30" data-color="#ff3b30" aria-label="Vermelho"></button>
+        <button class="color" style="background:#ffcc00" data-color="#ffcc00" aria-label="Amarelo"></button>
+        <button class="color" style="background:#34c759" data-color="#34c759" aria-label="Verde"></button>
+        <button class="color" style="background:#0a84ff" data-color="#0a84ff" aria-label="Azul"></button>
+      </div>
+
+      <div class="row">
+        Espessura
+        <input id="width" type="range" min="2" max="32" value="5">
+      </div>
+
+      <div class="row">
+        <button id="eraser" aria-label="Borracha" title="Borracha" style="width:40px;height:40px">⌫</button>
+        <span id="toolName">Caneta</span>
+      </div>
+    </div>
+
+    <div id="bottom" class="bar">
+      <button id="record" aria-label="Gravar" title="Gravar">
+        <span></span>
+      </button>
+    </div>
+
+    <div id="status"></div>
   </div>
-
-
-  <!-- =================================================
-       PAINEL DE CANETAS
-  ================================================== -->
-
-  <div
-    id="penSideWrapper"
-    class="collapsed"
-  >
-
-
-    <div
-      class="color-dot active"
-      style="background-color:#ffffff"
-      data-color="#ffffff"
-    ></div>
-
-
-    <div
-      class="color-dot"
-      style="background-color:#ff3b30"
-      data-color="#ff3b30"
-    ></div>
-
-
-    <div
-      class="color-dot"
-      style="background-color:#ffcc00"
-      data-color="#ffcc00"
-    ></div>
-
-
-    <div
-      class="color-dot"
-      style="background-color:#34c759"
-      data-color="#34c759"
-    ></div>
-
-
-    <div
-      class="color-dot"
-      style="background-color:#007aff"
-      data-color="#007aff"
-    ></div>
-
-
-    <span class="slider-label">
-      Espessura
-    </span>
-
-
-    <input
-      type="range"
-      id="lineWidth"
-      class="slider-vertical"
-      min="2"
-      max="30"
-      value="4"
-    >
-
-
-    <!-- BORRACHA -->
-
-    <button
-      id="btn-eraser"
-      class="floating-btn"
-      title="Borracha"
-      aria-label="Borracha"
-    >
-
-      <svg viewBox="0 0 24 24">
-
-        <path
-          d="
-          M15.14 3
-          c-.4 0-.8.15-1.11.45
-          l-10 10
-          c-.62.62-.62 1.62 0 2.24
-          l5.28 5.28
-          c.3.3.71.45 1.11.45h7.58v-2h-5.17
-          l8.28-8.28
-          c.62-.62.62-1.62 0-2.24
-          l-4.86-4.86
-          c-.3-.3-.71-.45-1.11-.45z
-          m-1.11 3.27L17.73 10
-          12 15.73 8.27 12l5.76-5.73z
-          "
-        />
-
-      </svg>
-
-    </button>
-
-
-  </div>
-
-
-  <!-- =================================================
-       TELA INICIAL
-  ================================================== -->
 
   <div id="startOverlay">
-
-
     <div id="startCard">
-
-
-      <!-- LOGO -->
-
-      <div id="startLogo">
-
-        <img
-          src="./icons/logo.png"
-          alt="Lousa Cam"
-        >
-
-      </div>
-
-
-      <h1>
-        Lousa Cam 2.0
-      </h1>
-
-
+      <h1>LOUSA CAM 2.0</h1>
       <p>
-        Ative a câmera e o microfone
-        para utilizar a lousa digital
-        e registrar suas aulas.
+        Ative a câmera e o microfone para usar a lousa sobre sua imagem.
+        Para melhor resultado no iPhone, use o aparelho na horizontal.
       </p>
-
-
-      <button
-        id="startBtn"
-        type="button"
-      >
-        Ativar câmera e microfone
-      </button>
-
-
-      <div id="permissionHint">
-
-        O navegador solicitará
-        autorização para câmera
-        e microfone.
-
-      </div>
-
-
-      <div id="cameraError"></div>
-
-
+      <button id="startBtn">Ativar câmera e microfone</button>
+      <div id="permissionHint">O Safari solicitará as permissões.</div>
     </div>
-
   </div>
-
 
 </div>
 
-
 <script src="./app.js"></script>
-
-
 </body>
-
 </html>
