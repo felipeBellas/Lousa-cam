@@ -1,4 +1,3 @@
-```javascript
 const $ = id => document.getElementById(id);
 
 const video = $("video");
@@ -19,6 +18,7 @@ let lineWidth = 5;
 let strokes = [];
 let redoStack = [];
 let currentStroke = null;
+
 let mediaRecorder = null;
 let chunks = [];
 let recording = false;
@@ -36,6 +36,7 @@ function toast(message, duration = 2200) {
 
 function fitCanvas() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
   canvas.width = Math.round(window.innerWidth * dpr);
   canvas.height = Math.round(window.innerHeight * dpr);
 
@@ -56,6 +57,7 @@ function redraw() {
 
 function drawStroke(c, stroke) {
   if (!stroke.points.length) return;
+
   c.save();
   c.lineCap = "round";
   c.lineJoin = "round";
@@ -100,9 +102,7 @@ function beginDraw(event) {
   drawing = true;
 
   if (canvas.setPointerCapture) {
-    try {
-      canvas.setPointerCapture(event.pointerId);
-    } catch (_) {}
+    try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
   }
 
   const point = getPointerPosition(event);
@@ -115,7 +115,6 @@ function beginDraw(event) {
   };
 
   redoStack = [];
-
   drawStroke(ctx, currentStroke);
 }
 
@@ -136,7 +135,6 @@ function moveDraw(event) {
   if (distance < 0.8) return;
 
   points.push(point);
-
   drawStroke(ctx, currentStroke);
 }
 
@@ -160,36 +158,13 @@ function endDraw(event) {
   }
 }
 
-canvas.addEventListener(
-  "pointerdown",
-  beginDraw,
-  { passive: false }
-);
-
-canvas.addEventListener(
-  "pointermove",
-  moveDraw,
-  { passive: false }
-);
-
-canvas.addEventListener(
-  "pointerup",
-  endDraw
-);
-
-canvas.addEventListener(
-  "pointercancel",
-  endDraw
-);
-
-canvas.addEventListener(
-  "pointerleave",
-  event => {
-    if (event.pointerType === "mouse" && drawing) {
-      endDraw(event);
-    }
-  }
-);
+canvas.addEventListener("pointerdown", beginDraw, { passive: false });
+canvas.addEventListener("pointermove", moveDraw, { passive: false });
+canvas.addEventListener("pointerup", endDraw);
+canvas.addEventListener("pointercancel", endDraw);
+canvas.addEventListener("pointerleave", event => {
+  if (event.pointerType === "mouse" && drawing) endDraw(event);
+});
 
 document.querySelectorAll(".color").forEach(button => {
   button.addEventListener("click", () => {
@@ -201,309 +176,175 @@ document.querySelectorAll(".color").forEach(button => {
     });
 
     button.classList.add("active");
-
     $("toolName").textContent = "Caneta";
     $("eraser").style.outline = "";
   });
 });
 
-$("width").addEventListener(
-  "input",
-  event => {
-    lineWidth = Number(event.target.value);
+$("width").addEventListener("input", event => {
+  lineWidth = Number(event.target.value);
+});
+
+$("eraser").addEventListener("click", () => {
+  if (tool === "eraser") {
+    tool = "pen";
+    $("toolName").textContent = "Caneta";
+    $("eraser").style.outline = "";
+  } else {
+    tool = "eraser";
+    $("toolName").textContent = "Borracha";
+    $("eraser").style.outline = "2px solid #fff";
   }
-);
+});
 
-$("eraser").addEventListener(
-  "click",
-  () => {
-    if (tool === "eraser") {
-      tool = "pen";
-      $("toolName").textContent = "Caneta";
-      $("eraser").style.outline = "";
-    } else {
-      tool = "eraser";
-      $("toolName").textContent = "Borracha";
-      $("eraser").style.outline = "2px solid #fff";
-    }
-  }
-);
+$("undo").addEventListener("click", () => {
+  if (!strokes.length) return;
 
-$("undo").addEventListener(
-  "click",
-  () => {
-    if (!strokes.length) return;
+  redoStack.push(strokes.pop());
+  redraw();
+});
 
-    redoStack.push(strokes.pop());
+$("redo").addEventListener("click", () => {
+  if (!redoStack.length) return;
 
-    redraw();
-  }
-);
+  strokes.push(redoStack.pop());
+  redraw();
+});
 
-$("redo").addEventListener(
-  "click",
-  () => {
-    if (!redoStack.length) return;
+$("clear").addEventListener("click", () => {
+  if (!strokes.length) return;
 
-    strokes.push(redoStack.pop());
-
-    redraw();
-  }
-);
-
-$("clear").addEventListener(
-  "click",
-  () => {
-    if (!strokes.length) return;
-
-    strokes = [];
-    redoStack = [];
-
-    redraw();
-
-    toast("Lousa limpa");
-  }
-);
+  strokes = [];
+  redoStack = [];
+  redraw();
+  toast("Lousa limpa");
+});
 
 function closePanels(except = null) {
   ["menuPanel", "tools"].forEach(id => {
     if (id !== except) {
       const panel = $(id);
-
       panel.classList.remove("open");
-
-      panel.setAttribute(
-        "aria-hidden",
-        "true"
-      );
+      panel.setAttribute("aria-hidden", "true");
     }
   });
 }
 
-$("menuBtn").addEventListener(
-  "click",
-  () => {
-    const panel = $("menuPanel");
+$("menuBtn").addEventListener("click", () => {
+  const panel = $("menuPanel");
+  const opening = !panel.classList.contains("open");
 
-    const opening =
-      !panel.classList.contains("open");
+  closePanels(opening ? "menuPanel" : null);
 
-    closePanels(
-      opening
-        ? "menuPanel"
-        : null
-    );
-
-    if (opening) {
-      panel.classList.add("open");
-
-      panel.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-    }
+  if (opening) {
+    panel.classList.add("open");
+    panel.setAttribute("aria-hidden", "false");
   }
-);
+});
 
-$("settings").addEventListener(
-  "click",
-  () => {
-    const panel = $("tools");
+$("settings").addEventListener("click", () => {
+  const panel = $("tools");
+  const opening = !panel.classList.contains("open");
 
-    const opening =
-      !panel.classList.contains("open");
+  closePanels(opening ? "tools" : null);
 
-    closePanels(
-      opening
-        ? "tools"
-        : null
-    );
-
-    if (opening) {
-      panel.classList.add("open");
-
-      panel.setAttribute(
-        "aria-hidden",
-        "false"
-      );
-    }
+  if (opening) {
+    panel.classList.add("open");
+    panel.setAttribute("aria-hidden", "false");
   }
-);
+});
 
-document.addEventListener(
-  "pointerdown",
-  event => {
-    if (
-      !event.target.closest("#menuPanel") &&
-      !event.target.closest("#menuBtn") &&
-      !event.target.closest("#tools") &&
-      !event.target.closest("#settings")
-    ) {
-      closePanels();
-    }
+document.addEventListener("pointerdown", event => {
+  if (
+    !event.target.closest("#menuPanel") &&
+    !event.target.closest("#menuBtn") &&
+    !event.target.closest("#tools") &&
+    !event.target.closest("#settings")
+  ) {
+    closePanels();
   }
-);
+});
 
 async function startCamera() {
-  if (
-    !navigator.mediaDevices?.getUserMedia
-  ) {
-    toast(
-      "Este navegador não oferece acesso à câmera.",
-      4000
-    );
-
+  if (!navigator.mediaDevices?.getUserMedia) {
+    toast("Este navegador não oferece acesso à câmera.", 4000);
     return false;
   }
 
   if (stream) {
-    stream
-      .getTracks()
-      .forEach(
-        track => track.stop()
-      );
-
+    stream.getTracks().forEach(track => track.stop());
     stream = null;
   }
 
   try {
-    stream =
-      await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: {
-            ideal: facingMode
-          },
-
-          width: {
-            ideal: 1920,
-            max: 1920
-          },
-
-          height: {
-            ideal: 1080,
-            max: 1080
-          },
-
-          frameRate: {
-            ideal: 30,
-            max: 30
-          }
-        },
-
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1920, max: 1920 },
+        height: { ideal: 1080, max: 1080 },
+        frameRate: { ideal: 30, max: 30 }
+      },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
 
     video.srcObject = stream;
-
-    video.classList.toggle(
-      "mirror",
-      facingMode === "user"
-    );
+    video.classList.toggle("mirror", facingMode === "user");
 
     await video.play();
 
-    startOverlay.classList.add(
-      "hidden"
-    );
-
+    startOverlay.classList.add("hidden");
     await requestWakeLock();
 
-    toast(
-      "Câmera ativada"
-    );
-
+    toast("Câmera ativada");
     return true;
-
   } catch (error) {
     console.error(error);
 
-    let message =
-      "Não foi possível iniciar a câmera.";
+    let message = "Não foi possível iniciar a câmera.";
 
-    if (
-      error.name === "NotAllowedError"
-    ) {
-      message =
-        "Permita câmera e microfone nas configurações do Safari.";
-
-    } else if (
-      error.name === "NotFoundError"
-    ) {
-      message =
-        "Câmera ou microfone não encontrados.";
-
-    } else if (
-      error.name === "NotReadableError"
-    ) {
-      message =
-        "A câmera está sendo usada por outro aplicativo.";
-
-    } else if (
-      error.name === "SecurityError"
-    ) {
-      message =
-        "O acesso à câmera foi bloqueado por segurança.";
+    if (error.name === "NotAllowedError") {
+      message = "Permita câmera e microfone nas configurações do Safari.";
+    } else if (error.name === "NotFoundError") {
+      message = "Câmera ou microfone não encontrados.";
+    } else if (error.name === "NotReadableError") {
+      message = "A câmera está sendo usada por outro aplicativo.";
+    } else if (error.name === "SecurityError") {
+      message = "O acesso à câmera foi bloqueado por segurança.";
     }
 
-    toast(
-      message,
-      5000
-    );
-
+    toast(message, 5000);
     return false;
   }
 }
 
-$("flip").addEventListener(
-  "click",
-  async () => {
-    facingMode =
-      facingMode === "user"
-        ? "environment"
-        : "user";
-
-    await startCamera();
-  }
-);
+$("flip").addEventListener("click", async () => {
+  facingMode = facingMode === "user" ? "environment" : "user";
+  await startCamera();
+});
 
 async function requestWakeLock() {
   try {
     if ("wakeLock" in navigator) {
-      wakeLock =
-        await navigator.wakeLock.request(
-          "screen"
-        );
+      wakeLock = await navigator.wakeLock.request("screen");
 
-      wakeLock.addEventListener?.(
-        "release",
-        () => {
-          wakeLock = null;
-        }
-      );
+      wakeLock.addEventListener?.("release", () => {
+        wakeLock = null;
+      });
     }
   } catch (error) {
-    console.log(
-      "Wake Lock indisponível"
-    );
+    console.log("Wake Lock indisponível");
   }
 }
 
-document.addEventListener(
-  "visibilitychange",
-  async () => {
-    if (
-      document.visibilityState ===
-        "visible" &&
-      stream
-    ) {
-      await requestWakeLock();
-    }
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && stream) {
+    await requestWakeLock();
   }
-);
+});
 
 function getSupportedMimeType() {
   const formats = [
@@ -514,372 +355,185 @@ function getSupportedMimeType() {
     "video/webm"
   ];
 
-  if (!window.MediaRecorder) {
-    return "";
-  }
+  if (!window.MediaRecorder) return "";
 
-  return formats.find(
-    type =>
-      MediaRecorder.isTypeSupported(
-        type
-      )
-  ) || "";
+  return formats.find(type => MediaRecorder.isTypeSupported(type)) || "";
 }
 
-function drawVideoCover(
-  context,
-  videoElement,
-  width,
-  height
-) {
-  const videoWidth =
-    videoElement.videoWidth ||
-    width;
+function drawVideoCover(context, videoElement, width, height) {
+  const videoWidth = videoElement.videoWidth || width;
+  const videoHeight = videoElement.videoHeight || height;
 
-  const videoHeight =
-    videoElement.videoHeight ||
-    height;
+  const scale = Math.max(
+    width / videoWidth,
+    height / videoHeight
+  );
 
-  const scale =
-    Math.max(
-      width / videoWidth,
-      height / videoHeight
-    );
+  const drawWidth = videoWidth * scale;
+  const drawHeight = videoHeight * scale;
 
-  const drawWidth =
-    videoWidth * scale;
-
-  const drawHeight =
-    videoHeight * scale;
-
-  const x =
-    (width - drawWidth) / 2;
-
-  const y =
-    (height - drawHeight) / 2;
+  const x = (width - drawWidth) / 2;
+  const y = (height - drawHeight) / 2;
 
   context.drawImage(
     videoElement,
-    0,
-    0,
+    0, 0,
     videoWidth,
     videoHeight,
-    x,
-    y,
+    x, y,
     drawWidth,
     drawHeight
   );
 }
 
 function renderFrame() {
-  if (
-    !recording ||
-    !renderCanvas ||
-    !renderCtx
-  ) {
-    return;
-  }
+  if (!recording || !renderCanvas || !renderCtx) return;
 
-  const width =
-    renderCanvas.width;
+  const width = renderCanvas.width;
+  const height = renderCanvas.height;
 
-  const height =
-    renderCanvas.height;
-
-  renderCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
+  renderCtx.clearRect(0, 0, width, height);
 
   renderCtx.save();
 
-  if (
-    facingMode === "user"
-  ) {
-    renderCtx.translate(
-      width,
-      0
-    );
-
-    renderCtx.scale(
-      -1,
-      1
-    );
+  if (facingMode === "user") {
+    renderCtx.translate(width, 0);
+    renderCtx.scale(-1, 1);
   }
 
-  drawVideoCover(
-    renderCtx,
-    video,
-    width,
-    height
-  );
-
+  drawVideoCover(renderCtx, video, width, height);
   renderCtx.restore();
 
   renderCtx.save();
 
   renderCtx.scale(
-    width /
-      Math.max(
-        1,
-        window.innerWidth
-      ),
-
-    height /
-      Math.max(
-        1,
-        window.innerHeight
-      )
+    width / Math.max(1, window.innerWidth),
+    height / Math.max(1, window.innerHeight)
   );
 
-  for (
-    const stroke of strokes
-  ) {
-    drawStroke(
-      renderCtx,
-      stroke
-    );
+  for (const stroke of strokes) {
+    drawStroke(renderCtx, stroke);
   }
 
   renderCtx.restore();
 
-  animationId =
-    requestAnimationFrame(
-      renderFrame
-    );
+  animationId = requestAnimationFrame(renderFrame);
 }
 
 async function startRecording() {
   if (!stream) {
-    toast(
-      "Ative a câmera primeiro."
-    );
-
+    toast("Ative a câmera primeiro.");
     return;
   }
 
   if (
     !window.MediaRecorder ||
-    !HTMLCanvasElement
-      .prototype
-      .captureStream
+    !HTMLCanvasElement.prototype.captureStream
   ) {
-    toast(
-      "Seu navegador não suporta gravação integrada.",
-      4000
-    );
-
+    toast("Seu navegador não suporta gravação integrada.", 4000);
     return;
   }
 
-  const mime =
-    getSupportedMimeType();
+  const mime = getSupportedMimeType();
 
   if (!mime) {
-    toast(
-      "Formato de vídeo não suportado neste navegador.",
-      4000
-    );
-
+    toast("Formato de vídeo não suportado neste navegador.", 4000);
     return;
   }
 
   chunks = [];
 
-  renderCanvas =
-    document.createElement(
-      "canvas"
-    );
+  renderCanvas = document.createElement("canvas");
 
   const width = 1920;
+  const aspect = window.innerWidth / Math.max(1, window.innerHeight);
 
-  const aspect =
-    window.innerWidth /
-    Math.max(
-      1,
-      window.innerHeight
-    );
+  renderCanvas.width = width;
+  renderCanvas.height = Math.max(1, Math.round(width / aspect));
 
-  renderCanvas.width =
-    width;
-
-  renderCanvas.height =
-    Math.max(
-      1,
-      Math.round(
-        width / aspect
-      )
-    );
-
-  renderCtx =
-    renderCanvas.getContext(
-      "2d"
-    );
+  renderCtx = renderCanvas.getContext("2d");
 
   if (!renderCtx) {
-    toast(
-      "Não foi possível preparar a gravação.",
-      4000
-    );
-
+    toast("Não foi possível preparar a gravação.", 4000);
     return;
   }
 
   recording = true;
-
   renderFrame();
 
-  const outputStream =
-    renderCanvas.captureStream(
-      30
-    );
-
-  const audioTrack =
-    stream.getAudioTracks()[0];
+  const outputStream = renderCanvas.captureStream(30);
+  const audioTrack = stream.getAudioTracks()[0];
 
   if (audioTrack) {
-    outputStream.addTrack(
-      audioTrack
-    );
+    outputStream.addTrack(audioTrack);
   }
 
   try {
-    mediaRecorder =
-      new MediaRecorder(
-        outputStream,
-        {
-          mimeType: mime,
-          videoBitsPerSecond:
-            6000000
-        }
-      );
-
+    mediaRecorder = new MediaRecorder(outputStream, {
+      mimeType: mime,
+      videoBitsPerSecond: 6000000
+    });
   } catch (error) {
     console.error(error);
-
     recording = false;
-
-    cancelAnimationFrame(
-      animationId
-    );
-
-    toast(
-      "Não foi possível iniciar a gravação.",
-      4000
-    );
-
+    cancelAnimationFrame(animationId);
+    toast("Não foi possível iniciar a gravação.", 4000);
     return;
   }
 
-  mediaRecorder.ondataavailable =
-    event => {
-      if (event.data?.size) {
-        chunks.push(
-          event.data
-        );
-      }
-    };
+  mediaRecorder.ondataavailable = event => {
+    if (event.data?.size) {
+      chunks.push(event.data);
+    }
+  };
 
-  mediaRecorder.onerror =
-    event => {
-      console.error(event);
+  mediaRecorder.onerror = event => {
+    console.error(event);
+    toast("Erro durante a gravação.", 4000);
+  };
 
-      toast(
-        "Erro durante a gravação.",
-        4000
-      );
-    };
-
-  mediaRecorder.onstop =
-    exportRecording;
+  mediaRecorder.onstop = exportRecording;
 
   mediaRecorder.start(1000);
 
-  recordBtn.classList.add(
-    "recording"
-  );
-
-  toast(
-    "Gravando…"
-  );
+  recordBtn.classList.add("recording");
+  toast("Gravando…");
 }
 
 function stopRecording() {
   if (!mediaRecorder) return;
 
   recording = false;
-
-  cancelAnimationFrame(
-    animationId
-  );
-
+  cancelAnimationFrame(animationId);
   animationId = null;
 
-  if (
-    mediaRecorder.state !==
-    "inactive"
-  ) {
+  if (mediaRecorder.state !== "inactive") {
     mediaRecorder.stop();
   }
 
-  recordBtn.classList.remove(
-    "recording"
-  );
-
-  toast(
-    "Processando vídeo…",
-    3000
-  );
+  recordBtn.classList.remove("recording");
+  toast("Processando vídeo…", 3000);
 }
 
 async function exportRecording() {
-  const type =
-    mediaRecorder?.mimeType ||
-    "video/mp4";
+  const type = mediaRecorder?.mimeType || "video/mp4";
+  const extension = type.includes("webm") ? "webm" : "mp4";
 
-  const extension =
-    type.includes("webm")
-      ? "webm"
-      : "mp4";
-
-  const blob =
-    new Blob(
-      chunks,
-      {
-        type
-      }
-    );
+  const blob = new Blob(chunks, { type });
 
   if (!blob.size) {
-    toast(
-      "A gravação ficou vazia.",
-      4000
-    );
-
+    toast("A gravação ficou vazia.", 4000);
     return;
   }
 
   const filename =
-    `lousa-cam-${new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")}.${extension}`;
+    `lousa-cam-${new Date().toISOString().replace(/[:.]/g, "-")}.${extension}`;
 
-  const file =
-    new File(
-      [blob],
-      filename,
-      {
-        type
-      }
-    );
+  const file = new File([blob], filename, { type });
 
   if (
     navigator.canShare &&
-    navigator.canShare({
-      files: [file]
-    })
+    navigator.canShare({ files: [file] })
   ) {
     try {
       await navigator.share({
@@ -888,70 +542,31 @@ async function exportRecording() {
         text: "Vídeo gravado no Lousa Cam"
       });
 
-      toast(
-        "Vídeo compartilhado."
-      );
-
+      toast("Vídeo compartilhado.");
       cleanupRecording();
-
       return;
-
     } catch (error) {
-
-      if (
-        error.name ===
-        "AbortError"
-      ) {
-        toast(
-          "Compartilhamento cancelado."
-        );
-
+      if (error.name === "AbortError") {
+        toast("Compartilhamento cancelado.");
         cleanupRecording();
-
         return;
       }
     }
   }
 
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-  const link =
-    document.createElement(
-      "a"
-    );
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
 
   link.href = url;
-
-  link.download =
-    filename;
-
-  link.rel =
-    "noopener";
-
-  document.body.appendChild(
-    link
-  );
-
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
   link.click();
-
   link.remove();
 
-  setTimeout(
-    () =>
-      URL.revokeObjectURL(
-        url
-      ),
-    15000
-  );
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
 
-  toast(
-    `Vídeo salvo como ${extension.toUpperCase()}.`,
-    3500
-  );
-
+  toast(`Vídeo salvo como ${extension.toUpperCase()}.`, 3500);
   cleanupRecording();
 }
 
@@ -967,49 +582,28 @@ function cleanupRecording() {
   chunks = [];
 }
 
-recordBtn.addEventListener(
-  "click",
-  () => {
-    if (recording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+recordBtn.addEventListener("click", () => {
+  if (recording) {
+    stopRecording();
+  } else {
+    startRecording();
   }
-);
+});
 
-startBtn.addEventListener(
-  "click",
-  startCamera
-);
+startBtn.addEventListener("click", startCamera);
 
-window.addEventListener(
-  "resize",
-  fitCanvas
-);
+window.addEventListener("resize", fitCanvas);
 
-window.addEventListener(
-  "orientationchange",
-  () => {
-    setTimeout(
-      fitCanvas,
-      300
-    );
-  }
-);
+window.addEventListener("orientationchange", () => {
+  setTimeout(fitCanvas, 300);
+});
 
-if (
-  "serviceWorker" in navigator
-) {
-  window.addEventListener(
-    "load",
-    () => {
-      navigator.serviceWorker
-        .register("./sw.js")
-        .catch(console.error);
-    }
-  );
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch(console.error);
+  });
 }
 
 fitCanvas();
-```
