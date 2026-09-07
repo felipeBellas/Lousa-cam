@@ -10,13 +10,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Lousa Cam">
 
-  <!-- Favicon e Ícones do App -->
-  <link rel="icon" type="image/png" sizes="32x32" href="./logo.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="./logo.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./logo.png">
-  <link rel="apple-touch-icon" href="./logo.png">
+  <!-- Favicon / Ícones do App / PWA (Refatorado sem ./ e com controle de cache) -->
+  <link rel="icon" type="image/png" sizes="32x32" href="logo.png?v=3">
+  <link rel="icon" type="image/png" sizes="192x192" href="logo.png?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png?v=3">
+  <link rel="apple-touch-icon" href="logo.png?v=3">
 
-  <link rel="manifest" href="./manifest.json">
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json?v=3">
 
   <title>Lousa Cam 2.0</title>
 
@@ -382,7 +383,7 @@
 
   <div id="startOverlay">
     <div id="startCard">
-      <img src="./logo.png" alt="Lousa Cam Logo" class="intro-logo">
+      <img src="logo.png?v=3" alt="Lousa Cam Logo" class="intro-logo">
       <h1>LOUSA CAM 2.0</h1>
       <p>
         Ative a câmera e o microfone para usar a lousa sobre a imagem.
