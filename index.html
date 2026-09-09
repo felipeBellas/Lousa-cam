@@ -1,529 +1,394 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
-  >
-
-  <meta name="theme-color" content="#111111">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <title>Lousa Cam</title>
-
-  <link rel="manifest" href="./manifest.json">
-
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: Arial, Helvetica, sans-serif;
-      touch-action: none;
-    }
-
-    body {
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    #app {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-    }
-
-    #video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      background: #000;
-      z-index: 1;
-    }
-
-    #canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      touch-action: none;
-    }
-
-    /* =========================================================
-       BARRA SUPERIOR
-       ========================================================= */
-
-    #top {
-      position: absolute;
-      z-index: 20;
-      top: env(safe-area-inset-top, 8px);
-      left: 8px;
-      right: 8px;
-
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-
-      pointer-events: none;
-    }
-
-    #left,
-    #right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-      pointer-events: auto;
-    }
-
-    button {
-      border: 0;
-      outline: none;
-      cursor: pointer;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      width: 46px;
-      height: 46px;
-
-      padding: 0;
-
-      border-radius: 12px;
-
-      background: rgba(20, 20, 20, 0.78);
-      color: white;
-
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-
-      box-shadow:
-        0 2px 8px rgba(0, 0, 0, 0.25);
-
-      flex: 0 0 46px;
-    }
-
-    button:active {
-      transform: scale(0.94);
-    }
-
-    button svg {
-      width: 21px;
-      height: 21px;
-      stroke: currentColor;
-    }
-
-    /* Botão T */
-    #textToolButton {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 21px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    /* =========================================================
-       BOTÃO GRAVAÇÃO
-       ========================================================= */
-
-    #record {
-      position: absolute;
-      z-index: 30;
-
-      left: 50%;
-      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-
-      transform: translateX(-50%);
-
-      width: 64px;
-      height: 64px;
-
-      border-radius: 50%;
-
-      background: rgba(210, 30, 30, 0.95);
-
-      border: 4px solid rgba(255, 255, 255, 0.9);
-    }
-
-    #record.recording {
-      background: #fff;
-    }
-
-    #record.recording::after {
-      content: "";
-      width: 22px;
-      height: 22px;
-      border-radius: 4px;
-      background: #d71919;
-    }
-
-    /* =========================================================
-       MENU DE AÇÕES DO CANVAS
-       ========================================================= */
-
-    #canvasMenu {
-      position: fixed;
-      z-index: 100;
-
-      display: none;
-
-      min-width: 230px;
-      max-width: calc(100vw - 20px);
-
-      padding: 8px;
-
-      background: rgba(25, 25, 25, 0.96);
-      border-radius: 16px;
-
-      box-shadow:
-        0 10px 35px rgba(0, 0, 0, 0.45);
-
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    #canvasMenu.show {
-      display: block;
-    }
-
-    #canvasMenu button {
-      width: 100%;
-      height: 46px;
-
-      flex: none;
-
-      justify-content: flex-start;
-
-      padding: 0 14px;
-
-      background: transparent;
-
-      border-radius: 10px;
-
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    #canvasMenu button:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    #canvasMenu button:active {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* =========================================================
-       PAINEL DE FERRAMENTAS
-       ========================================================= */
-
-    #tools {
-      position: absolute;
-      z-index: 40;
-
-      top: calc(62px + env(safe-area-inset-top, 0px));
-      left: 8px;
-
-      display: none;
-
-      padding: 12px;
-
-      border-radius: 16px;
-
-      background: rgba(20, 20, 20, 0.92);
-
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-
-    #tools.show {
-      display: block;
-    }
-
-    #tools label {
-      display: block;
-
-      margin-bottom: 8px;
-
-      color: #fff;
-
-      font-size: 13px;
-    }
-
-    #tools input {
-      width: 150px;
-    }
-
-    #toolName {
-      color: #fff;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    /* =========================================================
-       OVERLAY INICIAL
-       ========================================================= */
-
-    #startOverlay {
-      position: absolute;
-      inset: 0;
-
-      z-index: 200;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: 24px;
-
-      background: rgba(0, 0, 0, 0.94);
-    }
-
-    #startOverlay.hidden {
-      display: none;
-    }
-
-    #startBox {
-      width: min(420px, 100%);
-
-      padding: 28px 22px;
-
-      text-align: center;
-
-      color: white;
-
-      border-radius: 22px;
-
-      background: rgba(30, 30, 30, 0.96);
-
-      box-shadow:
-        0 15px 50px rgba(0, 0, 0, 0.45);
-    }
-
-    #startBox h1 {
-      margin: 0 0 10px;
-      font-size: 27px;
-    }
-
-    #startBox p {
-      margin: 0 0 22px;
-
-      color: #ccc;
-
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    #startBtn {
-      width: 100%;
-      height: 52px;
-
-      flex: none;
-
-      background: #fff;
-      color: #111;
-
-      font-size: 16px;
-      font-weight: 700;
-
-      border-radius: 13px;
-    }
-
-    #status {
-      margin-top: 12px;
-
-      min-height: 18px;
-
-      color: #aaa;
-
-      font-size: 12px;
-    }
-
-    /* =========================================================
-       ÁREA AUXILIAR PARA COLAR
-       ========================================================= */
-
-    #pasteOverlay {
-      position: fixed;
-      inset: 0;
-
-      z-index: 180;
-
-      display: none;
-
-      align-items: center;
-      justify-content: center;
-
-      padding: 20px;
-
-      background: rgba(0, 0, 0, 0.72);
-    }
-
-    #pasteOverlay.show {
-      display: flex;
-    }
-
-    #pasteBox {
-      width: min(440px, 100%);
-
-      padding: 20px;
-
-      border-radius: 18px;
-
-      background: #202020;
-      color: #fff;
-
-      text-align: center;
-    }
-
-    #pasteBox h2 {
-      margin: 0 0 8px;
-      font-size: 20px;
-    }
-
-    #pasteBox p {
-      margin: 0 0 14px;
-
-      color: #bbb;
-
-      font-size: 14px;
-      line-height: 1.4;
-    }
-
-    #pasteArea {
-      width: 100%;
-      min-height: 90px;
-
-      padding: 12px;
-
-      border-radius: 10px;
-
-      background: #fff;
-      color: #111;
-
-      text-align: left;
-
-      font-size: 16px;
-
-      user-select: text;
-      -webkit-user-select: text;
-
-      outline: none;
-    }
-
-    #pasteCancel {
-      width: 100%;
-      height: 44px;
-
-      margin-top: 12px;
-
-      flex: none;
-
-      background: #444;
-
-      color: #fff;
-
-      font-size: 15px;
-    }
-
-    /* =========================================================
-       RESPONSIVO - CELULAR
-       ========================================================= */
-
-    @media (max-width: 600px) {
-
-      #top {
-        left: 5px;
-        right: 5px;
-      }
-
-      #left,
-      #right {
-        gap: 3px;
-      }
-
-      #left button,
-      #right button {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-        border-radius: 10px;
-      }
-
-      #left button svg,
-      #right button svg {
-        width: 18px;
-        height: 18px;
-      }
-
-      #textToolButton {
-        font-size: 19px;
-      }
-    }
-
-    @media (max-width: 390px) {
-
-      #top {
-        left: 3px;
-        right: 3px;
-      }
-
-      #left,
-      #right {
-        gap: 2px;
-      }
-
-      #left button,
-      #right button {
-        width: 37px;
-        height: 37px;
-        flex-basis: 37px;
-        border-radius: 9px;
-      }
-
-      #left button svg,
-      #right button svg {
-        width: 17px;
-        height: 17px;
-      }
-
-      #textToolButton {
-        font-size: 18px;
-      }
-    }
-
-    @media (orientation: landscape) and (max-height: 500px) {
-
-      #left,
-      #right {
-        gap: 3px;
-      }
-
-      #left button,
-      #right button {
-        width: 40px;
-        height: 40px;
-        flex-basis: 40px;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+>
+
+<meta name="theme-color" content="#000000">
+
+<!-- iOS / Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lousa Cam">
+
+<link rel="icon" type="image/png" href="./logo.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./logo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./logo.png">
+
+<link rel="apple-touch-icon" sizes="180x180" href="./logo.png">
+<link rel="apple-touch-icon" sizes="152x152" href="./logo.png">
+<link rel="apple-touch-icon" sizes="120x120" href="./logo.png">
+
+<link rel="manifest" href="./manifest.json">
+
+<title>Lousa Cam 2.0</title>
+
+<style>
+
+:root {
+  --glass: rgba(22, 22, 26, 0.72);
+  --border: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+#video,
+#canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#video {
+  z-index: 1;
+  object-fit: cover;
+  background: #000;
+}
+
+#video.mirror {
+  transform: scaleX(-1);
+}
+
+#canvas {
+  z-index: 2;
+  touch-action: none;
+}
+
+#ui {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.bar {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+#top {
+  left: max(16px, env(safe-area-inset-left));
+  right: max(16px, env(safe-area-inset-right));
+  top: max(16px, env(safe-area-inset-top));
+  justify-content: space-between;
+}
+
+#left,
+#right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#bottom {
+  left: 0;
+  right: 0;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  justify-content: center;
+}
+
+button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: #fff;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease;
+}
+
+button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button:active {
+  transform: scale(0.92);
+}
+
+button:disabled {
+  opacity: 0.35;
+}
+
+/* =========================================================
+   BOTÃO T
+   ========================================================= */
+
+#textToolButton {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  flex: 0 0 48px;
+}
+
+/*
+ * Em telas muito estreitas, somente reduzimos
+ * o espaçamento para que o novo T não empurre
+ * os botões originais para fora da tela.
+ */
+@media (max-width: 390px) {
+
+  #top {
+    left: 8px;
+    right: 8px;
+  }
+
+  #left,
+  #right {
+    gap: 5px;
+  }
+
+  #left > button,
+  #right > button {
+    width: 42px;
+    height: 42px;
+  }
+
+  #textToolButton {
+    width: 42px !important;
+    height: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+#record {
+  width: 64px;
+  height: 64px;
+  border: 3px solid rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.4);
+}
+
+#record span {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ff3b30;
+  transition:
+    all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#record.recording span {
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+}
+
+#status {
+  position: absolute;
+  left: 50%;
+  top: max(72px, calc(env(safe-area-inset-top) + 60px));
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: rgba(18, 18, 20, 0.85);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+#status.show {
+  opacity: 1;
+}
+
+.panel {
+  position: absolute;
+  top: max(72px, calc(env(safe-area-inset-top) + 60px));
+  right: max(16px, env(safe-area-inset-right));
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(22, 22, 26, 0.88);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: none;
+  pointer-events: auto;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+
+.panel.open {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.colors {
+  display: flex;
+  gap: 10px;
+}
+
+.color {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.color.active {
+  border-color: #fff;
+  transform: scale(1.12);
+}
+
+input[type=range] {
+  width: 120px;
+  accent-color: #fff;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 13px;
+}
+
+#startOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #fff;
+  padding: 24px;
+  text-align: center;
+}
+
+#startOverlay.hidden {
+  display: none !important;
+}
+
+#startCard {
+  max-width: 380px;
+  width: 100%;
+  padding: 32px 24px;
+  background: rgba(28, 28, 32, 0.75);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.intro-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  object-fit: cover;
+}
+
+#startCard h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px;
+}
+
+#startCard p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+#startBtn {
+  width: 100%;
+  height: 52px;
+  border-radius: 26px;
+  background: #007aff;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.35);
+}
+
+#startBtn:active {
+  transform: scale(0.97);
+}
+
+#permissionHint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+</style>
 </head>
 
 <body>
@@ -539,212 +404,252 @@
 
   <canvas id="canvas"></canvas>
 
-  <!-- =======================================================
-       BARRA SUPERIOR
-       ======================================================= -->
+  <div id="ui">
 
-  <div id="top">
+    <div id="top" class="bar">
 
-    <div id="left">
+      <div id="left">
 
-      <!-- MENU -->
-      <button id="menuBtn" aria-label="Menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-      </button>
+        <!-- MENU ORIGINAL -->
+        <button
+          id="menuBtn"
+          aria-label="Menu"
+          title="Menu"
+        >
+          <svg viewBox="0 0 24 24">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
 
-      <!-- DESFAZER -->
-      <button id="undo" aria-label="Desfazer">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M9 14L4 9l5-5"/>
-          <path d="M4 9h10a6 6 0 0 1 0 12h-2"/>
-        </svg>
-      </button>
+        <!-- DESFAZER ORIGINAL -->
+        <button
+          id="undo"
+          aria-label="Desfazer"
+          title="Desfazer"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M3 7v6h6"></path>
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+          </svg>
+        </button>
 
-      <!-- REFAZER -->
-      <button id="redo" aria-label="Refazer">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M15 14l5-5-5-5"/>
-          <path d="M20 9H10a6 6 0 0 0 0 12h2"/>
-        </svg>
-      </button>
+        <!-- REFAZER ORIGINAL -->
+        <button
+          id="redo"
+          aria-label="Refazer"
+          title="Refazer"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M21 7v6h-6"></path>
+            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path>
+          </svg>
+        </button>
 
-      <!-- LIMPAR -->
-      <button id="clear" aria-label="Limpar">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M4 7h16"/>
-          <path d="M10 11v6M14 11v6"/>
-          <path d="M6 7l1 13h10l1-13"/>
-          <path d="M9 7V4h6v3"/>
-        </svg>
-      </button>
+        <!-- LIMPAR ORIGINAL -->
+        <button
+          id="clear"
+          aria-label="Limpar"
+          title="Limpar"
+        >
+          <svg viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
 
-      <!-- NOVO BOTÃO T -->
+        <!-- ÚNICO BOTÃO NOVO -->
+        <button
+          id="textToolButton"
+          aria-label="Texto"
+          title="Texto"
+          type="button"
+        >
+          T
+        </button>
+
+      </div>
+
+      <div id="right">
+
+        <!-- TROCAR CÂMERA ORIGINAL -->
+        <button
+          id="flip"
+          aria-label="Trocar câmera"
+          title="Trocar câmera"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v4"></path>
+            <path d="M16 19l3 3 3-3"></path>
+            <path d="M19 13v9"></path>
+          </svg>
+        </button>
+
+        <!-- FERRAMENTAS ORIGINAL -->
+        <button
+          id="settings"
+          aria-label="Ferramentas"
+          title="Ferramentas"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- MENU ☰ -->
+    <div
+      id="menuPanel"
+      class="panel"
+      aria-hidden="true"
+    >
+
+      <div class="row">
+        <strong>Lousa Cam 2.0</strong>
+      </div>
+
+      <div class="row">
+        <span>
+          Desenhe diretamente sobre a imagem da câmera.
+        </span>
+      </div>
+
+    </div>
+
+    <!-- FERRAMENTAS / CANETA -->
+    <div
+      id="tools"
+      class="panel"
+      aria-hidden="true"
+    >
+
+      <div class="colors">
+
+        <button
+          class="color active"
+          style="background:#fff"
+          data-color="#fff"
+          aria-label="Branco"
+        ></button>
+
+        <button
+          class="color"
+          style="background:#ff3b30"
+          data-color="#ff3b30"
+          aria-label="Vermelho"
+        ></button>
+
+        <button
+          class="color"
+          style="background:#ffcc00"
+          data-color="#ffcc00"
+          aria-label="Amarelo"
+        ></button>
+
+        <button
+          class="color"
+          style="background:#34c759"
+          data-color="#34c759"
+          aria-label="Verde"
+        ></button>
+
+        <button
+          class="color"
+          style="background:#0a84ff"
+          data-color="#0a84ff"
+          aria-label="Azul"
+        ></button>
+
+      </div>
+
+      <div class="row">
+
+        Espessura
+
+        <input
+          id="width"
+          type="range"
+          min="2"
+          max="32"
+          value="5"
+        >
+
+      </div>
+
+      <div class="row">
+
+        <button
+          id="eraser"
+          aria-label="Borracha"
+          title="Borracha"
+          style="width:40px;height:40px"
+        >
+
+          <svg viewBox="0 0 24 24">
+            <path d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L13 3.2c.8-.8 2-.8 2.8 0l5 5c.8.8.8 2 0 2.8L11 20"></path>
+          </svg>
+
+        </button>
+
+        <span id="toolName">
+          Caneta
+        </span>
+
+      </div>
+
+    </div>
+
+    <!-- GRAVAÇÃO -->
+    <div id="bottom" class="bar">
+
       <button
-        id="textToolButton"
-        aria-label="Adicionar texto"
-        title="Texto"
+        id="record"
+        aria-label="Gravar"
+        title="Gravar"
       >
-        T
+        <span></span>
       </button>
 
     </div>
 
-    <div id="right">
-
-      <!-- INVERTER CÂMERA -->
-      <button id="flip" aria-label="Inverter câmera">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <path d="M3 7h4l2-3h6l2 3h4v12H3z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-      </button>
-
-      <!-- CONFIGURAÇÕES -->
-      <button id="settings" aria-label="Configurações">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-1.8 1.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V20h-2.5v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-1.8-1.8.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H6V11.5h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1L9 6.7l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V5h2.5v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 1.8 1.8-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.1V14h-.1a1.7 1.7 0 0 0-1.5 1z"/>
-        </svg>
-      </button>
-
-    </div>
+    <div id="status"></div>
 
   </div>
 
-  <!-- =======================================================
-       PAINEL DE FERRAMENTAS
-       ======================================================= -->
-
-  <div id="tools">
-
-    <label>
-      Cor
-      <br>
-      <input
-        id="color"
-        type="color"
-        value="#ffffff"
-      >
-    </label>
-
-    <label>
-      Espessura
-      <br>
-      <input
-        id="width"
-        type="range"
-        min="1"
-        max="40"
-        value="5"
-      >
-    </label>
-
-    <button id="eraser" aria-label="Borracha">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-        <path d="M20 20H8l-5-5 10-10a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-7 7"/>
-        <path d="M6 14l4 4"/>
-      </svg>
-    </button>
-
-    <div id="toolName">
-      Caneta
-    </div>
-
-  </div>
-
-  <!-- =======================================================
-       MENU AO TOCAR NA LOUSA
-       ======================================================= -->
-
-  <div id="canvasMenu">
-
-    <button data-action="text">
-      <span>Texto</span>
-    </button>
-
-    <button data-action="image">
-      <span>Imagem</span>
-    </button>
-
-    <button data-action="paste">
-      <span>Conteúdo da área de transferência</span>
-    </button>
-
-    <button data-action="cancel">
-      <span>Cancelar</span>
-    </button>
-
-  </div>
-
-  <!-- INPUT DE IMAGEM -->
-  <input
-    id="imageInput"
-    type="file"
-    accept="image/*"
-    hidden
-  >
-
-  <!-- =======================================================
-       AUXILIAR DE COLAGEM
-       ======================================================= -->
-
-  <div id="pasteOverlay">
-
-    <div id="pasteBox">
-
-      <h2>Colar conteúdo</h2>
-
-      <p>
-        Toque na área abaixo e use o comando
-        <strong>Colar</strong> do Safari.
-        Texto ou imagem poderão ser adicionados à lousa.
-      </p>
-
-      <div
-        id="pasteArea"
-        contenteditable="true"
-        tabindex="0"
-      ></div>
-
-      <button id="pasteCancel">
-        Cancelar
-      </button>
-
-    </div>
-
-  </div>
-
-  <!-- =======================================================
-       GRAVAÇÃO
-       ======================================================= -->
-
-  <button
-    id="record"
-    aria-label="Gravar"
-  ></button>
-
-  <!-- =======================================================
-       TELA INICIAL
-       ======================================================= -->
-
+  <!-- TELA INICIAL ORIGINAL -->
   <div id="startOverlay">
 
-    <div id="startBox">
+    <div id="startCard">
 
-      <h1>Lousa Cam</h1>
+      <img
+        src="./logo.png"
+        alt="Lousa Cam Logo"
+        class="intro-logo"
+      >
+
+      <h1>
+        LOUSA CAM 2.0
+      </h1>
 
       <p>
-        Para começar, permita o acesso à câmera
-        e ao microfone.
+        Ative a câmera e o microfone para usar
+        a lousa sobre a imagem.
+        Para melhor experiência no iPhone,
+        use o aparelho na horizontal.
       </p>
 
       <button id="startBtn">
-        Iniciar câmera
+        Ativar câmera e microfone
       </button>
 
-      <div id="status"></div>
+      <div id="permissionHint">
+        O Safari solicitará as permissões.
+      </div>
 
     </div>
 
@@ -752,7 +657,7 @@
 
 </div>
 
-<script src="./app.js?v=20260910-01"></script>
+<script src="./app.js?v=20260910-02"></script>
 
 </body>
 </html>
