@@ -1,20 +1,28 @@
-/* =========================================================
-   LOUSA CAM
-   SERVICE WORKER
-   Build: 2026-09-09-02
-   ========================================================= */
+"use strict";
+
+/*
+===============================================================
+LOUSA CAM - SERVICE WORKER
+Versão: 20260910-01
+
+Objetivo:
+- Evitar que Safari/PWA fique preso em versão antiga
+- Atualizar index.html e app.js
+- Manter recursos disponíveis offline
+===============================================================
+*/
 
 const CACHE_NAME =
-  "lousa-cam-v20260909-02";
+  "lousa-cam-v20260910-01";
 
 
-const APP_FILES = [
+const APP_SHELL = [
 
   "./",
 
   "./index.html",
 
-  "./app.js?v=20260909-02",
+  "./app.js?v=20260910-01",
 
   "./manifest.json",
 
@@ -22,9 +30,9 @@ const APP_FILES = [
 ];
 
 
-/* =========================================================
+/* ============================================================
    INSTALL
-   ========================================================= */
+   ============================================================ */
 
 self.addEventListener(
   "install",
@@ -33,14 +41,12 @@ self.addEventListener(
     event.waitUntil(
 
       caches
-        .open(
-          CACHE_NAME
-        )
+        .open(CACHE_NAME)
 
         .then(
           cache =>
             cache.addAll(
-              APP_FILES
+              APP_SHELL
             )
         )
 
@@ -48,15 +54,14 @@ self.addEventListener(
           () =>
             self.skipWaiting()
         )
-
     );
   }
 );
 
 
-/* =========================================================
+/* ============================================================
    ACTIVATE
-   ========================================================= */
+   ============================================================ */
 
 self.addEventListener(
   "activate",
@@ -68,9 +73,9 @@ self.addEventListener(
         .keys()
 
         .then(
-          keys =>
+          keys => {
 
-            Promise.all(
+            return Promise.all(
 
               keys
                 .filter(
@@ -85,38 +90,61 @@ self.addEventListener(
                       key
                     )
                 )
-            )
+            );
+          }
         )
 
         .then(
           () =>
             self.clients.claim()
         )
-
     );
   }
 );
 
 
-/* =========================================================
+/* ============================================================
+   MESSAGE
+   ============================================================ */
+
+self.addEventListener(
+  "message",
+  event => {
+
+    if (
+      event.data &&
+      event.data.type ===
+        "SKIP_WAITING"
+    ) {
+
+      self.skipWaiting();
+    }
+  }
+);
+
+
+/* ============================================================
    FETCH
-   ========================================================= */
+   ============================================================ */
 
 self.addEventListener(
   "fetch",
   event => {
 
+    const request =
+      event.request;
+
+    /*
+     Somente GET.
+    */
+
     if (
-      event.request.method !==
+      request.method !==
       "GET"
     ) {
 
       return;
     }
-
-
-    const request =
-      event.request;
 
 
     const url =
@@ -126,23 +154,29 @@ self.addEventListener(
 
 
     /*
-     * app.js e index.html:
-     *
-     * Sempre tentamos buscar
-     * a versão nova primeiro.
-     */
+     Arquivos principais:
+     SEMPRE tenta buscar uma versão nova
+     na rede primeiro.
+    */
 
-    if (
-      url.pathname.endsWith(
-        "/app.js"
-      ) ||
+    const isAppFile =
       url.pathname.endsWith(
         "/index.html"
       ) ||
+
+      url.pathname.endsWith(
+        "/app.js"
+      ) ||
+
       url.pathname.endsWith(
         "/sw.js"
-      )
-    ) {
+      ) ||
+
+      url.pathname ===
+        "/";
+
+
+    if (isAppFile) {
 
       event.respondWith(
 
@@ -198,11 +232,10 @@ self.addEventListener(
 
 
     /*
-     * Outros arquivos:
-     *
-     * Primeiro cache.
-     * Se não houver, rede.
-     */
+     Outros arquivos:
+     cache primeiro,
+     rede como alternativa.
+    */
 
     event.respondWith(
 
@@ -214,13 +247,10 @@ self.addEventListener(
         .then(
           cached => {
 
-            if (
-              cached
-            ) {
+            if (cached) {
 
               return cached;
             }
-
 
             return fetch(
               request
@@ -238,10 +268,8 @@ self.addEventListener(
                     return response;
                   }
 
-
                   const copy =
                     response.clone();
-
 
                   caches
                     .open(
@@ -257,7 +285,6 @@ self.addEventListener(
                     .catch(
                       () => {}
                     );
-
 
                   return response;
                 }
