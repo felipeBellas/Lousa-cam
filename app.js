@@ -1,3410 +1,1076 @@
-/* =========================================================
-   LOUSA CAM 2.0
-   APP.JS
-   Versão corrigida
-   ========================================================= */
+/* Lousa Cam - versão 20260910-02 */
+"use strict";
 
 const $ = id => document.getElementById(id);
 
-/* =========================================================
-   ELEMENTOS
-   ========================================================= */
-
 const video = $("video");
 const canvas = $("canvas");
-const ctx = canvas.getContext("2d", {
-  alpha: true
-});
+const ctx = canvas.getContext("2d", { alpha: true });
 
 const startOverlay = $("startOverlay");
 const startBtn = $("startBtn");
 const statusEl = $("status");
-const recordBtn = $("record");
 
+const recordBtn = $("record");
 const menuBtn = $("menuBtn");
 const undoBtn = $("undo");
 const redoBtn = $("redo");
 const clearBtn = $("clear");
-
 const flipBtn = $("flip");
 const settingsBtn = $("settings");
+const textToolButton = $("textToolButton");
 
-const tools = $("tools");
+const toolsPanel = $("tools");
 const menuPanel = $("menuPanel");
-
+const menuCloseTools = $("menuCloseTools");
+const colorInput = $("color");
 const widthInput = $("width");
 const eraserBtn = $("eraser");
 const toolName = $("toolName");
 
-const textButton = $("textToolButton");
+const canvasMenu = $("canvasMenu");
 
-/* =========================================================
-   CÂMERA
-   ========================================================= */
-
-let facingMode = "user";
 let stream = null;
-
-/* =========================================================
-   DESENHO
-   ========================================================= */
-
-let drawing = false;
-let tool = "pen";
-let color = "#fff";
+let facingMode = "user";
+let color = "#ffffff";
 let lineWidth = 5;
+let tool = "pen";
 
 let strokes = [];
-let redoStack = [];
-
-let currentStroke = null;
-
-/* =========================================================
-   OBJETOS DA LOUSA
-   ========================================================= */
-
+let redoStrokes = [];
 let boardObjects = [];
-let selectedObject = null;
+let redoObjects = [];
 
-let draggingObject = false;
-let resizingObject = false;
-
-let objectDragOffset = null;
-let objectResizeStart = null;
-
-/* =========================================================
-   POINTER
-   ========================================================= */
-
+let drawing = false;
+let currentStroke = null;
 let pointerStart = null;
 let pointerMoved = false;
+let pointerDownTime = 0;
 
-const TAP_MAX_TIME = 350;
-const TAP_MAX_DISTANCE = 12;
+let selectedObject = null;
+let draggingObject = false;
+let resizingObject = false;
+let dragOffset = null;
+let resizeStart = null;
+let secondTapImage = false;
 
-/* =========================================================
-   MENU DE COLAR
-   ========================================================= */
-
-let pasteMenu = null;
-let pasteFallback = null;
-let pastePosition = null;
-
-/* =========================================================
-   AÇÃO DA IMAGEM
-   ========================================================= */
-
-let imageAction = null;
-
-/* =========================================================
-   GRAVAÇÃO
-   ========================================================= */
+let pendingPastePosition = null;
 
 let mediaRecorder = null;
 let chunks = [];
 let recording = false;
-
 let renderCanvas = null;
 let renderCtx = null;
 let animationId = null;
-
 let wakeLock = null;
 
-/* =========================================================
-   STATUS
-   ========================================================= */
+const TAP_MAX_TIME = 350;
+const TAP_MAX_DISTANCE = 12;
 
-function showStatus(message, duration = 2200) {
-
-  if (!statusEl) {
-    return;
-  }
-
-  statusEl.textContent = message || "";
-
-  if (message) {
-    statusEl.classList.add("show");
-
-    clearTimeout(showStatus.timer);
-
-    showStatus.timer = setTimeout(() => {
-      statusEl.classList.remove("show");
-    }, duration);
-
-  } else {
-    statusEl.classList.remove("show");
+function setStatus(text, ms = 2500) {
+  statusEl.textContent = text || "";
+  clearTimeout(setStatus.timer);
+  if (text) {
+    setStatus.timer = setTimeout(() => {
+      statusEl.textContent = "";
+    }, ms);
   }
 }
 
-/* =========================================================
-   UTILITÁRIOS
-   ========================================================= */
-
-function clamp(value, min, max) {
-
-  return Math.max(
-    min,
-    Math.min(max, value)
-  );
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
 }
 
-function getCanvasSize() {
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  return {
-    width: rect.width,
-    height: rect.height
-  };
-}
-
-function getCanvasPoint(event) {
-
-  const rect =
-    canvas.getBoundingClientRect();
-
+function pointFromEvent(event) {
+  const rect = canvas.getBoundingClientRect();
   return {
     x: event.clientX - rect.left,
     y: event.clientY - rect.top
   };
 }
 
-/* =========================================================
-   CANVAS
-   ========================================================= */
-
-function fitCanvas() {
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-  const dpr =
-    Math.min(
-      window.devicePixelRatio || 1,
-      3
-    );
-
-  canvas.width =
-    Math.max(
-      1,
-      Math.round(rect.width * dpr)
-    );
-
-  canvas.height =
-    Math.max(
-      1,
-      Math.round(rect.height * dpr)
-    );
-
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
-
-  redraw();
-}
-
-/* =========================================================
-   DESENHO
-   ========================================================= */
-
-function drawStroke(
-  target,
-  stroke,
-  scale = 1
-) {
-
-  if (
-    !stroke ||
-    !stroke.points ||
-    !stroke.points.length
-  ) {
-    return;
-  }
-
-  target.save();
-
-  target.lineCap = "round";
-  target.lineJoin = "round";
-
-  target.lineWidth =
-    stroke.width * scale;
-
-  if (
-    stroke.tool === "eraser"
-  ) {
-
-    target.globalCompositeOperation =
-      "destination-out";
-
-    target.strokeStyle =
-      "#000";
-
-  } else {
-
-    target.globalCompositeOperation =
-      "source-over";
-
-    target.strokeStyle =
-      stroke.color;
-  }
-
-  target.beginPath();
-
-  const first =
-    stroke.points[0];
-
-  target.moveTo(
-    first.x * scale,
-    first.y * scale
-  );
-
-  for (
-    let i = 1;
-    i < stroke.points.length;
-    i++
-  ) {
-
-    const point =
-      stroke.points[i];
-
-    target.lineTo(
-      point.x * scale,
-      point.y * scale
-    );
-  }
-
-  target.stroke();
-
-  target.restore();
-}
-
-/* =========================================================
-   TEXTO
-   ========================================================= */
-
-function wrapText(
-  target,
-  text,
-  maxWidth
-) {
-
-  const words =
-    String(text).split(/\s+/);
-
-  const lines = [];
-
-  let line = "";
-
-  for (const word of words) {
-
-    const test =
-      line
-        ? `${line} ${word}`
-        : word;
-
-    if (
-      target.measureText(test).width <=
-        maxWidth ||
-      !line
-    ) {
-
-      line = test;
-
-    } else {
-
-      lines.push(line);
-
-      line = word;
-    }
-  }
-
-  if (line) {
-    lines.push(line);
-  }
-
-  return lines.length
-    ? lines
-    : [""];
-}
-
-function getTextMetrics(object) {
-
-  ctx.save();
-
-  ctx.font =
-    `${object.fontSize}px ${object.fontFamily}`;
-
-  const lines =
-    wrapText(
-      ctx,
-      object.text,
-      object.width
-    );
-
-  const lineHeight =
-    object.fontSize * 1.25;
-
-  const height =
-    Math.max(
-      lineHeight + 10,
-      lines.length *
-        lineHeight +
-        8
-    );
-
-  ctx.restore();
-
-  return {
-    lines,
-    lineHeight,
-    height
-  };
-}
-
-function drawTextObject(
-  target,
-  object,
-  scale = 1
-) {
-
-  target.save();
-
-  target.globalCompositeOperation =
-    "source-over";
-
-  target.fillStyle =
-    object.color || "#fff";
-
-  target.font =
-    `${object.fontSize * scale}px ${object.fontFamily}`;
-
-  const lines =
-    wrapText(
-      target,
-      object.text,
-      object.width * scale
-    );
-
-  const lineHeight =
-    object.fontSize *
-    1.25 *
-    scale;
-
-  lines.forEach(
-    (line, index) => {
-
-      target.fillText(
-        line,
-        object.x * scale,
-        object.y * scale +
-          index * lineHeight
-      );
-
-    }
-  );
-
-  target.restore();
-}
-
-/* =========================================================
-   IMAGEM
-   ========================================================= */
-
-function drawImageObject(
-  target,
-  object,
-  scale = 1
-) {
-
-  if (
-    !object.image ||
-    !object.image.complete
-  ) {
-    return;
-  }
-
-  target.save();
-
-  target.globalCompositeOperation =
-    "source-over";
-
-  target.drawImage(
-    object.image,
-    object.x * scale,
-    object.y * scale,
-    object.width * scale,
-    object.height * scale
-  );
-
-  target.restore();
-}
-
-/* =========================================================
-   LIMITES DO OBJETO
-   ========================================================= */
-
-function getObjectBounds(object) {
-
-  if (
-    object.type === "text"
-  ) {
-
-    const metrics =
-      getTextMetrics(object);
-
-    return {
-      x: object.x,
-      y:
-        object.y -
-        object.fontSize,
-
-      width:
-        object.width,
-
-      height:
-        metrics.height
-    };
-  }
-
-  return {
-    x: object.x,
-    y: object.y,
-    width: object.width,
-    height: object.height
-  };
-}
-
-/* =========================================================
-   SELEÇÃO
-   ========================================================= */
-
-function drawSelection(
-  target,
-  object,
-  scale = 1
-) {
-
-  const bounds =
-    getObjectBounds(object);
-
-  target.save();
-
-  target.strokeStyle =
-    "#ffffff";
-
-  target.lineWidth =
-    2 * scale;
-
-  target.setLineDash([
-    7 * scale,
-    5 * scale
-  ]);
-
-  target.strokeRect(
-    bounds.x * scale,
-    bounds.y * scale,
-    bounds.width * scale,
-    bounds.height * scale
-  );
-
-  target.setLineDash([]);
-
-  target.fillStyle =
-    "#ffffff";
-
-  const handleSize =
-    12 * scale;
-
-  target.fillRect(
-    (
-      bounds.x +
-      bounds.width -
-      6
-    ) * scale,
-
-    (
-      bounds.y +
-      bounds.height -
-      6
-    ) * scale,
-
-    handleSize,
-    handleSize
-  );
-
-  target.restore();
-}
-
-/* =========================================================
-   REDESENHAR
-   ========================================================= */
-
-function redraw() {
-
-  const size =
-    getCanvasSize();
-
-  ctx.clearRect(
-    0,
-    0,
-    size.width,
-    size.height
-  );
-
-  for (
-    const stroke of strokes
-  ) {
-
-    drawStroke(
-      ctx,
-      stroke
-    );
-  }
-
-  for (
-    const object of boardObjects
-  ) {
-
-    if (
-      object.type === "text"
-    ) {
-
-      drawTextObject(
-        ctx,
-        object
-      );
-
-    } else if (
-      object.type === "image"
-    ) {
-
-      drawImageObject(
-        ctx,
-        object
-      );
-    }
-
-    if (
-      selectedObject === object
-    ) {
-
-      drawSelection(
-        ctx,
-        object
-      );
-    }
-  }
-}
-
-/* =========================================================
-   OBJETOS
-   ========================================================= */
-
-function getObjectAtPoint(
-  x,
-  y
-) {
-
-  for (
-    let i =
-      boardObjects.length - 1;
-    i >= 0;
-    i--
-  ) {
-
-    const object =
-      boardObjects[i];
-
-    const bounds =
-      getObjectBounds(object);
-
-    if (
-      x >= bounds.x &&
-      x <=
-        bounds.x +
-        bounds.width &&
-      y >= bounds.y &&
-      y <=
-        bounds.y +
-        bounds.height
-    ) {
-
-      return object;
-    }
-  }
-
-  return null;
-}
-
-function isResizeHandle(
-  object,
-  x,
-  y
-) {
-
-  const bounds =
-    getObjectBounds(object);
-
-  const handle =
-    24;
-
-  return (
-    x >=
-      bounds.x +
-      bounds.width -
-      handle &&
-
-    y >=
-      bounds.y +
-      bounds.height -
-      handle
-  );
-}
-
-/* =========================================================
-   CRIAR TEXTO
-   ========================================================= */
-
-function createTextObject(
-  text,
-  x,
-  y
-) {
-
-  const object = {
-
-    id:
-      `text-${Date.now()}-${Math.random()}`,
-
-    type:
-      "text",
-
-    text:
-      text,
-
-    x:
-      x,
-
-    y:
-      y,
-
-    width:
-      260,
-
-    height:
-      50,
-
-    color:
-      color,
-
-    fontSize:
-      30,
-
-    fontFamily:
-      "Arial"
-  };
-
-  const metrics =
-    getTextMetrics(object);
-
-  object.height =
-    metrics.height;
-
-  const size =
-    getCanvasSize();
-
-  object.x =
-    clamp(
-      object.x,
-      10,
-      Math.max(
-        10,
-        size.width -
-          object.width -
-          10
-      )
-    );
-
-  object.y =
-    clamp(
-      object.y,
-      object.fontSize + 10,
-      Math.max(
-        object.fontSize + 10,
-        size.height - 10
-      )
-    );
-
-  return object;
-}
-
-function addBoardObject(
-  object
-) {
-
-  boardObjects.push(
-    object
-  );
-
-  selectedObject =
-    object;
-
-  redraw();
-}
-
-/* =========================================================
-   EDITAR TEXTO
-   ========================================================= */
-
-function editTextObject(
-  object
-) {
-
-  if (
-    !object ||
-    object.type !== "text"
-  ) {
-    return;
-  }
-
-  const newText =
-    window.prompt(
-      "Editar texto:",
-      object.text
-    );
-
-  if (
-    newText === null
-  ) {
-    return;
-  }
-
-  if (
-    !newText.trim()
-  ) {
-    return;
-  }
-
-  object.text =
-    newText.trim();
-
-  const metrics =
-    getTextMetrics(object);
-
-  object.height =
-    metrics.height;
-
-  selectedObject =
-    object;
-
-  redraw();
-}
-
-/* =========================================================
-   BOTÃO T
-   ========================================================= */
-
-function initializeTextButton() {
-
-  if (!textButton) {
-    return;
-  }
-
-  textButton.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      closePasteMenu();
-
-      closeToolsPanel();
-
-      const value =
-        window.prompt(
-          "Digite o texto:"
-        );
-
-      if (
-        value === null
-      ) {
-        return;
-      }
-
-      if (
-        !value.trim()
-      ) {
-        return;
-      }
-
-      const size =
-        getCanvasSize();
-
-      const object =
-        createTextObject(
-          value.trim(),
-          size.width / 2 - 130,
-          size.height / 2
-        );
-
-      addBoardObject(
-        object
-      );
-    }
-  );
-}
-
-/* =========================================================
-   MENU DE COLAR
-   ========================================================= */
-
-function createPasteMenu() {
-
-  if (pasteMenu) {
-    return;
-  }
-
-  pasteMenu =
-    document.createElement(
-      "div"
-    );
-
-  pasteMenu.id =
-    "pasteMenu";
-
-  pasteMenu.innerHTML = `
-    <button
-      id="pasteClipboardButton"
-      type="button"
-    >
-      Colar da área de transferência
-    </button>
-  `;
-
-  Object.assign(
-    pasteMenu.style,
-    {
-      position:
-        "fixed",
-
-      zIndex:
-        "99999",
-
-      display:
-        "none",
-
-      padding:
-        "8px",
-
-      borderRadius:
-        "14px",
-
-      background:
-        "rgba(25,25,25,.97)",
-
-      border:
-        "1px solid rgba(255,255,255,.15)",
-
-      boxShadow:
-        "0 8px 30px rgba(0,0,0,.45)",
-
-      backdropFilter:
-        "blur(10px)"
-    }
-  );
-
-  const button =
-    pasteMenu.querySelector(
-      "#pasteClipboardButton"
-    );
-
-  Object.assign(
-    button.style,
-    {
-      width:
-        "100%",
-
-      minWidth:
-        "230px",
-
-      border:
-        "0",
-
-      background:
-        "transparent",
-
-      color:
-        "#fff",
-
-      padding:
-        "12px 14px",
-
-      borderRadius:
-        "9px",
-
-      fontSize:
-        "14px",
-
-      textAlign:
-        "left",
-
-      cursor:
-        "pointer"
-    }
-  );
-
-  button.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      pasteClipboard();
-    }
-  );
-
-  pasteMenu.addEventListener(
-    "pointerdown",
-    event => {
-
-      event.stopPropagation();
-    }
-  );
-
-  document
-    .getElementById("app")
-    .appendChild(
-      pasteMenu
-    );
-}
-
-/* =========================================================
-   ABRIR MENU DE COLAR
-   ========================================================= */
-
-function openPasteMenu(
-  clientX,
-  clientY,
-  canvasX,
-  canvasY
-) {
-
-  createPasteMenu();
-
-  pastePosition = {
-    x: canvasX,
-    y: canvasY
-  };
-
-  pasteMenu.style.display =
-    "block";
-
-  const width = 260;
-  const height = 58;
-
-  pasteMenu.style.left =
-    `${clamp(
-      clientX,
-      8,
-      window.innerWidth -
-        width -
-        8
-    )}px`;
-
-  pasteMenu.style.top =
-    `${clamp(
-      clientY,
-      8,
-      window.innerHeight -
-        height -
-        8
-    )}px`;
-}
-
-/* =========================================================
-   FECHAR MENU DE COLAR
-   ========================================================= */
-
-function closePasteMenu() {
-
-  if (pasteMenu) {
-
-    pasteMenu.style.display =
-      "none";
-  }
-
-  if (pasteFallback) {
-
-    pasteFallback.remove();
-
-    pasteFallback =
-      null;
-  }
-}
-
-/* =========================================================
-   FALLBACK PARA SAFARI
-   ========================================================= */
-
-function createPasteFallback() {
-
-  if (pasteFallback) {
-    return pasteFallback;
-  }
-
-  const element =
-    document.createElement(
-      "div"
-    );
-
-  element.contentEditable =
-    "true";
-
-  element.setAttribute(
-    "aria-label",
-    "Área temporária para colar"
-  );
-
-  Object.assign(
-    element.style,
-    {
-      position:
-        "fixed",
-
-      left:
-        "50%",
-
-      top:
-        "50%",
-
-      transform:
-        "translate(-50%,-50%)",
-
-      zIndex:
-        "100000",
-
-      width:
-        "260px",
-
-      minHeight:
-        "48px",
-
-      padding:
-        "12px",
-
-      borderRadius:
-        "12px",
-
-      background:
-        "rgba(20,20,20,.96)",
-
-      color:
-        "#fff",
-
-      border:
-        "1px solid rgba(255,255,255,.25)",
-
-      outline:
-        "none",
-
-      fontSize:
-        "16px",
-
-      userSelect:
-        "text",
-
-      WebkitUserSelect:
-        "text"
-    }
-  );
-
-  element.addEventListener(
-    "pointerdown",
-    event => {
-
-      event.stopPropagation();
-    }
-  );
-
-  element.addEventListener(
-    "paste",
-    event => {
-
-      event.preventDefault();
-
-      const position =
-        pastePosition || {
-          x: 50,
-          y: 50
-        };
-
-      const clipboard =
-        event.clipboardData;
-
-      if (!clipboard) {
-        return;
-      }
-
-      const items =
-        clipboard.items || [];
-
-      for (
-        const item of items
-      ) {
-
-        if (
-          item.kind ===
-            "file" &&
-          item.type.startsWith(
-            "image/"
-          )
-        ) {
-
-          const file =
-            item.getAsFile();
-
-          if (file) {
-
-            createImageObject(
-              file,
-              position.x,
-              position.y
-            );
-
-            closePasteMenu();
-
-            return;
-          }
-        }
-      }
-
-      const text =
-        clipboard.getData(
-          "text/plain"
-        );
-
-      if (
-        text &&
-        text.trim()
-      ) {
-
-        addBoardObject(
-          createTextObject(
-            text.trim(),
-            position.x,
-            position.y
-          )
-        );
-
-        closePasteMenu();
-      }
-    }
-  );
-
-  document
-    .getElementById("app")
-    .appendChild(
-      element
-    );
-
-  pasteFallback =
-    element;
-
-  return element;
-}
-
-/* =========================================================
-   COLAR
-   ========================================================= */
-
-async function pasteClipboard() {
-
-  const position =
-    pastePosition || {
-      x: 50,
-      y: 50
-    };
-
-  /*
-   * O menu desaparece imediatamente
-   * depois do comando Colar.
-   */
-  if (pasteMenu) {
-
-    pasteMenu.style.display =
-      "none";
-  }
-
-  try {
-
-    /*
-     * Primeiro tenta imagem/texto
-     * pela Clipboard API.
-     */
-
-    if (
-      navigator.clipboard &&
-      navigator.clipboard.read
-    ) {
-
-      const items =
-        await navigator.clipboard.read();
-
-      for (
-        const item of items
-      ) {
-
-        const imageType =
-          item.types.find(
-            type =>
-              type.startsWith(
-                "image/"
-              )
-          );
-
-        if (imageType) {
-
-          const blob =
-            await item.getType(
-              imageType
-            );
-
-          createImageObject(
-            blob,
-            position.x,
-            position.y
-          );
-
-          pastePosition =
-            null;
-
-          return;
-        }
-
-        if (
-          item.types.includes(
-            "text/plain"
-          )
-        ) {
-
-          const blob =
-            await item.getType(
-              "text/plain"
-            );
-
-          const text =
-            await blob.text();
-
-          if (
-            text &&
-            text.trim()
-          ) {
-
-            addBoardObject(
-              createTextObject(
-                text.trim(),
-                position.x,
-                position.y
-              )
-            );
-
-            pastePosition =
-              null;
-
-            return;
-          }
-        }
-      }
-    }
-
-    /*
-     * Depois tenta somente texto.
-     */
-
-    if (
-      navigator.clipboard &&
-      navigator.clipboard.readText
-    ) {
-
-      const text =
-        await navigator.clipboard.readText();
-
-      if (
-        text &&
-        text.trim()
-      ) {
-
-        addBoardObject(
-          createTextObject(
-            text.trim(),
-            position.x,
-            position.y
-          )
-        );
-
-        pastePosition =
-          null;
-
-        return;
-      }
-    }
-
-  } catch (error) {
-
-    console.log(
-      "Clipboard API bloqueada:",
-      error
-    );
-  }
-
-  /*
-   * Fallback especialmente útil
-   * para Safari/iPhone.
-   */
-
-  pastePosition =
-    position;
-
-  const fallback =
-    createPasteFallback();
-
-  fallback.focus();
-
-  showStatus(
-    "Toque no campo e use Colar."
-  );
-}
-
-/* =========================================================
-   IMAGEM
-   ========================================================= */
-
-function createImageObject(
-  blob,
-  x,
-  y
-) {
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-  const image =
-    new Image();
-
-  image.onload =
-    () => {
-
-      const size =
-        getCanvasSize();
-
-      const maxWidth =
-        Math.min(
-          400,
-          Math.max(
-            140,
-            size.width - 20
-          )
-        );
-
-      const naturalWidth =
-        image.naturalWidth ||
-        maxWidth;
-
-      const naturalHeight =
-        image.naturalHeight ||
-        1;
-
-      const width =
-        Math.min(
-          maxWidth,
-          naturalWidth
-        );
-
-      const height =
-        width *
-        (
-          naturalHeight /
-          naturalWidth
-        );
-
-      const object = {
-
-        id:
-          `image-${Date.now()}-${Math.random()}`,
-
-        type:
-          "image",
-
-        image:
-          image,
-
-        src:
-          url,
-
-        x:
-          clamp(
-            x,
-            10,
-            Math.max(
-              10,
-              size.width -
-                width -
-                10
-            )
-          ),
-
-        y:
-          clamp(
-            y,
-            10,
-            Math.max(
-              10,
-              size.height -
-                height -
-                10
-            )
-          ),
-
-        width:
-          width,
-
-        height:
-          height
-      };
-
-      addBoardObject(
-        object
-      );
-    };
-
-  image.onerror =
-    () => {
-
-      URL.revokeObjectURL(
-        url
-      );
-
-      showStatus(
-        "Não foi possível carregar a imagem."
-      );
-    };
-
-  image.src =
-    url;
-}
-
-/* =========================================================
-   AÇÃO DA IMAGEM
-   ========================================================= */
-
-function createImageAction() {
-
-  if (imageAction) {
-    return;
-  }
-
-  imageAction =
-    document.createElement(
-      "button"
-    );
-
-  imageAction.id =
-    "imageCancelButton";
-
-  imageAction.type =
-    "button";
-
-  imageAction.textContent =
-    "Cancelar";
-
-  Object.assign(
-    imageAction.style,
-    {
-      position:
-        "fixed",
-
-      display:
-        "none",
-
-      zIndex:
-        "100001",
-
-      padding:
-        "9px 14px",
-
-      borderRadius:
-        "10px",
-
-      border:
-        "1px solid rgba(255,255,255,.18)",
-
-      background:
-        "rgba(25,25,25,.96)",
-
-      color:
-        "#fff",
-
-      fontSize:
-        "14px",
-
-      cursor:
-        "pointer"
-    }
-  );
-
-  imageAction.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      selectedObject =
-        null;
-
-      hideImageAction();
-
-      redraw();
-    }
-  );
-
-  document
-    .getElementById("app")
-    .appendChild(
-      imageAction
-    );
-}
-
-function showImageAction(
-  object
-) {
-
-  createImageAction();
-
-  const bounds =
-    getObjectBounds(object);
-
-  imageAction.style.left =
-    `${clamp(
-      bounds.x +
-        bounds.width -
-        10,
-      8,
-      window.innerWidth -
-        100
-    )}px`;
-
-  imageAction.style.top =
-    `${clamp(
-      bounds.y - 48,
-      8,
-      window.innerHeight -
-        48
-    )}px`;
-
-  imageAction.style.display =
-    "block";
-}
-
-function hideImageAction() {
-
-  if (imageAction) {
-
-    imageAction.style.display =
-      "none";
-  }
-}
-
-/* =========================================================
-   FERRAMENTAS
-   ========================================================= */
-
-function closeToolsPanel() {
-
-  if (!tools) {
-    return;
-  }
-
-  tools.classList.remove(
-    "open"
-  );
-
-  tools.setAttribute(
-    "aria-hidden",
-    "true"
-  );
+function closePanels() {
+  toolsPanel.classList.remove("show");
+  menuPanel.classList.remove("show");
+  canvasMenu.classList.remove("show");
 }
 
 function toggleTools() {
+  const opening = !toolsPanel.classList.contains("show");
+  menuPanel.classList.remove("show");
+  canvasMenu.classList.remove("show");
+  toolsPanel.classList.toggle("show", opening);
+}
 
-  const open =
-    !tools.classList.contains(
-      "open"
-    );
+function toggleMainMenu() {
+  const opening = !menuPanel.classList.contains("show");
+  toolsPanel.classList.remove("show");
+  canvasMenu.classList.remove("show");
+  menuPanel.classList.toggle("show", opening);
+}
 
-  tools.classList.toggle(
-    "open",
-    open
-  );
+function fitCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(window.innerWidth * dpr);
+  canvas.height = Math.round(window.innerHeight * dpr);
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
+}
 
-  tools.setAttribute(
-    "aria-hidden",
-    String(!open)
-  );
+function drawStroke(target, stroke) {
+  if (!stroke || !stroke.points || !stroke.points.length) return;
 
-  if (open) {
+  target.save();
+  target.lineCap = "round";
+  target.lineJoin = "round";
+  target.lineWidth = stroke.width;
+  target.globalCompositeOperation =
+    stroke.tool === "eraser" ? "destination-out" : "source-over";
+  target.strokeStyle = stroke.color;
 
-    menuPanel.classList.remove(
-      "open"
-    );
+  target.beginPath();
+  target.moveTo(stroke.points[0].x, stroke.points[0].y);
 
-    menuPanel.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+  for (let i = 1; i < stroke.points.length; i++) {
+    target.lineTo(stroke.points[i].x, stroke.points[i].y);
+  }
+
+  if (stroke.points.length === 1) {
+    target.lineTo(stroke.points[0].x + 0.01, stroke.points[0].y + 0.01);
+  }
+
+  target.stroke();
+  target.restore();
+}
+
+function objectBounds(obj) {
+  return {
+    x: obj.x,
+    y: obj.y,
+    width: obj.width,
+    height: obj.height
+  };
+}
+
+function drawBoardObjects(target) {
+  for (const obj of boardObjects) {
+    target.save();
+
+    if (obj.type === "text") {
+      target.fillStyle = obj.color || "#ffffff";
+      target.font = `${obj.size || 32}px Arial`;
+      target.textBaseline = "top";
+
+      const lines = String(obj.text || "").split("\n");
+      const lh = (obj.size || 32) * 1.2;
+
+      lines.forEach((line, i) => {
+        target.fillText(line, obj.x, obj.y + i * lh);
+      });
+    }
+
+    if (obj.type === "image" && obj.image && obj.image.complete) {
+      target.drawImage(obj.image, obj.x, obj.y, obj.width, obj.height);
+    }
+
+    target.restore();
+  }
+
+  if (selectedObject) {
+    drawSelection(target, selectedObject);
   }
 }
 
-/* =========================================================
-   MENU ☰
-   ========================================================= */
+function drawSelection(target, obj) {
+  const b = objectBounds(obj);
+  target.save();
+  target.strokeStyle = "rgba(255,255,255,.9)";
+  target.lineWidth = 1.5;
+  target.setLineDash([6, 4]);
+  target.strokeRect(b.x, b.y, b.width, b.height);
+  target.setLineDash([]);
 
-function toggleMenu() {
-
-  const open =
-    !menuPanel.classList.contains(
-      "open"
-    );
-
-  menuPanel.classList.toggle(
-    "open",
-    open
+  target.fillStyle = "#fff";
+  target.fillRect(
+    b.x + b.width - 14,
+    b.y + b.height - 14,
+    14,
+    14
   );
+  target.restore();
+}
 
-  menuPanel.setAttribute(
-    "aria-hidden",
-    String(!open)
-  );
+function redraw() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  if (open) {
+  for (const stroke of strokes) {
+    drawStroke(ctx, stroke);
+  }
 
-    tools.classList.remove(
-      "open"
+  drawBoardObjects(ctx);
+}
+
+function addBoardObject(obj) {
+  boardObjects.push(obj);
+  redoObjects = [];
+  selectedObject = obj;
+  redraw();
+}
+
+function textMetrics(text, size) {
+  const lines = String(text).split("\n");
+  const widths = lines.map(line => {
+    const probe = document.createElement("canvas").getContext("2d");
+    probe.font = `${size}px Arial`;
+    return probe.measureText(line).width;
+  });
+
+  return {
+    width: Math.max(120, ...widths) + 12,
+    height: Math.max(42, lines.length * size * 1.2)
+  };
+}
+
+function createTextObject(x, y, initialText = null) {
+  const text = initialText ?? window.prompt("Digite o texto:", "");
+  if (text === null || !String(text).trim()) return;
+
+  const size = clamp(lineWidth * 6, 20, 54);
+  const m = textMetrics(text, size);
+
+  addBoardObject({
+    type: "text",
+    text: String(text),
+    x: clamp(x, 8, Math.max(8, window.innerWidth - m.width - 8)),
+    y: clamp(y, 8, Math.max(8, window.innerHeight - m.height - 8)),
+    size,
+    color,
+    width: m.width,
+    height: m.height
+  });
+
+  tool = "pen";
+  toolName.textContent = "Caneta";
+  setStatus("Texto inserido.");
+}
+
+function createImageObject(dataUrl, x, y) {
+  const image = new Image();
+
+  image.onload = () => {
+    const maxW = Math.min(window.innerWidth * 0.55, 420);
+    const maxH = Math.min(window.innerHeight * 0.45, 320);
+
+    const scale = Math.min(
+      1,
+      maxW / image.naturalWidth,
+      maxH / image.naturalHeight
     );
 
-    tools.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+    const width = Math.max(40, image.naturalWidth * scale);
+    const height = Math.max(40, image.naturalHeight * scale);
+
+    addBoardObject({
+      type: "image",
+      image,
+      dataUrl,
+      x: clamp(x, 8, Math.max(8, window.innerWidth - width - 8)),
+      y: clamp(y, 8, Math.max(8, window.innerHeight - height - 8)),
+      width,
+      height
+    });
+
+    setStatus("Imagem inserida.");
+  };
+
+  image.src = dataUrl;
+}
+
+function chooseImage(x, y) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => createImageObject(reader.result, x, y);
+    reader.readAsDataURL(file);
+  };
+
+  input.click();
+}
+
+function removeObject(obj) {
+  const i = boardObjects.indexOf(obj);
+  if (i >= 0) {
+    boardObjects.splice(i, 1);
+    redoObjects = [];
+    selectedObject = null;
+    redraw();
   }
 }
 
-/* =========================================================
-   CANETA
-   ========================================================= */
+function editTextObject(obj) {
+  if (!obj || obj.type !== "text") return;
+
+  const value = window.prompt("Edite o texto:", obj.text);
+  if (value === null || !String(value).trim()) return;
+
+  obj.text = String(value);
+  const m = textMetrics(obj.text, obj.size || 32);
+  obj.width = m.width;
+  obj.height = m.height;
+  redraw();
+}
+
+function getObjectAtPoint(x, y) {
+  for (let i = boardObjects.length - 1; i >= 0; i--) {
+    const obj = boardObjects[i];
+    if (
+      x >= obj.x &&
+      x <= obj.x + obj.width &&
+      y >= obj.y &&
+      y <= obj.y + obj.height
+    ) {
+      return obj;
+    }
+  }
+  return null;
+}
+
+function showImageCancelButton(obj) {
+  let button = document.getElementById("imageCancelAction");
+
+  if (!button) {
+    button = document.createElement("button");
+    button.id = "imageCancelAction";
+    button.textContent = "Cancelar";
+    Object.assign(button.style, {
+      position: "fixed",
+      zIndex: "10001",
+      width: "auto",
+      minWidth: "100px",
+      height: "40px",
+      padding: "0 14px",
+      background: "rgba(25,25,25,.96)",
+      color: "#fff",
+      borderRadius: "10px",
+      fontSize: "15px"
+    });
+    document.body.appendChild(button);
+  }
+
+  const x = clamp(obj.x, 8, window.innerWidth - 108);
+  const y = clamp(obj.y + obj.height + 8, 8, window.innerHeight - 48);
+
+  button.style.left = `${x}px`;
+  button.style.top = `${y}px`;
+  button.style.display = "flex";
+
+  button.onclick = event => {
+    event.stopPropagation();
+    selectedObject = null;
+    secondTapImage = false;
+    button.style.display = "none";
+    redraw();
+  };
+}
+
+function hideImageCancelButton() {
+  const button = document.getElementById("imageCancelAction");
+  if (button) button.style.display = "none";
+}
+
+function openCanvasPasteMenu(x, y) {
+  pendingPastePosition = { x, y };
+  toolsPanel.classList.remove("show");
+  menuPanel.classList.remove("show");
+
+  const rect = canvasMenu.getBoundingClientRect();
+  const margin = 8;
+
+  canvasMenu.style.left = `${clamp(
+    x,
+    margin,
+    Math.max(margin, window.innerWidth - rect.width - margin)
+  )}px`;
+
+  canvasMenu.style.top = `${clamp(
+    y,
+    margin,
+    Math.max(margin, window.innerHeight - rect.height - margin)
+  )}px`;
+
+  canvasMenu.classList.add("show");
+}
+
+function closeCanvasPasteMenu() {
+  canvasMenu.classList.remove("show");
+  pendingPastePosition = null;
+}
+
+async function pasteFromClipboard(x, y) {
+  closeCanvasPasteMenu();
+
+  let pasted = false;
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.read) {
+      const items = await navigator.clipboard.read();
+
+      for (const item of items) {
+        const type = item.types.find(t => t.startsWith("image/"));
+        if (type) {
+          const blob = await item.getType(type);
+          const reader = new FileReader();
+
+          reader.onload = () => createImageObject(reader.result, x, y);
+          reader.readAsDataURL(blob);
+          pasted = true;
+          return;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Leitura de imagem da área de transferência:", error);
+  }
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      const text = await navigator.clipboard.readText();
+
+      if (text && text.trim()) {
+        createTextObject(x, y, text);
+        pasted = true;
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("Leitura de texto da área de transferência:", error);
+  }
+
+  if (!pasted) {
+    safariPasteFallback(x, y);
+  }
+}
+
+function safariPasteFallback(x, y) {
+  const old = document.getElementById("safariPasteFallback");
+  if (old) old.remove();
+
+  const area = document.createElement("textarea");
+  area.id = "safariPasteFallback";
+  area.setAttribute("aria-hidden", "true");
+
+  Object.assign(area.style, {
+    position: "fixed",
+    left: "-10000px",
+    top: "0",
+    width: "1px",
+    height: "1px",
+    opacity: "0",
+    pointerEvents: "none",
+    zIndex: "-1"
+  });
+
+  document.body.appendChild(area);
+  area.focus();
+
+  area.addEventListener("paste", event => {
+    const cd = event.clipboardData;
+    if (!cd) return;
+
+    const files = Array.from(cd.files || []);
+    const imageFile = files.find(file => file.type.startsWith("image/"));
+
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = () => createImageObject(reader.result, x, y);
+      reader.readAsDataURL(imageFile);
+    } else {
+      const text = cd.getData("text/plain");
+      if (text && text.trim()) createTextObject(x, y, text);
+    }
+
+    event.preventDefault();
+    setTimeout(() => area.remove(), 50);
+  }, { once: true });
+
+  setTimeout(() => {
+    area.remove();
+    if (!document.getElementById("safariPasteFallback")) return;
+    setStatus("Se o Safari mostrar o menu, use Colar.");
+  }, 3000);
+}
 
 function setPen() {
-
-  tool =
-    "pen";
-
-  if (toolName) {
-
-    toolName.textContent =
-      "Caneta";
-  }
+  tool = "pen";
+  toolName.textContent = "Caneta";
+  eraserBtn.style.background = "rgba(20,20,20,.78)";
 }
 
 function setEraser() {
-
-  tool =
-    "eraser";
-
-  if (toolName) {
-
-    toolName.textContent =
-      "Borracha";
-  }
+  tool = "eraser";
+  toolName.textContent = "Borracha";
+  eraserBtn.style.background = "rgba(255,255,255,.2)";
 }
 
-/* =========================================================
-   POINTER DOWN
-   ========================================================= */
+function setTextMode() {
+  tool = "text";
+  toolName.textContent = "Texto";
+  toolsPanel.classList.remove("show");
+  menuPanel.classList.remove("show");
+  setStatus("Toque na lousa para inserir o texto.");
+}
 
-function startPointerInteraction(
-  event
-) {
+function beginPointer(event) {
+  if (event.target !== canvas) return;
 
-  if (
-    event.pointerType ===
-      "mouse" &&
-    event.button !== 0
-  ) {
+  toolsPanel.classList.remove("show");
+  menuPanel.classList.remove("show");
 
+  const p = pointFromEvent(event);
+  pointerStart = p;
+  pointerDownTime = Date.now();
+  pointerMoved = false;
+
+  const obj = getObjectAtPoint(p.x, p.y);
+
+  if (obj) {
+    event.preventDefault();
+    selectedObject = obj;
+
+    if (obj.type === "image") {
+      if (secondTapImage && selectedObject === obj) {
+        showImageCancelButton(obj);
+      } else {
+        secondTapImage = true;
+        hideImageCancelButton();
+      }
+    } else {
+      secondTapImage = false;
+      hideImageCancelButton();
+    }
+
+    const b = objectBounds(obj);
+    const handle = 22;
+
+    if (
+      p.x >= b.x + b.width - handle &&
+      p.y >= b.y + b.height - handle
+    ) {
+      resizingObject = true;
+      resizeStart = {
+        x: p.x,
+        y: p.y,
+        width: b.width,
+        height: b.height
+      };
+    } else {
+      draggingObject = true;
+      dragOffset = {
+        x: p.x - obj.x,
+        y: p.y - obj.y
+      };
+    }
+
+    redraw();
     return;
   }
 
-  event.preventDefault();
+  selectedObject = null;
+  secondTapImage = false;
+  hideImageCancelButton();
 
-  const point =
-    getCanvasPoint(event);
-
-  /*
-   * CORREÇÃO IMPORTANTE:
-   *
-   * qualquer toque na lousa fecha
-   * imediatamente a caixa da caneta.
-   */
-
-  closeToolsPanel();
-
-  pointerStart = {
-
-    x:
-      point.x,
-
-    y:
-      point.y,
-
-    clientX:
-      event.clientX,
-
-    clientY:
-      event.clientY,
-
-    time:
-      Date.now()
+  drawing = true;
+  currentStroke = {
+    tool: tool === "eraser" ? "eraser" : "pen",
+    color,
+    width: lineWidth,
+    points: [p]
   };
 
-  pointerMoved =
-    false;
+  redoStrokes = [];
+  redraw();
+  drawStroke(ctx, currentStroke);
 
-  const object =
-    getObjectAtPoint(
-      point.x,
-      point.y
-    );
-
-  /*
-   * OBJETO
-   */
-
-  if (object) {
-
-    selectedObject =
-      object;
-
-    hideImageAction();
-
-    /*
-     * Redimensionar
-     */
-
-    if (
-      isResizeHandle(
-        object,
-        point.x,
-        point.y
-      )
-    ) {
-
-      resizingObject =
-        true;
-
-      objectResizeStart = {
-
-        x:
-          point.x,
-
-        y:
-          point.y,
-
-        width:
-          object.width,
-
-        height:
-          object.height
-      };
-
-    } else {
-
-      /*
-       * Mover
-       */
-
-      draggingObject =
-        true;
-
-      const bounds =
-        getObjectBounds(
-          object
-        );
-
-      objectDragOffset = {
-
-        x:
-          point.x -
-          bounds.x,
-
-        y:
-          point.y -
-          bounds.y
-      };
-    }
-
-    canvas.setPointerCapture?.(
-      event.pointerId
-    );
-
-    redraw();
-
-    return;
-  }
-
-  /*
-   * Clique em área vazia.
-   */
-
-  selectedObject =
-    null;
-
-  hideImageAction();
-
-  /*
-   * DESENHO
-   */
-
-  if (
-    tool === "pen" ||
-    tool === "eraser"
-  ) {
-
-    drawing =
-      true;
-
-    currentStroke = {
-
-      tool:
-        tool,
-
-      color:
-        color,
-
-      width:
-        lineWidth,
-
-      points: [
-        {
-          x:
-            point.x,
-
-          y:
-            point.y
-        }
-      ]
-    };
-
-    strokes.push(
-      currentStroke
-    );
-
-    redoStack =
-      [];
-
-    canvas.setPointerCapture?.(
-      event.pointerId
-    );
-
-    redraw();
-
-    return;
-  }
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch (_) {}
 }
 
-/* =========================================================
-   POINTER MOVE
-   ========================================================= */
+function movePointer(event) {
+  if (draggingObject || resizingObject) {
+    const p = pointFromEvent(event);
+    pointerMoved = true;
 
-function movePointerInteraction(
-  event
-) {
+    if (draggingObject && selectedObject && dragOffset) {
+      const b = objectBounds(selectedObject);
+      selectedObject.x = clamp(
+        p.x - dragOffset.x,
+        0,
+        Math.max(0, window.innerWidth - b.width)
+      );
+      selectedObject.y = clamp(
+        p.y - dragOffset.y,
+        0,
+        Math.max(0, window.innerHeight - b.height)
+      );
+      redraw();
+    }
 
-  if (!pointerStart) {
+    if (resizingObject && selectedObject && resizeStart) {
+      selectedObject.width = Math.max(
+        selectedObject.type === "text" ? 100 : 60,
+        resizeStart.width + (p.x - resizeStart.x)
+      );
+      selectedObject.height = Math.max(
+        selectedObject.type === "text" ? 45 : 40,
+        resizeStart.height + (p.y - resizeStart.y)
+      );
+      redraw();
+    }
     return;
   }
+
+  if (!drawing || !currentStroke) return;
+
+  const p = pointFromEvent(event);
+  const d = Math.hypot(
+    p.x - pointerStart.x,
+    p.y - pointerStart.y
+  );
+
+  if (d > TAP_MAX_DISTANCE) pointerMoved = true;
+
+  const last = currentStroke.points[currentStroke.points.length - 1];
+  if (Math.hypot(p.x - last.x, p.y - last.y) < 0.7) return;
 
   event.preventDefault();
-
-  const point =
-    getCanvasPoint(event);
-
-  const distance =
-    Math.hypot(
-      point.x -
-        pointerStart.x,
-
-      point.y -
-        pointerStart.y
-    );
-
-  if (
-    distance >
-    TAP_MAX_DISTANCE
-  ) {
-
-    pointerMoved =
-      true;
-  }
-
-  /*
-   * REDIMENSIONAR
-   */
-
-  if (
-    resizingObject &&
-    selectedObject
-  ) {
-
-    const dx =
-      point.x -
-      pointerStart.x;
-
-    const newWidth =
-      Math.max(
-        80,
-        objectResizeStart.width +
-          dx
-      );
-
-    selectedObject.width =
-      newWidth;
-
-    if (
-      selectedObject.type ===
-      "image"
-    ) {
-
-      const ratio =
-        objectResizeStart.height /
-        objectResizeStart.width;
-
-      selectedObject.height =
-        Math.max(
-          60,
-          newWidth * ratio
-        );
-
-    } else {
-
-      selectedObject.height =
-        getTextMetrics(
-          selectedObject
-        ).height;
-    }
-
-    redraw();
-
-    return;
-  }
-
-  /*
-   * MOVER
-   */
-
-  if (
-    draggingObject &&
-    selectedObject
-  ) {
-
-    const size =
-      getCanvasSize();
-
-    const bounds =
-      getObjectBounds(
-        selectedObject
-      );
-
-    const newX =
-      point.x -
-      objectDragOffset.x;
-
-    const newY =
-      point.y -
-      objectDragOffset.y;
-
-    selectedObject.x =
-      clamp(
-        newX,
-        5,
-        Math.max(
-          5,
-          size.width -
-            bounds.width -
-            5
-        )
-      );
-
-    if (
-      selectedObject.type ===
-      "text"
-    ) {
-
-      selectedObject.y =
-        clamp(
-          newY +
-            selectedObject.fontSize,
-
-          selectedObject.fontSize +
-            5,
-
-          size.height -
-            5
-        );
-
-    } else {
-
-      selectedObject.y =
-        clamp(
-          newY,
-          5,
-          Math.max(
-            5,
-            size.height -
-              selectedObject.height -
-              5
-          )
-        );
-    }
-
-    redraw();
-
-    return;
-  }
-
-  /*
-   * DESENHAR
-   */
-
-  if (
-    drawing &&
-    currentStroke
-  ) {
-
-    currentStroke.points.push({
-
-      x:
-        point.x,
-
-      y:
-        point.y
-    });
-
-    redraw();
-  }
+  currentStroke.points.push(p);
+  drawStroke(ctx, currentStroke);
 }
 
-/* =========================================================
-   POINTER UP
-   ========================================================= */
-
-function endPointerInteraction(
-  event
-) {
-
-  if (!pointerStart) {
+function endPointer(event) {
+  if (draggingObject || resizingObject) {
+    draggingObject = false;
+    resizingObject = false;
+    dragOffset = null;
+    resizeStart = null;
+    if (selectedObject) redraw();
     return;
   }
 
-  event.preventDefault();
+  if (!drawing) return;
 
-  const point =
-    getCanvasPoint(event);
+  drawing = false;
 
-  const wasTap =
+  const quickTap =
     !pointerMoved &&
-    (
-      Date.now() -
-      pointerStart.time
-    ) <=
-      TAP_MAX_TIME;
+    Date.now() - pointerDownTime <= TAP_MAX_TIME;
 
-  const tappedObject =
-    getObjectAtPoint(
-      point.x,
-      point.y
-    );
+  const p = pointerStart;
 
-  /*
-   * ENCERRA DESENHO
-   */
+  if (quickTap) {
+    currentStroke = null;
+    redraw();
 
-  if (drawing) {
-
-    drawing =
-      false;
-
-    currentStroke =
-      null;
-  }
-
-  /*
-   * OBJETO
-   */
-
-  if (
-    draggingObject ||
-    resizingObject
-  ) {
-
-    draggingObject =
-      false;
-
-    resizingObject =
-      false;
-
-    objectDragOffset =
-      null;
-
-    objectResizeStart =
-      null;
-
-    /*
-     * Um segundo clique no objeto:
-     */
-
-    if (
-      wasTap &&
-      tappedObject ===
-        selectedObject
-    ) {
-
-      if (
-        selectedObject.type ===
-        "text"
-      ) {
-
-        /*
-         * TEXTO:
-         * abre edição.
-         */
-
-        editTextObject(
-          selectedObject
-        );
-
-      } else if (
-        selectedObject.type ===
-        "image"
-      ) {
-
-        /*
-         * IMAGEM:
-         * mostra somente Cancelar.
-         */
-
-        showImageAction(
-          selectedObject
-        );
-      }
+    if (tool === "text") {
+      createTextObject(p.x, p.y);
+      pointerStart = null;
+      return;
     }
 
-  } else if (
-    wasTap &&
-    !tappedObject &&
-    !drawing
-  ) {
-
-    /*
-     * ÁREA VAZIA:
-     * somente Colar.
-     */
-
-    openPasteMenu(
-      event.clientX,
-      event.clientY,
-      point.x,
-      point.y
-    );
-  }
-
-  pointerStart =
-    null;
-
-  pointerMoved =
-    false;
-
-  try {
-
-    canvas.releasePointerCapture?.(
-      event.pointerId
-    );
-
-  } catch (error) {}
-
-  redraw();
-}
-
-/* =========================================================
-   POINTER CANCEL
-   ========================================================= */
-
-function cancelPointerInteraction(
-  event
-) {
-
-  drawing =
-    false;
-
-  draggingObject =
-    false;
-
-  resizingObject =
-    false;
-
-  currentStroke =
-    null;
-
-  pointerStart =
-    null;
-
-  pointerMoved =
-    false;
-
-  objectDragOffset =
-    null;
-
-  objectResizeStart =
-    null;
-
-  redraw();
-
-  try {
-
-    canvas.releasePointerCapture?.(
-      event.pointerId
-    );
-
-  } catch (error) {}
-}
-
-/* =========================================================
-   INTERAÇÃO COM CANVAS
-   ========================================================= */
-
-function initializeCanvasInteraction() {
-
-  canvas.addEventListener(
-    "pointerdown",
-    startPointerInteraction,
-    {
-      passive: false
-    }
-  );
-
-  canvas.addEventListener(
-    "pointermove",
-    movePointerInteraction,
-    {
-      passive: false
-    }
-  );
-
-  canvas.addEventListener(
-    "pointerup",
-    endPointerInteraction,
-    {
-      passive: false
-    }
-  );
-
-  canvas.addEventListener(
-    "pointercancel",
-    cancelPointerInteraction,
-    {
-      passive: false
-    }
-  );
-
-  canvas.addEventListener(
-    "contextmenu",
-    event => {
-
-      event.preventDefault();
-    }
-  );
-}
-
-/* =========================================================
-   BOTÕES DA INTERFACE
-   ========================================================= */
-
-function initializeInterface() {
-
-  /*
-   * ☰
-   *
-   * IMPORTANTE:
-   * não chama caneta.
-   */
-
-  menuBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      toggleMenu();
-    }
-  );
-
-  /*
-   * FERRAMENTAS / CANETA
-   */
-
-  settingsBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      toggleTools();
-    }
-  );
-
-  /*
-   * DESFAZER
-   */
-
-  undoBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      if (!strokes.length) {
-        return;
-      }
-
-      const stroke =
-        strokes.pop();
-
-      redoStack.push(
-        stroke
-      );
-
-      redraw();
-    }
-  );
-
-  /*
-   * REFAZER
-   */
-
-  redoBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      if (!redoStack.length) {
-        return;
-      }
-
-      const stroke =
-        redoStack.pop();
-
-      strokes.push(
-        stroke
-      );
-
-      redraw();
-    }
-  );
-
-  /*
-   * LIMPAR
-   */
-
-  clearBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      if (
-        !strokes.length &&
-        !boardObjects.length
-      ) {
-        return;
-      }
-
-      const confirmed =
-        window.confirm(
-          "Limpar toda a lousa?"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      strokes =
-        [];
-
-      redoStack =
-        [];
-
-      boardObjects =
-        [];
-
-      selectedObject =
-        null;
-
-      hideImageAction();
-
-      closePasteMenu();
-
-      redraw();
-    }
-  );
-
-  /*
-   * CORES
-   */
-
-  document
-    .querySelectorAll(
-      ".color"
-    )
-    .forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          event => {
-
-            event.stopPropagation();
-
-            color =
-              button.dataset.color ||
-              "#fff";
-
-            document
-              .querySelectorAll(
-                ".color"
-              )
-              .forEach(
-                item =>
-                  item.classList.remove(
-                    "active"
-                  )
-              );
-
-            button.classList.add(
-              "active"
-            );
-
-            setPen();
-          }
-        );
-      }
-    );
-
-  /*
-   * ESPESSURA
-   */
-
-  widthInput?.addEventListener(
-    "input",
-    () => {
-
-      lineWidth =
-        Number(
-          widthInput.value
-        );
-    }
-  );
-
-  /*
-   * BORRACHA
-   */
-
-  eraserBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      if (
-        tool ===
-        "eraser"
-      ) {
-
-        setPen();
-
-      } else {
-
-        setEraser();
-      }
-    }
-  );
-
-  /*
-   * T
-   */
-
-  initializeTextButton();
-
-  /*
-   * CLIQUE FORA DOS PAINÉIS
-   */
-
-  document.addEventListener(
-    "pointerdown",
-    event => {
-
-      /*
-       * Menu de colar
-       */
-
-      if (
-        pasteMenu &&
-        pasteMenu.style.display ===
-          "block" &&
-        !pasteMenu.contains(
-          event.target
-        )
-      ) {
-
-        closePasteMenu();
-      }
-
-      /*
-       * Menu ☰
-       */
-
-      if (
-        menuPanel &&
-        menuPanel.classList.contains(
-          "open"
-        ) &&
-        !menuPanel.contains(
-          event.target
-        ) &&
-        event.target !==
-          menuBtn
-      ) {
-
-        menuPanel.classList.remove(
-          "open"
-        );
-
-        menuPanel.setAttribute(
-          "aria-hidden",
-          "true"
-        );
-      }
-
-      /*
-       * Ferramentas
-       */
-
-      if (
-        tools &&
-        tools.classList.contains(
-          "open"
-        ) &&
-        !tools.contains(
-          event.target
-        ) &&
-        event.target !==
-          settingsBtn
-      ) {
-
-        /*
-         * Não fecha quando o toque
-         * aconteceu na lousa.
-         *
-         * A própria interação da
-         * lousa fecha o painel.
-         */
-
-        if (
-          event.target !==
-            canvas
-        ) {
-
-          closeToolsPanel();
-        }
-      }
-    },
-    true
-  );
-}
-
-/* =========================================================
-   TROCAR CÂMERA
-   ========================================================= */
-
-function initializeFlipButton() {
-
-  flipBtn?.addEventListener(
-    "click",
-    async event => {
-
-      event.stopPropagation();
-
-      facingMode =
-        facingMode ===
-          "user"
-          ? "environment"
-          : "user";
-
-      if (!stream) {
-        return;
-      }
-
-      try {
-
-        const oldStream =
-          stream;
-
-        const newStream =
-          await navigator
-            .mediaDevices
-            .getUserMedia({
-              video: {
-                facingMode:
-                  facingMode
-              },
-              audio: false
-            });
-
-        const newVideoTrack =
-          newStream
-            .getVideoTracks()[0];
-
-        const audioTracks =
-          oldStream
-            .getAudioTracks();
-
-        const tracks = [];
-
-        if (
-          newVideoTrack
-        ) {
-
-          tracks.push(
-            newVideoTrack
-          );
-        }
-
-        tracks.push(
-          ...audioTracks
-        );
-
-        const combined =
-          new MediaStream(
-            tracks
-          );
-
-        const oldVideoTrack =
-          oldStream
-            .getVideoTracks()[0];
-
-        if (
-          oldVideoTrack
-        ) {
-
-          oldVideoTrack.stop();
-        }
-
-        video.srcObject =
-          combined;
-
-        stream =
-          combined;
-
-        if (
-          facingMode ===
-          "user"
-        ) {
-
-          video.classList.add(
-            "mirror"
-          );
-
-        } else {
-
-          video.classList.remove(
-            "mirror"
-          );
-        }
-
-        await video.play()
-          .catch(() => {});
-
-      } catch (error) {
-
-        console.error(
-          error
-        );
-
-        showStatus(
-          "Não foi possível trocar a câmera."
-        );
-      }
-    }
-  );
-}
-
-/* =========================================================
-   CÂMERA
-   ========================================================= */
-
-async function startCamera() {
-
-  try {
-
-    showStatus(
-      "Solicitando acesso à câmera e ao microfone...",
-      3000
-    );
-
-    stream =
-      await navigator
-        .mediaDevices
-        .getUserMedia({
-          video: {
-            facingMode:
-              facingMode
-          },
-
-          audio: true
-        });
-
-    video.srcObject =
-      stream;
-
-    await video
-      .play()
-      .catch(() => {});
-
-    if (
-      facingMode ===
-      "user"
-    ) {
-
-      video.classList.add(
-        "mirror"
-      );
-
-    } else {
-
-      video.classList.remove(
-        "mirror"
-      );
+    if (tool === "eraser") {
+      pointerStart = null;
+      return;
     }
 
-    startOverlay.classList.add(
-      "hidden"
-    );
-
-    showStatus(
-      ""
-    );
-
-    fitCanvas();
-
-  } catch (error) {
-
-    console.error(
-      "Erro da câmera:",
-      error
-    );
-
-    let message =
-      "Não foi possível acessar a câmera e o microfone.";
-
-    if (
-      error &&
-      error.name ===
-        "NotAllowedError"
-    ) {
-
-      message =
-        "Permissão negada. Autorize câmera e microfone nas configurações do Safari.";
-    }
-
-    if (
-      error &&
-      error.name ===
-        "NotFoundError"
-    ) {
-
-      message =
-        "Câmera ou microfone não encontrados.";
-    }
-
-    if (
-      error &&
-      error.name ===
-        "SecurityError"
-    ) {
-
-      message =
-        "O acesso foi bloqueado. Verifique se o site está em HTTPS.";
-    }
-
-    showStatus(
-      message,
-      4500
-    );
-  }
-}
-
-/* =========================================================
-   GRAVAÇÃO
-   ========================================================= */
-
-function createRenderCanvas() {
-
-  renderCanvas =
-    document.createElement(
-      "canvas"
-    );
-
-  renderCanvas.width =
-    canvas.width;
-
-  renderCanvas.height =
-    canvas.height;
-
-  renderCtx =
-    renderCanvas.getContext(
-      "2d"
-    );
-}
-
-function drawRecordingFrame() {
-
-  if (
-    !renderCanvas ||
-    !renderCtx
-  ) {
+    openCanvasPasteMenu(p.x, p.y);
+    pointerStart = null;
     return;
   }
 
-  const width =
-    renderCanvas.width;
-
-  const height =
-    renderCanvas.height;
-
-  renderCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  if (
-    video.readyState >= 2
-  ) {
-
-    renderCtx.save();
-
-    if (
-      facingMode ===
-      "user"
-    ) {
-
-      renderCtx.translate(
-        width,
-        0
-      );
-
-      renderCtx.scale(
-        -1,
-        1
-      );
-    }
-
-    const videoWidth =
-      video.videoWidth ||
-      width;
-
-    const videoHeight =
-      video.videoHeight ||
-      height;
-
-    const scale =
-      Math.max(
-        width /
-          videoWidth,
-
-        height /
-          videoHeight
-      );
-
-    const drawWidth =
-      videoWidth *
-      scale;
-
-    const drawHeight =
-      videoHeight *
-      scale;
-
-    renderCtx.drawImage(
-      video,
-
-      (
-        width -
-        drawWidth
-      ) / 2,
-
-      (
-        height -
-        drawHeight
-      ) / 2,
-
-      drawWidth,
-      drawHeight
-    );
-
-    renderCtx.restore();
+  if (currentStroke && currentStroke.points.length) {
+    strokes.push(currentStroke);
   }
 
-  const scale =
-    width /
-    Math.max(
-      1,
-      canvas.clientWidth
-    );
+  currentStroke = null;
+  pointerStart = null;
+  redraw();
+}
 
-  for (
-    const stroke of strokes
-  ) {
+function cancelPointer() {
+  drawing = false;
+  currentStroke = null;
+  draggingObject = false;
+  resizingObject = false;
+  dragOffset = null;
+  resizeStart = null;
+  redraw();
+}
 
-    drawStroke(
-      renderCtx,
-      stroke,
-      scale
-    );
+function undo() {
+  if (boardObjects.length) {
+    const obj = boardObjects.pop();
+    redoObjects.push(obj);
+    selectedObject = null;
+    hideImageCancelButton();
+    redraw();
+    return;
   }
 
-  for (
-    const object of boardObjects
-  ) {
-
-    if (
-      object.type ===
-      "text"
-    ) {
-
-      drawTextObject(
-        renderCtx,
-        object,
-        scale
-      );
-
-    } else {
-
-      drawImageObject(
-        renderCtx,
-        object,
-        scale
-      );
-    }
+  if (strokes.length) {
+    redoStrokes.push(strokes.pop());
+    redraw();
   }
 }
 
-function chooseRecordingMime() {
+function redo() {
+  if (redoObjects.length) {
+    const obj = redoObjects.pop();
+    boardObjects.push(obj);
+    selectedObject = obj;
+    redraw();
+    return;
+  }
 
-  const types = [
+  if (redoStrokes.length) {
+    strokes.push(redoStrokes.pop());
+    redraw();
+  }
+}
 
-    "video/mp4;codecs=avc1",
+function clearAll() {
+  drawing = false;
+  currentStroke = null;
+  strokes = [];
+  redoStrokes = [];
+  boardObjects = [];
+  redoObjects = [];
+  selectedObject = null;
+  hideImageCancelButton();
+  redraw();
+  setStatus("Lousa limpa.");
+}
 
-    "video/webm;codecs=vp9,opus",
+function drawVideoCover(target, source, width, height) {
+  const vw = source.videoWidth || width;
+  const vh = source.videoHeight || height;
+  const scale = Math.max(width / vw, height / vh);
+  const dw = vw * scale;
+  const dh = vh * scale;
+  const x = (width - dw) / 2;
+  const y = (height - dh) / 2;
 
-    "video/webm;codecs=vp8,opus",
+  target.drawImage(source, 0, 0, vw, vh, x, y, dw, dh);
+}
 
-    "video/webm"
-  ];
+function renderFrame() {
+  if (!recording || !renderCanvas || !renderCtx) return;
 
-  return types.find(
-    type =>
-      window.MediaRecorder &&
-      MediaRecorder.isTypeSupported &&
-      MediaRecorder.isTypeSupported(
-        type
-      )
-  ) || "";
+  const w = renderCanvas.width;
+  const h = renderCanvas.height;
+
+  renderCtx.clearRect(0, 0, w, h);
+
+  renderCtx.save();
+
+  if (facingMode === "user") {
+    renderCtx.translate(w, 0);
+    renderCtx.scale(-1, 1);
+  }
+
+  drawVideoCover(renderCtx, video, w, h);
+  renderCtx.restore();
+
+  renderCtx.save();
+  renderCtx.scale(w / window.innerWidth, h / window.innerHeight);
+
+  for (const stroke of strokes) {
+    drawStroke(renderCtx, stroke);
+  }
+  drawBoardObjects(renderCtx);
+
+  renderCtx.restore();
+
+  animationId = requestAnimationFrame(renderFrame);
 }
 
 async function startRecording() {
-
-  if (recording) {
+  if (!stream) {
+    setStatus("Ative a câmera primeiro.");
     return;
   }
 
   if (
-    !canvas.captureStream ||
-    !window.MediaRecorder
+    !window.MediaRecorder ||
+    !HTMLCanvasElement.prototype.captureStream
   ) {
-
-    showStatus(
-      "A gravação não é suportada neste navegador."
-    );
-
+    setStatus("Este navegador não suporta a gravação integrada.", 4500);
     return;
   }
 
-  createRenderCanvas();
+  renderCanvas = document.createElement("canvas");
+  renderCanvas.width = Math.round(window.innerWidth * Math.min(devicePixelRatio || 1, 2));
+  renderCanvas.height = Math.round(window.innerHeight * Math.min(devicePixelRatio || 1, 2));
+  renderCtx = renderCanvas.getContext("2d");
 
-  const capture =
-    renderCanvas.captureStream(
-      30
-    );
+  const canvasStream = renderCanvas.captureStream(30);
 
-  const audioTrack =
-    stream &&
-    stream.getAudioTracks &&
-    stream.getAudioTracks()[0];
+  const audioTracks = stream.getAudioTracks();
+  audioTracks.forEach(track => canvasStream.addTrack(track));
 
-  if (audioTrack) {
+  let mimeType = "";
+  const candidates = [
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm",
+    "video/mp4"
+  ];
 
-    capture.addTrack(
-      audioTrack
-    );
+  for (const candidate of candidates) {
+    if (
+      MediaRecorder.isTypeSupported &&
+      MediaRecorder.isTypeSupported(candidate)
+    ) {
+      mimeType = candidate;
+      break;
+    }
   }
 
-  const mime =
-    chooseRecordingMime();
-
   try {
-
-    mediaRecorder =
-      new MediaRecorder(
-        capture,
-        mime
-          ? {
-              mimeType:
-                mime
-            }
-          : undefined
-      );
-
+    mediaRecorder = new MediaRecorder(
+      canvasStream,
+      mimeType ? { mimeType } : undefined
+    );
   } catch (error) {
-
-    mediaRecorder =
-      new MediaRecorder(
-        capture
-      );
+    console.error(error);
+    setStatus("Não foi possível iniciar a gravação.", 4000);
+    return;
   }
 
   chunks = [];
 
-  mediaRecorder.ondataavailable =
-    event => {
+  mediaRecorder.ondataavailable = event => {
+    if (event.data && event.data.size) chunks.push(event.data);
+  };
 
-      if (
-        event.data &&
-        event.data.size
-      ) {
+  mediaRecorder.onstop = () => {
+    const type = mediaRecorder.mimeType || "video/webm";
+    const blob = new Blob(chunks, { type });
+    const url = URL.createObjectURL(blob);
 
-        chunks.push(
-          event.data
-        );
-      }
-    };
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lousa-cam-${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-  mediaRecorder.onstop =
-    () => {
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    chunks = [];
+  };
 
-      const blob =
-        new Blob(
-          chunks,
-          {
-            type:
-              mediaRecorder.mimeType ||
-              "video/webm"
-          }
-        );
+  mediaRecorder.start(250);
+  recording = true;
+  recordBtn.classList.add("recording");
+  setStatus("Gravando.");
 
-      const url =
-        URL.createObjectURL(
-          blob
-        );
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock = await navigator.wakeLock.request("screen");
+    }
+  } catch (_) {}
 
-      const link =
-        document.createElement(
-          "a"
-        );
-
-      link.href =
-        url;
-
-      link.download =
-        `lousa-cam-${Date.now()}.${
-          blob.type.includes(
-            "mp4"
-          )
-            ? "mp4"
-            : "webm"
-        }`;
-
-      link.click();
-
-      setTimeout(
-        () =>
-          URL.revokeObjectURL(
-            url
-          ),
-        1000
-      );
-    };
-
-  mediaRecorder.start(
-    200
-  );
-
-  recording =
-    true;
-
-  recordBtn.classList.add(
-    "recording"
-  );
-
-  const renderLoop =
-    () => {
-
-      if (!recording) {
-        return;
-      }
-
-      drawRecordingFrame();
-
-      animationId =
-        requestAnimationFrame(
-          renderLoop
-        );
-    };
-
-  renderLoop();
-
-  requestWakeLock();
-
-  showStatus(
-    "Gravação iniciada."
-  );
+  renderFrame();
 }
 
 function stopRecording() {
-
-  if (
-    !mediaRecorder ||
-    !recording
-  ) {
-    return;
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
   }
 
-  recording =
-    false;
+  recording = false;
+  recordBtn.classList.remove("recording");
 
-  cancelAnimationFrame(
-    animationId
-  );
-
-  mediaRecorder.stop();
-
-  recordBtn.classList.remove(
-    "recording"
-  );
-
-  releaseWakeLock();
-
-  showStatus(
-    "Gravação finalizada."
-  );
-}
-
-/* =========================================================
-   WAKE LOCK
-   ========================================================= */
-
-async function requestWakeLock() {
-
-  try {
-
-    if (
-      "wakeLock" in navigator
-    ) {
-
-      wakeLock =
-        await navigator.wakeLock.request(
-          "screen"
-        );
-    }
-
-  } catch (error) {}
-}
-
-function releaseWakeLock() {
-
-  try {
-
-    if (wakeLock) {
-
-      wakeLock.release();
-    }
-
-  } catch (error) {}
-
-  wakeLock =
-    null;
-}
-
-/* =========================================================
-   BOTÃO GRAVAR
-   ========================================================= */
-
-function initializeRecordButton() {
-
-  recordBtn?.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      if (recording) {
-
-        stopRecording();
-
-      } else {
-
-        startRecording();
-      }
-    }
-  );
-}
-
-/* =========================================================
-   START
-   ========================================================= */
-
-function initializeStartButton() {
-
-  startBtn?.addEventListener(
-    "click",
-    async event => {
-
-      event.preventDefault();
-
-      await startCamera();
-    }
-  );
-}
-
-/* =========================================================
-   SERVICE WORKER
-   ========================================================= */
-
-function registerServiceWorker() {
-
-  if (
-    !("serviceWorker" in navigator)
-  ) {
-    return;
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
   }
 
-  navigator.serviceWorker
-    .register(
-      "./sw.js"
-    )
-    .then(
-      registration =>
-        registration.update()
-    )
-    .catch(
-      error =>
-        console.log(
-          "Service Worker:",
-          error
-        )
+  if (wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+
+  setStatus("Gravação finalizada.");
+}
+
+async function startCamera() {
+  try {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: facingMode },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: true
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    startOverlay.classList.add("hidden");
+    setStatus("Câmera ativada.");
+    fitCanvas();
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      "Não foi possível acessar a câmera e o microfone. Verifique as permissões.",
+      6000
     );
-}
-
-/* =========================================================
-   INICIALIZAÇÃO
-   ========================================================= */
-
-function initializeApplication() {
-
-  initializeInterface();
-
-  initializeFlipButton();
-
-  initializeRecordButton();
-
-  initializeStartButton();
-
-  initializeCanvasInteraction();
-
-  createPasteMenu();
-
-  createImageAction();
-
-  fitCanvas();
-
-  window.addEventListener(
-    "resize",
-    fitCanvas
-  );
-
-  registerServiceWorker();
-}
-
-/* =========================================================
-   VISIBILIDADE
-   ========================================================= */
-
-document.addEventListener(
-  "visibilitychange",
-  async () => {
-
-    if (
-      document.visibilityState ===
-        "visible" &&
-      recording
-    ) {
-
-      await requestWakeLock();
-    }
   }
-);
-
-/* =========================================================
-   INICIAR
-   ========================================================= */
-
-if (
-  document.readyState ===
-  "loading"
-) {
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializeApplication
-  );
-
-} else {
-
-  initializeApplication();
 }
+
+async function flipCamera() {
+  facingMode = facingMode === "user" ? "environment" : "user";
+  await startCamera();
+}
+
+menuBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  toggleMainMenu();
+});
+
+menuCloseTools.addEventListener("click", event => {
+  event.stopPropagation();
+  menuPanel.classList.remove("show");
+});
+
+settingsBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  toggleTools();
+});
+
+textToolButton.addEventListener("click", event => {
+  event.stopPropagation();
+  setTextMode();
+});
+
+undoBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  undo();
+});
+
+redoBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  redo();
+});
+
+clearBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  clearAll();
+});
+
+flipBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  flipCamera();
+});
+
+recordBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  if (recording) stopRecording();
+  else startRecording();
+});
+
+colorInput.addEventListener("input", event => {
+  color = event.target.value;
+  setPen();
+});
+
+widthInput.addEventListener("input", event => {
+  lineWidth = Number(event.target.value);
+});
+
+eraserBtn.addEventListener("click", event => {
+  event.stopPropagation();
+  if (tool === "eraser") setPen();
+  else setEraser();
+});
+
+canvasMenu.addEventListener("pointerdown", event => {
+  event.stopPropagation();
+});
+
+canvasMenu.addEventListener("click", async event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const action = button.dataset.action;
+  const position = pendingPastePosition || {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
+  };
+
+  if (action === "paste") {
+    await pasteFromClipboard(position.x, position.y);
+  }
+
+  closeCanvasPasteMenu();
+});
+
+canvas.addEventListener("pointerdown", beginPointer, { passive: false });
+canvas.addEventListener("pointermove", movePointer, { passive: false });
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", cancelPointer);
+
+canvas.addEventListener("dblclick", event => {
+  const p = pointFromEvent(event);
+  const obj = getObjectAtPoint(p.x, p.y);
+
+  if (obj && obj.type === "text") {
+    selectedObject = obj;
+    editTextObject(obj);
+    redraw();
+  }
+});
+
+document.addEventListener("pointerdown", event => {
+  if (
+    event.target !== canvas &&
+    !canvasMenu.contains(event.target) &&
+    !toolsPanel.contains(event.target) &&
+    !menuPanel.contains(event.target) &&
+    event.target !== menuBtn &&
+    event.target !== settingsBtn &&
+    event.target !== textToolButton
+  ) {
+    canvasMenu.classList.remove("show");
+  }
+});
+
+startBtn.addEventListener("click", startCamera);
+
+window.addEventListener("resize", fitCanvas);
+window.addEventListener("orientationchange", () => {
+  setTimeout(fitCanvas, 300);
+});
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(console.error);
+  });
+}
+
+fitCanvas();
