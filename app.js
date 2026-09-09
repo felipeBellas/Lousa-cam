@@ -1,25 +1,21 @@
 /* =========================================================
-   LOUSA CAM
-   app.js
+   LOUSA CAM 2.0
+   Versão com Texto / Imagem / Área de transferência
+   Build: 2026-09-09-02
    ========================================================= */
+
+const BUILD_VERSION = "2026-09-09-02";
 
 const $ = id => document.getElementById(id);
 
 const video = $("video");
 const canvas = $("canvas");
-const ctx = canvas.getContext("2d", {
-  alpha: true
-});
+const ctx = canvas.getContext("2d", { alpha: true });
 
 const startOverlay = $("startOverlay");
 const startBtn = $("startBtn");
 const statusEl = $("status");
 const recordBtn = $("record");
-
-
-/* =========================================================
-   ESTADO PRINCIPAL
-   ========================================================= */
 
 let facingMode = "user";
 let stream = null;
@@ -33,6 +29,30 @@ let strokes = [];
 let redoStack = [];
 let currentStroke = null;
 
+let boardObjects = [];
+let objectRedoStack = [];
+let selectedObject = null;
+
+let draggingObject = false;
+let resizingObject = false;
+
+let objectDragOffset = null;
+let objectResizeStart = null;
+
+let tapStart = null;
+let tapMoved = false;
+
+const TAP_MAX_TIME = 280;
+const TAP_MAX_DISTANCE = 10;
+
+let pasteMenu = null;
+let pastePoint = null;
+
+let pasteHelper = null;
+let pasteArea = null;
+
+let imageInput = null;
+
 let mediaRecorder = null;
 let chunks = [];
 let recording = false;
@@ -43,72 +63,23 @@ let animationId = null;
 
 let wakeLock = null;
 
-
-/* =========================================================
-   OBJETOS DA LOUSA
-   ========================================================= */
-
-let boardObjects = [];
-
-let selectedObject = null;
-
-let objectAction = null;
-
-let objectStartState = null;
-
-let objectStartPoint = null;
-
-let objectChanged = false;
+let toastTimer = null;
 
 
 /* =========================================================
-   HISTÓRICO DOS OBJETOS
-   ========================================================= */
-
-let objectUndoStack = [];
-let objectRedoStack = [];
-
-
-/* =========================================================
-   TOQUE / CLIQUE
-   ========================================================= */
-
-let pointerStart = null;
-
-let pointerMoved = false;
-
-let pointerActive = false;
-
-const TAP_MAX_TIME = 280;
-const TAP_MAX_DISTANCE = 10;
-
-
-/* =========================================================
-   MENU DE COLAR
-   ========================================================= */
-
-let pasteMenu = null;
-let imageInput = null;
-let textButton = null;
-
-
-/* =========================================================
-   MENSAGENS
+   STATUS
    ========================================================= */
 
 function toast(message, duration = 2200) {
 
-  if (!statusEl) {
-    return;
-  }
+  if (!statusEl) return;
 
   statusEl.textContent = message;
-
   statusEl.classList.add("show");
 
-  clearTimeout(toast.timer);
+  clearTimeout(toastTimer);
 
-  toast.timer = setTimeout(() => {
+  toastTimer = setTimeout(() => {
     statusEl.classList.remove("show");
   }, duration);
 }
@@ -126,21 +97,29 @@ function fitCanvas() {
       2
     );
 
-  canvas.width =
-    Math.round(
-      window.innerWidth * dpr
+  const width =
+    Math.max(
+      1,
+      window.innerWidth
     );
+
+  const height =
+    Math.max(
+      1,
+      window.innerHeight
+    );
+
+  canvas.width =
+    Math.round(width * dpr);
 
   canvas.height =
-    Math.round(
-      window.innerHeight * dpr
-    );
+    Math.round(height * dpr);
 
   canvas.style.width =
-    window.innerWidth + "px";
+    width + "px";
 
   canvas.style.height =
-    window.innerHeight + "px";
+    height + "px";
 
   ctx.setTransform(
     dpr,
@@ -156,22 +135,17 @@ function fitCanvas() {
 
 
 /* =========================================================
-   POSIÇÃO DO POINTER
+   PONTO DO CANVAS
    ========================================================= */
 
-function getPointerPosition(event) {
+function getCanvasPoint(event) {
 
   const rect =
     canvas.getBoundingClientRect();
 
   return {
-    x:
-      event.clientX -
-      rect.left,
-
-    y:
-      event.clientY -
-      rect.top
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top
   };
 }
 
@@ -180,61 +154,7 @@ function getPointerPosition(event) {
    DESENHO
    ========================================================= */
 
-function redraw(
-  targetCtx = ctx,
-  includeSelection = true
-) {
-
-  const width =
-    window.innerWidth;
-
-  const height =
-    window.innerHeight;
-
-  targetCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  for (const stroke of strokes) {
-
-    drawStroke(
-      targetCtx,
-      stroke
-    );
-  }
-
-  for (const object of boardObjects) {
-
-    drawBoardObject(
-      targetCtx,
-      object
-    );
-  }
-
-  if (
-    includeSelection &&
-    selectedObject &&
-    boardObjects.includes(
-      selectedObject
-    )
-  ) {
-
-    drawObjectBox(
-      targetCtx,
-      selectedObject
-    );
-  }
-}
-
-
-/* =========================================================
-   DESENHAR TRAÇO
-   ========================================================= */
-
-function drawStroke(c, stroke) {
+function drawStroke(context, stroke) {
 
   if (
     !stroke ||
@@ -244,31 +164,25 @@ function drawStroke(c, stroke) {
     return;
   }
 
-  c.save();
+  context.save();
 
-  c.lineCap = "round";
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.lineWidth = stroke.width;
 
-  c.lineJoin = "round";
-
-  c.lineWidth =
-    stroke.width;
-
-  c.globalCompositeOperation =
+  context.globalCompositeOperation =
     stroke.tool === "eraser"
       ? "destination-out"
       : "source-over";
 
-  c.strokeStyle =
+  context.strokeStyle =
     stroke.color;
 
-  c.beginPath();
+  context.beginPath();
 
-  const first =
-    stroke.points[0];
-
-  c.moveTo(
-    first.x,
-    first.y
+  context.moveTo(
+    stroke.points[0].x,
+    stroke.points[0].y
   );
 
   for (
@@ -277,12 +191,9 @@ function drawStroke(c, stroke) {
     i++
   ) {
 
-    const point =
-      stroke.points[i];
-
-    c.lineTo(
-      point.x,
-      point.y
+    context.lineTo(
+      stroke.points[i].x,
+      stroke.points[i].y
     );
   }
 
@@ -290,55 +201,15 @@ function drawStroke(c, stroke) {
     stroke.points.length === 1
   ) {
 
-    c.lineTo(
-      first.x + 0.01,
-      first.y + 0.01
+    context.lineTo(
+      stroke.points[0].x + 0.01,
+      stroke.points[0].y + 0.01
     );
   }
 
-  c.stroke();
+  context.stroke();
 
-  c.restore();
-}
-
-
-/* =========================================================
-   OBJETOS
-   ========================================================= */
-
-function drawBoardObject(
-  targetCtx,
-  object
-) {
-
-  if (
-    !object ||
-    !object.type
-  ) {
-    return;
-  }
-
-  if (
-    object.type === "text"
-  ) {
-
-    drawTextObject(
-      targetCtx,
-      object
-    );
-
-    return;
-  }
-
-  if (
-    object.type === "image"
-  ) {
-
-    drawImageObject(
-      targetCtx,
-      object
-    );
-  }
+  context.restore();
 }
 
 
@@ -346,248 +217,243 @@ function drawBoardObject(
    TEXTO
    ========================================================= */
 
-function drawTextObject(
-  targetCtx,
-  object
+function drawWrappedText(
+  context,
+  text,
+  x,
+  y,
+  maxWidth,
+  fontSize,
+  lineHeight
 ) {
 
-  targetCtx.save();
+  const paragraphs =
+    String(text || "").split("\n");
 
-  targetCtx.font =
-    `${object.fontSize}px ${object.fontFamily}`;
+  let currentY = y;
 
-  targetCtx.fillStyle =
-    object.color;
-
-  targetCtx.textBaseline =
-    "top";
-
-  targetCtx.textAlign =
-    "left";
-
-  const lineHeight =
-    object.fontSize * 1.25;
-
-  const words =
-    object.text.split(/\s+/);
-
-  let line = "";
-
-  let lines = [];
+  context.textBaseline = "top";
 
   for (
-    const word of words
+    const paragraph of paragraphs
   ) {
 
-    const testLine =
-      line
-        ? line + " " + word
-        : word;
+    const words =
+      paragraph.split(" ");
 
-    const metrics =
-      targetCtx.measureText(
-        testLine
-      );
+    let line = "";
 
-    if (
-      metrics.width >
-        object.width &&
-      line
+    for (
+      let i = 0;
+      i < words.length;
+      i++
     ) {
 
-      lines.push(line);
+      const testLine =
+        line
+          ? line + " " + words[i]
+          : words[i];
 
-      line = word;
+      const width =
+        context.measureText(testLine).width;
 
-    } else {
+      if (
+        width > maxWidth &&
+        line
+      ) {
 
-      line = testLine;
+        context.fillText(
+          line,
+          x,
+          currentY
+        );
+
+        line = words[i];
+
+        currentY +=
+          lineHeight;
+
+      } else {
+
+        line = testLine;
+      }
+    }
+
+    context.fillText(
+      line,
+      x,
+      currentY
+    );
+
+    currentY +=
+      lineHeight;
+  }
+
+  return currentY - y;
+}
+
+
+/* =========================================================
+   DESENHAR OBJETOS
+   ========================================================= */
+
+function drawObject(
+  context,
+  object,
+  showSelection = false
+) {
+
+  if (!object) return;
+
+  context.save();
+
+  if (object.type === "text") {
+
+    const fontSize =
+      object.fontSize || 32;
+
+    const padding =
+      object.padding || 10;
+
+    const width =
+      object.width || 320;
+
+    const lineHeight =
+      fontSize * 1.25;
+
+    context.font =
+      `${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+
+    context.fillStyle =
+      object.color || "#fff";
+
+    const textHeight =
+      drawWrappedText(
+        context,
+        object.text,
+        object.x + padding,
+        object.y + padding,
+        width - padding * 2,
+        fontSize,
+        lineHeight
+      );
+
+    object.height =
+      Math.max(
+        object.height || 0,
+        textHeight + padding * 2
+      );
+  }
+
+  if (object.type === "image") {
+
+    if (object.image) {
+
+      context.drawImage(
+        object.image,
+        object.x,
+        object.y,
+        object.width,
+        object.height
+      );
     }
   }
 
-  if (line) {
-    lines.push(line);
-  }
+  context.restore();
 
-  for (
-    let i = 0;
-    i < lines.length;
-    i++
+  if (
+    showSelection &&
+    selectedObject === object
   ) {
 
-    targetCtx.fillText(
-      lines[i],
+    context.save();
+
+    context.strokeStyle =
+      "#0a84ff";
+
+    context.lineWidth = 2;
+
+    context.setLineDash([
+      6,
+      5
+    ]);
+
+    context.strokeRect(
       object.x,
-      object.y +
-        i * lineHeight
+      object.y,
+      object.width,
+      object.height
+    );
+
+    context.setLineDash([]);
+
+    context.fillStyle =
+      "#0a84ff";
+
+    context.beginPath();
+
+    context.arc(
+      object.x + object.width,
+      object.y + object.height,
+      8,
+      0,
+      Math.PI * 2
+    );
+
+    context.fill();
+
+    context.restore();
+  }
+}
+
+
+/* =========================================================
+   REDESENHAR
+   ========================================================= */
+
+function redraw() {
+
+  ctx.clearRect(
+    0,
+    0,
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  for (
+    const stroke of strokes
+  ) {
+
+    drawStroke(
+      ctx,
+      stroke
     );
   }
 
-  targetCtx.restore();
-}
-
-
-/* =========================================================
-   IMAGEM
-   ========================================================= */
-
-function drawImageObject(
-  targetCtx,
-  object
-) {
-
-  if (
-    !object.image ||
-    !object.image.complete
+  for (
+    const object of boardObjects
   ) {
-    return;
+
+    drawObject(
+      ctx,
+      object,
+      true
+    );
   }
-
-  targetCtx.save();
-
-  targetCtx.drawImage(
-    object.image,
-    object.x,
-    object.y,
-    object.width,
-    object.height
-  );
-
-  targetCtx.restore();
 }
 
 
 /* =========================================================
-   LIMITES DO OBJETO
+   OBJETO SOB O PONTEIRO
    ========================================================= */
 
-function getObjectBounds(object) {
-
-  return {
-    x: object.x,
-    y: object.y,
-    width: object.width,
-    height: object.height
-  };
-}
-
-
-/* =========================================================
-   CAIXA DO OBJETO SELECIONADO
-   ========================================================= */
-
-function drawObjectBox(
-  targetCtx,
-  object
+function getObjectAtPoint(
+  x,
+  y
 ) {
-
-  const bounds =
-    getObjectBounds(object);
-
-  targetCtx.save();
-
-  targetCtx.strokeStyle =
-    "rgba(255,255,255,0.9)";
-
-  targetCtx.lineWidth = 2;
-
-  targetCtx.setLineDash([
-    6,
-    5
-  ]);
-
-  targetCtx.strokeRect(
-    bounds.x - 4,
-    bounds.y - 4,
-    bounds.width + 8,
-    bounds.height + 8
-  );
-
-  targetCtx.setLineDash([]);
-
-  const handleSize = 12;
-
-  targetCtx.fillStyle =
-    "#ffffff";
-
-  targetCtx.fillRect(
-    bounds.x +
-      bounds.width -
-      handleSize / 2,
-
-    bounds.y +
-      bounds.height -
-      handleSize / 2,
-
-    handleSize,
-    handleSize
-  );
-
-  targetCtx.restore();
-}
-
-
-/* =========================================================
-   HIT TEST
-   ========================================================= */
-
-function pointInsideObject(
-  point,
-  object
-) {
-
-  return (
-    point.x >= object.x &&
-    point.x <=
-      object.x +
-      object.width &&
-    point.y >= object.y &&
-    point.y <=
-      object.y +
-      object.height
-  );
-}
-
-
-/* =========================================================
-   RESIZE HANDLE
-   ========================================================= */
-
-function pointOnResizeHandle(
-  point,
-  object
-) {
-
-  const handleSize = 24;
-
-  const hx =
-    object.x +
-    object.width;
-
-  const hy =
-    object.y +
-    object.height;
-
-  return (
-    Math.abs(
-      point.x - hx
-    ) <= handleSize &&
-    Math.abs(
-      point.y - hy
-    ) <= handleSize
-  );
-}
-
-
-/* =========================================================
-   ENCONTRAR OBJETO
-   ========================================================= */
-
-function getObjectAtPoint(point) {
 
   for (
-    let i =
-      boardObjects.length - 1;
+    let i = boardObjects.length - 1;
     i >= 0;
     i--
   ) {
@@ -596,10 +462,10 @@ function getObjectAtPoint(point) {
       boardObjects[i];
 
     if (
-      pointInsideObject(
-        point,
-        object
-      )
+      x >= object.x &&
+      x <= object.x + object.width &&
+      y >= object.y &&
+      y <= object.y + object.height
     ) {
 
       return object;
@@ -611,168 +477,277 @@ function getObjectAtPoint(point) {
 
 
 /* =========================================================
-   ADICIONAR OBJETO
+   VERIFICAR ALÇA DE REDIMENSIONAMENTO
    ========================================================= */
 
-function addBoardObject(
-  object
+function isResizeHandle(
+  object,
+  x,
+  y
 ) {
 
-  boardObjects.push(
-    object
+  if (!object) {
+    return false;
+  }
+
+  const handleX =
+    object.x + object.width;
+
+  const handleY =
+    object.y + object.height;
+
+  return (
+    Math.hypot(
+      x - handleX,
+      y - handleY
+    ) <= 18
   );
-
-  selectedObject =
-    object;
-
-  objectUndoStack.push({
-    type: "add",
-    object
-  });
-
-  objectRedoStack = [];
-
-  redraw();
 }
 
 
 /* =========================================================
-   CRIAR TEXTO
+   CRIAR OBJETO TEXTO
    ========================================================= */
 
 function createTextObject(
   text,
-  position
+  x,
+  y
 ) {
 
-  if (
-    !text ||
-    !text.trim()
-  ) {
-    return;
+  const value =
+    String(text || "").trim();
+
+  if (!value) {
+    return null;
   }
 
   const object = {
 
     type: "text",
 
-    id:
-      "text-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2),
+    text: value,
 
-    text:
-      text.trim(),
+    x: Math.max(
+      10,
+      Math.min(
+        x,
+        window.innerWidth - 340
+      )
+    ),
 
-    x:
-      position.x,
+    y: Math.max(
+      10,
+      Math.min(
+        y,
+        window.innerHeight - 100
+      )
+    ),
 
-    y:
-      position.y,
+    width:
+      Math.min(
+        340,
+        Math.max(
+          180,
+          window.innerWidth - 30
+        )
+      ),
 
-    width: 300,
-
-    height: 80,
+    height: 60,
 
     fontSize: 32,
 
-    fontFamily:
-      "Arial, sans-serif",
+    color: color || "#fff",
 
-    color:
-      color === "transparent"
-        ? "#ffffff"
-        : color
+    padding: 10
   };
 
-  addBoardObject(
+  boardObjects.push(
     object
   );
 
-  toast(
-    "Texto adicionado"
-  );
+  objectRedoStack = [];
+
+  selectedObject =
+    object;
+
+  redraw();
+
+  return object;
 }
 
 
 /* =========================================================
-   CRIAR IMAGEM
+   CRIAR OBJETO IMAGEM
    ========================================================= */
 
 function createImageObject(
-  image,
-  position
+  file,
+  x,
+  y
 ) {
 
-  if (!image) {
+  if (!file) {
     return;
   }
 
-  const maxWidth = 500;
+  if (
+    !file.type ||
+    !file.type.startsWith("image/")
+  ) {
 
-  const maxHeight = 400;
-
-  let width =
-    image.naturalWidth ||
-    image.width ||
-    300;
-
-  let height =
-    image.naturalHeight ||
-    image.height ||
-    200;
-
-  const scale =
-    Math.min(
-      1,
-      maxWidth / width,
-      maxHeight / height
+    toast(
+      "O conteúdo selecionado não é uma imagem.",
+      3000
     );
 
-  width *= scale;
+    return;
+  }
 
-  height *= scale;
+  const reader =
+    new FileReader();
 
-  const object = {
+  reader.onload = event => {
 
-    type: "image",
+    const image =
+      new Image();
 
-    id:
-      "image-" +
-      Date.now() +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2),
+    image.onload = () => {
 
-    image,
+      const maxWidth =
+        Math.min(
+          500,
+          window.innerWidth - 40
+        );
 
-    x:
-      position.x,
+      const scale =
+        Math.min(
+          1,
+          maxWidth / image.width
+        );
 
-    y:
-      position.y,
+      const width =
+        Math.max(
+          80,
+          image.width * scale
+        );
 
-    width,
+      const height =
+        Math.max(
+          80,
+          image.height * scale
+        );
 
-    height
+      const object = {
+
+        type: "image",
+
+        image,
+
+        x: Math.max(
+          10,
+          Math.min(
+            x,
+            window.innerWidth - width - 10
+          )
+        ),
+
+        y: Math.max(
+          10,
+          Math.min(
+            y,
+            window.innerHeight - height - 10
+          )
+        ),
+
+        width,
+
+        height,
+
+        sourceName:
+          file.name || "imagem"
+      };
+
+      boardObjects.push(
+        object
+      );
+
+      objectRedoStack = [];
+
+      selectedObject =
+        object;
+
+      redraw();
+
+      toast(
+        "Imagem adicionada."
+      );
+    };
+
+    image.onerror = () => {
+
+      toast(
+        "Não foi possível carregar a imagem.",
+        3000
+      );
+    };
+
+    image.src =
+      event.target.result;
   };
 
-  addBoardObject(
-    object
-  );
-
-  toast(
-    "Imagem adicionada"
-  );
+  reader.readAsDataURL(file);
 }
 
 
 /* =========================================================
-   MENU DE COLAR
+   EDITAR TEXTO
+   ========================================================= */
+
+function editSelectedText() {
+
+  if (
+    !selectedObject ||
+    selectedObject.type !== "text"
+  ) {
+
+    return;
+  }
+
+  const oldText =
+    selectedObject.text;
+
+  const newText =
+    window.prompt(
+      "Editar texto:",
+      oldText
+    );
+
+  if (
+    newText === null
+  ) {
+
+    return;
+  }
+
+  if (
+    !newText.trim()
+  ) {
+
+    deleteSelectedObject();
+
+    return;
+  }
+
+  selectedObject.text =
+    newText;
+
+  redraw();
+}
+
+
+/* =========================================================
+   MENU DE COLAGEM
    ========================================================= */
 
 function createPasteMenu() {
@@ -787,150 +762,46 @@ function createPasteMenu() {
     );
 
   pasteMenu.id =
-    "lousaPasteMenu";
+    "pasteMenu";
 
-  pasteMenu.style.position =
-    "fixed";
+  pasteMenu.innerHTML = `
+    <button type="button" data-paste-action="text">
+      <span class="paste-icon">T</span>
+      <span>Texto</span>
+    </button>
 
-  pasteMenu.style.zIndex =
-    "99999";
+    <button type="button" data-paste-action="image">
+      <span class="paste-icon">▧</span>
+      <span>Imagem</span>
+    </button>
 
-  pasteMenu.style.display =
-    "none";
+    <button type="button" data-paste-action="clipboard">
+      <span class="paste-icon">⧉</span>
+      <span>Conteúdo da área de transferência</span>
+    </button>
 
-  pasteMenu.style.minWidth =
-    "230px";
-
-  pasteMenu.style.background =
-    "rgba(20,20,20,.97)";
-
-  pasteMenu.style.border =
-    "1px solid rgba(255,255,255,.25)";
-
-  pasteMenu.style.borderRadius =
-    "14px";
-
-  pasteMenu.style.padding =
-    "8px";
-
-  pasteMenu.style.boxShadow =
-    "0 10px 30px rgba(0,0,0,.45)";
+    <button type="button" data-paste-action="cancel">
+      <span class="paste-icon">×</span>
+      <span>Cancelar</span>
+    </button>
+  `;
 
   document.body.appendChild(
     pasteMenu
   );
 
-  const items = [
+  pasteMenu.addEventListener(
+    "pointerdown",
+    event => {
 
-    {
-      label: "Texto",
-      action: requestText
-    },
-
-    {
-      label: "Imagem",
-      action: requestImage
-    },
-
-    {
-      label:
-        "Conteúdo da área de transferência",
-      action:
-        pasteClipboard
-    },
-
-    {
-      label: "Cancelar",
-      action:
-        closePasteMenu
+      event.stopPropagation();
     }
-  ];
+  );
 
-  for (
-    const item of items
-  ) {
-
-    const button =
-      document.createElement(
-        "button"
-      );
-
-    button.type =
-      "button";
-
-    button.textContent =
-      item.label;
-
-    button.style.display =
-      "block";
-
-    button.style.width =
-      "100%";
-
-    button.style.padding =
-      "12px 14px";
-
-    button.style.margin =
-      "2px 0";
-
-    button.style.border =
-      "0";
-
-    button.style.borderRadius =
-      "10px";
-
-    button.style.background =
-      "transparent";
-
-    button.style.color =
-      "#fff";
-
-    button.style.fontSize =
-      "15px";
-
-    button.style.textAlign =
-      "left";
-
-    button.style.cursor =
-      "pointer";
-
-    button.addEventListener(
-      "pointerdown",
-      event => {
-        event.stopPropagation();
-      }
-    );
-
-    button.addEventListener(
-      "click",
-      event => {
-
-        event.stopPropagation();
-
-        item.action();
-      }
-    );
-
-    button.addEventListener(
-      "mouseenter",
-      () => {
-        button.style.background =
-          "rgba(255,255,255,.12)";
-      }
-    );
-
-    button.addEventListener(
-      "mouseleave",
-      () => {
-        button.style.background =
-          "transparent";
-      }
-    );
-
-    pasteMenu.appendChild(
-      button
-    );
-  }
+  pasteMenu.addEventListener(
+    "click",
+    handlePasteMenuAction
+  );
 }
 
 
@@ -938,39 +809,74 @@ function createPasteMenu() {
    ABRIR MENU
    ========================================================= */
 
-let pastePosition = {
-  x: 100,
-  y: 100
-};
-
 function openPasteMenu(
-  point
+  clientX,
+  clientY,
+  canvasX,
+  canvasY
 ) {
 
   createPasteMenu();
 
-  pastePosition = {
-    x: clamp(
-      point.x,
-      20,
-      window.innerWidth - 320
-    ),
-
-    y: clamp(
-      point.y,
-      20,
-      window.innerHeight - 230
-    )
+  pastePoint = {
+    x: canvasX,
+    y: canvasY
   };
 
+  pasteMenu.style.display =
+    "flex";
+
+  const menuWidth =
+    290;
+
+  const menuHeight =
+    220;
+
+  let left =
+    clientX;
+
+  let top =
+    clientY;
+
+  if (
+    left + menuWidth >
+    window.innerWidth - 10
+  ) {
+
+    left =
+      window.innerWidth -
+      menuWidth -
+      10;
+  }
+
+  if (
+    top + menuHeight >
+    window.innerHeight - 10
+  ) {
+
+    top =
+      window.innerHeight -
+      menuHeight -
+      10;
+  }
+
+  left =
+    Math.max(
+      10,
+      left
+    );
+
+  top =
+    Math.max(
+      10,
+      top
+    );
+
   pasteMenu.style.left =
-    pastePosition.x + "px";
+    `${left}px`;
 
   pasteMenu.style.top =
-    pastePosition.y + "px";
-
-  pasteMenu.style.display =
-    "block";
+    `${top}px`;
 }
 
 
@@ -990,70 +896,145 @@ function closePasteMenu() {
 
 
 /* =========================================================
-   BOTÃO T TEXTO
+   AÇÕES DO MENU
    ========================================================= */
 
-function createTextToolbarButton() {
+function handlePasteMenuAction(
+  event
+) {
 
-  if (
-    textButton ||
-    !$("settings")
-  ) {
+  const button =
+    event.target.closest(
+      "[data-paste-action]"
+    );
+
+  if (!button) {
     return;
   }
 
-  textButton =
-    document.createElement(
-      "button"
-    );
+  const action =
+    button.dataset.pasteAction;
 
-  textButton.id =
-    "textToolButton";
+  const point =
+    pastePoint || {
+      x: 40,
+      y: 100
+    };
 
-  textButton.type =
-    "button";
+  closePasteMenu();
 
-  textButton.textContent =
-    "T";
+  if (
+    action === "text"
+  ) {
 
-  textButton.title =
-    "Texto";
+    const text =
+      window.prompt(
+        "Digite o texto:"
+      );
 
-  /*
-     Usa a mesma classe visual
-     do botão de configurações.
-  */
+    if (
+      text &&
+      text.trim()
+    ) {
 
-  textButton.className =
-    $("settings").className;
-
-  textButton.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      openPasteMenu({
-        x:
-          window.innerWidth / 2 - 110,
-
-        y:
-          window.innerHeight / 2 - 100
-      });
+      createTextObject(
+        text,
+        point.x,
+        point.y
+      );
     }
-  );
 
-  $("settings")
-    .parentElement
-    .insertBefore(
-      textButton,
-      $("settings")
+    return;
+  }
+
+  if (
+    action === "image"
+  ) {
+
+    openImagePicker();
+
+    return;
+  }
+
+  if (
+    action === "clipboard"
+  ) {
+
+    pasteFromClipboard(
+      point.x,
+      point.y
     );
+
+    return;
+  }
+
+  if (
+    action === "cancel"
+  ) {
+
+    return;
+  }
 }
 
 
 /* =========================================================
-   INPUT DE IMAGEM
+   BOTÃO T
+   ========================================================= */
+
+function initializeTextButton() {
+
+  const button =
+    $("textToolButton");
+
+  if (!button) {
+    return;
+  }
+
+  button.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const point = {
+
+        x:
+          Math.max(
+            20,
+            window.innerWidth / 2 - 150
+          ),
+
+        y:
+          Math.max(
+            100,
+            window.innerHeight / 2 - 80
+          )
+      };
+
+      const text =
+        window.prompt(
+          "Digite o texto:"
+        );
+
+      if (
+        text &&
+        text.trim()
+      ) {
+
+        createTextObject(
+          text,
+          point.x,
+          point.y
+        );
+      }
+    }
+  );
+}
+
+
+/* =========================================================
+   SELECIONAR ARQUIVO DE IMAGEM
    ========================================================= */
 
 function createImageInput() {
@@ -1076,85 +1057,41 @@ function createImageInput() {
   imageInput.style.display =
     "none";
 
-  imageInput.addEventListener(
-    "change",
-    event => {
-
-      const file =
-        event.target.files?.[0];
-
-      if (!file) {
-        return;
-      }
-
-      const url =
-        URL.createObjectURL(
-          file
-        );
-
-      const image =
-        new Image();
-
-      image.onload =
-        () => {
-
-          createImageObject(
-            image,
-            pastePosition
-          );
-
-          URL.revokeObjectURL(
-            url
-          );
-
-          imageInput.value =
-            "";
-        };
-
-      image.src = url;
-    }
-  );
-
   document.body.appendChild(
     imageInput
   );
-}
 
+  imageInput.addEventListener(
+    "change",
+    () => {
 
-/* =========================================================
-   TEXTO DIGITADO
-   ========================================================= */
+      const file =
+        imageInput.files &&
+        imageInput.files[0];
 
-function requestText() {
+      if (file) {
 
-  closePasteMenu();
+        const point =
+          pastePoint || {
+            x: 40,
+            y: 100
+          };
 
-  const text =
-    window.prompt(
-      "Digite o texto:"
-    );
+        createImageObject(
+          file,
+          point.x,
+          point.y
+        );
+      }
 
-  if (
-    text === null ||
-    !text.trim()
-  ) {
-    return;
-  }
-
-  createTextObject(
-    text,
-    pastePosition
+      imageInput.value =
+        "";
+    }
   );
 }
 
 
-/* =========================================================
-   IMAGEM
-   ========================================================= */
-
-function requestImage() {
-
-  closePasteMenu();
+function openImagePicker() {
 
   createImageInput();
 
@@ -1166,30 +1103,323 @@ function requestImage() {
    ÁREA DE TRANSFERÊNCIA
    ========================================================= */
 
-async function pasteClipboard() {
+function createPasteHelper() {
 
-  closePasteMenu();
+  if (pasteHelper) {
+    return;
+  }
 
-  try {
+  pasteHelper =
+    document.createElement(
+      "div"
+    );
+
+  pasteHelper.id =
+    "pasteHelper";
+
+  pasteHelper.innerHTML = `
+
+    <div class="paste-helper-card">
+
+      <div class="paste-helper-title">
+        Colar conteúdo
+      </div>
+
+      <div class="paste-helper-text">
+        Toque no campo e escolha
+        <strong>Colar</strong>.
+        Também funciona para imagens copiadas.
+      </div>
+
+      <div
+        id="pasteArea"
+        class="paste-area"
+        contenteditable="true"
+        spellcheck="false"
+        role="textbox"
+        aria-label="Área para colar"
+      ></div>
+
+      <div class="paste-helper-actions">
+
+        <button
+          type="button"
+          id="pasteCancel"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          id="pasteDone"
+        >
+          Concluir
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(
+    pasteHelper
+  );
+
+  pasteArea =
+    $("pasteArea");
+
+  pasteHelper
+    .querySelector("#pasteCancel")
+    .addEventListener(
+      "click",
+      closePasteHelper
+    );
+
+  pasteHelper
+    .querySelector("#pasteDone")
+    .addEventListener(
+      "click",
+      finishManualPaste
+    );
+
+  pasteArea.addEventListener(
+    "paste",
+    handleNativePaste
+  );
+
+  pasteHelper.addEventListener(
+    "pointerdown",
+    event => {
+
+      event.stopPropagation();
+    }
+  );
+}
+
+
+/* =========================================================
+   ABRIR AUXILIAR DE COLAGEM
+   ========================================================= */
+
+function openPasteHelper(
+  x,
+  y
+) {
+
+  createPasteHelper();
+
+  pastePoint = {
+    x,
+    y
+  };
+
+  pasteHelper.style.display =
+    "flex";
+
+  pasteArea.innerHTML =
+    "";
+
+  setTimeout(
+    () => {
+
+      pasteArea.focus();
+
+      toast(
+        "Toque no campo e escolha Colar.",
+        3500
+      );
+
+    },
+    100
+  );
+}
+
+
+/* =========================================================
+   FECHAR AUXILIAR
+   ========================================================= */
+
+function closePasteHelper() {
+
+  if (!pasteHelper) {
+    return;
+  }
+
+  pasteHelper.style.display =
+    "none";
+
+  if (pasteArea) {
+    pasteArea.innerHTML =
+      "";
+  }
+}
+
+
+/* =========================================================
+   PROCESSAR PASTE NATIVO
+   ========================================================= */
+
+function handleNativePaste(
+  event
+) {
+
+  event.preventDefault();
+
+  const clipboard =
+    event.clipboardData;
+
+  if (!clipboard) {
+    return;
+  }
+
+  const items =
+    Array.from(
+      clipboard.items || []
+    );
+
+  const imageItem =
+    items.find(
+      item =>
+        item.kind === "file" &&
+        item.type.startsWith("image/")
+    );
+
+  if (imageItem) {
+
+    const file =
+      imageItem.getAsFile();
+
+    if (file) {
+
+      const point =
+        pastePoint || {
+          x: 40,
+          y: 100
+        };
+
+      closePasteHelper();
+
+      createImageObject(
+        file,
+        point.x,
+        point.y
+      );
+
+      return;
+    }
+  }
+
+  const text =
+    clipboard.getData(
+      "text/plain"
+    );
+
+  if (
+    text &&
+    text.trim()
+  ) {
+
+    const point =
+      pastePoint || {
+        x: 40,
+        y: 100
+      };
+
+    closePasteHelper();
+
+    createTextObject(
+      text,
+      point.x,
+      point.y
+    );
+
+    return;
+  }
+
+  const html =
+    clipboard.getData(
+      "text/html"
+    );
+
+  if (
+    html &&
+    html.trim()
+  ) {
+
+    const temporary =
+      document.createElement(
+        "div"
+      );
+
+    temporary.innerHTML =
+      html;
+
+    const cleanText =
+      temporary.innerText ||
+      temporary.textContent ||
+      "";
 
     if (
-      navigator.clipboard &&
-      navigator.clipboard.read
+      cleanText.trim()
     ) {
+
+      const point =
+        pastePoint || {
+          x: 40,
+          y: 100
+        };
+
+      closePasteHelper();
+
+      createTextObject(
+        cleanText,
+        point.x,
+        point.y
+      );
+    }
+  }
+}
+
+
+/* =========================================================
+   TENTAR CLIPBOARD API
+   ========================================================= */
+
+async function pasteFromClipboard(
+  x,
+  y
+) {
+
+  pastePoint = {
+    x,
+    y
+  };
+
+  /*
+   * PRIMEIRA TENTATIVA:
+   * Clipboard API moderna.
+   */
+
+  if (
+    navigator.clipboard &&
+    navigator.clipboard.read
+  ) {
+
+    try {
 
       const items =
         await navigator.clipboard.read();
 
       for (
-        const item of items
+        const clipboardItem of items
       ) {
 
         /*
-           Primeiro tenta imagem.
-        */
+         * IMAGEM
+         */
 
         const imageType =
-          item.types.find(
+          clipboardItem.types.find(
             type =>
               type.startsWith(
                 "image/"
@@ -1199,48 +1429,44 @@ async function pasteClipboard() {
         if (imageType) {
 
           const blob =
-            await item.getType(
+            await clipboardItem.getType(
               imageType
             );
 
-          const url =
-            URL.createObjectURL(
-              blob
+          const file =
+            new File(
+              [blob],
+              "imagem-colada.png",
+              {
+                type: blob.type
+              }
             );
 
-          const image =
-            new Image();
+          createImageObject(
+            file,
+            x,
+            y
+          );
 
-          image.onload =
-            () => {
-
-              createImageObject(
-                image,
-                pastePosition
-              );
-
-              URL.revokeObjectURL(
-                url
-              );
-            };
-
-          image.src = url;
+          toast(
+            "Imagem colada."
+          );
 
           return;
         }
 
         /*
-           Depois tenta texto.
-        */
+         * TEXTO
+         */
 
         if (
-          item.types.includes(
+          clipboardItem.types.includes(
             "text/plain"
           )
         ) {
 
           const blob =
-            await item.getType(
+            await clipboardItem.getType(
               "text/plain"
             );
 
@@ -1253,23 +1479,40 @@ async function pasteClipboard() {
 
             createTextObject(
               text,
-              pastePosition
+              x,
+              y
+            );
+
+            toast(
+              "Texto colado."
             );
 
             return;
           }
         }
       }
+
+    } catch (error) {
+
+      console.log(
+        "Clipboard.read indisponível:",
+        error
+      );
     }
+  }
 
-    /*
-       Fallback para texto.
-    */
 
-    if (
-      navigator.clipboard &&
-      navigator.clipboard.readText
-    ) {
+  /*
+   * SEGUNDA TENTATIVA:
+   * readText().
+   */
+
+  if (
+    navigator.clipboard &&
+    navigator.clipboard.readText
+  ) {
+
+    try {
 
       const text =
         await navigator.clipboard.readText();
@@ -1281,510 +1524,568 @@ async function pasteClipboard() {
 
         createTextObject(
           text,
-          pastePosition
+          x,
+          y
+        );
+
+        toast(
+          "Texto colado."
         );
 
         return;
       }
+
+    } catch (error) {
+
+      console.log(
+        "Clipboard.readText indisponível:",
+        error
+      );
     }
-
-    toast(
-      "Não foi possível acessar a área de transferência.",
-      3500
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Clipboard:",
-      error
-    );
-
-    toast(
-      "Permita o acesso à área de transferência.",
-      3500
-    );
-  }
-}
-
-
-/* =========================================================
-   EDITAR TEXTO
-   ========================================================= */
-
-function editSelectedText() {
-
-  if (
-    !selectedObject ||
-    selectedObject.type !==
-      "text"
-  ) {
-    return;
   }
 
-  const oldText =
-    selectedObject.text;
 
-  const newText =
-    window.prompt(
-      "Editar texto:",
-      oldText
-    );
+  /*
+   * TERCEIRA TENTATIVA:
+   * mecanismo nativo do Safari/iOS.
+   */
 
-  if (
-    newText === null
-  ) {
-    return;
-  }
-
-  if (
-    !newText.trim()
-  ) {
-    return;
-  }
-
-  const oldState = {
-    text: oldText,
-    width:
-      selectedObject.width,
-    height:
-      selectedObject.height
-  };
-
-  selectedObject.text =
-    newText.trim();
-
-  const newState = {
-    text:
-      selectedObject.text,
-    width:
-      selectedObject.width,
-    height:
-      selectedObject.height
-  };
-
-  objectUndoStack.push({
-    type: "modify",
-    object:
-      selectedObject,
-    before:
-      oldState,
-    after:
-      newState
-  });
-
-  objectRedoStack = [];
-
-  redraw();
-}
-
-
-/* =========================================================
-   MOVIMENTO / REDIMENSIONAMENTO
-   ========================================================= */
-
-function startObjectInteraction(
-  event,
-  object,
-  point
-) {
-
-  selectedObject =
-    object;
-
-  pointerActive = true;
-
-  pointerMoved = false;
-
-  objectStartPoint = {
-    x: point.x,
-    y: point.y
-  };
-
-  objectStartState = {
-    x: object.x,
-    y: object.y,
-    width: object.width,
-    height: object.height
-  };
-
-  objectChanged = false;
-
-  if (
-    pointOnResizeHandle(
-      point,
-      object
-    )
-  ) {
-
-    objectAction =
-      "resize";
-
-  } else {
-
-    objectAction =
-      "move";
-  }
-
-  canvas.setPointerCapture?.(
-    event.pointerId
+  openPasteHelper(
+    x,
+    y
   );
-
-  redraw();
 }
 
 
-function moveObjectInteraction(
+/* =========================================================
+   FINALIZAR COLAGEM MANUAL
+   ========================================================= */
+
+function finishManualPaste() {
+
+  if (!pasteArea) {
+    return;
+  }
+
+  const text =
+    pasteArea.innerText ||
+    pasteArea.textContent ||
+    "";
+
+  if (
+    text.trim()
+  ) {
+
+    const point =
+      pastePoint || {
+        x: 40,
+        y: 100
+      };
+
+    closePasteHelper();
+
+    createTextObject(
+      text,
+      point.x,
+      point.y
+    );
+
+    toast(
+      "Texto colado."
+    );
+
+    return;
+  }
+
+  /*
+   * Se não houver texto,
+   * avisamos para usar o paste
+   * nativo.
+   */
+
+  toast(
+    "Cole o conteúdo no campo primeiro.",
+    3000
+  );
+}
+
+
+/* =========================================================
+   EVENTOS DO CANVAS
+   ========================================================= */
+
+function startPointerInteraction(
   event
 ) {
 
   if (
-    !pointerActive ||
-    !selectedObject ||
-    !objectAction
+    event.target !== canvas
   ) {
+
     return;
   }
+
+  event.preventDefault();
 
   const point =
-    getPointerPosition(event);
+    getCanvasPoint(event);
 
-  const dx =
-    point.x -
-    objectStartPoint.x;
+  tapStart = {
 
-  const dy =
-    point.y -
-    objectStartPoint.y;
+    time: Date.now(),
 
-  if (
-    Math.abs(dx) >
-      TAP_MAX_DISTANCE ||
-    Math.abs(dy) >
-      TAP_MAX_DISTANCE
-  ) {
+    x: point.x,
 
-    pointerMoved = true;
-  }
+    y: point.y
+  };
 
-  if (
-    objectAction ===
-    "move"
-  ) {
-
-    selectedObject.x =
-      clamp(
-        objectStartState.x + dx,
-        0,
-        Math.max(
-          0,
-          window.innerWidth -
-            selectedObject.width
-        )
-      );
-
-    selectedObject.y =
-      clamp(
-        objectStartState.y + dy,
-        0,
-        Math.max(
-          0,
-          window.innerHeight -
-            selectedObject.height
-        )
-      );
-
-  } else if (
-    objectAction ===
-    "resize"
-  ) {
-
-    const minWidth =
-      selectedObject.type ===
-        "text"
-        ? 80
-        : 60;
-
-    const minHeight =
-      selectedObject.type ===
-        "text"
-        ? 40
-        : 60;
-
-    selectedObject.width =
-      Math.max(
-        minWidth,
-        objectStartState.width +
-          dx
-      );
-
-    selectedObject.height =
-      Math.max(
-        minHeight,
-        objectStartState.height +
-          dy
-      );
-  }
-
-  objectChanged = true;
-
-  redraw();
-}
+  tapMoved =
+    false;
 
 
-function finishObjectInteraction() {
+  /*
+   * Verifica objeto.
+   */
+
+  const object =
+    getObjectAtPoint(
+      point.x,
+      point.y
+    );
 
   if (
-    !pointerActive
+    object
   ) {
+
+    selectedObject =
+      object;
+
+    if (
+      isResizeHandle(
+        object,
+        point.x,
+        point.y
+      )
+    ) {
+
+      resizingObject =
+        true;
+
+      objectResizeStart = {
+
+        x: point.x,
+
+        y: point.y,
+
+        width:
+          object.width,
+
+        height:
+          object.height
+      };
+
+    } else {
+
+      draggingObject =
+        true;
+
+      objectDragOffset = {
+
+        x:
+          point.x - object.x,
+
+        y:
+          point.y - object.y
+      };
+    }
+
+    if (
+      canvas.setPointerCapture
+    ) {
+
+      try {
+
+        canvas.setPointerCapture(
+          event.pointerId
+        );
+
+      } catch (_) {}
+    }
+
+    redraw();
+
     return;
   }
 
+
+  /*
+   * Se borracha, desenha normalmente.
+   */
+
   if (
-    selectedObject &&
-    objectChanged
+    tool === "eraser" ||
+    tool === "pen"
   ) {
 
-    objectUndoStack.push({
-      type: "modify",
-      object:
-        selectedObject,
+    drawing =
+      true;
 
-      before:
-        objectStartState,
+    currentStroke = {
 
-      after: {
-        x:
-          selectedObject.x,
+      tool,
 
-        y:
-          selectedObject.y,
+      color,
 
-        width:
-          selectedObject.width,
+      width:
+        lineWidth,
 
-        height:
-          selectedObject.height
-      }
-    });
+      points: [
+        point
+      ]
+    };
 
-    objectRedoStack = [];
+    redoStack =
+      [];
+
+    if (
+      canvas.setPointerCapture
+    ) {
+
+      try {
+
+        canvas.setPointerCapture(
+          event.pointerId
+        );
+
+      } catch (_) {}
+    }
+
+    drawStroke(
+      ctx,
+      currentStroke
+    );
   }
-
-  pointerActive = false;
-
-  objectAction = null;
-
-  objectStartState = null;
-
-  objectStartPoint = null;
-
-  objectChanged = false;
-
-  redraw();
 }
 
 
 /* =========================================================
-   DESENHO COM POINTER
+   MOVIMENTO
    ========================================================= */
 
-function beginDraw(event) {
-
-  if (
-    event.target !== canvas
-  ) {
-    return;
-  }
-
-  event.preventDefault();
+function movePointerInteraction(
+  event
+) {
 
   const point =
-    getPointerPosition(event);
-
-  /*
-     Primeiro verifica se tocou
-     em algum objeto.
-  */
-
-  const object =
-    getObjectAtPoint(point);
-
-  if (object) {
-
-    startObjectInteraction(
-      event,
-      object,
-      point
-    );
-
-    return;
-  }
-
-  /*
-     Se for um toque simples,
-     abriremos o menu no final.
-  */
-
-  pointerActive = true;
-
-  pointerMoved = false;
-
-  pointerStart = {
-    point,
-    time: Date.now()
-  };
-
-  /*
-     Borracha e caneta
-     continuam funcionando normalmente.
-  */
-
-  drawing = true;
-
-  currentStroke = {
-    tool,
-    color,
-    width: lineWidth,
-    points: [point]
-  };
-
-  redoStack = [];
-
-  drawStroke(
-    ctx,
-    currentStroke
-  );
-}
-
-
-function moveDraw(event) {
+    getCanvasPoint(event);
 
   if (
-    !drawing ||
-    !currentStroke
+    tapStart
   ) {
-    return;
-  }
 
-  event.preventDefault();
+    const distance =
+      Math.hypot(
+        point.x - tapStart.x,
+        point.y - tapStart.y
+      );
 
-  const point =
-    getPointerPosition(event);
-
-  if (
-    pointerStart &&
-    Math.hypot(
-      point.x -
-        pointerStart.point.x,
-
-      point.y -
-        pointerStart.point.y
-    ) >
+    if (
+      distance >
       TAP_MAX_DISTANCE
-  ) {
+    ) {
 
-    pointerMoved = true;
+      tapMoved =
+        true;
+    }
   }
 
-  const points =
-    currentStroke.points;
-
-  const last =
-    points[
-      points.length - 1
-    ];
-
-  const distance =
-    Math.hypot(
-      point.x - last.x,
-      point.y - last.y
-    );
-
-  if (
-    distance < 0.8
-  ) {
-    return;
-  }
-
-  points.push(point);
-
-  drawStroke(
-    ctx,
-    currentStroke
-  );
-}
-
-
-function endDraw(event) {
-
-  if (
-    pointerActive &&
-    selectedObject &&
-    objectAction
-  ) {
-
-    finishObjectInteraction();
-
-    return;
-  }
-
-  if (!drawing) {
-    return;
-  }
-
-  drawing = false;
-
-  const elapsed =
-    pointerStart
-      ? Date.now() -
-        pointerStart.time
-      : 9999;
 
   /*
-     Toque rápido sem movimento:
-     não cria traço e abre menu.
-  */
+   * REDIMENSIONANDO
+   */
 
   if (
-    elapsed <= TAP_MAX_TIME &&
-    !pointerMoved
+    resizingObject &&
+    selectedObject &&
+    objectResizeStart
   ) {
 
-    currentStroke = null;
+    event.preventDefault();
+
+    const deltaX =
+      point.x -
+      objectResizeStart.x;
+
+    const deltaY =
+      point.y -
+      objectResizeStart.y;
+
+    selectedObject.width =
+      Math.max(
+        60,
+        objectResizeStart.width +
+        deltaX
+      );
+
+    selectedObject.height =
+      Math.max(
+        40,
+        objectResizeStart.height +
+        deltaY
+      );
 
     redraw();
 
-    openPasteMenu(
-      pointerStart.point
-    );
+    return;
+  }
 
-    pointerStart = null;
 
-    pointerActive = false;
+  /*
+   * MOVENDO OBJETO
+   */
+
+  if (
+    draggingObject &&
+    selectedObject &&
+    objectDragOffset
+  ) {
+
+    event.preventDefault();
+
+    selectedObject.x =
+      point.x -
+      objectDragOffset.x;
+
+    selectedObject.y =
+      point.y -
+      objectDragOffset.y;
+
+    selectedObject.x =
+      Math.max(
+        0,
+        Math.min(
+          selectedObject.x,
+          window.innerWidth -
+          selectedObject.width
+        )
+      );
+
+    selectedObject.y =
+      Math.max(
+        0,
+        Math.min(
+          selectedObject.y,
+          window.innerHeight -
+          selectedObject.height
+        )
+      );
+
+    redraw();
 
     return;
   }
 
+
   /*
-     Desenho normal.
-  */
+   * DESENHO
+   */
 
   if (
-    currentStroke &&
-    currentStroke.points.length
+    drawing &&
+    currentStroke
   ) {
 
-    strokes.push(
+    event.preventDefault();
+
+    const points =
+      currentStroke.points;
+
+    const last =
+      points[
+        points.length - 1
+      ];
+
+    const distance =
+      Math.hypot(
+        point.x - last.x,
+        point.y - last.y
+      );
+
+    if (
+      distance <
+      0.8
+    ) {
+
+      return;
+    }
+
+    points.push(
+      point
+    );
+
+    drawStroke(
+      ctx,
       currentStroke
     );
   }
+}
 
-  currentStroke = null;
 
-  pointerStart = null;
+/* =========================================================
+   FINALIZAR INTERAÇÃO
+   ========================================================= */
 
-  pointerActive = false;
+function endPointerInteraction(
+  event
+) {
+
+  const point =
+    getCanvasPoint(event);
+
+  const elapsed =
+    tapStart
+      ? Date.now() -
+        tapStart.time
+      : 9999;
+
+  const distance =
+    tapStart
+      ? Math.hypot(
+          point.x -
+          tapStart.x,
+          point.y -
+          tapStart.y
+        )
+      : 9999;
+
+  const isQuickTap =
+    elapsed <= TAP_MAX_TIME &&
+    distance <= TAP_MAX_DISTANCE &&
+    !tapMoved;
+
+
+  /*
+   * OBJETO
+   */
+
+  if (
+    draggingObject ||
+    resizingObject
+  ) {
+
+    draggingObject =
+      false;
+
+    resizingObject =
+      false;
+
+    objectDragOffset =
+      null;
+
+    objectResizeStart =
+      null;
+
+    tapStart =
+      null;
+
+    tapMoved =
+      false;
+
+    try {
+
+      canvas.releasePointerCapture(
+        event.pointerId
+      );
+
+    } catch (_) {}
+
+    redraw();
+
+    return;
+  }
+
+
+  /*
+   * DESENHO
+   */
+
+  if (
+    drawing
+  ) {
+
+    drawing =
+      false;
+
+    if (
+      currentStroke &&
+      currentStroke.points.length
+    ) {
+
+      /*
+       * Se foi um toque rápido,
+       * não transforma o toque
+       * em um risco.
+       */
+
+      if (
+        isQuickTap
+      ) {
+
+        /*
+         * Remove o pequeno ponto.
+         */
+
+        currentStroke =
+          null;
+
+      } else {
+
+        strokes.push(
+          currentStroke
+        );
+
+        redoStack =
+          [];
+      }
+    }
+
+    currentStroke =
+      null;
+  }
+
+
+  /*
+   * TOQUE RÁPIDO:
+   * abre menu.
+   */
+
+  if (
+    isQuickTap &&
+    tool !== "eraser"
+  ) {
+
+    openPasteMenu(
+      event.clientX,
+      event.clientY,
+      point.x,
+      point.y
+    );
+  }
+
+
+  tapStart =
+    null;
+
+  tapMoved =
+    false;
+
+  try {
+
+    canvas.releasePointerCapture(
+      event.pointerId
+    );
+
+  } catch (_) {}
 
   redraw();
 }
@@ -1794,193 +2095,626 @@ function endDraw(event) {
    CANCELAR POINTER
    ========================================================= */
 
-function cancelPointer() {
+function cancelPointerInteraction(
+  event
+) {
 
-  drawing = false;
+  drawing =
+    false;
 
-  currentStroke = null;
+  draggingObject =
+    false;
 
-  pointerStart = null;
+  resizingObject =
+    false;
 
-  pointerActive = false;
+  currentStroke =
+    null;
 
-  objectAction = null;
+  tapStart =
+    null;
 
-  objectStartState = null;
+  tapMoved =
+    false;
 
-  objectStartPoint = null;
+  objectDragOffset =
+    null;
+
+  objectResizeStart =
+    null;
+
+  try {
+
+    canvas.releasePointerCapture(
+      event.pointerId
+    );
+
+  } catch (_) {}
 
   redraw();
 }
 
 
 /* =========================================================
-   POINTER EVENTS DO CANVAS
+   DUPLO CLIQUE
    ========================================================= */
 
-canvas.addEventListener(
-  "pointerdown",
-  beginDraw,
-  {
-    passive: false
+function handleCanvasDoubleClick(
+  event
+) {
+
+  event.preventDefault();
+
+  const point =
+    getCanvasPoint(event);
+
+  const object =
+    getObjectAtPoint(
+      point.x,
+      point.y
+    );
+
+  if (
+    object &&
+    object.type === "text"
+  ) {
+
+    selectedObject =
+      object;
+
+    editSelectedText();
   }
-);
-
-canvas.addEventListener(
-  "pointermove",
-  event => {
-
-    if (
-      selectedObject &&
-      objectAction
-    ) {
-
-      event.preventDefault();
-
-      moveObjectInteraction(
-        event
-      );
-
-      return;
-    }
-
-    moveDraw(event);
-  },
-  {
-    passive: false
-  }
-);
-
-canvas.addEventListener(
-  "pointerup",
-  endDraw
-);
-
-canvas.addEventListener(
-  "pointercancel",
-  cancelPointer
-);
+}
 
 
 /* =========================================================
-   DUPLO CLIQUE NO TEXTO
+   EVENTOS CANVAS
    ========================================================= */
 
-canvas.addEventListener(
-  "dblclick",
-  event => {
+function initializeCanvasInteraction() {
 
-    const point =
-      getPointerPosition(event);
+  canvas.addEventListener(
+    "pointerdown",
+    startPointerInteraction,
+    {
+      passive: false
+    }
+  );
+
+  canvas.addEventListener(
+    "pointermove",
+    movePointerInteraction,
+    {
+      passive: false
+    }
+  );
+
+  canvas.addEventListener(
+    "pointerup",
+    endPointerInteraction,
+    {
+      passive: false
+    }
+  );
+
+  canvas.addEventListener(
+    "pointercancel",
+    cancelPointerInteraction,
+    {
+      passive: false
+    }
+  );
+
+  canvas.addEventListener(
+    "dblclick",
+    handleCanvasDoubleClick
+  );
+}
+
+
+/* =========================================================
+   CANETA / CORES
+   ========================================================= */
+
+function initializeTools() {
+
+  document
+    .querySelectorAll(".color")
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            color =
+              button.dataset.color;
+
+            tool =
+              "pen";
+
+            document
+              .querySelectorAll(
+                ".color"
+              )
+              .forEach(
+                item =>
+                  item.classList.remove(
+                    "active"
+                  )
+              );
+
+            button.classList.add(
+              "active"
+            );
+
+            if (
+              $("toolName")
+            ) {
+
+              $("toolName")
+                .textContent =
+                "Caneta";
+            }
+
+            if (
+              $("eraser")
+            ) {
+
+              $("eraser")
+                .style
+                .outline =
+                "";
+            }
+          }
+        );
+      }
+    );
+
+
+  const widthInput =
+    $("width");
+
+  if (
+    widthInput
+  ) {
+
+    lineWidth =
+      Number(
+        widthInput.value
+      ) || 5;
+
+    widthInput.addEventListener(
+      "input",
+      event => {
+
+        lineWidth =
+          Number(
+            event.target.value
+          ) || 5;
+      }
+    );
+  }
+
+
+  const eraser =
+    $("eraser");
+
+  if (
+    eraser
+  ) {
+
+    eraser.addEventListener(
+      "click",
+      () => {
+
+        if (
+          tool === "eraser"
+        ) {
+
+          tool =
+            "pen";
+
+          if (
+            $("toolName")
+          ) {
+
+            $("toolName")
+              .textContent =
+              "Caneta";
+          }
+
+          eraser.style.outline =
+            "";
+
+        } else {
+
+          tool =
+            "eraser";
+
+          selectedObject =
+            null;
+
+          if (
+            $("toolName")
+          ) {
+
+            $("toolName")
+              .textContent =
+              "Borracha";
+          }
+
+          eraser.style.outline =
+            "2px solid #fff";
+
+          redraw();
+        }
+      }
+    );
+  }
+}
+
+
+/* =========================================================
+   UNDO
+   ========================================================= */
+
+function undo() {
+
+  /*
+   * Primeiro tenta desfazer
+   * o último objeto.
+   */
+
+  if (
+    boardObjects.length
+  ) {
 
     const object =
-      getObjectAtPoint(point);
+      boardObjects[
+        boardObjects.length - 1
+      ];
 
-    if (
-      object &&
-      object.type ===
-        "text"
-    ) {
+    boardObjects.pop();
 
-      selectedObject =
-        object;
+    objectRedoStack.push(
+      object
+    );
 
-      editSelectedText();
-    }
+    selectedObject =
+      null;
+
+    redraw();
+
+    return;
   }
-);
+
+
+  /*
+   * Depois tenta desfazer
+   * o último traço.
+   */
+
+  if (
+    strokes.length
+  ) {
+
+    redoStack.push(
+      strokes.pop()
+    );
+
+    redraw();
+  }
+}
 
 
 /* =========================================================
-   DESSELECIONAR
+   REDO
    ========================================================= */
 
-canvas.addEventListener(
-  "contextmenu",
-  event => {
-    event.preventDefault();
+function redo() {
+
+  if (
+    objectRedoStack.length
+  ) {
+
+    const object =
+      objectRedoStack.pop();
+
+    boardObjects.push(
+      object
+    );
+
+    selectedObject =
+      object;
+
+    redraw();
+
+    return;
   }
-);
+
+  if (
+    redoStack.length
+  ) {
+
+    strokes.push(
+      redoStack.pop()
+    );
+
+    redraw();
+  }
+}
 
 
 /* =========================================================
-   CLIQUE FORA DO MENU
+   CLEAR
    ========================================================= */
 
-document.addEventListener(
-  "pointerdown",
-  event => {
+function clearBoard() {
 
-    if (
-      pasteMenu &&
-      pasteMenu.style.display !==
-        "none" &&
-      !pasteMenu.contains(
-        event.target
-      ) &&
-      event.target !==
-        canvas
-    ) {
+  if (
+    !strokes.length &&
+    !boardObjects.length
+  ) {
 
-      closePasteMenu();
-    }
+    return;
   }
-);
+
+  strokes =
+    [];
+
+  redoStack =
+    [];
+
+  boardObjects =
+    [];
+
+  objectRedoStack =
+    [];
+
+  selectedObject =
+    null;
+
+  redraw();
+
+  toast(
+    "Lousa limpa."
+  );
+}
 
 
 /* =========================================================
-   TECLADO
+   BOTÕES UNDO / REDO / CLEAR
    ========================================================= */
 
-document.addEventListener(
-  "keydown",
-  event => {
+function initializeUndoRedoButtons() {
+
+  const undoButton =
+    $("undo");
+
+  const redoButton =
+    $("redo");
+
+  const clearButton =
+    $("clear");
+
+
+  if (
+    undoButton
+  ) {
+
+    undoButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        undo();
+      }
+    );
+  }
+
+
+  if (
+    redoButton
+  ) {
+
+    redoButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        redo();
+      }
+    );
+  }
+
+
+  if (
+    clearButton
+  ) {
+
+    clearButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        clearBoard();
+      }
+    );
+  }
+}
+
+
+/* =========================================================
+   MENU PRINCIPAL
+   ========================================================= */
+
+function initializeMainMenus() {
+
+  const menuButton =
+    $("menuBtn");
+
+  const menuPanel =
+    $("menuPanel");
+
+  const settings =
+    $("settings");
+
+  const tools =
+    $("tools");
+
+
+  function closePanels() {
 
     if (
-      event.key ===
-        "Escape"
+      menuPanel
     ) {
 
-      closePasteMenu();
+      menuPanel.classList.remove(
+        "open"
+      );
 
-      selectedObject =
-        null;
-
-      redraw();
-
-      return;
+      menuPanel.setAttribute(
+        "aria-hidden",
+        "true"
+      );
     }
 
     if (
-      event.key ===
-        "Delete" ||
-      event.key ===
-        "Backspace"
+      tools
     ) {
+
+      tools.classList.remove(
+        "open"
+      );
+
+      tools.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+    }
+  }
+
+
+  if (
+    menuButton &&
+    menuPanel
+  ) {
+
+    menuButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const opening =
+          !menuPanel.classList.contains(
+            "open"
+          );
+
+        closePanels();
+
+        if (
+          opening
+        ) {
+
+          menuPanel.classList.add(
+            "open"
+          );
+
+          menuPanel.setAttribute(
+            "aria-hidden",
+            "false"
+          );
+        }
+      }
+    );
+  }
+
+
+  if (
+    settings &&
+    tools
+  ) {
+
+    settings.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const opening =
+          !tools.classList.contains(
+            "open"
+          );
+
+        closePanels();
+
+        if (
+          opening
+        ) {
+
+          tools.classList.add(
+            "open"
+          );
+
+          tools.setAttribute(
+            "aria-hidden",
+            "false"
+          );
+        }
+      }
+    );
+  }
+
+
+  document.addEventListener(
+    "pointerdown",
+    event => {
 
       if (
-        selectedObject &&
-        !(
-          event.target instanceof
-          HTMLInputElement
-        ) &&
-        !(
-          event.target instanceof
-          HTMLTextAreaElement
+        event.target.closest(
+          "#menuPanel"
+        ) ||
+        event.target.closest(
+          "#menuBtn"
+        ) ||
+        event.target.closest(
+          "#tools"
+        ) ||
+        event.target.closest(
+          "#settings"
+        ) ||
+        event.target.closest(
+          "#pasteMenu"
+        ) ||
+        event.target.closest(
+          "#pasteHelper"
+        ) ||
+        event.target.closest(
+          "#textToolButton"
         )
       ) {
 
-        deleteSelectedObject();
-
-        event.preventDefault();
+        return;
       }
-    }
-  }
-);
+
+      closePanels();
+
+      closePasteMenu();
+    },
+    true
+  );
+}
 
 
 /* =========================================================
-   APAGAR OBJETO
+   DELETE / BACKSPACE
    ========================================================= */
 
 function deleteSelectedObject() {
@@ -1988,7 +2722,8 @@ function deleteSelectedObject() {
   if (
     !selectedObject
   ) {
-    return;
+
+    return false;
   }
 
   const index =
@@ -1999,375 +2734,70 @@ function deleteSelectedObject() {
   if (
     index === -1
   ) {
-    return;
-  }
-
-  const object =
-    selectedObject;
-
-  boardObjects.splice(
-    index,
-    1
-  );
-
-  objectUndoStack.push({
-    type: "delete",
-    object,
-    index
-  });
-
-  objectRedoStack = [];
-
-  selectedObject = null;
-
-  redraw();
-}
-
-
-/* =========================================================
-   DESFAZER
-   ========================================================= */
-
-function undo() {
-
-  /*
-     Se houver uma ação de objeto
-     posterior ao último desenho,
-     desfazemos o objeto.
-  */
-
-  if (
-    objectUndoStack.length
-  ) {
-
-    const action =
-      objectUndoStack.pop();
-
-    if (
-      action.type ===
-      "add"
-    ) {
-
-      const index =
-        boardObjects.indexOf(
-          action.object
-        );
-
-      if (
-        index !== -1
-      ) {
-
-        boardObjects.splice(
-          index,
-          1
-        );
-      }
-
-      if (
-        selectedObject ===
-        action.object
-      ) {
-
-        selectedObject =
-          null;
-      }
-
-    } else if (
-      action.type ===
-      "delete"
-    ) {
-
-      boardObjects.splice(
-        action.index,
-        0,
-        action.object
-      );
-
-    } else if (
-      action.type ===
-      "modify"
-    ) {
-
-      Object.assign(
-        action.object,
-        action.before
-      );
-    }
-
-    objectRedoStack.push(
-      action
-    );
-
-    redraw();
-
-    return;
-  }
-
-  /*
-     Caso não existam objetos
-     para desfazer, desfaz o
-     último traço.
-  */
-
-  if (
-    !strokes.length
-  ) {
-    return;
-  }
-
-  redoStack.push(
-    strokes.pop()
-  );
-
-  redraw();
-}
-
-
-/* =========================================================
-   REFAZER
-   ========================================================= */
-
-function redo() {
-
-  if (
-    objectRedoStack.length
-  ) {
-
-    const action =
-      objectRedoStack.pop();
-
-    if (
-      action.type ===
-      "add"
-    ) {
-
-      if (
-        !boardObjects.includes(
-          action.object
-        )
-      ) {
-
-        boardObjects.push(
-          action.object
-        );
-      }
-
-    } else if (
-      action.type ===
-      "delete"
-    ) {
-
-      const index =
-        boardObjects.indexOf(
-          action.object
-        );
-
-      if (
-        index !== -1
-      ) {
-
-        boardObjects.splice(
-          index,
-          1
-        );
-      }
-
-    } else if (
-      action.type ===
-      "modify"
-    ) {
-
-      Object.assign(
-        action.object,
-        action.after
-      );
-    }
 
     selectedObject =
-      action.object;
+      null;
 
-    objectUndoStack.push(
-      action
-    );
-
-    redraw();
-
-    return;
+    return false;
   }
 
-  if (
-    !redoStack.length
-  ) {
-    return;
-  }
+  const removed =
+    boardObjects.splice(
+      index,
+      1
+    )[0];
 
-  strokes.push(
-    redoStack.pop()
+  objectRedoStack.push(
+    removed
   );
 
+  selectedObject =
+    null;
+
   redraw();
+
+  return true;
 }
 
 
-/* =========================================================
-   BOTÃO DESFAZER
-   ========================================================= */
+function initializeObjectKeyboardControls() {
 
-$("undo").addEventListener(
-  "click",
-  undo
-);
+  document.addEventListener(
+    "keydown",
+    event => {
 
+      const tag =
+        event.target &&
+        event.target.tagName
+          ? event.target.tagName.toLowerCase()
+          : "";
 
-/* =========================================================
-   BOTÃO REFAZER
-   ========================================================= */
+      if (
+        tag === "input" ||
+        tag === "textarea" ||
+        event.target.isContentEditable
+      ) {
 
-$("redo").addEventListener(
-  "click",
-  redo
-);
-
-
-/* =========================================================
-   LIMPAR
-   ========================================================= */
-
-$("clear").addEventListener(
-  "click",
-  () => {
-
-    if (
-      !strokes.length &&
-      !boardObjects.length
-    ) {
-      return;
-    }
-
-    strokes = [];
-
-    redoStack = [];
-
-    boardObjects = [];
-
-    objectUndoStack = [];
-
-    objectRedoStack = [];
-
-    selectedObject = null;
-
-    redraw();
-  }
-);
-
-
-/* =========================================================
-   CORES
-   ========================================================= */
-
-document
-  .querySelectorAll(".color")
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        color =
-          button.dataset.color;
-
-        tool = "pen";
-
-        document
-          .querySelectorAll(
-            ".color"
-          )
-          .forEach(
-            item =>
-              item.classList.remove(
-                "active"
-              )
-          );
-
-        button.classList.add(
-          "active"
-        );
-
-        $("toolName").textContent =
-          "Caneta";
-
-        $("eraser").style.outline =
-          "";
+        return;
       }
-    );
-  });
 
+      if (
+        event.key === "Delete" ||
+        event.key === "Backspace"
+      ) {
 
-/* =========================================================
-   ESPESSURA
-   ========================================================= */
+        if (
+          selectedObject
+        ) {
 
-$("width").addEventListener(
-  "input",
-  event => {
+          event.preventDefault();
 
-    lineWidth =
-      Number(
-        event.target.value
-      );
-  }
-);
-
-
-/* =========================================================
-   BORRACHA
-   ========================================================= */
-
-$("eraser").addEventListener(
-  "click",
-  () => {
-
-    if (
-      tool === "eraser"
-    ) {
-
-      tool = "pen";
-
-      $("toolName").textContent =
-        "Caneta";
-
-      $("eraser").style.outline =
-        "";
-
-    } else {
-
-      tool = "eraser";
-
-      $("toolName").textContent =
-        "Borracha";
-
-      $("eraser").style.outline =
-        "2px solid #fff";
+          deleteSelectedObject();
+        }
+      }
     }
-  }
-);
-
-
-/* =========================================================
-   MENU DE FERRAMENTAS
-   ========================================================= */
-
-$("settings").addEventListener(
-  "click",
-  event => {
-
-    event.stopPropagation();
-
-    $("tools")
-      .classList
-      .toggle("open");
-  }
-);
+  );
+}
 
 
 /* =========================================================
@@ -2378,8 +2808,7 @@ async function startCamera() {
 
   if (
     !navigator.mediaDevices ||
-    !navigator.mediaDevices
-      .getUserMedia
+    !navigator.mediaDevices.getUserMedia
   ) {
 
     toast(
@@ -2390,7 +2819,10 @@ async function startCamera() {
     return false;
   }
 
-  if (stream) {
+
+  if (
+    stream
+  ) {
 
     stream
       .getTracks()
@@ -2398,13 +2830,16 @@ async function startCamera() {
         track =>
           track.stop()
       );
+
+    stream =
+      null;
   }
+
 
   try {
 
     stream =
-      await navigator
-        .mediaDevices
+      await navigator.mediaDevices
         .getUserMedia({
 
           video: {
@@ -2443,13 +2878,13 @@ async function startCamera() {
           }
         });
 
+
     video.srcObject =
       stream;
 
     video.classList.toggle(
       "mirror",
-      facingMode ===
-        "user"
+      facingMode === "user"
     );
 
     await video.play();
@@ -2461,7 +2896,7 @@ async function startCamera() {
     await requestWakeLock();
 
     toast(
-      "Câmera ativada"
+      "Câmera ativada."
     );
 
     return true;
@@ -2481,16 +2916,31 @@ async function startCamera() {
     ) {
 
       message =
-        "Permita câmera e microfone nas configurações do navegador.";
-    }
+        "Permita câmera e microfone nas configurações do Safari.";
 
-    if (
+    } else if (
       error.name ===
       "NotFoundError"
     ) {
 
       message =
         "Câmera ou microfone não encontrados.";
+
+    } else if (
+      error.name ===
+      "NotReadableError"
+    ) {
+
+      message =
+        "A câmera está sendo usada por outro aplicativo.";
+
+    } else if (
+      error.name ===
+      "SecurityError"
+    ) {
+
+      message =
+        "O acesso à câmera foi bloqueado por segurança.";
     }
 
     toast(
@@ -2507,19 +2957,31 @@ async function startCamera() {
    TROCAR CÂMERA
    ========================================================= */
 
-$("flip").addEventListener(
-  "click",
-  async () => {
+function initializeFlipButton() {
 
-    facingMode =
-      facingMode ===
-        "user"
-        ? "environment"
-        : "user";
+  const flip =
+    $("flip");
 
-    await startCamera();
+  if (
+    !flip
+  ) {
+
+    return;
   }
-);
+
+  flip.addEventListener(
+    "click",
+    async () => {
+
+      facingMode =
+        facingMode === "user"
+          ? "environment"
+          : "user";
+
+      await startCamera();
+    }
+  );
+}
 
 
 /* =========================================================
@@ -2531,22 +2993,34 @@ async function requestWakeLock() {
   try {
 
     if (
-      "wakeLock" in
-      navigator
+      "wakeLock" in navigator
     ) {
 
       wakeLock =
-        await navigator
-          .wakeLock
-          .request(
-            "screen"
-          );
+        await navigator.wakeLock.request(
+          "screen"
+        );
+
+      if (
+        wakeLock &&
+        wakeLock.addEventListener
+      ) {
+
+        wakeLock.addEventListener(
+          "release",
+          () => {
+
+            wakeLock =
+              null;
+          }
+        );
+      }
     }
 
   } catch (error) {
 
     console.log(
-      "Wake Lock indisponível"
+      "Wake Lock indisponível."
     );
   }
 }
@@ -2558,7 +3032,7 @@ document.addEventListener(
 
     if (
       document.visibilityState ===
-        "visible" &&
+      "visible" &&
       stream
     ) {
 
@@ -2594,18 +3068,19 @@ function getSupportedMimeType() {
     return "";
   }
 
-  return formats.find(
-    type =>
-      MediaRecorder
-        .isTypeSupported(
+  return (
+    formats.find(
+      type =>
+        MediaRecorder.isTypeSupported(
           type
         )
-  ) || "";
+    ) || ""
+  );
 }
 
 
 /* =========================================================
-   VÍDEO COVER
+   VIDEO COVER
    ========================================================= */
 
 function drawVideoCover(
@@ -2636,14 +3111,10 @@ function drawVideoCover(
     videoHeight * scale;
 
   const x =
-    (width -
-      drawWidth) /
-    2;
+    (width - drawWidth) / 2;
 
   const y =
-    (height -
-      drawHeight) /
-    2;
+    (height - drawHeight) / 2;
 
   context.drawImage(
     videoElement,
@@ -2680,6 +3151,7 @@ function renderFrame() {
   const height =
     renderCanvas.height;
 
+
   renderCtx.clearRect(
     0,
     0,
@@ -2687,15 +3159,15 @@ function renderFrame() {
     height
   );
 
+
   /*
-     Câmera
-  */
+   * Câmera
+   */
 
   renderCtx.save();
 
   if (
-    facingMode ===
-    "user"
+    facingMode === "user"
   ) {
 
     renderCtx.translate(
@@ -2718,25 +3190,32 @@ function renderFrame() {
 
   renderCtx.restore();
 
+
   /*
-     Lousa
-  */
+   * Lousa
+   */
 
   renderCtx.save();
 
-  renderCtx.scale(
+  const scaleX =
     width /
-      Math.max(
-        1,
-        window.innerWidth
-      ),
+    Math.max(
+      1,
+      window.innerWidth
+    );
 
+  const scaleY =
     height /
-      Math.max(
-        1,
-        window.innerHeight
-      )
+    Math.max(
+      1,
+      window.innerHeight
+    );
+
+  renderCtx.scale(
+    scaleX,
+    scaleY
   );
+
 
   for (
     const stroke of strokes
@@ -2748,22 +3227,20 @@ function renderFrame() {
     );
   }
 
+
   for (
     const object of boardObjects
   ) {
 
-    drawBoardObject(
+    drawObject(
       renderCtx,
-      object
+      object,
+      false
     );
   }
 
-  /*
-     Não grava a caixa de
-     seleção dos objetos.
-  */
-
   renderCtx.restore();
+
 
   animationId =
     requestAnimationFrame(
@@ -2778,7 +3255,9 @@ function renderFrame() {
 
 async function startRecording() {
 
-  if (!stream) {
+  if (
+    !stream
+  ) {
 
     toast(
       "Ative a câmera primeiro."
@@ -2789,9 +3268,7 @@ async function startRecording() {
 
   if (
     !window.MediaRecorder ||
-    !HTMLCanvasElement
-      .prototype
-      .captureStream
+    !HTMLCanvasElement.prototype.captureStream
   ) {
 
     toast(
@@ -2805,7 +3282,9 @@ async function startRecording() {
   const mime =
     getSupportedMimeType();
 
-  if (!mime) {
+  if (
+    !mime
+  ) {
 
     toast(
       "Formato de vídeo não suportado neste navegador.",
@@ -2815,14 +3294,16 @@ async function startRecording() {
     return;
   }
 
-  chunks = [];
+  chunks =
+    [];
 
   renderCanvas =
     document.createElement(
       "canvas"
     );
 
-  const width = 1920;
+  const width =
+    1920;
 
   const aspect =
     window.innerWidth /
@@ -2835,8 +3316,11 @@ async function startRecording() {
     width;
 
   renderCanvas.height =
-    Math.round(
-      width / aspect
+    Math.max(
+      1,
+      Math.round(
+        width / aspect
+      )
     );
 
   renderCtx =
@@ -2844,7 +3328,20 @@ async function startRecording() {
       "2d"
     );
 
-  recording = true;
+  if (
+    !renderCtx
+  ) {
+
+    toast(
+      "Não foi possível preparar a gravação.",
+      4000
+    );
+
+    return;
+  }
+
+  recording =
+    true;
 
   renderFrame();
 
@@ -2856,7 +3353,9 @@ async function startRecording() {
   const audioTrack =
     stream.getAudioTracks()[0];
 
-  if (audioTrack) {
+  if (
+    audioTrack
+  ) {
 
     outputStream.addTrack(
       audioTrack
@@ -2878,11 +3377,21 @@ async function startRecording() {
 
   } catch (error) {
 
-    recording = false;
-
-    cancelAnimationFrame(
-      animationId
+    console.error(
+      error
     );
+
+    recording =
+      false;
+
+    if (
+      animationId
+    ) {
+
+      cancelAnimationFrame(
+        animationId
+      );
+    }
 
     toast(
       "Não foi possível iniciar a gravação.",
@@ -2891,6 +3400,7 @@ async function startRecording() {
 
     return;
   }
+
 
   mediaRecorder.ondataavailable =
     event => {
@@ -2906,6 +3416,7 @@ async function startRecording() {
       }
     };
 
+
   mediaRecorder.onerror =
     event => {
 
@@ -2919,18 +3430,19 @@ async function startRecording() {
       );
     };
 
+
   mediaRecorder.onstop =
     exportRecording;
+
 
   mediaRecorder.start(
     1000
   );
 
-  recordBtn
-    .classList
-    .add(
-      "recording"
-    );
+
+  recordBtn.classList.add(
+    "recording"
+  );
 
   toast(
     "Gravando…"
@@ -2944,15 +3456,27 @@ async function startRecording() {
 
 function stopRecording() {
 
-  if (!mediaRecorder) {
+  if (
+    !mediaRecorder
+  ) {
+
     return;
   }
 
-  recording = false;
+  recording =
+    false;
 
-  cancelAnimationFrame(
+  if (
     animationId
-  );
+  ) {
+
+    cancelAnimationFrame(
+      animationId
+    );
+
+    animationId =
+      null;
+  }
 
   if (
     mediaRecorder.state !==
@@ -2962,11 +3486,9 @@ function stopRecording() {
     mediaRecorder.stop();
   }
 
-  recordBtn
-    .classList
-    .remove(
-      "recording"
-    );
+  recordBtn.classList.remove(
+    "recording"
+  );
 
   toast(
     "Processando vídeo…",
@@ -2986,9 +3508,7 @@ async function exportRecording() {
     "video/mp4";
 
   const extension =
-    type.includes(
-      "webm"
-    )
+    type.includes("webm")
       ? "webm"
       : "mp4";
 
@@ -3000,15 +3520,20 @@ async function exportRecording() {
       }
     );
 
-  if (!blob.size) {
+  if (
+    !blob.size
+  ) {
 
     toast(
       "A gravação ficou vazia.",
       4000
     );
 
+    cleanupRecording();
+
     return;
   }
+
 
   const filename =
     `lousa-cam-${new Date()
@@ -3017,6 +3542,7 @@ async function exportRecording() {
         /[:.]/g,
         "-"
       )}.${extension}`;
+
 
   const file =
     new File(
@@ -3027,9 +3553,10 @@ async function exportRecording() {
       }
     );
 
+
   /*
-     Compartilhamento no celular.
-  */
+   * Compartilhamento iOS.
+   */
 
   if (
     navigator.canShare &&
@@ -3042,7 +3569,9 @@ async function exportRecording() {
 
       await navigator.share({
 
-        files: [file],
+        files: [
+          file
+        ],
 
         title:
           "Lousa Cam",
@@ -3054,6 +3583,8 @@ async function exportRecording() {
       toast(
         "Vídeo compartilhado."
       );
+
+      cleanupRecording();
 
       return;
 
@@ -3068,14 +3599,17 @@ async function exportRecording() {
           "Compartilhamento cancelado."
         );
 
+        cleanupRecording();
+
         return;
       }
     }
   }
 
+
   /*
-     Download normal.
-  */
+   * Download.
+   */
 
   const url =
     URL.createObjectURL(
@@ -3093,6 +3627,9 @@ async function exportRecording() {
   link.download =
     filename;
 
+  link.rel =
+    "noopener";
+
   document.body.appendChild(
     link
   );
@@ -3102,10 +3639,13 @@ async function exportRecording() {
   link.remove();
 
   setTimeout(
-    () =>
+    () => {
+
       URL.revokeObjectURL(
         url
-      ),
+      );
+
+    },
     15000
   );
 
@@ -3113,6 +3653,39 @@ async function exportRecording() {
     `Vídeo salvo como ${extension.toUpperCase()}.`,
     3500
   );
+
+  cleanupRecording();
+}
+
+
+/* =========================================================
+   LIMPAR GRAVAÇÃO
+   ========================================================= */
+
+function cleanupRecording() {
+
+  if (
+    renderCanvas
+  ) {
+
+    renderCanvas.width =
+      1;
+
+    renderCanvas.height =
+      1;
+  }
+
+  renderCanvas =
+    null;
+
+  renderCtx =
+    null;
+
+  mediaRecorder =
+    null;
+
+  chunks =
+    [];
 }
 
 
@@ -3120,59 +3693,28 @@ async function exportRecording() {
    BOTÃO GRAVAR
    ========================================================= */
 
-recordBtn.addEventListener(
-  "click",
-  () => {
+function initializeRecordButton() {
 
-    if (recording) {
+  if (
+    !recordBtn
+  ) {
 
-      stopRecording();
-
-    } else {
-
-      startRecording();
-    }
+    return;
   }
-);
 
-
-/* =========================================================
-   BOTÃO INICIAR CÂMERA
-   ========================================================= */
-
-startBtn.addEventListener(
-  "click",
-  startCamera
-);
-
-
-/* =========================================================
-   INICIALIZAÇÃO DA FUNÇÃO TEXTO / COLAR
-   ========================================================= */
-
-function initializePasteFeature() {
-
-  createPasteMenu();
-
-  createImageInput();
-
-  createTextToolbarButton();
-
-  /*
-     Impede arrastar imagens
-     acidentalmente para a página.
-  */
-
-  document.addEventListener(
-    "dragstart",
-    event => {
+  recordBtn.addEventListener(
+    "click",
+    () => {
 
       if (
-        event.target instanceof
-        HTMLImageElement
+        recording
       ) {
 
-        event.preventDefault();
+        stopRecording();
+
+      } else {
+
+        startRecording();
       }
     }
   );
@@ -3180,12 +3722,79 @@ function initializePasteFeature() {
 
 
 /* =========================================================
-   REDIMENSIONAMENTO
+   BOTÃO START
+   ========================================================= */
+
+function initializeStartButton() {
+
+  if (
+    !startBtn
+  ) {
+
+    return;
+  }
+
+  startBtn.addEventListener(
+    "click",
+    async () => {
+
+      await startCamera();
+    }
+  );
+}
+
+
+/* =========================================================
+   MENU DE COLAGEM
+   ========================================================= */
+
+function initializePasteMenuOutsideClick() {
+
+  document.addEventListener(
+    "pointerdown",
+    event => {
+
+      if (
+        !pasteMenu
+      ) {
+
+        return;
+      }
+
+      if (
+        pasteMenu.style.display !==
+        "flex"
+      ) {
+
+        return;
+      }
+
+      if (
+        pasteMenu.contains(
+          event.target
+        )
+      ) {
+
+        return;
+      }
+
+      closePasteMenu();
+    },
+    true
+  );
+}
+
+
+/* =========================================================
+   RESIZE / ORIENTAÇÃO
    ========================================================= */
 
 window.addEventListener(
   "resize",
-  fitCanvas
+  () => {
+
+    fitCanvas();
+  }
 );
 
 
@@ -3206,8 +3815,7 @@ window.addEventListener(
    ========================================================= */
 
 if (
-  "serviceWorker" in
-  navigator
+  "serviceWorker" in navigator
 ) {
 
   window.addEventListener(
@@ -3216,7 +3824,20 @@ if (
 
       navigator.serviceWorker
         .register(
-          "./sw.js"
+          `./sw.js?v=${BUILD_VERSION}`,
+          {
+            updateViaCache:
+              "none"
+          }
+        )
+        .then(
+          registration => {
+
+            registration.update()
+              .catch(
+                () => {}
+              );
+          }
         )
         .catch(
           console.error
@@ -3227,33 +3848,49 @@ if (
 
 
 /* =========================================================
-   INICIALIZAÇÃO FINAL
+   INICIALIZAÇÃO
    ========================================================= */
 
 function initializeApplication() {
 
+  console.log(
+    `Lousa Cam build ${BUILD_VERSION}`
+  );
+
+  initializeUndoRedoButtons();
+
+  initializeTools();
+
+  initializeMainMenus();
+
+  initializeFlipButton();
+
+  initializeRecordButton();
+
+  initializeStartButton();
+
+  initializeTextButton();
+
+  initializeCanvasInteraction();
+
+  initializeObjectKeyboardControls();
+
+  initializePasteMenuOutsideClick();
+
+  createImageInput();
+
   fitCanvas();
 
-  initializePasteFeature();
+  setTimeout(
+    () => {
 
-  /*
-     Garante que o estado
-     inicial seja Caneta.
-  */
+      fitCanvas();
 
-  tool = "pen";
-
-  if ($("toolName")) {
-
-    $("toolName").textContent =
-      "Caneta";
-  }
+    },
+    150
+  );
 }
 
-
-/* =========================================================
-   DOM READY
-   ========================================================= */
 
 if (
   document.readyState ===
@@ -3262,10 +3899,7 @@ if (
 
   document.addEventListener(
     "DOMContentLoaded",
-    initializeApplication,
-    {
-      once: true
-    }
+    initializeApplication
   );
 
 } else {
