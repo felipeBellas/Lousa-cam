@@ -1,10 +1,23 @@
 {
-  "name": "Lousa Cam",
-  "short_name": "Lousa Cam",
-  "start_url": "./",
+  "name": "Lousa Cam 2.0",
+  "short_name": "LousaCam",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#111111",
-  "lang": "pt-BR",
-  "orientation": "any"
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
