@@ -483,22 +483,22 @@
 
       position: absolute;
 
-      top:
-        max(
-          72px,
-          calc(
-            env(safe-area-inset-top)
-            + 60px
-          )
-        );
+        top:
+    calc(
+      max(16px, env(safe-area-inset-top))
+      + 58px
+    );
 
-      right:
-        max(
-          16px,
-          env(safe-area-inset-right)
-        );
+  left:
+    max(16px, env(safe-area-inset-left));
 
       padding: 16px;
+        width: max-content;
+
+  max-width:
+    calc(
+      100vw - 32px
+    );
 
       border-radius: 22px;
 
@@ -1253,11 +1253,11 @@
 
     <div id="canvasMenu">
 
-      <button id="pasteButton">
+    <!-- <button id="pasteButton">
 
         
 
-      </button>
+      </button> -->
 
     </div>
 
