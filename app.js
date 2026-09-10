@@ -1639,61 +1639,49 @@ inlineEditor.addEventListener(
   "input",
   () => {
 
-    if (!editingObjectId) {
-
+    if (
+      !editingObjectId
+    ) {
       return;
-
     }
-
 
     const object =
       getObjectById(
         editingObjectId
       );
 
-
     if (!object) {
-
       return;
-
     }
 
-
     object.text =
-      inlineEditor.innerText
+      inlineEditor.textContent
         .replace(/\u00a0/g, " ");
 
-
     object.width =
-  Math.max(
-    60,
-    inlineEditor.offsetWidth
-  );
+      Math.max(
+        60,
+        inlineEditor.offsetWidth
+      );
 
-object.height =
-  Math.max(
-    35,
-    inlineEditor.offsetHeight
-  );
+    object.height =
+      Math.max(
+        35,
+        inlineEditor.offsetHeight
+      );
 
+    updateEditorPosition();
 
-/*
-  Mantém a caixa e o objeto
-  permanentemente sincronizados.
-*/
-
-inlineEditor.style.width =
-  `${object.width}px`;
-
-inlineEditor.style.height =
-  `${object.height}px`;
-
+    /*
+      O redraw() agora preserva o texto
+      somente no editor enquanto ele está
+      sendo digitado.
+    */
 
     redraw();
 
   }
 );
-
 
 /* =========================================================
    BLUR DO EDITOR
