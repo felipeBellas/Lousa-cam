@@ -1,13 +1,11 @@
 {
+  "id": "yse3mi",
   "name": "Lousa Cam 2.0",
   "short_name": "LousaCam",
-  "id": "./",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "orientation": "any",
   "icons": [
     {
       "src": "./logo.png",
