@@ -177,7 +177,20 @@ let pointerMoved =
 
 let pointerDownTime =
   0;
+let lastCanvasTapTime =
+  0;
 
+let lastCanvasTapX =
+  0;
+
+let lastCanvasTapY =
+  0;
+
+const DOUBLE_TAP_DELAY =
+  350;
+
+const DOUBLE_TAP_DISTANCE =
+  40;
 let dragOffsetX =
   0;
 
