@@ -1,11 +1,9 @@
-"use strict";
-
-const CACHE_NAME =
-  "lousa-cam-v2-20260911-04";
+const CACHE_NAME = "lousa-cam-v2-20260911-01";
 
 const FILES_TO_CACHE = [
   "./",
   "./index.html",
+  "./app.js",
   "./manifest.json",
   "./logo.png"
 ];
@@ -15,230 +13,113 @@ const FILES_TO_CACHE = [
    INSTALL
    ========================================================= */
 
-self.addEventListener(
-  "install",
-  event => {
+self.addEventListener("install", event => {
 
-    event.waitUntil(
+  event.waitUntil(
 
-      caches
-        .open(CACHE_NAME)
-        .then(
-          cache =>
-            cache.addAll(
-              FILES_TO_CACHE
-            )
-        )
+    caches.open(CACHE_NAME)
+      .then(cache => {
 
-    );
+        return cache.addAll(
+          FILES_TO_CACHE
+        );
 
-    self.skipWaiting();
+      })
 
-  }
-);
+  );
+
+  self.skipWaiting();
+
+});
 
 
 /* =========================================================
    ACTIVATE
    ========================================================= */
 
-self.addEventListener(
-  "activate",
-  event => {
+self.addEventListener("activate", event => {
 
-    event.waitUntil(
+  event.waitUntil(
 
-      caches
-        .keys()
-        .then(
-          keys =>
-            Promise.all(
+    caches.keys()
+      .then(keys => {
 
-              keys
-                .filter(
-                  key =>
-                    key !== CACHE_NAME
-                )
-                .map(
-                  key =>
-                    caches.delete(key)
-                )
+        return Promise.all(
 
+          keys
+            .filter(
+              key =>
+                key !== CACHE_NAME
             )
-        )
-        .then(
-          () =>
-            self.clients.claim()
-        )
+            .map(
+              key =>
+                caches.delete(key)
+            )
 
-    );
+        );
 
-  }
-);
+      })
+
+  );
+
+  self.clients.claim();
+
+});
 
 
 /* =========================================================
    FETCH
    ========================================================= */
 
-self.addEventListener(
-  "fetch",
-  event => {
+self.addEventListener("fetch", event => {
 
-    const request =
-      event.request;
+  event.respondWith(
 
-    if (
-      request.method !== "GET"
-    ) {
-      return;
-    }
+    caches.match(event.request)
+      .then(cached => {
 
-    const url =
-      new URL(
-        request.url
-      );
+        if (cached) {
 
+          return cached;
 
-    /* =====================================================
-       ARQUIVOS PRINCIPAIS
-       REDE PRIMEIRO
-       ===================================================== */
+        }
 
-    const isMainFile =
-      url.pathname.endsWith(
-        "/index.html"
-      ) ||
+        return fetch(event.request)
+          .then(response => {
 
-      url.pathname.endsWith(
-        "/app.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/sw.js"
-      ) ||
-
-      url.pathname === "/";
-
-
-    if (isMainFile) {
-
-      event.respondWith(
-
-        fetch(
-          request,
-          {
-            cache: "no-store"
-          }
-        )
-
-        .then(
-          response => {
+            /*
+              Só armazena respostas válidas.
+            */
 
             if (
-              response &&
-              response.ok
+              !response ||
+              response.status !== 200 ||
+              response.type === "opaque"
             ) {
 
-              const copy =
-                response.clone();
-
-              caches
-                .open(
-                  CACHE_NAME
-                )
-                .then(
-                  cache =>
-                    cache.put(
-                      request,
-                      copy
-                    )
-                )
-                .catch(
-                  () => {}
-                );
+              return response;
 
             }
+
+            const responseClone =
+              response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+
+                cache.put(
+                  event.request,
+                  responseClone
+                );
+
+              });
 
             return response;
 
-          }
-        )
+          });
 
-        .catch(
-          () =>
-            caches.match(
-              request
-            )
-        )
+      })
 
-      );
+  );
 
-      return;
-
-    }
-
-
-    /* =====================================================
-       OUTROS ARQUIVOS
-       CACHE PRIMEIRO
-       ===================================================== */
-
-    event.respondWith(
-
-      caches
-        .match(
-          request
-        )
-
-        .then(
-          cached => {
-
-            if (cached) {
-              return cached;
-            }
-
-            return fetch(
-              request
-            )
-
-            .then(
-              response => {
-
-                if (
-                  !response ||
-                  response.status !== 200
-                ) {
-                  return response;
-                }
-
-                const copy =
-                  response.clone();
-
-                caches
-                  .open(
-                    CACHE_NAME
-                  )
-                  .then(
-                    cache =>
-                      cache.put(
-                        request,
-                        copy
-                      )
-                  )
-                  .catch(
-                    () => {}
-                  );
-
-                return response;
-
-              }
-            );
-
-          }
-        )
-
-    );
-
-  }
-);
+});
