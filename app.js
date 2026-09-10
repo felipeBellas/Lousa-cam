@@ -496,6 +496,7 @@ function positionTextToolButton() {
   textToolButton.style.top =
     `${topRect.bottom + 8}px`;
 }
+
 /* =========================================================
    REDESENHAR
    ========================================================= */
@@ -509,6 +510,9 @@ function redraw() {
     window.innerHeight
   );
 
+  /*
+    DESENHOS
+  */
 
   for (
     const stroke
@@ -522,11 +526,30 @@ function redraw() {
 
   }
 
+  /*
+    OBJETOS
+  */
 
   for (
     const object
     of objects
   ) {
+
+    /*
+      IMPORTANTE:
+      enquanto o texto está sendo editado,
+      ele NÃO é desenhado no canvas.
+
+      O único texto visível será o
+      contenteditable.
+    */
+
+    if (
+      editingObjectId &&
+      object.id === editingObjectId
+    ) {
+      continue;
+    }
 
     drawObject(
       ctx,
@@ -535,6 +558,9 @@ function redraw() {
 
   }
 
+  /*
+    SELEÇÃO
+  */
 
   if (
     selectedObjectId &&
