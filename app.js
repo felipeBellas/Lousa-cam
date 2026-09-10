@@ -614,12 +614,41 @@ function drawTextObject(
   object
 ) {
 
+  if (!object) {
+
+    return;
+
+  }
+
+
   c.save();
 
 
   const fontSize =
     object.fontSize ||
     24;
+
+
+  const lineHeight =
+    fontSize * 1.15;
+
+
+  const padding =
+    7;
+
+
+  const boxWidth =
+    Math.max(
+      60,
+      object.width || 60
+    );
+
+
+  const boxHeight =
+    Math.max(
+      35,
+      object.height || 35
+    );
 
 
   c.font =
@@ -635,15 +664,202 @@ function drawTextObject(
     "#fff";
 
 
-  const lines =
+  /*
+    Área real disponível para o texto.
+  */
+
+  const maxWidth =
+    Math.max(
+      20,
+      boxWidth -
+      padding * 2
+    );
+
+
+  /*
+    Transforma o texto em linhas
+    respeitando a largura da caixa.
+  */
+
+  const sourceLines =
     String(
       object.text ||
       ""
     ).split("\n");
 
 
-  const lineHeight =
-    fontSize * 1.15;
+  const lines =
+    [];
+
+
+  for (
+    const sourceLine
+    of sourceLines
+  ) {
+
+    /*
+      Linha vazia.
+    */
+
+    if (
+      sourceLine.length === 0
+    ) {
+
+      lines.push("");
+
+      continue;
+
+    }
+
+
+    const words =
+      sourceLine.split(
+        /\s+/
+      );
+
+
+    let currentLine =
+      "";
+
+
+    for (
+      const word
+      of words
+    ) {
+
+      const testLine =
+        currentLine
+          ? `${currentLine} ${word}`
+          : word;
+
+
+      const testWidth =
+        c.measureText(
+          testLine
+        ).width;
+
+
+      if (
+        testWidth <=
+        maxWidth
+      ) {
+
+        currentLine =
+          testLine;
+
+        continue;
+
+      }
+
+
+      /*
+        Palavra ultrapassou a caixa.
+        Guarda a linha anterior.
+      */
+
+      if (currentLine) {
+
+        lines.push(
+          currentLine
+        );
+
+      }
+
+
+      /*
+        Palavra isolada maior que
+        a largura disponível.
+      */
+
+      if (
+        c.measureText(
+          word
+        ).width >
+        maxWidth
+      ) {
+
+        let partial =
+          "";
+
+
+        for (
+          const character
+          of word
+        ) {
+
+          const testPartial =
+            partial +
+            character;
+
+
+          if (
+            c.measureText(
+              testPartial
+            ).width <=
+            maxWidth
+          ) {
+
+            partial =
+              testPartial;
+
+          } else {
+
+            if (partial) {
+
+              lines.push(
+                partial
+              );
+
+            }
+
+
+            partial =
+              character;
+
+          }
+
+        }
+
+
+        currentLine =
+          partial;
+
+      } else {
+
+        currentLine =
+          word;
+
+      }
+
+    }
+
+
+    if (currentLine) {
+
+      lines.push(
+        currentLine
+      );
+
+    }
+
+  }
+
+
+  /*
+    Clipping:
+    o texto nunca ultrapassa a caixa.
+  */
+
+  c.beginPath();
+
+  c.rect(
+    object.x,
+    object.y,
+    boxWidth,
+    boxHeight
+  );
+
+  c.clip();
 
 
   for (
@@ -652,11 +868,32 @@ function drawTextObject(
     i++
   ) {
 
-    c.fillText(
-      lines[i],
-      object.x,
+    const y =
       object.y +
-      i * lineHeight
+      padding +
+      i * lineHeight;
+
+
+    if (
+      y >
+      object.y +
+      boxHeight
+    ) {
+
+      break;
+
+    }
+
+
+    c.fillText(
+
+      lines[i],
+
+      object.x +
+        padding,
+
+      y
+
     );
 
   }
