@@ -3928,16 +3928,28 @@ function renderRecordingFrame() {
 
 
   for (
-    const object
-    of objects
+  const object
+  of objects
+) {
+
+  /*
+    Não grava o texto duplicado enquanto
+    ele ainda está sendo editado.
+  */
+
+  if (
+    editingObjectId &&
+    object.id === editingObjectId
   ) {
-
-    drawObject(
-      renderCtx,
-      object
-    );
-
+    continue;
   }
+
+  drawObject(
+    renderCtx,
+    object
+  );
+
+}
 
 
   renderCtx.restore();
