@@ -3124,6 +3124,14 @@ async function startCamera() {
 
   try {
 
+    /*
+      PRIMEIRA TENTATIVA:
+      somente câmera.
+
+      O microfone não participa
+      da abertura inicial do aplicativo.
+    */
+
     const newStream =
       await navigator.mediaDevices
         .getUserMedia({
@@ -3133,7 +3141,7 @@ async function startCamera() {
               facingMode
           },
 
-          audio: true
+          audio: false
 
         });
 
@@ -3153,15 +3161,6 @@ async function startCamera() {
     video.muted =
       true;
 
-
-    /*
-      IMPORTANTE PARA SAFARI/iPHONE:
-
-      Não bloqueamos o início da aplicação
-      aguardando video.play().
-
-      O stream já foi obtido com sucesso.
-    */
 
     video
       .play()
@@ -3189,8 +3188,7 @@ async function startCamera() {
 
     video.classList.toggle(
       "mirror",
-      facingMode ===
-        "user"
+      facingMode === "user"
     );
 
 
@@ -3205,108 +3203,17 @@ async function startCamera() {
   } catch (error) {
 
     console.error(
-      "Câmera + microfone:",
+      "Câmera:",
       error
     );
 
 
-    /*
-      Segunda tentativa somente
-      com a câmera.
-    */
-
-    try {
-
-      const newStream =
-        await navigator.mediaDevices
-          .getUserMedia({
-
-            video: {
-              facingMode:
-                facingMode
-            },
-
-            audio: false
-
-          });
+    toast(
+      "Não foi possível acessar a câmera"
+    );
 
 
-      const oldStream =
-        stream;
-
-
-      stream =
-        newStream;
-
-
-      video.srcObject =
-        stream;
-
-
-      video.muted =
-        true;
-
-
-      /*
-        Não aguardamos video.play()
-        para liberar a tela inicial.
-      */
-
-      video
-        .play()
-        .catch(error => {
-
-          console.log(
-            "Safari video.play():",
-            error
-          );
-
-        });
-
-
-      if (oldStream) {
-
-        oldStream
-          .getTracks()
-          .forEach(
-            track =>
-              track.stop()
-          );
-
-      }
-
-
-      video.classList.toggle(
-        "mirror",
-        facingMode ===
-          "user"
-      );
-
-
-      toast(
-        "Câmera ativa — microfone indisponível"
-      );
-
-
-      return true;
-
-
-    } catch (secondError) {
-
-      console.error(
-        "Somente câmera:",
-        secondError
-      );
-
-
-      toast(
-        "Não foi possível acessar a câmera"
-      );
-
-
-      return false;
-
-    }
+    return false;
 
   }
 
