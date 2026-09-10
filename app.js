@@ -397,6 +397,8 @@ function fitCanvas() {
   updateEditorPosition();
 
   updateCancelPosition();
+  
+  positionTextToolButton();
 
 }
 
@@ -419,7 +421,81 @@ window.addEventListener(
   }
 );
 
+/* =========================================================
+   POSIÇÃO DO BOTÃO T
+   ========================================================= */
 
+function positionTextToolButton() {
+
+  if (!textToolButton) {
+    return;
+  }
+
+  const topBar =
+    $("top");
+
+  const leftBar =
+    $("left");
+
+  const rightBar =
+    $("right");
+
+  if (
+    !topBar ||
+    !leftBar ||
+    !rightBar
+  ) {
+    return;
+  }
+
+  const topRect =
+    topBar.getBoundingClientRect();
+
+  const leftRect =
+    leftBar.getBoundingClientRect();
+
+  const rightRect =
+    rightBar.getBoundingClientRect();
+
+  const size =
+    38;
+
+  const gap =
+    rightRect.left -
+    leftRect.right;
+
+  /*
+    Se houver espaço real entre os grupos,
+    coloca o T exatamente no meio.
+  */
+
+  if (
+    gap >=
+    size + 8
+  ) {
+
+    textToolButton.style.left =
+      `${leftRect.right + gap / 2 - size / 2}px`;
+
+    textToolButton.style.top =
+      `${topRect.top + (topRect.height - size) / 2}px`;
+
+    return;
+  }
+
+  /*
+    Em iPhones estreitos não existe espaço
+    entre os grupos. Nesse caso o T fica
+    centralizado abaixo da barra superior,
+    sem sobrepor Limpar.
+  */
+
+  textToolButton.style.left =
+    `${window.innerWidth / 2 - size / 2}px`;
+
+  textToolButton.style.top =
+    `${topRect.bottom + 8}px`;
+}
 /* =========================================================
    REDESENHAR
    ========================================================= */
