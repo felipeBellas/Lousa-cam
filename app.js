@@ -1568,17 +1568,28 @@ inlineEditor.addEventListener(
 
 
     object.width =
-      Math.max(
-        60,
-        inlineEditor.offsetWidth
-      );
+  Math.max(
+    60,
+    inlineEditor.offsetWidth
+  );
+
+object.height =
+  Math.max(
+    35,
+    inlineEditor.offsetHeight
+  );
 
 
-    object.height =
-      Math.max(
-        35,
-        inlineEditor.offsetHeight
-      );
+/*
+  Mantém a caixa e o objeto
+  permanentemente sincronizados.
+*/
+
+inlineEditor.style.width =
+  `${object.width}px`;
+
+inlineEditor.style.height =
+  `${object.height}px`;
 
 
     redraw();
