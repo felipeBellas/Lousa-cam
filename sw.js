@@ -1,6 +1,6 @@
-const CACHE_NAME = "lousa-cam-v2-20260911-01";
+const CACHE_NAME = "lousa-cam-v20260911-02";
 
-const FILES_TO_CACHE = [
+const APP_FILES = [
   "./",
   "./index.html",
   "./app.js",
@@ -8,118 +8,94 @@ const FILES_TO_CACHE = [
   "./logo.png"
 ];
 
-
-/* =========================================================
-   INSTALL
-   ========================================================= */
-
 self.addEventListener("install", event => {
-
   event.waitUntil(
-
     caches.open(CACHE_NAME)
-      .then(cache => {
-
-        return cache.addAll(
-          FILES_TO_CACHE
-        );
-
-      })
-
+      .then(cache => cache.addAll(APP_FILES))
+      .then(() => self.skipWaiting())
   );
-
-  self.skipWaiting();
-
 });
-
-
-/* =========================================================
-   ACTIVATE
-   ========================================================= */
 
 self.addEventListener("activate", event => {
-
   event.waitUntil(
-
     caches.keys()
       .then(keys => {
-
         return Promise.all(
-
           keys
-            .filter(
-              key =>
-                key !== CACHE_NAME
-            )
-            .map(
-              key =>
-                caches.delete(key)
-            )
-
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
         );
-
       })
-
+      .then(() => self.clients.claim())
   );
-
-  self.clients.claim();
-
 });
 
-
-/* =========================================================
-   FETCH
-   ========================================================= */
-
 self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
 
-  event.respondWith(
+  const request = event.request;
+  const url = new URL(request.url);
 
-    caches.match(event.request)
-      .then(cached => {
+  /*
+   * Arquivos principais do aplicativo:
+   * sempre tenta buscar a versão atual da internet.
+   * Se estiver sem internet, utiliza o cache.
+   */
+  const isAppFile =
+    url.pathname.endsWith("/") ||
+    url.pathname.endsWith("/index.html") ||
+    url.pathname.endsWith("/app.js") ||
+    url.pathname.endsWith("/manifest.json") ||
+    url.pathname.endsWith("/sw.js") ||
+    url.pathname.endsWith("/logo.png");
 
-        if (cached) {
-
-          return cached;
-
-        }
-
-        return fetch(event.request)
-          .then(response => {
-
-            /*
-              Só armazena respostas válidas.
-            */
-
-            if (
-              !response ||
-              response.status !== 200 ||
-              response.type === "opaque"
-            ) {
-
-              return response;
-
-            }
-
-            const responseClone =
-              response.clone();
+  if (isAppFile) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.ok) {
+            const copy = response.clone();
 
             caches.open(CACHE_NAME)
-              .then(cache => {
+              .then(cache => cache.put(request, copy))
+              .catch(() => {});
+          }
 
-                cache.put(
-                  event.request,
-                  responseClone
-                );
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then(cached => {
+            if (cached) return cached;
 
-              });
+            return caches.match("./index.html");
+          });
+        })
+    );
+
+    return;
+  }
+
+  /*
+   * Outros arquivos:
+   * tenta cache primeiro e depois internet.
+   */
+  event.respondWith(
+    caches.match(request)
+      .then(cached => {
+        if (cached) return cached;
+
+        return fetch(request)
+          .then(response => {
+            if (response && response.ok) {
+              const copy = response.clone();
+
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(request, copy))
+                .catch(() => {});
+            }
 
             return response;
-
           });
-
       })
-
   );
-
 });
