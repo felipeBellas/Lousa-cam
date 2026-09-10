@@ -321,37 +321,43 @@
        Não modifica os botões originais.
        ===================================================== */
 
-    #textToolButton {
+   #textToolButton {
 
-      position: absolute;
+  position: static;
 
-      left: 50%;
+  width: 40px;
 
-      top: 0;
+  height: 40px;
 
-      transform:
-        translateX(-50%);
+  flex-shrink: 0;
 
-      z-index: 30;
+  transform: none;
 
-      font-size: 20px;
+  z-index: auto;
 
-      font-weight: 700;
+  font-size: 20px;
 
-      font-family: Arial, sans-serif;
+  font-weight: 700;
 
-      pointer-events: auto;
+  font-family: Arial, sans-serif;
 
-    }
+  pointer-events: auto;
+
+}
 
 
     #textToolButton:active {
 
-      transform:
-        translateX(-50%)
-        scale(0.92);
+  transform: scale(0.92);
 
-    }
+}
+    .text-menu-item {
+
+  justify-content: flex-start;
+
+  gap: 10px;
+
+}
 
 
     /* =====================================================
@@ -905,15 +911,7 @@
     }
 
 
-    @media (max-width: 380px) {
-
-      #textToolButton {
-
-        top: 0;
-
-      }
-
-    }
+   
 
   </style>
 
@@ -1047,18 +1045,7 @@
       </div>
 
 
-      <!-- ÚNICO NOVO BOTÃO -->
-
-      <button
-        id="textToolButton"
-        aria-label="Texto"
-        title="Texto">
-
-        T
-
-      </button>
-
-
+      
       <div id="right">
 
 
@@ -1117,28 +1104,44 @@
          ================================================= -->
 
     <div
-      id="menuPanel"
-      class="panel"
-      aria-hidden="true">
+  id="menuPanel"
+  class="panel"
+  aria-hidden="true">
 
-      <div class="row">
+  <div class="row">
 
-        <strong>
-          Lousa Cam 2.0
-        </strong>
+    <strong>
+      Lousa Cam 2.0
+    </strong>
 
-      </div>
+  </div>
 
+  <div class="row">
 
-      <div class="row">
+    <span>
+      Desenhe diretamente sobre a imagem da câmera.
+    </span>
 
-        <span>
-          Desenhe diretamente sobre a imagem da câmera.
-        </span>
+  </div>
 
-      </div>
+  <div class="row text-menu-item">
 
-    </div>
+    <button
+      id="textToolButton"
+      aria-label="Texto"
+      title="Texto">
+
+      T
+
+    </button>
+
+    <span>
+      Texto
+    </span>
+
+  </div>
+
+</div>
 
 
     <!-- =================================================
