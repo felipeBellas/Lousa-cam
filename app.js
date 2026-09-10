@@ -2628,25 +2628,42 @@ canvas.addEventListener(
 
 
     /* ===================================================
-       TOQUE SIMPLES NO CANVAS
-       =================================================== */
+   TOQUE SIMPLES NO CANVAS
+   COLAR DIRETAMENTE
+   =================================================== */
 
-    if (
-      pointerMode ===
-      "canvas" &&
-      !pointerMoved
-    ) {
+if (
+  pointerMode ===
+  "canvas" &&
+  !pointerMoved
+) {
 
-      /*
-        Mostra somente Colar.
-      */
+  closeCanvasPasteMenu();
 
-      showCanvasPasteMenu(
-        point.x,
-        point.y
-      );
+  /*
+    O toque na lousa já é a ação de colar.
+    Não aparece botão Colar do Lousa Cam.
+  */
 
+  pasteFromClipboard(
+    point.x,
+    point.y
+  ).then(success => {
+
+    if (success) {
+      toast("Conteúdo colado");
     }
+
+  }).catch(error => {
+
+    console.log(
+      "Colar:",
+      error
+    );
+
+  });
+
+}
 
 
     pointerMode =
