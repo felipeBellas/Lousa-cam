@@ -187,43 +187,6 @@ let dragOffsetY =
 let resizeStart =
   null;
 
-let lastCanvasTapTime = 0;
-let lastCanvasTapX = 0;
-let lastCanvasTapY = 0;
-
-const DOUBLE_TAP_DELAY = 350;
-const DOUBLE_TAP_DISTANCE = 40;
-
-function isDoubleCanvasTap(point) {
-
-  const now = Date.now();
-
-  const timeDifference =
-    now - lastCanvasTapTime;
-
-  const dx =
-    point.x - lastCanvasTapX;
-
-  const dy =
-    point.y - lastCanvasTapY;
-
-  const distance =
-    Math.sqrt(
-      dx * dx +
-      dy * dy
-    );
-
-  const doubleTap =
-    timeDifference <= DOUBLE_TAP_DELAY &&
-    distance <= DOUBLE_TAP_DISTANCE;
-
-  lastCanvasTapTime = now;
-  lastCanvasTapX = point.x;
-  lastCanvasTapY = point.y;
-
-  return doubleTap;
-}
-
 
 /* =========================================================
    COLAR
@@ -231,6 +194,7 @@ function isDoubleCanvasTap(point) {
 
 let pastePosition =
   null;
+
 
 /* =========================================================
    IMAGENS
@@ -433,8 +397,6 @@ function fitCanvas() {
   updateEditorPosition();
 
   updateCancelPosition();
-  
-  positionTextToolButton();
 
 }
 
@@ -457,81 +419,6 @@ window.addEventListener(
   }
 );
 
-/* =========================================================
-   POSIÇÃO DO BOTÃO T
-   ========================================================= */
-
-function positionTextToolButton() {
-
-  if (!textToolButton) {
-    return;
-  }
-
-  const topBar =
-    $("top");
-
-  const leftBar =
-    $("left");
-
-  const rightBar =
-    $("right");
-
-  if (
-    !topBar ||
-    !leftBar ||
-    !rightBar
-  ) {
-    return;
-  }
-
-  const topRect =
-    topBar.getBoundingClientRect();
-
-  const leftRect =
-    leftBar.getBoundingClientRect();
-
-  const rightRect =
-    rightBar.getBoundingClientRect();
-
-  const size =
-    38;
-
-  const gap =
-    rightRect.left -
-    leftRect.right;
-
-  /*
-    Se houver espaço real entre os grupos,
-    coloca o T exatamente no meio.
-  */
-
-  if (
-    gap >=
-    size + 8
-  ) {
-
-    textToolButton.style.left =
-      `${leftRect.right + gap / 2 - size / 2}px`;
-
-    textToolButton.style.top =
-      `${topRect.top + (topRect.height - size) / 2}px`;
-
-    return;
-  }
-
-  /*
-    Em iPhones estreitos não existe espaço
-    entre os grupos. Nesse caso o T fica
-    centralizado abaixo da barra superior,
-    sem sobrepor Limpar.
-  */
-
-  textToolButton.style.left =
-    `${window.innerWidth / 2 - size / 2}px`;
-
-  textToolButton.style.top =
-    `${topRect.bottom + 8}px`;
-}
 
 /* =========================================================
    REDESENHAR
@@ -546,9 +433,6 @@ function redraw() {
     window.innerHeight
   );
 
-  /*
-    DESENHOS
-  */
 
   for (
     const stroke
@@ -562,30 +446,11 @@ function redraw() {
 
   }
 
-  /*
-    OBJETOS
-  */
 
   for (
     const object
     of objects
   ) {
-
-    /*
-      IMPORTANTE:
-      enquanto o texto está sendo editado,
-      ele NÃO é desenhado no canvas.
-
-      O único texto visível será o
-      contenteditable.
-    */
-
-    if (
-      editingObjectId &&
-      object.id === editingObjectId
-    ) {
-      continue;
-    }
 
     drawObject(
       ctx,
@@ -594,9 +459,6 @@ function redraw() {
 
   }
 
-  /*
-    SELEÇÃO
-  */
 
   if (
     selectedObjectId &&
@@ -752,41 +614,12 @@ function drawTextObject(
   object
 ) {
 
-  if (!object) {
-
-    return;
-
-  }
-
-
   c.save();
 
 
   const fontSize =
     object.fontSize ||
     24;
-
-
-  const lineHeight =
-    fontSize * 1.15;
-
-
-  const padding =
-    7;
-
-
-  const boxWidth =
-    Math.max(
-      60,
-      object.width || 60
-    );
-
-
-  const boxHeight =
-    Math.max(
-      35,
-      object.height || 35
-    );
 
 
   c.font =
@@ -802,202 +635,15 @@ function drawTextObject(
     "#fff";
 
 
-  /*
-    Área real disponível para o texto.
-  */
-
-  const maxWidth =
-    Math.max(
-      20,
-      boxWidth -
-      padding * 2
-    );
-
-
-  /*
-    Transforma o texto em linhas
-    respeitando a largura da caixa.
-  */
-
-  const sourceLines =
+  const lines =
     String(
       object.text ||
       ""
     ).split("\n");
 
 
-  const lines =
-    [];
-
-
-  for (
-    const sourceLine
-    of sourceLines
-  ) {
-
-    /*
-      Linha vazia.
-    */
-
-    if (
-      sourceLine.length === 0
-    ) {
-
-      lines.push("");
-
-      continue;
-
-    }
-
-
-    const words =
-      sourceLine.split(
-        /\s+/
-      );
-
-
-    let currentLine =
-      "";
-
-
-    for (
-      const word
-      of words
-    ) {
-
-      const testLine =
-        currentLine
-          ? `${currentLine} ${word}`
-          : word;
-
-
-      const testWidth =
-        c.measureText(
-          testLine
-        ).width;
-
-
-      if (
-        testWidth <=
-        maxWidth
-      ) {
-
-        currentLine =
-          testLine;
-
-        continue;
-
-      }
-
-
-      /*
-        Palavra ultrapassou a caixa.
-        Guarda a linha anterior.
-      */
-
-      if (currentLine) {
-
-        lines.push(
-          currentLine
-        );
-
-      }
-
-
-      /*
-        Palavra isolada maior que
-        a largura disponível.
-      */
-
-      if (
-        c.measureText(
-          word
-        ).width >
-        maxWidth
-      ) {
-
-        let partial =
-          "";
-
-
-        for (
-          const character
-          of word
-        ) {
-
-          const testPartial =
-            partial +
-            character;
-
-
-          if (
-            c.measureText(
-              testPartial
-            ).width <=
-            maxWidth
-          ) {
-
-            partial =
-              testPartial;
-
-          } else {
-
-            if (partial) {
-
-              lines.push(
-                partial
-              );
-
-            }
-
-
-            partial =
-              character;
-
-          }
-
-        }
-
-
-        currentLine =
-          partial;
-
-      } else {
-
-        currentLine =
-          word;
-
-      }
-
-    }
-
-
-    if (currentLine) {
-
-      lines.push(
-        currentLine
-      );
-
-    }
-
-  }
-
-
-  /*
-    Clipping:
-    o texto nunca ultrapassa a caixa.
-  */
-
-  c.beginPath();
-
-  c.rect(
-    object.x,
-    object.y,
-    boxWidth,
-    boxHeight
-  );
-
-  c.clip();
+  const lineHeight =
+    fontSize * 1.15;
 
 
   for (
@@ -1006,32 +652,11 @@ function drawTextObject(
     i++
   ) {
 
-    const y =
-      object.y +
-      padding +
-      i * lineHeight;
-
-
-    if (
-      y >
-      object.y +
-      boxHeight
-    ) {
-
-      break;
-
-    }
-
-
     c.fillText(
-
       lines[i],
-
-      object.x +
-        padding,
-
-      y
-
+      object.x,
+      object.y +
+      i * lineHeight
     );
 
   }
@@ -1173,10 +798,6 @@ function getTextDimensions(
     24;
 
 
-  const padding =
-    14;
-
-
   const lines =
     String(
       object.text ||
@@ -1202,14 +823,10 @@ function getTextDimensions(
 
     width =
       Math.max(
-
         width,
-
         ctx.measureText(
           line
-        ).width +
-        padding
-
+        ).width + 20
       );
 
   }
@@ -1220,14 +837,11 @@ function getTextDimensions(
 
   const height =
     Math.max(
-
       35,
-
       lines.length *
       fontSize *
       1.15 +
-      padding
-
+      12
     );
 
 
@@ -1440,7 +1054,9 @@ function beginTextEditing(
     return;
   }
 
+
   finishTextEditing();
+
 
   selectedObjectId =
     object.id;
@@ -1448,54 +1064,54 @@ function beginTextEditing(
   editingObjectId =
     object.id;
 
-  /*
-    textContent evita que qualquer
-    estrutura HTML seja criada dentro
-    do editor.
-  */
 
-  inlineEditor.textContent =
+  inlineEditor.innerText =
     object.text ||
     "";
+
 
   inlineEditor.style.color =
     object.color ||
     "#fff";
 
+
   inlineEditor.style.fontSize =
     `${object.fontSize || 24}px`;
 
+
   inlineEditor.style.width =
     `${Math.max(
-      60,
+      80,
       object.width
     )}px`;
 
+
   inlineEditor.style.height =
     `${Math.max(
-      35,
+      40,
       object.height
     )}px`;
 
-  inlineEditor.style.boxSizing =
-    "border-box";
 
   inlineEditor.classList.add(
     "show"
   );
 
+
   updateEditorPosition();
+
 
   redraw();
 
-  inlineEditor.focus();
 
   /*
-    Coloca o cursor no final
-    apenas quando o texto é aberto.
-    Depois disso o usuário pode tocar
-    em qualquer letra para reposicionar.
+    IMPORTANTE:
+    focus direto para permitir
+    abertura do teclado no Safari.
   */
+
+  inlineEditor.focus();
+
 
   try {
 
@@ -1528,8 +1144,6 @@ function beginTextEditing(
   }
 
 }
-
-
 
 
 /* =========================================================
@@ -1622,16 +1236,7 @@ function finishTextEditing() {
         35,
         height
       );
-/*
-  Sincroniza novamente o editor
-  com o objeto antes de ocultá-lo.
-*/
 
-inlineEditor.style.width =
-  `${object.width}px`;
-
-inlineEditor.style.height =
-  `${object.height}px`;
 
     /*
       Se o texto foi criado vazio,
@@ -1675,24 +1280,30 @@ inlineEditor.addEventListener(
   "input",
   () => {
 
-    if (
-      !editingObjectId
-    ) {
+    if (!editingObjectId) {
+
       return;
+
     }
+
 
     const object =
       getObjectById(
         editingObjectId
       );
 
+
     if (!object) {
+
       return;
+
     }
 
+
     object.text =
-      inlineEditor.textContent
+      inlineEditor.innerText
         .replace(/\u00a0/g, " ");
+
 
     object.width =
       Math.max(
@@ -1700,24 +1311,19 @@ inlineEditor.addEventListener(
         inlineEditor.offsetWidth
       );
 
+
     object.height =
       Math.max(
         35,
         inlineEditor.offsetHeight
       );
 
-    updateEditorPosition();
-
-    /*
-      O redraw() agora preserva o texto
-      somente no editor enquanto ele está
-      sendo digitado.
-    */
 
     redraw();
 
   }
 );
+
 
 /* =========================================================
    BLUR DO EDITOR
@@ -2740,42 +2346,38 @@ canvas.addEventListener(
 
 
     /* ===================================================
-   DOIS TOQUES RÁPIDOS NO CANVAS
-   COLAR DA ÁREA DE TRANSFERÊNCIA
-   =================================================== */
+       TOQUE SIMPLES NO CANVAS
+       =================================================== */
 
-if (
-  pointerMode === "canvas" &&
-  !pointerMoved
-) {
+    if (
+      pointerMode ===
+      "canvas" &&
+      !pointerMoved
+    ) {
 
-  const doubleTap = isDoubleCanvasTap(point);
+      /*
+        Mostra somente Colar.
+      */
 
-  if (doubleTap) {
-
-    closeCanvasPasteMenu();
-
-    pasteFromClipboard(
-      point.x,
-      point.y
-    )
-    .then(success => {
-
-      if (success) {
-        toast("Conteúdo colado");
-      }
-
-    })
-    .catch(error => {
-
-      console.log(
-        "Erro ao colar:",
-        error
+      showCanvasPasteMenu(
+        point.x,
+        point.y
       );
 
-    });
+    }
+
+
+    pointerMode =
+      null;
+
+
+    releasePointer(
+      event
+    );
+
+
   }
-}
+);
 
 
 /* =========================================================
@@ -3951,28 +3553,16 @@ function renderRecordingFrame() {
 
 
   for (
-  const object
-  of objects
-) {
-
-  /*
-    Não grava o texto duplicado enquanto
-    ele ainda está sendo editado.
-  */
-
-  if (
-    editingObjectId &&
-    object.id === editingObjectId
+    const object
+    of objects
   ) {
-    continue;
+
+    drawObject(
+      renderCtx,
+      object
+    );
+
   }
-
-  drawObject(
-    renderCtx,
-    object
-  );
-
-}
 
 
   renderCtx.restore();
@@ -3989,6 +3579,7 @@ function renderRecordingFrame() {
 /* =========================================================
    PARAR GRAVAÇÃO
    ========================================================= */
+
 
 function stopRecording() {
 
@@ -4440,5 +4031,5 @@ if (
 
     }
   );
-
-}
+  
+  }
