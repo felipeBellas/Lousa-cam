@@ -3116,6 +3116,12 @@ async function startCamera() {
   }
 
 
+  toast(
+    "Iniciando câmera...",
+    3000
+  );
+
+
   try {
 
     const newStream =
@@ -3123,10 +3129,8 @@ async function startCamera() {
         .getUserMedia({
 
           video: {
-
             facingMode:
               facingMode
-
           },
 
           audio: true
@@ -3150,7 +3154,25 @@ async function startCamera() {
       true;
 
 
-    await video.play();
+    /*
+      IMPORTANTE PARA SAFARI/iPHONE:
+
+      Não bloqueamos o início da aplicação
+      aguardando video.play().
+
+      O stream já foi obtido com sucesso.
+    */
+
+    video
+      .play()
+      .catch(error => {
+
+        console.log(
+          "Safari video.play():",
+          error
+        );
+
+      });
 
 
     if (oldStream) {
@@ -3179,15 +3201,18 @@ async function startCamera() {
 
     return true;
 
+
   } catch (error) {
 
     console.error(
+      "Câmera + microfone:",
       error
     );
 
 
     /*
-      Segunda tentativa sem áudio.
+      Segunda tentativa somente
+      com a câmera.
     */
 
     try {
@@ -3197,10 +3222,8 @@ async function startCamera() {
           .getUserMedia({
 
             video: {
-
               facingMode:
                 facingMode
-
             },
 
             audio: false
@@ -3224,7 +3247,21 @@ async function startCamera() {
         true;
 
 
-      await video.play();
+      /*
+        Não aguardamos video.play()
+        para liberar a tela inicial.
+      */
+
+      video
+        .play()
+        .catch(error => {
+
+          console.log(
+            "Safari video.play():",
+            error
+          );
+
+        });
 
 
       if (oldStream) {
@@ -3253,9 +3290,11 @@ async function startCamera() {
 
       return true;
 
+
     } catch (secondError) {
 
       console.error(
+        "Somente câmera:",
         secondError
       );
 
@@ -3272,7 +3311,6 @@ async function startCamera() {
   }
 
 }
-
 
 /* =========================================================
    BOTÃO INICIAR
