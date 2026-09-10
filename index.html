@@ -604,27 +604,18 @@
 
 
     /* =====================================================
-       MENU COLAR
-       ===================================================== */
+   MENU COLAR
+   O paste acontece diretamente ao tocar na lousa.
+   ===================================================== */
 
-    #canvasMenu {
+#canvasMenu {
+  display: none !important;
+  pointer-events: none !important;
+}
 
-      position: fixed;
-
-      z-index: 70;
-
-      display: none;
-
-      pointer-events: auto;
-
-    }
-
-
-    #canvasMenu.open {
-
-      display: block;
-
-    }
+#canvasMenu.open {
+  display: none !important;
+}
 
 
     #pasteButton {
