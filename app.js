@@ -1035,6 +1035,10 @@ function getTextDimensions(
     24;
 
 
+  const padding =
+    14;
+
+
   const lines =
     String(
       object.text ||
@@ -1060,10 +1064,14 @@ function getTextDimensions(
 
     width =
       Math.max(
+
         width,
+
         ctx.measureText(
           line
-        ).width + 20
+        ).width +
+        padding
+
       );
 
   }
@@ -1074,11 +1082,14 @@ function getTextDimensions(
 
   const height =
     Math.max(
+
       35,
+
       lines.length *
       fontSize *
       1.15 +
-      12
+      padding
+
     );
 
 
