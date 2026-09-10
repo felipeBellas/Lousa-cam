@@ -1,17 +1,6 @@
-"use strict";
+const CACHE_NAME = "lousa-cam-v2-20260911-01";
 
-/*
-  Lousa Cam 2.0
-  Service Worker
-
-  Cache atualizado para evitar que o navegador
-  continue utilizando versões antigas do app.
-*/
-
-const CACHE_NAME =
-  "lousa-cam-v3-20260911";
-
-const FILES = [
+const FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./app.js",
@@ -19,178 +8,118 @@ const FILES = [
   "./logo.png"
 ];
 
+
 /* =========================================================
    INSTALL
    ========================================================= */
 
-self.addEventListener(
-  "install",
-  event => {
+self.addEventListener("install", event => {
 
-    event.waitUntil(
-      caches
-        .open(CACHE_NAME)
-        .then(cache =>
-          cache.addAll(FILES)
-        )
-        .then(() =>
-          self.skipWaiting()
-        )
-    );
-  }
-);
+  event.waitUntil(
+
+    caches.open(CACHE_NAME)
+      .then(cache => {
+
+        return cache.addAll(
+          FILES_TO_CACHE
+        );
+
+      })
+
+  );
+
+  self.skipWaiting();
+
+});
+
 
 /* =========================================================
    ACTIVATE
    ========================================================= */
 
-self.addEventListener(
-  "activate",
-  event => {
+self.addEventListener("activate", event => {
 
-    event.waitUntil(
+  event.waitUntil(
 
-      caches
-        .keys()
-        .then(cacheNames =>
-          Promise.all(
-            cacheNames
-              .filter(
-                name =>
-                  name !== CACHE_NAME
-              )
-              .map(
-                name =>
-                  caches.delete(name)
-              )
-          )
-        )
-        .then(() =>
-          self.clients.claim()
-        )
-    );
-  }
-);
+    caches.keys()
+      .then(keys => {
+
+        return Promise.all(
+
+          keys
+            .filter(
+              key =>
+                key !== CACHE_NAME
+            )
+            .map(
+              key =>
+                caches.delete(key)
+            )
+
+        );
+
+      })
+
+  );
+
+  self.clients.claim();
+
+});
+
 
 /* =========================================================
    FETCH
    ========================================================= */
 
-self.addEventListener(
-  "fetch",
-  event => {
+self.addEventListener("fetch", event => {
 
-    const request =
-      event.request;
+  event.respondWith(
 
-    /*
-      Para navegação e arquivos principais,
-      tenta primeiro a rede.
+    caches.match(event.request)
+      .then(cached => {
 
-      Isso reduz o risco de o Safari/PWA
-      carregar um app.js antigo.
-    */
-    if (
-      request.method !== "GET"
-    ) {
-      return;
-    }
+        if (cached) {
 
-    const url =
-      new URL(
-        request.url
-      );
+          return cached;
 
-    const isAppFile =
-      url.pathname.endsWith(
-        "/index.html"
-      ) ||
-      url.pathname.endsWith(
-        "/app.js"
-      ) ||
-      url.pathname.endsWith(
-        "/manifest.json"
-      ) ||
-      url.pathname.endsWith(
-        "/sw.js"
-      );
+        }
 
-    if (isAppFile) {
-
-      event.respondWith(
-
-        fetch(request)
+        return fetch(event.request)
           .then(response => {
 
+            /*
+              Só armazena respostas válidas.
+            */
+
             if (
-              response &&
-              response.ok
+              !response ||
+              response.status !== 200 ||
+              response.type === "opaque"
             ) {
 
-              const copy =
-                response.clone();
+              return response;
 
-              caches
-                .open(CACHE_NAME)
-                .then(cache =>
-                  cache.put(
-                    request,
-                    copy
-                  )
-                );
             }
 
+            const responseClone =
+              response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+
+                cache.put(
+                  event.request,
+                  responseClone
+                );
+
+              });
+
             return response;
-          })
-          .catch(
-            () =>
-              caches.match(request)
-          )
-      );
 
-      return;
-    }
+          });
 
-    /*
-      Outros arquivos:
-      cache primeiro, rede como fallback.
-    */
-    event.respondWith(
+      })
 
-      caches
-        .match(request)
-        .then(cached => {
+  );
 
-          if (cached) {
-            return cached;
-          }
-
-          return fetch(request)
-            .then(response => {
-
-              if (
-                response &&
-                response.ok
-              {
-
-                const copy =
-                  response.clone();
-
-                caches
-                  .open(
-                    CACHE_NAME
-                  )
-                  .then(cache =>
-                    cache.put(
-                      request,
-                      copy
-                    )
-                  );
-              }
-
-              return response;
-            });
-        })
-    );
-  }
-);
+});
