@@ -626,66 +626,63 @@
        EDITOR DE TEXTO
        ===================================================== */
 
-    #inlineEditor {
+ #inlineEditor {
+  position: fixed;
 
-      position: fixed;
+  display: none;
 
-      display: none;
+  z-index: 80;
 
-      z-index: 80;
+  margin: 0;
 
-      margin: 0;
+  padding: 4px 7px;
 
-      padding:
-        4px 7px;
+  border:
+    1px dotted
+    rgba(255,255,255,.65);
 
-      border:
-        2px dotted
-        rgba(255, 255, 255, 0.95);
+  border-radius: 4px;
 
-      border-radius: 4px;
+  background:
+    rgba(0,0,0,.12);
 
-      background:
-        rgba(0, 0, 0, 0.18);
+  color: #fff;
 
-      color: #fff;
+  outline: none;
 
-      outline: none;
+  resize: both;
 
-      resize: both;
+  overflow: hidden;
 
-      overflow: auto;
+  white-space: pre-wrap;
 
-      white-space: pre-wrap;
+  word-break: break-word;
 
-      word-break: break-word;
+  overflow-wrap: break-word;
 
-      font-family:
-        Arial,
-        sans-serif;
+  font-family:
+    Arial,
+    sans-serif;
 
-      line-height: 1.15;
+  line-height: 1.15;
 
-      min-width: 60px;
+  min-width: 60px;
 
-      min-height: 30px;
+  min-height: 35px;
 
-      user-select: text;
+  box-sizing: border-box;
 
-      -webkit-user-select: text;
+  user-select: text;
+  -webkit-user-select: text;
 
-      -webkit-touch-callout: default;
+  -webkit-touch-callout: default;
 
-      touch-action: auto;
+  touch-action: manipulation;
+}
 
-    }
-
-
-    #inlineEditor.show {
-
-      display: block;
-
-    }
+#inlineEditor.show {
+  display: block;
+}
 
 
     /* =====================================================
