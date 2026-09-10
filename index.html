@@ -1,419 +1,668 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-  <meta name="theme-color" content="#000000">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="utf-8">
 
-  <link rel="manifest" href="./manifest.json">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+
+  <meta
+    name="theme-color"
+    content="#000000">
+
+  <!-- iOS / Safari -->
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes">
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent">
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="Lousa Cam">
+
+  <!-- Ícones -->
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="./logo.png">
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="192x192"
+    href="./logo.png">
+
+  <link
+    rel="apple-touch-icon"
+    sizes="180x180"
+    href="./logo.png">
+
+  <link
+    rel="apple-touch-icon"
+    href="./logo.png">
+
+  <link
+    rel="manifest"
+    href="./manifest.json">
 
   <title>Lousa Cam 2.0</title>
 
+
   <style>
+
     :root {
-      --glass: rgba(22,22,26,.72);
-      --border: rgba(255,255,255,.18);
-      --white: #fff;
-      --blue: #0a84ff;
+
+      --glass: rgba(22, 22, 26, 0.72);
+
+      --border: rgba(255, 255, 255, 0.18);
+
     }
 
+
     * {
+
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+
+      user-select: none;
+
+      -webkit-user-select: none;
+
+      -webkit-touch-callout: none;
+
     }
+
 
     html,
     body {
+
       margin: 0;
+
       padding: 0;
-      width: 100%;
-      height: 100%;
+
+      width: 100vw;
+
+      height: 100vh;
+
       overflow: hidden;
+
       background: #000;
+
       font-family:
         -apple-system,
         BlinkMacSystemFont,
         "SF Pro Display",
-        "SF Pro Text",
         "Segoe UI",
-        Arial,
+        Roboto,
         sans-serif;
-      color: #fff;
+
     }
+
+
+    body {
+
+      overscroll-behavior: none;
+
+    }
+
 
     #app {
+
       position: fixed;
+
       inset: 0;
-      width: 100%;
-      height: 100%;
+
+      background: #000;
+
       overflow: hidden;
-      background: #000;
+
     }
 
-    #camera {
+
+    #video,
+    #canvas {
+
       position: absolute;
+
       inset: 0;
+
       width: 100%;
+
       height: 100%;
+
+    }
+
+
+    #video {
+
+      z-index: 1;
+
       object-fit: cover;
+
       background: #000;
+
     }
 
-    #camera.mirror {
+
+    #video.mirror {
+
       transform: scaleX(-1);
+
     }
 
-    #board {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+
+    #canvas {
+
+      z-index: 2;
+
       touch-action: none;
-      pointer-events: auto;
+
     }
+
 
     #ui {
+
       position: absolute;
+
       inset: 0;
+
+      z-index: 10;
+
       pointer-events: none;
+
     }
 
-    /* =========================
-       BARRA SUPERIOR
-       ========================= */
 
-    #top {
+    /* =====================================================
+       BARRA ORIGINAL
+       ===================================================== */
+
+    .bar {
+
       position: absolute;
-      top: env(safe-area-inset-top, 10px);
-      left: 10px;
-      right: 10px;
 
-      height: 54px;
+      display: flex;
 
-      display: grid;
-      grid-template-columns: auto 1fr auto;
       align-items: center;
 
-      pointer-events: none;
+      gap: 10px;
+
+      pointer-events: auto;
+
     }
+
+
+    #top {
+
+      left:
+        max(16px, env(safe-area-inset-left));
+
+      right:
+        max(16px, env(safe-area-inset-right));
+
+      top:
+        max(16px, env(safe-area-inset-top));
+
+      justify-content:
+        space-between;
+
+    }
+
 
     #left,
     #right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      pointer-events: auto;
-    }
-
-    #left {
-      grid-column: 1;
-      justify-content: flex-start;
-    }
-
-    #right {
-      grid-column: 3;
-      justify-content: flex-end;
-    }
-
-    /*
-      Área central exclusiva para o T.
-      Assim ele não empurra nem sobrepõe
-      os botões originais.
-    */
-    #textToolSlot {
-      grid-column: 2;
 
       display: flex;
+
+      gap: 10px;
+
       align-items: center;
+
+    }
+
+
+    #bottom {
+
+      left: 0;
+
+      right: 0;
+
+      bottom:
+        max(20px, env(safe-area-inset-bottom));
+
       justify-content: center;
 
-      min-width: 48px;
-      height: 54px;
-
-      pointer-events: none;
     }
 
-    #textToolSlot button {
-      pointer-events: auto;
-    }
 
-    .toolButton {
+    button {
+
       width: 48px;
+
       height: 48px;
 
-      border: 1px solid var(--border);
       border-radius: 50%;
 
-      background: var(--glass);
+      border:
+        1px solid var(--border);
+
+      background:
+        var(--glass);
+
       color: #fff;
 
+      backdrop-filter:
+        blur(20px);
+
+      -webkit-backdrop-filter:
+        blur(20px);
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
-
-      font-size: 20px;
-      font-weight: 500;
-
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
 
       box-shadow:
-        0 4px 18px rgba(0,0,0,.28);
+        0 8px 24px rgba(0, 0, 0, 0.35);
 
       cursor: pointer;
-      user-select: none;
+
+      padding: 0;
+
+      transition:
+        transform 0.15s ease,
+        background-color 0.2s ease;
+
     }
 
-    .toolButton:active {
-      transform: scale(.94);
+
+    button svg {
+
+      width: 22px;
+
+      height: 22px;
+
+      fill: none;
+
+      stroke: currentColor;
+
+      stroke-width: 2;
+
+      stroke-linecap: round;
+
+      stroke-linejoin: round;
+
     }
+
+
+    button:active {
+
+      transform: scale(0.92);
+
+    }
+
+
+    button:disabled {
+
+      opacity: 0.35;
+
+    }
+
+
+    /* =====================================================
+       T — ÚNICO BOTÃO NOVO
+       Não modifica os botões originais.
+       ===================================================== */
 
     #textToolButton {
-      font-size: 19px;
-      font-weight: 700;
-    }
 
-    #recordButton {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-
-      border: 2px solid rgba(255,255,255,.85);
-
-      background: rgba(255,255,255,.12);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      pointer-events: auto;
-    }
-
-    #recordButton::after {
-      content: "";
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #ff3b30;
-    }
-
-    #recordButton.recording::after {
-      border-radius: 5px;
-    }
-
-    /* =========================
-       STATUS
-       ========================= */
-
-    #status {
       position: absolute;
 
-      top: calc(env(safe-area-inset-top, 10px) + 64px);
       left: 50%;
 
-      transform: translateX(-50%);
+      top: 0;
 
-      padding: 7px 12px;
+      transform:
+        translateX(-50%);
 
-      border-radius: 18px;
+      z-index: 30;
 
-      background: var(--glass);
-      border: 1px solid var(--border);
+      font-size: 20px;
+
+      font-weight: 700;
+
+      font-family: Arial, sans-serif;
+
+      pointer-events: auto;
+
+    }
+
+
+    #textToolButton:active {
+
+      transform:
+        translateX(-50%)
+        scale(0.92);
+
+    }
+
+
+    /* =====================================================
+       GRAVAÇÃO
+       ===================================================== */
+
+    #record {
+
+      width: 64px;
+
+      height: 64px;
+
+      border:
+        3px solid rgba(255, 255, 255, 0.85);
+
+      background:
+        rgba(0, 0, 0, 0.4);
+
+    }
+
+
+    #record span {
+
+      width: 28px;
+
+      height: 28px;
+
+      border-radius: 50%;
+
+      background: #ff3b30;
+
+      transition:
+        all 0.25s
+        cubic-bezier(0.4, 0, 0.2, 1);
+
+    }
+
+
+    #record.recording span {
+
+      border-radius: 6px;
+
+      width: 22px;
+
+      height: 22px;
+
+      background: #fff;
+
+    }
+
+
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    #status {
+
+      position: absolute;
+
+      left: 50%;
+
+      top:
+        max(
+          72px,
+          calc(
+            env(safe-area-inset-top)
+            + 60px
+          )
+        );
+
+      transform:
+        translateX(-50%);
+
+      padding:
+        8px 16px;
+
+      border-radius: 20px;
+
+      background:
+        rgba(18, 18, 20, 0.85);
+
+      border:
+        1px solid var(--border);
+
+      backdrop-filter:
+        blur(12px);
+
+      -webkit-backdrop-filter:
+        blur(12px);
+
+      color: #fff;
 
       font-size: 13px;
 
-      white-space: nowrap;
+      font-weight: 500;
 
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+
+      transition:
+        opacity 0.25s ease;
 
       pointer-events: none;
-    }
 
-    /* =========================
-       MENUS
-       ========================= */
-
-    #menuPanel,
-    #toolsPanel {
-      position: absolute;
-
-      top: calc(env(safe-area-inset-top, 10px) + 60px);
-
-      padding: 10px;
-
-      border-radius: 16px;
-
-      background: var(--glass);
-      border: 1px solid var(--border);
-
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-
-      box-shadow: 0 12px 35px rgba(0,0,0,.35);
-
-      display: none;
-
-      pointer-events: auto;
-
-      z-index: 50;
-    }
-
-    #menuPanel {
-      left: 10px;
-      min-width: 190px;
-    }
-
-    #toolsPanel {
-      right: 10px;
-      min-width: 220px;
-    }
-
-    #menuPanel.open,
-    #toolsPanel.open {
-      display: block;
-    }
-
-    .menuItem {
-      width: 100%;
-
-      padding: 12px 14px;
-
-      margin: 2px 0;
-
-      border: 0;
-      border-radius: 10px;
-
-      background: transparent;
-      color: #fff;
-
-      text-align: left;
-
-      font-size: 15px;
-
-      cursor: pointer;
-    }
-
-    .menuItem:active {
-      background: rgba(255,255,255,.12);
-    }
-
-    .panelRow {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 8px 0;
-    }
-
-    .panelRow label {
-      font-size: 14px;
-      flex: 1;
-    }
-
-    #colorInput {
-      width: 44px;
-      height: 32px;
-      padding: 0;
-      border: 0;
-      background: transparent;
-    }
-
-    #widthInput {
-      width: 110px;
-    }
-
-    /* =========================
-       MENU COLAR DO CANVAS
-       ========================= */
-
-    #canvasMenu {
-      position: absolute;
-
-      display: none;
+      white-space: nowrap;
 
       z-index: 100;
 
-      pointer-events: auto;
-
-      padding: 6px;
-
-      border-radius: 12px;
-
-      background: var(--glass);
-      border: 1px solid var(--border);
-
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-
-      box-shadow: 0 10px 30px rgba(0,0,0,.4);
     }
 
-    #canvasMenu.open {
-      display: block;
+
+    #status.show {
+
+      opacity: 1;
+
     }
 
-    #canvasMenu button {
-      border: 0;
-      background: transparent;
-      color: #fff;
 
-      padding: 10px 16px;
+    /* =====================================================
+       PAINÉIS ORIGINAIS
+       ===================================================== */
 
-      border-radius: 9px;
+    .panel {
 
-      font-size: 15px;
-
-      cursor: pointer;
-    }
-
-    #canvasMenu button:active {
-      background: rgba(255,255,255,.12);
-    }
-
-    /* =========================
-       EDITOR DE TEXTO
-       ========================= */
-
-    #inlineEditor {
       position: absolute;
+
+      top:
+        max(
+          72px,
+          calc(
+            env(safe-area-inset-top)
+            + 60px
+          )
+        );
+
+      right:
+        max(
+          16px,
+          env(safe-area-inset-right)
+        );
+
+      padding: 16px;
+
+      border-radius: 22px;
+
+      background:
+        rgba(22, 22, 26, 0.88);
+
+      border:
+        1px solid var(--border);
+
+      backdrop-filter:
+        blur(24px);
+
+      -webkit-backdrop-filter:
+        blur(24px);
 
       display: none;
 
-      z-index: 200;
+      pointer-events: auto;
 
-      min-width: 80px;
-      min-height: 40px;
+      box-shadow:
+        0 12px 32px
+        rgba(0, 0, 0, 0.4);
 
-      padding: 5px 7px;
+      z-index: 40;
 
-      margin: 0;
+    }
 
-      border: 2px dashed rgba(255,255,255,.85);
 
-      border-radius: 5px;
+    .panel.open {
 
-      outline: none;
+      display: flex;
 
-      background: rgba(0,0,0,.18);
+      flex-direction: column;
+
+      gap: 14px;
+
+    }
+
+
+    .colors {
+
+      display: flex;
+
+      gap: 10px;
+
+    }
+
+
+    .color {
+
+      width: 32px;
+
+      height: 32px;
+
+      border-radius: 50%;
+
+      border:
+        2px solid transparent;
+
+      cursor: pointer;
+
+    }
+
+
+    .color.active {
+
+      border-color: #fff;
+
+      transform: scale(1.12);
+
+    }
+
+
+    input[type=range] {
+
+      width: 120px;
+
+      accent-color: #fff;
+
+    }
+
+
+    .row {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
 
       color: #fff;
 
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "SF Pro Display",
-        "SF Pro Text",
-        "Segoe UI",
-        Arial,
-        sans-serif;
+      font-size: 13px;
 
-      font-size: 24px;
+    }
 
-      line-height: 1.2;
+
+    /* =====================================================
+       MENU COLAR
+       ===================================================== */
+
+    #canvasMenu {
+
+      position: fixed;
+
+      z-index: 70;
+
+      display: none;
+
+      pointer-events: auto;
+
+    }
+
+
+    #canvasMenu.open {
+
+      display: block;
+
+    }
+
+
+    #pasteButton {
+
+      width: auto;
+
+      min-width: 82px;
+
+      height: 42px;
+
+      padding:
+        0 18px;
+
+      border-radius: 21px;
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+    }
+
+
+    /* =====================================================
+       EDITOR DE TEXTO
+       ===================================================== */
+
+    #inlineEditor {
+
+      position: fixed;
+
+      display: none;
+
+      z-index: 80;
+
+      margin: 0;
+
+      padding:
+        4px 7px;
+
+      border:
+        2px dotted
+        rgba(255, 255, 255, 0.95);
+
+      border-radius: 4px;
+
+      background:
+        rgba(0, 0, 0, 0.18);
+
+      color: #fff;
+
+      outline: none;
 
       resize: both;
 
@@ -421,376 +670,701 @@
 
       white-space: pre-wrap;
 
-      touch-action: auto;
+      word-break: break-word;
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      line-height: 1.15;
+
+      min-width: 60px;
+
+      min-height: 30px;
+
+      user-select: text;
 
       -webkit-user-select: text;
-      user-select: text;
+
+      -webkit-touch-callout: default;
+
+      touch-action: auto;
+
     }
 
-    #inlineEditor.editing {
+
+    #inlineEditor.show {
+
       display: block;
+
     }
 
-    /* =========================
-       BOTÃO CANCELAR IMAGEM
-       ========================= */
 
-    #imageCancelButton {
-      position: absolute;
+    /* =====================================================
+       CANCELAR IMAGEM
+       ===================================================== */
+
+    #objectCancel {
+
+      position: fixed;
 
       display: none;
 
-      z-index: 150;
+      z-index: 75;
 
-      padding: 8px 13px;
+      width: auto;
 
-      border-radius: 10px;
+      min-width: 84px;
 
-      border: 1px solid rgba(255,255,255,.22);
+      height: 40px;
 
-      background: rgba(30,30,35,.9);
+      padding:
+        0 16px;
 
-      color: #fff;
+      border-radius: 20px;
 
-      font-size: 14px;
-
-      pointer-events: auto;
-    }
-
-    #imageCancelButton.open {
-      display: block;
-    }
-
-    /* =========================
-       TELA INICIAL
-       ========================= */
-
-    #startOverlay {
-      position: absolute;
-      inset: 0;
-
-      z-index: 500;
-
-      background: rgba(0,0,0,.82);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      padding: 25px;
-
-      pointer-events: auto;
-    }
-
-    #startCard {
-      width: min(380px, 100%);
-
-      padding: 30px 24px;
-
-      border-radius: 24px;
-
-      background: rgba(25,25,30,.86);
-
-      border: 1px solid var(--border);
-
-      text-align: center;
-
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    #startLogo {
-      width: 110px;
-      height: 110px;
-
-      object-fit: contain;
-
-      margin-bottom: 15px;
-    }
-
-    #startCard h1 {
-      margin: 0 0 20px;
-
-      font-size: 26px;
-      font-weight: 700;
-    }
-
-    #startButton {
-      width: 100%;
-
-      border: 0;
-      border-radius: 14px;
-
-      padding: 15px;
-
-      background: var(--blue);
-      color: #fff;
-
-      font-size: 17px;
-      font-weight: 600;
-
-      cursor: pointer;
-    }
-
-    #permissionHint {
-      margin: 15px 0 0;
-
-      color: rgba(255,255,255,.68);
+      background:
+        rgba(22, 22, 26, 0.9);
 
       font-size: 13px;
 
-      line-height: 1.45;
+      font-weight: 600;
+
     }
 
-    /* =========================
-       RESPONSIVO
-       ========================= */
 
-    @media (max-width: 600px) {
+    #objectCancel.show {
 
-      #top {
-        left: 8px;
-        right: 8px;
-      }
+      display: flex;
 
-      #left,
-      #right {
-        gap: 5px;
-      }
-
-      .toolButton {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
-      }
-
-      #textToolSlot {
-        min-width: 44px;
-      }
-
-      #recordButton {
-        width: 58px;
-        height: 58px;
-      }
-
-      #recordButton::after {
-        width: 22px;
-        height: 22px;
-      }
     }
+
+
+    /* =====================================================
+       TELA INICIAL
+       ===================================================== */
+
+    #startOverlay {
+
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 50;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      background:
+        rgba(0, 0, 0, 0.82);
+
+      backdrop-filter:
+        blur(16px);
+
+      -webkit-backdrop-filter:
+        blur(16px);
+
+      color: #fff;
+
+      padding: 24px;
+
+      text-align: center;
+
+    }
+
+
+    #startOverlay.hidden {
+
+      display: none !important;
+
+    }
+
+
+    #startCard {
+
+      max-width: 380px;
+
+      width: 100%;
+
+      padding:
+        32px 24px;
+
+      background:
+        rgba(28, 28, 32, 0.75);
+
+      border:
+        1px solid var(--border);
+
+      border-radius: 28px;
+
+      box-shadow:
+        0 20px 40px
+        rgba(0, 0, 0, 0.5);
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+
+    }
+
+
+    .intro-logo {
+
+      width: 96px;
+
+      height: 96px;
+
+      border-radius: 22px;
+
+      margin-bottom: 16px;
+
+      box-shadow:
+        0 8px 24px
+        rgba(0, 0, 0, 0.4);
+
+      object-fit: cover;
+
+    }
+
+
+    #startCard h1 {
+
+      font-size: 24px;
+
+      font-weight: 700;
+
+      letter-spacing: 0.5px;
+
+      margin:
+        0 0 12px;
+
+    }
+
+
+    #startCard p {
+
+      font-size: 14px;
+
+      color:
+        rgba(255, 255, 255, 0.75);
+
+      line-height: 1.5;
+
+      margin:
+        0 0 24px;
+
+    }
+
+
+    #startBtn {
+
+      width: 100%;
+
+      height: 52px;
+
+      border-radius: 26px;
+
+      background: #007aff;
+
+      border: none;
+
+      font-size: 15px;
+
+      font-weight: 600;
+
+      color: #fff;
+
+      box-shadow:
+        0 4px 16px
+        rgba(0, 122, 255, 0.35);
+
+    }
+
+
+    #startBtn:active {
+
+      transform: scale(0.97);
+
+    }
+
+
+    #permissionHint {
+
+      margin-top: 14px;
+
+      font-size: 12px;
+
+      color:
+        rgba(255, 255, 255, 0.5);
+
+    }
+
+
+    @media (max-width: 380px) {
+
+      #textToolButton {
+
+        top: 0;
+
+      }
+
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
 <div id="app">
 
-  <video id="camera" autoplay playsinline muted></video>
 
-  <canvas id="board"></canvas>
+  <video
+    id="video"
+    autoplay
+    playsinline
+    muted>
+  </video>
+
+
+  <canvas id="canvas"></canvas>
+
 
   <div id="ui">
 
-    <!-- BARRA SUPERIOR -->
-    <div id="top">
+
+    <!-- =================================================
+         BARRA SUPERIOR
+         ================================================= -->
+
+    <div
+      id="top"
+      class="bar">
+
 
       <div id="left">
 
-        <button id="menuBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Menu">
-          ☰
+
+        <button
+          id="menuBtn"
+          aria-label="Menu"
+          title="Menu">
+
+          <svg viewBox="0 0 24 24">
+
+            <line
+              x1="3"
+              y1="12"
+              x2="21"
+              y2="12">
+            </line>
+
+            <line
+              x1="3"
+              y1="6"
+              x2="21"
+              y2="6">
+            </line>
+
+            <line
+              x1="3"
+              y1="18"
+              x2="21"
+              y2="18">
+            </line>
+
+          </svg>
+
         </button>
 
-        <button id="undoBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Desfazer">
-          ↶
+
+        <button
+          id="undo"
+          aria-label="Desfazer"
+          title="Desfazer">
+
+          <svg viewBox="0 0 24 24">
+
+            <path
+              d="M3 7v6h6">
+            </path>
+
+            <path
+              d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13">
+            </path>
+
+          </svg>
+
         </button>
 
-        <button id="redoBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Refazer">
-          ↷
+
+        <button
+          id="redo"
+          aria-label="Refazer"
+          title="Refazer">
+
+          <svg viewBox="0 0 24 24">
+
+            <path
+              d="M21 7v6h-6">
+            </path>
+
+            <path
+              d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7">
+            </path>
+
+          </svg>
+
         </button>
 
-        <button id="clearBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Limpar tudo">
-          ⌫
+
+        <button
+          id="clear"
+          aria-label="Limpar"
+          title="Limpar">
+
+          <svg viewBox="0 0 24 24">
+
+            <polyline
+              points="3 6 5 6 21 6">
+            </polyline>
+
+            <path
+              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+            </path>
+
+          </svg>
+
         </button>
+
 
       </div>
 
-      <!-- NOVO BOTÃO T -->
-      <div id="textToolSlot">
 
-        <button id="textToolButton"
-                class="toolButton"
-                type="button"
-                aria-label="Texto">
-          T
-        </button>
+      <!-- ÚNICO NOVO BOTÃO -->
 
-      </div>
+      <button
+        id="textToolButton"
+        aria-label="Texto"
+        title="Texto">
+
+        T
+
+      </button>
+
 
       <div id="right">
 
-        <button id="flipBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Inverter câmera">
-          ↔
+
+        <button
+          id="flip"
+          aria-label="Trocar câmera"
+          title="Trocar câmera">
+
+          <svg viewBox="0 0 24 24">
+
+            <path
+              d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v4">
+            </path>
+
+            <path
+              d="M16 19l3 3 3-3">
+            </path>
+
+            <path
+              d="M19 13v9">
+            </path>
+
+          </svg>
+
         </button>
 
-        <button id="settingsBtn"
-                class="toolButton"
-                type="button"
-                aria-label="Ferramentas">
-          ⚙
+
+        <button
+          id="settings"
+          aria-label="Ferramentas"
+          title="Ferramentas">
+
+          <svg viewBox="0 0 24 24">
+
+            <path
+              d="M12 20h9">
+            </path>
+
+            <path
+              d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z">
+            </path>
+
+          </svg>
+
         </button>
 
-        <button id="recordButton"
-                type="button"
-                aria-label="Gravar">
-        </button>
+
+      </div>
+
+
+    </div>
+
+
+    <!-- =================================================
+         MENU
+         ================================================= -->
+
+    <div
+      id="menuPanel"
+      class="panel"
+      aria-hidden="true">
+
+      <div class="row">
+
+        <strong>
+          Lousa Cam 2.0
+        </strong>
+
+      </div>
+
+
+      <div class="row">
+
+        <span>
+          Desenhe diretamente sobre a imagem da câmera.
+        </span>
 
       </div>
 
     </div>
 
-    <div id="status">
-      Pronto
-    </div>
 
-    <!-- MENU PRINCIPAL -->
-    <div id="menuPanel">
+    <!-- =================================================
+         FERRAMENTAS
+         ================================================= -->
 
-      <button class="menuItem"
-              id="menuCloseTools"
-              type="button">
-        Fechar
-      </button>
+    <div
+      id="tools"
+      class="panel"
+      aria-hidden="true">
 
-      <button class="menuItem"
-              data-menu-action="record"
-              type="button">
-        Gravação
-      </button>
 
-      <button class="menuItem"
-              data-menu-action="camera"
-              type="button">
-        Reiniciar câmera
-      </button>
+      <div class="colors">
 
-    </div>
 
-    <!-- PAINEL DE FERRAMENTAS -->
-    <div id="toolsPanel">
-
-      <div class="panelRow">
-
-        <label for="colorInput">
-          Cor
-        </label>
-
-        <input id="colorInput"
-               type="color"
-               value="#ffffff">
-
-      </div>
-
-      <div class="panelRow">
-
-        <label for="widthInput">
-          Espessura
-        </label>
-
-        <input id="widthInput"
-               type="range"
-               min="1"
-               max="30"
-               value="5">
-
-      </div>
-
-      <div class="panelRow">
-
-        <button id="eraserBtn"
-                class="menuItem"
-                type="button">
-          Borracha
+        <button
+          class="color active"
+          style="background:#fff"
+          data-color="#fff"
+          aria-label="Branco">
         </button>
 
+
+        <button
+          class="color"
+          style="background:#ff3b30"
+          data-color="#ff3b30"
+          aria-label="Vermelho">
+        </button>
+
+
+        <button
+          class="color"
+          style="background:#ffcc00"
+          data-color="#ffcc00"
+          aria-label="Amarelo">
+        </button>
+
+
+        <button
+          class="color"
+          style="background:#34c759"
+          data-color="#34c759"
+          aria-label="Verde">
+        </button>
+
+
+        <button
+          class="color"
+          style="background:#0a84ff"
+          data-color="#0a84ff"
+          aria-label="Azul">
+        </button>
+
+
       </div>
 
-      <div id="toolName">
-        Caneta
+
+      <div class="row">
+
+        Espessura
+
+        <input
+          id="width"
+          type="range"
+          min="2"
+          max="32"
+          value="5">
+
       </div>
+
+
+      <div class="row">
+
+
+        <button
+          id="eraser"
+          aria-label="Borracha"
+          title="Borracha"
+          style="width:40px;height:40px">
+
+
+          <svg viewBox="0 0 24 24">
+
+            <path
+              d="M20 20H7L3 16c-.8-.8-.8-2 0-2.8L13 3.2c.8-.8.8-2 0-2.8l5 5c.8.8.8 2 0 2.8L11 20">
+            </path>
+
+          </svg>
+
+
+        </button>
+
+
+        <span id="toolName">
+          Caneta
+        </span>
+
+
+      </div>
+
 
     </div>
 
-    <!-- MENU COLAR -->
+
+    <!-- =================================================
+         COLAR
+         ================================================= -->
+
     <div id="canvasMenu">
 
-      <button id="pasteButton"
-              data-action="paste"
-              type="button">
+      <button id="pasteButton">
+
         Colar
+
       </button>
 
     </div>
 
-    <!-- EDITOR DIRETO NA LOUSA -->
-    <textarea id="inlineEditor"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="sentences"
-              spellcheck="true"></textarea>
 
-    <!-- CANCELAR IMAGEM -->
-    <button id="imageCancelButton"
-            type="button">
+    <!-- =================================================
+         CANCELAR IMAGEM
+         ================================================= -->
+
+    <button id="objectCancel">
+
       Cancelar
+
     </button>
+
+
+    <!-- =================================================
+         EDITOR DE TEXTO
+         ================================================= -->
+
+    <div
+      id="inlineEditor"
+      contenteditable="true"
+      spellcheck="true"
+      role="textbox"
+      aria-label="Editar texto">
+    </div>
+
+
+    <!-- =================================================
+         BOTÃO GRAVAR
+         ================================================= -->
+
+    <div
+      id="bottom"
+      class="bar">
+
+      <button
+        id="record"
+        aria-label="Gravar"
+        title="Gravar">
+
+        <span></span>
+
+      </button>
+
+    </div>
+
+
+    <div id="status"></div>
+
 
   </div>
 
-  <!-- TELA INICIAL -->
+
+  <!-- =================================================
+       TELA INICIAL
+       ================================================= -->
+
   <div id="startOverlay">
+
 
     <div id="startCard">
 
-      <img id="startLogo"
-           src="./logo.png"
-           alt="Lousa Cam">
+
+      <img
+        src="./logo.png"
+        alt="Lousa Cam Logo"
+        class="intro-logo">
+
 
       <h1>
         LOUSA CAM 2.0
       </h1>
 
-      <button id="startButton"
-              type="button">
-        Iniciar câmera
+
+      <p>
+
+        Ative a câmera e o microfone
+        para usar a lousa sobre a imagem.
+        Para melhor experiência no iPhone,
+        use o aparelho na horizontal.
+
+      </p>
+
+
+      <button id="startBtn">
+
+        Ativar câmera e microfone
+
       </button>
 
-      <p id="permissionHint">
-        Permita o acesso à câmera e ao microfone
-        quando solicitado pelo navegador.
-      </p>
+
+      <div id="permissionHint">
+
+        O Safari solicitará as permissões.
+
+      </div>
+
 
     </div>
 
+
   </div>
+
 
 </div>
 
-<script src="./app.js?v=20260911-01"></script>
+
+<script src="./app.js?v=20260911-02"></script>
 
 </body>
+
 </html>
