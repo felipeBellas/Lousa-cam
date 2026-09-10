@@ -2241,7 +2241,7 @@ canvas.addEventListener(
 
 canvas.addEventListener(
   "pointerup",
-  event => {
+  async event => {
 
     if (
       event.pointerId !==
@@ -2358,40 +2358,88 @@ canvas.addEventListener(
     }
 
 
-    /* ===================================================
-       TOQUE SIMPLES NO CANVAS
-       =================================================== */
+   /* ===================================================
+   DUPLO TOQUE NO CANVAS
+   =================================================== */
 
-    if (
-      pointerMode ===
-      "canvas" &&
-      !pointerMoved
-    ) {
+if (
+  pointerMode ===
+  "canvas" &&
+  !pointerMoved
+) {
 
-      /*
-        Mostra somente Colar.
-      */
+  const now =
+    Date.now();
 
-      showCanvasPasteMenu(
+  const dx =
+    point.x -
+    lastCanvasTapX;
+
+  const dy =
+    point.y -
+    lastCanvasTapY;
+
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
+
+  const isDoubleTap =
+    lastCanvasTapTime > 0 &&
+    now -
+      lastCanvasTapTime <=
+      DOUBLE_TAP_DELAY &&
+    distance <=
+      DOUBLE_TAP_DISTANCE;
+
+  if (isDoubleTap) {
+
+    lastCanvasTapTime =
+      0;
+
+    lastCanvasTapX =
+      0;
+
+    lastCanvasTapY =
+      0;
+
+    closeCanvasPasteMenu();
+
+    const success =
+      await pasteFromClipboard(
         point.x,
         point.y
       );
 
+    if (success) {
+
+      toast(
+        "Conteúdo colado"
+      );
+
+    } else {
+
+      toast(
+        "Não foi possível colar"
+      );
+
     }
 
+  } else {
 
-    pointerMode =
-      null;
+    lastCanvasTapTime =
+      now;
 
+    lastCanvasTapX =
+      point.x;
 
-    releasePointer(
-      event
-    );
-
+    lastCanvasTapY =
+      point.y;
 
   }
-);
 
+}
 
 /* =========================================================
    POINTER CANCEL
