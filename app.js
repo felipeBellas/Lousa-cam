@@ -214,22 +214,16 @@ function isDoubleCanvasTap(point) {
     );
 
   const doubleTap =
-    timeDifference <=
-      DOUBLE_TAP_DELAY &&
-    distance <=
-      DOUBLE_TAP_DISTANCE;
+    timeDifference <= DOUBLE_TAP_DELAY &&
+    distance <= DOUBLE_TAP_DISTANCE;
 
-  lastCanvasTapTime =
-    now;
-
-  lastCanvasTapX =
-    point.x;
-
-  lastCanvasTapY =
-    point.y;
+  lastCanvasTapTime = now;
+  lastCanvasTapX = point.x;
+  lastCanvasTapY = point.y;
 
   return doubleTap;
 }
+
 
 /* =========================================================
    COLAR
