@@ -1498,7 +1498,16 @@ function finishTextEditing() {
         35,
         height
       );
+/*
+  Sincroniza novamente o editor
+  com o objeto antes de ocultá-lo.
+*/
 
+inlineEditor.style.width =
+  `${object.width}px`;
+
+inlineEditor.style.height =
+  `${object.height}px`;
 
     /*
       Se o texto foi criado vazio,
