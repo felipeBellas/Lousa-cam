@@ -1404,9 +1404,7 @@ function beginTextEditing(
     return;
   }
 
-
   finishTextEditing();
-
 
   selectedObjectId =
     object.id;
@@ -1414,68 +1412,54 @@ function beginTextEditing(
   editingObjectId =
     object.id;
 
+  /*
+    textContent evita que qualquer
+    estrutura HTML seja criada dentro
+    do editor.
+  */
 
-  inlineEditor.innerText =
+  inlineEditor.textContent =
     object.text ||
     "";
-
 
   inlineEditor.style.color =
     object.color ||
     "#fff";
 
-
   inlineEditor.style.fontSize =
     `${object.fontSize || 24}px`;
 
-
   inlineEditor.style.width =
-  `${Math.max(
-    60,
-    object.width
-  )}px`;
+    `${Math.max(
+      60,
+      object.width
+    )}px`;
 
-inlineEditor.style.height =
-  `${Math.max(
-    35,
-    object.height
-  )}px`;
+  inlineEditor.style.height =
+    `${Math.max(
+      35,
+      object.height
+    )}px`;
 
-inlineEditor.style.boxSizing =
-  "border-box";
-
-inlineEditor.style.overflow =
-  "hidden";
-
-inlineEditor.style.whiteSpace =
-  "pre-wrap";
-
-inlineEditor.style.overflowWrap =
-  "break-word";
-
-inlineEditor.style.wordBreak =
-  "break-word";
-
+  inlineEditor.style.boxSizing =
+    "border-box";
 
   inlineEditor.classList.add(
     "show"
   );
 
-
   updateEditorPosition();
-
 
   redraw();
 
-
-  /*
-    IMPORTANTE:
-    focus direto para permitir
-    abertura do teclado no Safari.
-  */
-
   inlineEditor.focus();
 
+  /*
+    Coloca o cursor no final
+    apenas quando o texto é aberto.
+    Depois disso o usuário pode tocar
+    em qualquer letra para reposicionar.
+  */
 
   try {
 
@@ -1508,6 +1492,8 @@ inlineEditor.style.wordBreak =
   }
 
 }
+
+
 
 
 /* =========================================================
