@@ -177,20 +177,7 @@ let pointerMoved =
 
 let pointerDownTime =
   0;
-let lastCanvasTapTime =
-  0;
 
-let lastCanvasTapX =
-  0;
-
-let lastCanvasTapY =
-  0;
-
-const DOUBLE_TAP_DELAY =
-  350;
-
-const DOUBLE_TAP_DISTANCE =
-  40;
 let dragOffsetX =
   0;
 
@@ -2241,7 +2228,7 @@ canvas.addEventListener(
 
 canvas.addEventListener(
   "pointerup",
-  async event => {
+  event => {
 
     if (
       event.pointerId !==
@@ -2358,88 +2345,40 @@ canvas.addEventListener(
     }
 
 
-   /* ===================================================
-   DUPLO TOQUE NO CANVAS
-   =================================================== */
+    /* ===================================================
+       TOQUE SIMPLES NO CANVAS
+       =================================================== */
 
-if (
-  pointerMode ===
-  "canvas" &&
-  !pointerMoved
-) {
+    if (
+      pointerMode ===
+      "canvas" &&
+      !pointerMoved
+    ) {
 
-  const now =
-    Date.now();
+      /*
+        Mostra somente Colar.
+      */
 
-  const dx =
-    point.x -
-    lastCanvasTapX;
-
-  const dy =
-    point.y -
-    lastCanvasTapY;
-
-  const distance =
-    Math.sqrt(
-      dx * dx +
-      dy * dy
-    );
-
-  const isDoubleTap =
-    lastCanvasTapTime > 0 &&
-    now -
-      lastCanvasTapTime <=
-      DOUBLE_TAP_DELAY &&
-    distance <=
-      DOUBLE_TAP_DISTANCE;
-
-  if (isDoubleTap) {
-
-    lastCanvasTapTime =
-      0;
-
-    lastCanvasTapX =
-      0;
-
-    lastCanvasTapY =
-      0;
-
-    closeCanvasPasteMenu();
-
-    const success =
-      await pasteFromClipboard(
+      showCanvasPasteMenu(
         point.x,
         point.y
       );
 
-    if (success) {
-
-      toast(
-        "Conteúdo colado"
-      );
-
-    } else {
-
-      toast(
-        "Não foi possível colar"
-      );
-
     }
 
-  } else {
 
-    lastCanvasTapTime =
-      now;
+    pointerMode =
+      null;
 
-    lastCanvasTapX =
-      point.x;
 
-    lastCanvasTapY =
-      point.y;
+    releasePointer(
+      event
+    );
+
 
   }
+);
 
-}
 
 /* =========================================================
    POINTER CANCEL
@@ -3116,32 +3055,20 @@ async function startCamera() {
   }
 
 
-  toast(
-    "Iniciando câmera...",
-    3000
-  );
-
-
   try {
-
-    /*
-      PRIMEIRA TENTATIVA:
-      somente câmera.
-
-      O microfone não participa
-      da abertura inicial do aplicativo.
-    */
 
     const newStream =
       await navigator.mediaDevices
         .getUserMedia({
 
           video: {
+
             facingMode:
               facingMode
+
           },
 
-          audio: false
+          audio: true
 
         });
 
@@ -3162,16 +3089,7 @@ async function startCamera() {
       true;
 
 
-    video
-      .play()
-      .catch(error => {
-
-        console.log(
-          "Safari video.play():",
-          error
-        );
-
-      });
+    await video.play();
 
 
     if (oldStream) {
@@ -3188,7 +3106,8 @@ async function startCamera() {
 
     video.classList.toggle(
       "mirror",
-      facingMode === "user"
+      facingMode ===
+        "user"
     );
 
 
@@ -3199,25 +3118,100 @@ async function startCamera() {
 
     return true;
 
-
   } catch (error) {
 
     console.error(
-      "Câmera:",
       error
     );
 
 
-    toast(
-      "Não foi possível acessar a câmera"
-    );
+    /*
+      Segunda tentativa sem áudio.
+    */
+
+    try {
+
+      const newStream =
+        await navigator.mediaDevices
+          .getUserMedia({
+
+            video: {
+
+              facingMode:
+                facingMode
+
+            },
+
+            audio: false
+
+          });
 
 
-    return false;
+      const oldStream =
+        stream;
+
+
+      stream =
+        newStream;
+
+
+      video.srcObject =
+        stream;
+
+
+      video.muted =
+        true;
+
+
+      await video.play();
+
+
+      if (oldStream) {
+
+        oldStream
+          .getTracks()
+          .forEach(
+            track =>
+              track.stop()
+          );
+
+      }
+
+
+      video.classList.toggle(
+        "mirror",
+        facingMode ===
+          "user"
+      );
+
+
+      toast(
+        "Câmera ativa — microfone indisponível"
+      );
+
+
+      return true;
+
+    } catch (secondError) {
+
+      console.error(
+        secondError
+      );
+
+
+      toast(
+        "Não foi possível acessar a câmera"
+      );
+
+
+      return false;
+
+    }
 
   }
 
 }
+
 
 /* =========================================================
    BOTÃO INICIAR
@@ -3585,7 +3579,6 @@ function renderRecordingFrame() {
 /* =========================================================
    PARAR GRAVAÇÃO
    ========================================================= */
-
 
 function stopRecording() {
 
@@ -4037,5 +4030,5 @@ if (
 
     }
   );
-  
-  }
+
+}
