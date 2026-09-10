@@ -1328,17 +1328,31 @@ function beginTextEditing(
 
 
   inlineEditor.style.width =
-    `${Math.max(
-      80,
-      object.width
-    )}px`;
+  `${Math.max(
+    60,
+    object.width
+  )}px`;
 
+inlineEditor.style.height =
+  `${Math.max(
+    35,
+    object.height
+  )}px`;
 
-  inlineEditor.style.height =
-    `${Math.max(
-      40,
-      object.height
-    )}px`;
+inlineEditor.style.boxSizing =
+  "border-box";
+
+inlineEditor.style.overflow =
+  "hidden";
+
+inlineEditor.style.whiteSpace =
+  "pre-wrap";
+
+inlineEditor.style.overflowWrap =
+  "break-word";
+
+inlineEditor.style.wordBreak =
+  "break-word";
 
 
   inlineEditor.classList.add(
