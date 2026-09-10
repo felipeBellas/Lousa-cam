@@ -320,38 +320,51 @@
        T — ÚNICO BOTÃO NOVO
        Não modifica os botões originais.
        ===================================================== */
+ #textToolButton {
 
-    #textToolButton {
+  position: absolute;
 
-      position: absolute;
+  /*
+    Mantém o T dentro da barra superior,
+    mas nunca sobre o botão Limpar.
+  */
 
-      left: 50%;
+  left: clamp(
+    236px,
+    calc(50% + 40px),
+    calc(100% - 236px)
+  );
 
-      top: 0;
+  top:
+    max(
+      16px,
+      env(safe-area-inset-top)
+    );
 
-      transform:
-        translateX(-50%);
+  transform: none;
 
-      z-index: 30;
+  z-index: 30;
 
-      font-size: 20px;
+  flex-shrink: 0;
 
-      font-weight: 700;
+  font-size: 20px;
 
-      font-family: Arial, sans-serif;
+  font-weight: 700;
 
-      pointer-events: auto;
+  font-family: Arial, sans-serif;
 
-    }
+  pointer-events: auto;
+
+}
 
 
-    #textToolButton:active {
+#textToolButton:active {
 
-      transform:
-        translateX(-50%)
-        scale(0.92);
+  transform:
+    scale(0.92);
 
-    }
+}
+  
 
 
     /* =====================================================
