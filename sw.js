@@ -1,19 +1,13 @@
-const CACHE_NAME =
-  "lousa-cam-v2-20260911-03";
+"use strict";
 
+const CACHE_NAME =
+  "lousa-cam-v2-20260911-04";
 
 const FILES_TO_CACHE = [
-
   "./",
-
   "./index.html",
-
-  "./app.js",
-
   "./manifest.json",
-
   "./logo.png"
-
 ];
 
 
@@ -28,9 +22,7 @@ self.addEventListener(
     event.waitUntil(
 
       caches
-        .open(
-          CACHE_NAME
-        )
+        .open(CACHE_NAME)
         .then(
           cache =>
             cache.addAll(
@@ -39,7 +31,6 @@ self.addEventListener(
         )
 
     );
-
 
     self.skipWaiting();
 
@@ -66,23 +57,21 @@ self.addEventListener(
               keys
                 .filter(
                   key =>
-                    key !==
-                    CACHE_NAME
+                    key !== CACHE_NAME
                 )
                 .map(
                   key =>
-                    caches.delete(
-                      key
-                    )
+                    caches.delete(key)
                 )
 
             )
         )
+        .then(
+          () =>
+            self.clients.claim()
+        )
 
     );
-
-
-    self.clients.claim();
 
   }
 );
@@ -96,65 +85,155 @@ self.addEventListener(
   "fetch",
   event => {
 
+    const request =
+      event.request;
+
+    if (
+      request.method !== "GET"
+    ) {
+      return;
+    }
+
+    const url =
+      new URL(
+        request.url
+      );
+
+
+    /* =====================================================
+       ARQUIVOS PRINCIPAIS
+       REDE PRIMEIRO
+       ===================================================== */
+
+    const isMainFile =
+      url.pathname.endsWith(
+        "/index.html"
+      ) ||
+
+      url.pathname.endsWith(
+        "/app.js"
+      ) ||
+
+      url.pathname.endsWith(
+        "/sw.js"
+      ) ||
+
+      url.pathname === "/";
+
+
+    if (isMainFile) {
+
+      event.respondWith(
+
+        fetch(
+          request,
+          {
+            cache: "no-store"
+          }
+        )
+
+        .then(
+          response => {
+
+            if (
+              response &&
+              response.ok
+            ) {
+
+              const copy =
+                response.clone();
+
+              caches
+                .open(
+                  CACHE_NAME
+                )
+                .then(
+                  cache =>
+                    cache.put(
+                      request,
+                      copy
+                    )
+                )
+                .catch(
+                  () => {}
+                );
+
+            }
+
+            return response;
+
+          }
+        )
+
+        .catch(
+          () =>
+            caches.match(
+              request
+            )
+        )
+
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       OUTROS ARQUIVOS
+       CACHE PRIMEIRO
+       ===================================================== */
+
     event.respondWith(
 
       caches
         .match(
-          event.request
+          request
         )
+
         .then(
           cached => {
 
             if (cached) {
-
               return cached;
-
             }
 
-
             return fetch(
-              event.request
+              request
             )
-              .then(
-                response => {
 
-                  if (
-                    !response ||
-                    response.status !==
-                      200 ||
-                    response.type ===
-                      "opaque"
-                  ) {
+            .then(
+              response => {
 
-                    return response;
-
-                  }
-
-
-                  const clone =
-                    response.clone();
-
-
-                  caches
-                    .open(
-                      CACHE_NAME
-                    )
-                    .then(
-                      cache => {
-
-                        cache.put(
-                          event.request,
-                          clone
-                        );
-
-                      }
-                    );
-
-
+                if (
+                  !response ||
+                  response.status !== 200
+                ) {
                   return response;
-
                 }
-              );
+
+                const copy =
+                  response.clone();
+
+                caches
+                  .open(
+                    CACHE_NAME
+                  )
+                  .then(
+                    cache =>
+                      cache.put(
+                        request,
+                        copy
+                      )
+                  )
+                  .catch(
+                    () => {}
+                  );
+
+                return response;
+
+              }
+            );
 
           }
         )
