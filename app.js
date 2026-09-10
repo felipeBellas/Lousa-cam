@@ -187,6 +187,49 @@ let dragOffsetY =
 let resizeStart =
   null;
 
+let lastCanvasTapTime = 0;
+let lastCanvasTapX = 0;
+let lastCanvasTapY = 0;
+
+const DOUBLE_TAP_DELAY = 350;
+const DOUBLE_TAP_DISTANCE = 40;
+
+function isDoubleCanvasTap(point) {
+
+  const now = Date.now();
+
+  const timeDifference =
+    now - lastCanvasTapTime;
+
+  const dx =
+    point.x - lastCanvasTapX;
+
+  const dy =
+    point.y - lastCanvasTapY;
+
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
+
+  const doubleTap =
+    timeDifference <=
+      DOUBLE_TAP_DELAY &&
+    distance <=
+      DOUBLE_TAP_DISTANCE;
+
+  lastCanvasTapTime =
+    now;
+
+  lastCanvasTapX =
+    point.x;
+
+  lastCanvasTapY =
+    point.y;
+
+  return doubleTap;
+}
 
 /* =========================================================
    COLAR
@@ -2704,55 +2747,42 @@ canvas.addEventListener(
 
 
     /* ===================================================
-   TOQUE SIMPLES NO CANVAS
-   COLAR DIRETAMENTE
+   DOIS TOQUES RÁPIDOS NO CANVAS
+   COLAR DA ÁREA DE TRANSFERÊNCIA
    =================================================== */
 
 if (
-  pointerMode ===
-  "canvas" &&
+  pointerMode === "canvas" &&
   !pointerMoved
 ) {
 
-  closeCanvasPasteMenu();
+  const doubleTap = isDoubleCanvasTap(point);
 
-  /*
-    O toque na lousa já é a ação de colar.
-    Não aparece botão Colar do Lousa Cam.
-  */
+  if (doubleTap) {
 
-  pasteFromClipboard(
-    point.x,
-    point.y
-  ).then(success => {
+    closeCanvasPasteMenu();
 
-    if (success) {
-      toast("Conteúdo colado");
-    }
+    pasteFromClipboard(
+      point.x,
+      point.y
+    )
+    .then(success => {
 
-  }).catch(error => {
+      if (success) {
+        toast("Conteúdo colado");
+      }
 
-    console.log(
-      "Colar:",
-      error
-    );
+    })
+    .catch(error => {
 
-  });
+      console.log(
+        "Erro ao colar:",
+        error
+      );
 
-}
-
-
-    pointerMode =
-      null;
-
-
-    releasePointer(
-      event
-    );
-
-
+    });
   }
-);
+}
 
 
 /* =========================================================
