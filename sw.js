@@ -1,11 +1,19 @@
-const CACHE_NAME = "lousa-cam-v2-20260911-01";
+const CACHE_NAME =
+  "lousa-cam-v2-20260911-03";
+
 
 const FILES_TO_CACHE = [
+
   "./",
+
   "./index.html",
+
   "./app.js",
+
   "./manifest.json",
+
   "./logo.png"
+
 ];
 
 
@@ -13,113 +21,145 @@ const FILES_TO_CACHE = [
    INSTALL
    ========================================================= */
 
-self.addEventListener("install", event => {
+self.addEventListener(
+  "install",
+  event => {
 
-  event.waitUntil(
+    event.waitUntil(
 
-    caches.open(CACHE_NAME)
-      .then(cache => {
+      caches
+        .open(
+          CACHE_NAME
+        )
+        .then(
+          cache =>
+            cache.addAll(
+              FILES_TO_CACHE
+            )
+        )
 
-        return cache.addAll(
-          FILES_TO_CACHE
-        );
+    );
 
-      })
 
-  );
+    self.skipWaiting();
 
-  self.skipWaiting();
-
-});
+  }
+);
 
 
 /* =========================================================
    ACTIVATE
    ========================================================= */
 
-self.addEventListener("activate", event => {
+self.addEventListener(
+  "activate",
+  event => {
 
-  event.waitUntil(
+    event.waitUntil(
 
-    caches.keys()
-      .then(keys => {
+      caches
+        .keys()
+        .then(
+          keys =>
+            Promise.all(
 
-        return Promise.all(
+              keys
+                .filter(
+                  key =>
+                    key !==
+                    CACHE_NAME
+                )
+                .map(
+                  key =>
+                    caches.delete(
+                      key
+                    )
+                )
 
-          keys
-            .filter(
-              key =>
-                key !== CACHE_NAME
             )
-            .map(
-              key =>
-                caches.delete(key)
-            )
+        )
 
-        );
+    );
 
-      })
 
-  );
+    self.clients.claim();
 
-  self.clients.claim();
-
-});
+  }
+);
 
 
 /* =========================================================
    FETCH
    ========================================================= */
 
-self.addEventListener("fetch", event => {
+self.addEventListener(
+  "fetch",
+  event => {
 
-  event.respondWith(
+    event.respondWith(
 
-    caches.match(event.request)
-      .then(cached => {
+      caches
+        .match(
+          event.request
+        )
+        .then(
+          cached => {
 
-        if (cached) {
+            if (cached) {
 
-          return cached;
-
-        }
-
-        return fetch(event.request)
-          .then(response => {
-
-            /*
-              Só armazena respostas válidas.
-            */
-
-            if (
-              !response ||
-              response.status !== 200 ||
-              response.type === "opaque"
-            ) {
-
-              return response;
+              return cached;
 
             }
 
-            const responseClone =
-              response.clone();
 
-            caches.open(CACHE_NAME)
-              .then(cache => {
+            return fetch(
+              event.request
+            )
+              .then(
+                response => {
 
-                cache.put(
-                  event.request,
-                  responseClone
-                );
+                  if (
+                    !response ||
+                    response.status !==
+                      200 ||
+                    response.type ===
+                      "opaque"
+                  ) {
 
-              });
+                    return response;
 
-            return response;
+                  }
 
-          });
 
-      })
+                  const clone =
+                    response.clone();
 
-  );
 
-});
+                  caches
+                    .open(
+                      CACHE_NAME
+                    )
+                    .then(
+                      cache => {
+
+                        cache.put(
+                          event.request,
+                          clone
+                        );
+
+                      }
+                    );
+
+
+                  return response;
+
+                }
+              );
+
+          }
+        )
+
+    );
+
+  }
+);
