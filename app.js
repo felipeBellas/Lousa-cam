@@ -2360,10 +2360,11 @@ canvas.addEventListener(
        =================================================== */
 
     if (
-      pointerMode ===
-      "canvas" &&
-      !pointerMoved
-    ) {
+  pointerMode ===
+    "canvas" &&
+  !pointerMoved &&
+  duration <= 300
+) {
 
       /*
         Mostra somente Colar.
