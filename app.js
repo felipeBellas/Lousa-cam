@@ -1073,9 +1073,9 @@ function beginTextEditing(
     object.id;
 
 
-  inlineEditor.innerText =
-    object.text ||
-    "";
+  inlineEditor.innerHTML =
+  object.text ||
+  "";
 
 
   inlineEditor.style.color =
@@ -1187,9 +1187,7 @@ function finishTextEditing() {
   if (object) {
 
     object.text =
-      inlineEditor.innerText
-        .replace(/\u00a0/g, " ");
-
+  inlineEditor.innerHTML;
 
     /*
       Mantém dimensões redimensionadas.
@@ -1280,9 +1278,7 @@ inlineEditor.addEventListener(
 
 
     object.text =
-      inlineEditor.innerText
-        .replace(/\u00a0/g, " ");
-
+  inlineEditor.innerHTML;
 
     object.width =
       Math.max(
