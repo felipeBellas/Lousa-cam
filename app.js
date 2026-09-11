@@ -1121,35 +1121,6 @@ function beginTextEditing(
   inlineEditor.focus();
 
 
-  try {
-
-    const selection =
-      window.getSelection();
-
-    const range =
-      document.createRange();
-
-    range.selectNodeContents(
-      inlineEditor
-    );
-
-    range.collapse(
-      false
-    );
-
-    selection.removeAllRanges();
-
-    selection.addRange(
-      range
-    );
-
-  } catch (error) {
-
-    console.log(
-      error
-    );
-
-  }
 
 }
 
