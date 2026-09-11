@@ -195,6 +195,16 @@ let resizeStart =
 let pastePosition =
   null;
 
+/* =========================================================
+   DUPLO TOQUE — COLAR
+   ========================================================= */
+
+let lastTapTime = 0;
+let lastTapX = 0;
+let lastTapY = 0;
+
+const DOUBLE_TAP_DELAY = 350;
+const DOUBLE_TAP_DISTANCE = 35;
 
 /* =========================================================
    IMAGENS
