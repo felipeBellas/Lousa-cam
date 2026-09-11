@@ -1654,7 +1654,7 @@ pasteButton.addEventListener(
 
 
 pasteButton.addEventListener(
-  "click", */
+  "click", 
   async event => {
 
     event.preventDefault();
@@ -1707,7 +1707,7 @@ pasteButton.addEventListener(
   }
 );
 
-
+*/
 /* =========================================================
    LEITURA DO CLIPBOARD
    ========================================================= */
