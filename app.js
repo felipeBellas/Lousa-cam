@@ -72,8 +72,6 @@ const textToolButton =
 const canvasMenu =
   $("canvasMenu");
 
-const pasteButton =
-  $("pasteButton");
 
 const inlineEditor =
   $("inlineEditor");
@@ -1644,7 +1642,7 @@ function closeCanvasPasteMenu() {
 /* =========================================================
    COLAR
    ========================================================= */
-
+/*
 pasteButton.addEventListener(
   "pointerdown",
   event => {
@@ -1668,9 +1666,9 @@ pasteButton.addEventListener(
       pastePosition;
 
 
-    /*
-      Fecha antes de ler.
-    */
+  
+    
+    
 
     closeCanvasPasteMenu();
 
@@ -1709,7 +1707,7 @@ pasteButton.addEventListener(
   }
 );
 
-
+*/
 /* =========================================================
    LEITURA DO CLIPBOARD
    ========================================================= */
