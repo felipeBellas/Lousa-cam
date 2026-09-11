@@ -1055,7 +1055,9 @@ function createTextObject(
    ========================================================= */
 
 function beginTextEditing(
-  object
+  object,
+  tapX = null,
+  tapY = null
 ) {
 
   if (!object) {
@@ -1120,11 +1122,118 @@ function beginTextEditing(
 
   inlineEditor.focus();
 
+if (
+  tapX !== null &&
+  tapY !== null
+) {
+
+  requestAnimationFrame(
+    () => {
+
+      placeCaretAtPoint(
+        tapX,
+        tapY
+      );
+
+    }
+  );
 
 
 }
 
+function placeCaretAtPoint(
+  x,
+  y
+) {
 
+  try {
+
+    const rect =
+      inlineEditor.getBoundingClientRect();
+
+    const clientX =
+      x;
+
+    const clientY =
+      y;
+
+    let range = null;
+
+    if (
+      document.caretRangeFromPoint
+    ) {
+
+      range =
+        document.caretRangeFromPoint(
+          clientX,
+          clientY
+        );
+
+    } else if (
+      document.caretPositionFromPoint
+    ) {
+
+      const position =
+        document.caretPositionFromPoint(
+          clientX,
+          clientY
+        );
+
+      if (position) {
+
+        range =
+          document.createRange();
+
+        range.setStart(
+          position.offsetNode,
+          position.offset
+        );
+
+        range.collapse(
+          true
+        );
+
+      }
+
+    }
+
+    if (!range) {
+
+      return;
+
+    }
+
+    if (
+      !inlineEditor.contains(
+        range.startContainer
+      )
+    ) {
+
+      return;
+
+    }
+
+    const selection =
+      window.getSelection();
+
+    selection.removeAllRanges();
+
+    selection.addRange(
+      range
+    );
+
+    inlineEditor.focus();
+
+  } catch (error) {
+
+    console.log(
+      "Erro ao posicionar cursor:",
+      error
+    );
+
+  }
+
+}
 /* =========================================================
    POSIÇÃO DO EDITOR
    ========================================================= */
@@ -2370,7 +2479,9 @@ canvas.addEventListener(
           hideObjectCancel();
 
           beginTextEditing(
-            object
+          object,
+          point.x,
+          point.y
           );
 
         }
