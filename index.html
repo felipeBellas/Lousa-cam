@@ -321,43 +321,37 @@
        Não modifica os botões originais.
        ===================================================== */
 
-   #textToolButton {
+    #textToolButton {
 
-  position: static;
+      position: absolute;
 
-  width: 40px;
+      left: 50%;
 
-  height: 40px;
+      top: 0;
 
-  flex-shrink: 0;
+      transform:
+        translateX(-50%);
 
-  transform: none;
+      z-index: 30;
 
-  z-index: auto;
+      font-size: 20px;
 
-  font-size: 20px;
+      font-weight: 700;
 
-  font-weight: 700;
+      font-family: Arial, sans-serif;
 
-  font-family: Arial, sans-serif;
+      pointer-events: auto;
 
-  pointer-events: auto;
-
-}
+    }
 
 
     #textToolButton:active {
 
-  transform: scale(0.92);
+      transform:
+        translateX(-50%)
+        scale(0.92);
 
-}
-    .text-menu-item {
-
-  justify-content: flex-start;
-
-  gap: 10px;
-
-}
+    }
 
 
     /* =====================================================
@@ -483,22 +477,22 @@
 
       position: absolute;
 
-        top:
-    calc(
-      max(16px, env(safe-area-inset-top))
-      + 58px
-    );
+      top:
+        max(
+          72px,
+          calc(
+            env(safe-area-inset-top)
+            + 60px
+          )
+        );
 
-  left:
-    max(16px, env(safe-area-inset-left));
+      right:
+        max(
+          16px,
+          env(safe-area-inset-right)
+        );
 
       padding: 16px;
-        width: max-content;
-
-  max-width:
-    calc(
-      100vw - 32px
-    );
 
       border-radius: 22px;
 
@@ -621,8 +615,23 @@
 
 
     #pasteButton {
-  display: none !important;
-}
+
+      width: auto;
+
+      min-width: 0px;
+
+      height: 0px;
+
+      padding:
+        0 1px;
+
+      border-radius: 21px;
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+    }
 
 
     /* =====================================================
@@ -896,7 +905,15 @@
     }
 
 
-   
+    @media (max-width: 380px) {
+
+      #textToolButton {
+
+        top: 0;
+
+      }
+
+    }
 
   </style>
 
@@ -1030,7 +1047,18 @@
       </div>
 
 
-      
+      <!-- ÚNICO NOVO BOTÃO -->
+
+      <button
+        id="textToolButton"
+        aria-label="Texto"
+        title="Texto">
+
+        T
+
+      </button>
+
+
       <div id="right">
 
 
@@ -1089,44 +1117,28 @@
          ================================================= -->
 
     <div
-  id="menuPanel"
-  class="panel"
-  aria-hidden="true">
+      id="menuPanel"
+      class="panel"
+      aria-hidden="true">
 
-  <div class="row">
+      <div class="row">
 
-    <strong>
-      Menu
-    </strong>
+        <strong>
+          Lousa Cam 2.0
+        </strong>
 
-  </div>
+      </div>
 
-  <div class="row">
 
-    <span>
-      
-    </span>
+      <div class="row">
 
-  </div>
+        <span>
+          Desenhe diretamente sobre a imagem da câmera.
+        </span>
 
-  <div class="row text-menu-item">
+      </div>
 
-    <button
-      id="textToolButton"
-      aria-label="Texto"
-      title="Texto">
-
-      T
-
-    </button>
-
-    <span>
-      
-    </span>
-
-  </div>
-
-</div>
+    </div>
 
 
     <!-- =================================================
@@ -1236,7 +1248,7 @@
          COLAR
          ================================================= -->
 
- <div id="canvasMenu">
+    <div id="canvasMenu">
 
       <button id="pasteButton">
 
@@ -1245,6 +1257,7 @@
       </button>
 
     </div>
+
 
     <!-- =================================================
          CANCELAR IMAGEM
@@ -1299,9 +1312,8 @@
   <!-- =================================================
        TELA INICIAL
        ================================================= -->
-      
-      
-       <div id="startOverlay">
+
+  <div id="startOverlay">
 
 
     <div id="startCard">
@@ -1327,13 +1339,13 @@
 
       </p>
 
-  <button
-  id="startBtn"
-  type="button">
 
-  Ativar câmera e microfone
+      <button id="startBtn">
 
-</button>
+        Ativar câmera e microfone
+
+      </button>
+
 
       <div id="permissionHint">
 
@@ -1351,7 +1363,7 @@
 </div>
 
 
-<script src="./app.js?v=20260910-01"></script>
+<script src="./app.js?v=20260911-02"></script>
 
 </body>
 
