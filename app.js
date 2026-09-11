@@ -2352,42 +2352,85 @@ canvas.addEventListener(
 
     }
 
+/* ===================================================
+   DUPLO TOQUE — COLAR
+   =================================================== */
 
-    /* ===================================================
-       TOQUE SIMPLES NO CANVAS
-       =================================================== */
-
-    if (
+if (
   pointerMode ===
-    "canvas" &&
+  "canvas" &&
   !pointerMoved &&
   duration <= 300
 ) {
 
-      /*
-        Mostra somente Colar.
-      */
+  const now =
+    Date.now();
 
-      showCanvasPasteMenu(
-        point.x,
-        point.y
-      );
-
-    }
-
-
-    pointerMode =
-      null;
-
-
-    releasePointer(
-      event
+  const distance =
+    Math.sqrt(
+      Math.pow(
+        point.x -
+        lastTapX,
+        2
+      ) +
+      Math.pow(
+        point.y -
+        lastTapY,
+        2
+      )
     );
 
+  const isDoubleTap =
+    lastTapTime > 0 &&
+    now -
+      lastTapTime <=
+      DOUBLE_TAP_DELAY &&
+    distance <=
+      DOUBLE_TAP_DISTANCE;
+
+  if (isDoubleTap) {
+
+    lastTapTime = 0;
+
+    closeCanvasPasteMenu();
+
+    pasteFromClipboard(
+      point.x,
+      point.y
+    ).then(
+      success => {
+
+        if (success) {
+
+          toast(
+            "Conteúdo colado"
+          );
+
+        } else {
+
+          toast(
+            "Não foi possível colar"
+          );
+
+        }
+
+      }
+    );
+
+  } else {
+
+    lastTapTime =
+      now;
+
+    lastTapX =
+      point.x;
+
+    lastTapY =
+      point.y;
 
   }
-);
 
+}
 
 /* =========================================================
    POINTER CANCEL
