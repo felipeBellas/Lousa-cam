@@ -660,6 +660,49 @@ function drawObject(
   object
 ) {
 
+  if (!object) {
+    return;
+  }
+
+  const rotation =
+    object.rotation || 0;
+
+  /*
+    Centro do objeto.
+  */
+  const centerX =
+    object.x +
+    object.width / 2;
+
+  const centerY =
+    object.y +
+    object.height / 2;
+
+  c.save();
+
+  /*
+    Rotaciona ao redor do centro
+    do próprio objeto.
+  */
+  if (rotation !== 0) {
+
+    c.translate(
+      centerX,
+      centerY
+    );
+
+    c.rotate(
+      rotation
+    );
+
+    c.translate(
+      -centerX,
+      -centerY
+    );
+
+  }
+
+
   if (
     object.type ===
     "text"
@@ -670,8 +713,9 @@ function drawObject(
       object
     );
 
-    return;
+    c.restore();
 
+    return;
   }
 
 
@@ -687,6 +731,7 @@ function drawObject(
 
   }
 
+  c.restore();
 }
 
 
@@ -1386,7 +1431,34 @@ function drawSelection(
 
 
   c.save();
+  const rotation =
+  object.rotation || 0;
 
+if (rotation !== 0) {
+
+  const centerX =
+    object.x +
+    object.width / 2;
+
+  const centerY =
+    object.y +
+    object.height / 2;
+
+  c.translate(
+    centerX,
+    centerY
+  );
+
+  c.rotate(
+    rotation
+  );
+
+  c.translate(
+    -centerX,
+    -centerY
+  );
+
+}
 
   c.strokeStyle =
     "rgba(255,255,255,.95)";
@@ -1642,18 +1714,95 @@ function objectContainsPoint(
   y
 ) {
 
+  const rotation =
+    object.rotation || 0;
+
+  /*
+    Sem rotação:
+    mantém exatamente o comportamento
+    original.
+  */
+  if (rotation === 0) {
+
+    return (
+
+      x >= object.x - 8 &&
+
+      x <=
+        object.x +
+        object.width +
+        8 &&
+
+      y >= object.y - 8 &&
+
+      y <=
+        object.y +
+        object.height +
+        8
+
+    );
+
+  }
+
+
+  /*
+    Centro do objeto.
+  */
+  const centerX =
+    object.x +
+    object.width / 2;
+
+  const centerY =
+    object.y +
+    object.height / 2;
+
+
+  /*
+    Converte o ponto tocado
+    para o sistema de coordenadas
+    antes da rotação.
+  */
+  const dx =
+    x - centerX;
+
+  const dy =
+    y - centerY;
+
+  const cos =
+    Math.cos(
+      -rotation
+    );
+
+  const sin =
+    Math.sin(
+      -rotation
+    );
+
+  const localX =
+    centerX +
+    dx * cos -
+    dy * sin;
+
+  const localY =
+    centerY +
+    dx * sin +
+    dy * cos;
+
+
   return (
 
-    x >= object.x - 8 &&
+    localX >=
+      object.x - 8 &&
 
-    x <=
+    localX <=
       object.x +
       object.width +
       8 &&
 
-    y >= object.y - 8 &&
+    localY >=
+      object.y - 8 &&
 
-    y <=
+    localY <=
       object.y +
       object.height +
       8
@@ -1672,25 +1821,78 @@ function isResizeHandle(
   const size =
     24;
 
+  const rotation =
+    object.rotation || 0;
+
+  let localX =
+    x;
+
+  let localY =
+    y;
+
+
+  /*
+    Se o objeto estiver girado,
+    converte o toque para as
+    coordenadas originais da caixa.
+  */
+  if (rotation !== 0) {
+
+    const centerX =
+      object.x +
+      object.width / 2;
+
+    const centerY =
+      object.y +
+      object.height / 2;
+
+    const dx =
+      x - centerX;
+
+    const dy =
+      y - centerY;
+
+    const cos =
+      Math.cos(
+        -rotation
+      );
+
+    const sin =
+      Math.sin(
+        -rotation
+      );
+
+    localX =
+      centerX +
+      dx * cos -
+      dy * sin;
+
+    localY =
+      centerY +
+      dx * sin +
+      dy * cos;
+
+  }
+
 
   return (
 
-    x >=
+    localX >=
       object.x +
       object.width -
       size &&
 
-    x <=
+    localX <=
       object.x +
       object.width +
       8 &&
 
-    y >=
+    localY >=
       object.y +
       object.height -
       size &&
 
-    y <=
+    localY <=
       object.y +
       object.height +
       8
@@ -1698,7 +1900,6 @@ function isResizeHandle(
   );
 
 }
-
 
 function findObjectAt(
   x,
@@ -2066,7 +2267,12 @@ function updateEditorPosition() {
   inlineEditor.style.top =
     `${object.y}px`;
 
+  inlineEditor.style.transformOrigin =
+  "center center";
 
+  inlineEditor.style.transform =
+  `rotate(${object.rotation || 0}rad)`;
+   
   updateTextFormatToolbarPosition();
 
 }
@@ -3160,7 +3366,13 @@ function beginPinchGesture() {
 
     startDistance:
       info.distance,
+    
+     startAngle:
+      info.angle,
 
+     startRotation:
+     object.rotation || 0,
+     
     startCenterX:
       info.centerX,
 
@@ -3234,7 +3446,42 @@ function updatePinchGesture() {
       0.25,
       5
     );
+/*
+  ROTAÇÃO COM DOIS DEDOS
+*/
 
+let angleDelta =
+  info.angle -
+  pinchState.startAngle;
+
+/*
+  Corrige a passagem entre
+  +180° e -180° para evitar
+  saltos bruscos.
+*/
+if (
+  angleDelta >
+  Math.PI
+) {
+
+  angleDelta -=
+    Math.PI * 2;
+
+}
+
+else if (
+  angleDelta <
+  -Math.PI
+) {
+
+  angleDelta +=
+    Math.PI * 2;
+
+}
+
+object.rotation =
+  pinchState.startRotation +
+  angleDelta;
   const newWidth =
     Math.max(
       50,
