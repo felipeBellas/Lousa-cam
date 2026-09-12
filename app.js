@@ -1050,10 +1050,6 @@ function createTextObject(
 }
 
 
-/* =========================================================
-   EDITOR DE TEXTO
-   ========================================================= */
-
 function beginTextEditing(
   object,
   tapX = null,
@@ -1064,9 +1060,7 @@ function beginTextEditing(
     return;
   }
 
-
   finishTextEditing();
-
 
   selectedObjectId =
     object.id;
@@ -1074,20 +1068,16 @@ function beginTextEditing(
   editingObjectId =
     object.id;
 
-
-  inlineEditor.innerHTML =
-  object.text ||
-  "";
-
+  inlineEditor.innerText =
+    object.text ||
+    "";
 
   inlineEditor.style.color =
     object.color ||
     "#fff";
 
-
   inlineEditor.style.fontSize =
     `${object.fontSize || 24}px`;
-
 
   inlineEditor.style.width =
     `${Math.max(
@@ -1095,51 +1085,55 @@ function beginTextEditing(
       object.width
     )}px`;
 
-
   inlineEditor.style.height =
     `${Math.max(
       40,
       object.height
     )}px`;
 
-
   inlineEditor.classList.add(
     "show"
   );
 
-
   updateEditorPosition();
-
 
   redraw();
 
-
   /*
-    IMPORTANTE:
-    focus direto para permitir
+    Foco direto para permitir
     abertura do teclado no Safari.
   */
-
   inlineEditor.focus();
 
-if (
-  tapX !== null &&
-  tapY !== null
-) {
+  /*
+    Se o toque veio de um texto existente,
+    tenta posicionar o cursor exatamente
+    onde o usuário tocou.
+  */
+  if (
+    tapX !== null &&
+    tapY !== null
+  ) {
 
-  requestAnimationFrame(
-    () => {
+    requestAnimationFrame(
+      () => {
 
-      placeCaretAtPoint(
-        tapX,
-        tapY
-      );
+        placeCaretAtPoint(
+          tapX,
+          tapY
+        );
 
-    }
-  );
+      }
+    );
 
+  }
 
 }
+
+
+/* =========================================================
+   POSICIONAR CURSOR NO PONTO DO TOQUE
+   ========================================================= */
 
 function placeCaretAtPoint(
   x,
@@ -1148,17 +1142,23 @@ function placeCaretAtPoint(
 
   try {
 
-    const rect =
-      inlineEditor.getBoundingClientRect();
+    const canvasRect =
+      canvas.getBoundingClientRect();
 
     const clientX =
+      canvasRect.left +
       x;
 
     const clientY =
+      canvasRect.top +
       y;
 
-    let range = null;
+    let range =
+      null;
 
+    /*
+      Safari / WebKit
+    */
     if (
       document.caretRangeFromPoint
     ) {
@@ -1169,7 +1169,12 @@ function placeCaretAtPoint(
           clientY
         );
 
-    } else if (
+    }
+
+    /*
+      Fallback para outros navegadores
+    */
+    else if (
       document.caretPositionFromPoint
     ) {
 
@@ -1197,12 +1202,19 @@ function placeCaretAtPoint(
 
     }
 
+    /*
+      Não encontrou uma posição válida.
+    */
     if (!range) {
 
       return;
 
     }
 
+    /*
+      Garante que o cursor pertence
+      ao editor de texto.
+    */
     if (
       !inlineEditor.contains(
         range.startContainer
@@ -1296,7 +1308,8 @@ function finishTextEditing() {
   if (object) {
 
     object.text =
-  inlineEditor.innerHTML;
+  inlineEditor.innerText
+    .replace(/\u00a0/g, " ");
 
     /*
       Mantém dimensões redimensionadas.
@@ -1387,7 +1400,8 @@ inlineEditor.addEventListener(
 
 
     object.text =
-  inlineEditor.innerHTML;
+  inlineEditor.innerText
+    .replace(/\u00a0/g, " ");
 
     object.width =
       Math.max(
