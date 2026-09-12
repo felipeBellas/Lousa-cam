@@ -4058,18 +4058,18 @@ document.addEventListener(
     }
 
     const range =
-      selection.getRangeAt(0);
+  selection.getRangeAt(0);
 
-    if (
-      inlineEditor.contains(
-        range.commonAncestorContainer
-      )
-    ) {
+if (
+  !range.collapsed &&
+  inlineEditor.contains(
+    range.commonAncestorContainer
+  )
+) {
+  savedTextSelection =
+    range.cloneRange();
 
-      savedTextSelection =
-        range.cloneRange();
-
-    }
+}
 
   }
 );
@@ -4290,14 +4290,13 @@ function restoreTextSelection() {
     window.getSelection();
 
 
-  selection.removeAllRanges();
-
-  selection.addRange(
-    savedTextSelection
-  );
-
-
   inlineEditor.focus();
+
+selection.removeAllRanges();
+
+selection.addRange(
+  savedTextSelection
+);
 
 
   return true;
