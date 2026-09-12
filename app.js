@@ -1448,66 +1448,179 @@ function getTextDimensions(
   object
 ) {
 
-  const fontSize =
+  /*
+    Mede o texto considerando também
+    os <span> com font-size individual.
+
+    Isso é importante porque A+ / A-
+    aplica o tamanho somente ao trecho
+    selecionado.
+  */
+
+  const baseFontSize =
     object.fontSize ||
     24;
 
-
-  const lines =
+  const text =
     String(
       object.text ||
       ""
-    ).split("\n");
+    );
 
-
-  ctx.save();
-
-
-  ctx.font =
-    `${fontSize}px Arial, sans-serif`;
-
-
-  let width =
-    60;
-
-
-  for (
-    const line
-    of lines
+  /*
+    Texto simples.
+  */
+  if (
+    !object.richText
   ) {
 
-    width =
-      Math.max(
-        width,
-        ctx.measureText(
-          line
-        ).width + 20
-      );
+    ctx.save();
 
+    ctx.font =
+      `${baseFontSize}px Arial, sans-serif`;
+
+    const lines =
+      text.split("\n");
+
+    let width =
+      60;
+
+    for (
+      const line
+      of lines
+    ) {
+
+      width =
+        Math.max(
+          width,
+          ctx.measureText(
+            line
+          ).width + 20
+        );
+
+    }
+
+    ctx.restore();
+
+    return {
+      width:
+        width,
+
+      height:
+        Math.max(
+          35,
+          lines.length *
+          baseFontSize *
+          1.15 +
+          12
+        )
+    };
   }
 
+  /*
+    Texto formatado.
 
-  ctx.restore();
+    Cria um elemento temporário
+    exatamente para medir o HTML
+    já contendo os tamanhos dos spans.
+  */
 
+  const measure =
+    document.createElement(
+      "div"
+    );
+
+  measure.innerHTML =
+    object.richText;
+
+  /*
+    Mantém a mesma fonte base
+    utilizada pelo editor.
+  */
+
+  measure.style.position =
+    "absolute";
+
+  measure.style.left =
+    "-100000px";
+
+  measure.style.top =
+    "-100000px";
+
+  measure.style.visibility =
+    "hidden";
+
+  measure.style.display =
+    "block";
+
+  measure.style.width =
+    "max-content";
+
+  measure.style.height =
+    "auto";
+
+  measure.style.minWidth =
+    "0";
+
+  measure.style.maxWidth =
+    "none";
+
+  measure.style.whiteSpace =
+    "pre-wrap";
+
+  measure.style.fontFamily =
+    "Arial, sans-serif";
+
+  measure.style.fontSize =
+    `${baseFontSize}px`;
+
+  measure.style.fontWeight =
+    "normal";
+
+  measure.style.fontStyle =
+    "normal";
+
+  measure.style.lineHeight =
+    "1.15";
+
+  document.body.appendChild(
+    measure
+  );
+
+  const rect =
+    measure.getBoundingClientRect();
+
+  /*
+    Garante dimensões mínimas
+    para a caixa continuar
+    selecionável e movimentável.
+  */
+
+  const width =
+    Math.max(
+      60,
+      Math.ceil(
+        rect.width
+      ) + 20
+    );
 
   const height =
     Math.max(
       35,
-      lines.length *
-      fontSize *
-      1.15 +
-      12
+      Math.ceil(
+        rect.height
+      ) + 12
     );
 
+  measure.remove();
 
   return {
+    width:
+      width,
 
-    width,
-
-    height
-
+    height:
+      height
   };
-
 }
 
 
@@ -2104,22 +2217,27 @@ function finishTextEditing() {
     object.richText =
       inlineEditor.innerHTML;
 
-    /*
-      Mantém dimensões redimensionadas.
-    */
+/*
+  Recalcula as dimensões finais
+  considerando os spans com
+  tamanhos diferentes.
+*/
+const dimensions =
+  getTextDimensions(
+    object
+  );
 
-    const width =
-      inlineEditor.offsetWidth;
+object.width =
+  Math.max(
+    60,
+    dimensions.width
+  );
 
-
-    const height =
-      inlineEditor.offsetHeight;
-
-    object.width =
-      Math.max(
-        60,
-        width
-      );
+object.height =
+  Math.max(
+    35,
+    dimensions.height
+  );
 
 
     object.height =
@@ -4315,7 +4433,6 @@ function changeSelectedFontSize(
 
   }
 
-
   if (
     !restoreTextSelection()
   ) {
@@ -4324,10 +4441,8 @@ function changeSelectedFontSize(
 
   }
 
-
   const selection =
     window.getSelection();
-
 
   if (
     !selection ||
@@ -4338,69 +4453,101 @@ function changeSelectedFontSize(
 
   }
 
-
-  /*
-    Cria um span próprio para
-    não depender do <font size>
-    do navegador.
-  */
-
   const range =
     selection.getRangeAt(0);
 
+  /*
+    Descobre o tamanho real do trecho
+    selecionado.
 
-  const span =
-    document.createElement(
-      "span"
-    );
+    Se ele já estiver dentro de um
+    span com font-size, usa esse tamanho.
+  */
 
-
-  const currentSize =
+  let currentSize =
     parseFloat(
       window.getComputedStyle(
         inlineEditor
       ).fontSize
     ) || 24;
 
+  const container =
+    range.commonAncestorContainer;
+
+  let element =
+    container.nodeType ===
+    Node.ELEMENT_NODE
+      ? container
+      : container.parentElement;
 
   /*
-    Se já existe uma formatação
-    no trecho selecionado,
-    tenta obter o tamanho real
-    daquele trecho.
+    Procura o primeiro elemento
+    que realmente tenha font-size.
   */
 
-  const parentElement =
-    range.commonAncestorContainer
-      .nodeType === Node.ELEMENT_NODE
-      ? range.commonAncestorContainer
-      : range.commonAncestorContainer.parentElement;
+  while (
+    element &&
+    element !== inlineEditor
+  ) {
 
+    const computed =
+      window.getComputedStyle(
+        element
+      );
 
-  const parentSize =
-    parentElement
-      ? parseFloat(
-          window.getComputedStyle(
-            parentElement
-          ).fontSize
-        )
-      : currentSize;
+    const size =
+      parseFloat(
+        computed.fontSize
+      );
 
+    if (
+      Number.isFinite(
+        size
+      )
+    ) {
+
+      currentSize =
+        size;
+
+      break;
+
+    }
+
+    element =
+      element.parentElement;
+
+  }
+
+  /*
+    Novo tamanho.
+  */
 
   const newSize =
     Math.max(
       10,
       Math.min(
         96,
-        parentSize +
+        currentSize +
         delta
       )
     );
 
+  /*
+    Cria o span somente no
+    trecho selecionado.
+  */
+
+  const span =
+    document.createElement(
+      "span"
+    );
 
   span.style.fontSize =
     `${newSize}px`;
 
+  /*
+    Aplica o tamanho.
+  */
 
   try {
 
@@ -4411,10 +4558,16 @@ function changeSelectedFontSize(
   } catch (error) {
 
     /*
-      Caso a seleção atravesse
-      elementos diferentes, usa
-      o comando nativo.
+      Se a seleção atravessar
+      elementos diferentes,
+      usa o comando nativo.
     */
+
+    document.execCommand(
+      "styleWithCSS",
+      false,
+      true
+    );
 
     document.execCommand(
       "fontSize",
@@ -4424,18 +4577,78 @@ function changeSelectedFontSize(
 
   }
 
+  /*
+    Salva novamente o HTML
+    formatado.
+  */
 
-  savedTextSelection =
-    selection
-      .getRangeAt(0)
-      .cloneRange();
+  const object =
+    getObjectById(
+      editingObjectId
+    );
 
+  if (object) {
 
-  saveFormattedText();
+    object.text =
+      inlineEditor.innerText
+        .replace(
+          /\u00a0/g,
+          " "
+        );
 
+    object.richText =
+      inlineEditor.innerHTML;
+
+    /*
+      RECALCULA A CAIXA
+      imediatamente.
+    */
+
+    const dimensions =
+      getTextDimensions(
+        object
+      );
+
+    object.width =
+      dimensions.width;
+
+    object.height =
+      dimensions.height;
+
+    inlineEditor.style.width =
+      `${dimensions.width}px`;
+
+    inlineEditor.style.height =
+      `${dimensions.height}px`;
+
+  }
+
+  /*
+    Mantém a seleção.
+  */
+
+  const newSelection =
+    window.getSelection();
+
+  if (
+    newSelection &&
+    newSelection.rangeCount
+  ) {
+
+    savedTextSelection =
+      newSelection
+        .getRangeAt(0)
+        .cloneRange();
+
+  }
+
+  updateEditorPosition();
+
+  updateTextFormatToolbarPosition();
+
+  redraw();
 
   return true;
-
 }
 
 
