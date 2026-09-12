@@ -370,52 +370,35 @@ function getPointerPosition(
    ========================================================= */
 function fitCanvas() {
 
-  const viewport =
-    window.visualViewport ||
-    null;
-
-
-  const width =
-    viewport
-      ? viewport.width
-      : window.innerWidth;
-
-
-  const height =
-    viewport
-      ? viewport.height
-      : window.innerHeight;
-
-
   const dpr =
     Math.min(
       window.devicePixelRatio || 1,
       2
     );
 
+  const width =
+    window.innerWidth;
+
+  const height =
+    window.innerHeight;
+
 
   canvas.width =
     Math.round(
-      width *
-      dpr
+      width * dpr
     );
-
 
   canvas.height =
     Math.round(
-      height *
-      dpr
+      height * dpr
     );
 
 
   canvas.style.width =
-    width +
-    "px";
-
+    width + "px";
 
   canvas.style.height =
-    height +
-    "px";
+    height + "px";
 
 
   ctx.setTransform(
@@ -430,15 +413,75 @@ function fitCanvas() {
 
   redraw();
 
-
   updateEditorPosition();
-
 
   updateCancelPosition();
 
 }
 
+/* =========================================================
+   CORRIGIR DESLOCAMENTO DO VIEWPORT NO iOS
+   ========================================================= */
 
+function compensateVisualViewport() {
+
+  if (
+    !window.visualViewport
+  ) {
+    return;
+  }
+
+  const viewport =
+    window.visualViewport;
+
+  const offsetTop =
+    viewport.offsetTop || 0;
+
+  const offsetLeft =
+    viewport.offsetLeft || 0;
+
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+  if (!app) {
+    return;
+  }
+
+
+  app.style.transform =
+    `translate3d(
+      ${offsetLeft}px,
+      ${offsetTop}px,
+      0
+    )`;
+
+}
+
+
+if (window.visualViewport) {
+
+  window.visualViewport.addEventListener(
+    "scroll",
+    compensateVisualViewport
+  );
+
+  window.visualViewport.addEventListener(
+    "resize",
+    () => {
+
+      compensateVisualViewport();
+
+      updateEditorPosition();
+
+      updateTextFormatToolbarPosition();
+
+    }
+  );
+
+}
 /* =========================================================
    REDESENHAR
    ========================================================= */
