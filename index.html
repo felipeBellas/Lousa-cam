@@ -928,7 +928,46 @@ body {
 
     }
 
+     /* =====================================================
+   FIXAR IMAGEM
+   ===================================================== */
 
+#objectLock {
+
+  position: fixed;
+
+  display: none;
+
+  z-index: 75;
+
+  width: auto;
+
+  min-width: 84px;
+
+  height: 40px;
+
+  padding:
+    0 16px;
+
+  border-radius: 20px;
+
+  background:
+    rgba(22, 22, 26, 0.9);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  color: #fff;
+
+}
+
+
+#objectLock.show {
+
+  display: flex;
+
+}
     /* =====================================================
        TELA INICIAL
        ===================================================== */
@@ -1305,29 +1344,39 @@ body {
          MENU
          ================================================= -->
 
-    <div
-      id="menuPanel"
-      class="panel"
-      aria-hidden="true">
+<div
+  id="menuPanel"
+  class="panel"
+  aria-hidden="true">
 
-      <div class="row">
+  <div class="row">
 
-        <strong>
-          Menu
-        </strong>
+    <strong>
+      Menu
+    </strong>
 
-      </div>
+  </div>
 
 
-      <div class="row">
+  <div class="row">
 
-        <span>
-          
-        </span>
+    <button
+      id="unlockImagesButton"
+      type="button"
+      style="
+        width:auto;
+        height:40px;
+        padding:0 16px;
+        border-radius:20px;
+      ">
 
-      </div>
+      🔓 Desbloquear imagens
 
-    </div>
+    </button>
+
+  </div>
+
+</div>
 
 
     <!-- =================================================
@@ -1458,7 +1507,15 @@ body {
 
     </button>
 
+    <!-- =================================================
+     FIXAR IMAGEM
+     ================================================= -->
 
+<button id="objectLock">
+
+  🔒 Fixar
+
+</button>
     <!-- =================================================
      BARRA DE FORMATAÇÃO DO TEXTO
      ================================================= -->
