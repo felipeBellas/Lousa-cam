@@ -75,6 +75,9 @@ const canvasMenu =
 
 const inlineEditor =
   $("inlineEditor");
+  
+const textFormatToolbar =
+  $("textFormatToolbar");
 
 const objectCancel =
   $("objectCancel");
@@ -1425,11 +1428,22 @@ function beginTextEditing(
     )}px`;
 
   inlineEditor.classList.add(
-    "show"
-  );
+  "show"
+);
 
-  updateEditorPosition();
+textFormatToolbar.classList.add(
+  "show"
+);
 
+updateEditorPosition();
+
+requestAnimationFrame(
+  () => {
+
+    updateTextFormatToolbarPosition();
+
+  }
+);
   redraw();
 
   /*
@@ -1612,8 +1626,109 @@ function updateEditorPosition() {
     `${object.y}px`;
 
 
+  updateTextFormatToolbarPosition();
+
 }
 
+
+/* =========================================================
+   POSIÇÃO DA BARRA DE FORMATAÇÃO
+   ========================================================= */
+
+function updateTextFormatToolbarPosition() {
+
+  if (
+    !editingObjectId ||
+    !textFormatToolbar
+  ) {
+
+    return;
+
+  }
+
+
+  const editorRect =
+    inlineEditor.getBoundingClientRect();
+
+
+  const toolbarRect =
+    textFormatToolbar.getBoundingClientRect();
+
+
+  const gap =
+    8;
+
+
+  let left =
+    editorRect.left;
+
+
+  let top =
+    editorRect.top -
+    toolbarRect.height -
+    gap;
+
+
+  /*
+    Impede que a barra saia
+    pelas laterais da tela.
+  */
+
+  left =
+    Math.max(
+      6,
+      Math.min(
+        left,
+        window.innerWidth -
+        toolbarRect.width -
+        6
+      )
+    );
+
+
+  /*
+    Se não houver espaço acima
+    da caixa, coloca abaixo.
+  */
+
+  if (top < 6) {
+
+    top =
+      editorRect.bottom +
+      gap;
+
+  }
+
+
+  /*
+    Impede que a barra saia
+    pela parte inferior.
+  */
+
+  if (
+    top +
+    toolbarRect.height >
+    window.innerHeight - 6
+  ) {
+
+    top =
+      Math.max(
+        6,
+        editorRect.top -
+        toolbarRect.height -
+        gap
+      );
+
+  }
+
+
+  textFormatToolbar.style.left =
+    `${left}px`;
+
+  textFormatToolbar.style.top =
+    `${top}px`;
+
+}
 
 /* =========================================================
    FINALIZAR TEXTO
@@ -1697,11 +1812,15 @@ function finishTextEditing() {
   "show"
 );
 
+textFormatToolbar.classList.remove(
+  "show"
+);
+
 
 editingObjectId =
   null;
 
-selectedObjectId =
+savedTextSelection =
   null;
 
 
@@ -3631,6 +3750,453 @@ document
     }
   );
 
+/* =========================================================
+   FORMATAÇÃO DE TEXTO
+   ========================================================= */
+
+function restoreTextSelection() {
+
+  if (
+    !savedTextSelection ||
+    !editingObjectId
+  ) {
+
+    return false;
+
+  }
+
+
+  const selection =
+    window.getSelection();
+
+
+  selection.removeAllRanges();
+
+  selection.addRange(
+    savedTextSelection
+  );
+
+
+  inlineEditor.focus();
+
+
+  return true;
+
+}
+
+
+/* =========================================================
+   SALVAR TEXTO FORMATADO
+   ========================================================= */
+
+function saveFormattedText() {
+
+  if (!editingObjectId) {
+
+    return;
+
+  }
+
+
+  const object =
+    getObjectById(
+      editingObjectId
+    );
+
+
+  if (!object) {
+
+    return;
+
+  }
+
+
+  object.text =
+    inlineEditor.innerText
+      .replace(/\u00a0/g, " ");
+
+
+  object.richText =
+    inlineEditor.innerHTML;
+
+
+  const dimensions =
+    getTextDimensions(
+      object
+    );
+
+
+  object.width =
+    dimensions.width;
+
+  object.height =
+    dimensions.height;
+
+
+  inlineEditor.style.width =
+    `${dimensions.width}px`;
+
+  inlineEditor.style.height =
+    `${dimensions.height}px`;
+
+
+  updateEditorPosition();
+
+  redraw();
+
+}
+
+
+/* =========================================================
+   APLICAR FORMATAÇÃO
+   ========================================================= */
+
+function applyTextFormat(
+  command,
+  value = null
+) {
+
+  if (
+    !editingObjectId ||
+    !savedTextSelection
+  ) {
+
+    return false;
+
+  }
+
+
+  if (
+    !restoreTextSelection()
+  ) {
+
+    return false;
+
+  }
+
+
+  const selection =
+    window.getSelection();
+
+
+  if (
+    !selection ||
+    selection.isCollapsed
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    Usa o mecanismo nativo do
+    contenteditable, que é bem
+    suportado pelo Safari/iPhone.
+  */
+
+  try {
+
+    document.execCommand(
+      "styleWithCSS",
+      false,
+      true
+    );
+
+  } catch (error) {
+
+    console.log(
+      "styleWithCSS:",
+      error
+    );
+
+  }
+
+
+  document.execCommand(
+    command,
+    false,
+    value
+  );
+
+
+  savedTextSelection =
+    selection
+      .getRangeAt(0)
+      .cloneRange();
+
+
+  saveFormattedText();
+
+
+  return true;
+
+}
+
+
+/* =========================================================
+   TAMANHO DA FONTE
+   ========================================================= */
+
+function changeSelectedFontSize(
+  delta
+) {
+
+  if (
+    !editingObjectId ||
+    !savedTextSelection
+  ) {
+
+    return false;
+
+  }
+
+
+  if (
+    !restoreTextSelection()
+  ) {
+
+    return false;
+
+  }
+
+
+  const selection =
+    window.getSelection();
+
+
+  if (
+    !selection ||
+    selection.isCollapsed
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    Cria um span próprio para
+    não depender do <font size>
+    do navegador.
+  */
+
+  const range =
+    selection.getRangeAt(0);
+
+
+  const span =
+    document.createElement(
+      "span"
+    );
+
+
+  const currentSize =
+    parseFloat(
+      window.getComputedStyle(
+        inlineEditor
+      ).fontSize
+    ) || 24;
+
+
+  /*
+    Se já existe uma formatação
+    no trecho selecionado,
+    tenta obter o tamanho real
+    daquele trecho.
+  */
+
+  const parentElement =
+    range.commonAncestorContainer
+      .nodeType === Node.ELEMENT_NODE
+      ? range.commonAncestorContainer
+      : range.commonAncestorContainer.parentElement;
+
+
+  const parentSize =
+    parentElement
+      ? parseFloat(
+          window.getComputedStyle(
+            parentElement
+          ).fontSize
+        )
+      : currentSize;
+
+
+  const newSize =
+    Math.max(
+      10,
+      Math.min(
+        96,
+        parentSize +
+        delta
+      )
+    );
+
+
+  span.style.fontSize =
+    `${newSize}px`;
+
+
+  try {
+
+    range.surroundContents(
+      span
+    );
+
+  } catch (error) {
+
+    /*
+      Caso a seleção atravesse
+      elementos diferentes, usa
+      o comando nativo.
+    */
+
+    document.execCommand(
+      "fontSize",
+      false,
+      "4"
+    );
+
+  }
+
+
+  savedTextSelection =
+    selection
+      .getRangeAt(0)
+      .cloneRange();
+
+
+  saveFormattedText();
+
+
+  return true;
+
+}
+
+
+/* =========================================================
+   BOTÕES DA BARRA
+   ========================================================= */
+
+textFormatToolbar
+  .querySelectorAll(
+    "[data-format]"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "pointerdown",
+        event => {
+
+          /*
+            Evita que o toque no botão
+            destrua a seleção do texto.
+          */
+
+          event.preventDefault();
+
+        }
+      );
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          const format =
+            button.dataset.format;
+
+
+          if (
+            format ===
+            "increase"
+          ) {
+
+            changeSelectedFontSize(
+              2
+            );
+
+            return;
+
+          }
+
+
+          if (
+            format ===
+            "decrease"
+          ) {
+
+            changeSelectedFontSize(
+              -2
+            );
+
+            return;
+
+          }
+
+
+          applyTextFormat(
+            format
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   CORES DA BARRA
+   ========================================================= */
+
+textFormatToolbar
+  .querySelectorAll(
+    ".format-color"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "pointerdown",
+        event => {
+
+          event.preventDefault();
+
+        }
+      );
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          const selectedColor =
+            button.dataset.color;
+
+
+          applyTextColor(
+            selectedColor
+          );
+
+        }
+      );
+
+    }
+  );
+  
 /* =========================================================
    ESPESSURA
    ========================================================= */
