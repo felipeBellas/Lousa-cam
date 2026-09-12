@@ -1400,8 +1400,8 @@ inlineEditor.addEventListener(
 
 
     object.text =
-  inlineEditor.innerText
-    .replace(/\u00a0/g, " ");
+      inlineEditor.innerText
+       .replace(/\u00a0/g, " ");
 
     object.width =
       Math.max(
