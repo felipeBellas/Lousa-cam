@@ -660,15 +660,145 @@ function drawTextObject(
     fontSize * 1.15;
 
   /*
-    Se o texto não possui formatação
-    por trecho, mantém exatamente
-    o comportamento anterior.
+    Largura interna da caixa.
+    O texto nunca poderá ultrapassar
+    essa largura.
   */
-  if (!object.richText) {
+  const maxWidth =
+    Math.max(
+      40,
+      object.width - 10
+    );
 
-    c.fillStyle =
-      object.color ||
-      "#fff";
+  /*
+    Desenha um trecho de texto,
+    quebrando automaticamente quando
+    atingir a largura da caixa.
+  */
+  function drawWrappedText(
+    text,
+    textColor
+  ) {
+
+    if (!text) {
+      return;
+    }
+
+    const words =
+      text.split(/(\s+)/);
+
+    for (
+      const word
+      of words
+    ) {
+
+      if (
+        word === ""
+      ) {
+        continue;
+      }
+
+      /*
+        Quebra de linha explícita.
+      */
+      if (
+        word.includes("\n")
+      ) {
+
+        const pieces =
+          word.split("\n");
+
+        for (
+          let i = 0;
+          i < pieces.length;
+          i++
+        ) {
+
+          if (
+            i > 0
+          ) {
+
+            currentX =
+              object.x;
+
+            currentY +=
+              lineHeight;
+
+          }
+
+          if (
+            pieces[i]
+          ) {
+
+            drawWrappedText(
+              pieces[i],
+              textColor
+            );
+
+          }
+
+        }
+
+        continue;
+      }
+
+      const wordWidth =
+        c.measureText(
+          word
+        ).width;
+
+      /*
+        Se a palavra não couber
+        na linha atual, passa para
+        a próxima linha.
+      */
+      if (
+        currentX >
+          object.x &&
+        currentX -
+          object.x +
+          wordWidth >
+          maxWidth
+      ) {
+
+        currentX =
+          object.x;
+
+        currentY +=
+          lineHeight;
+
+      }
+
+      c.fillStyle =
+        textColor ||
+        object.color ||
+        "#fff";
+
+      c.fillText(
+        word,
+        currentX,
+        currentY
+      );
+
+      currentX +=
+        wordWidth;
+
+    }
+
+  }
+
+  let currentX =
+    object.x;
+
+  let currentY =
+    object.y;
+
+  /*
+    Texto sem richText.
+  */
+  if (
+    !object.richText
+  ) {
 
     const lines =
       String(
@@ -677,17 +807,21 @@ function drawTextObject(
       ).split("\n");
 
     for (
-      let i = 0;
-      i < lines.length;
-      i++
+      const line
+      of lines
     ) {
 
-      c.fillText(
-        lines[i],
-        object.x,
-        object.y +
-        i * lineHeight
+      drawWrappedText(
+        line,
+        object.color ||
+        "#fff"
       );
+
+      currentX =
+        object.x;
+
+      currentY +=
+        lineHeight;
 
     }
 
@@ -697,8 +831,11 @@ function drawTextObject(
   }
 
   /*
-    Cria uma estrutura temporária
-    para ler as cores dos trechos.
+    Texto com cores diferentes.
+    Mantém FONT, style.color,
+    quebras de linha e faz
+    quebra automática dentro
+    da caixa.
   */
   const container =
     document.createElement(
@@ -708,35 +845,35 @@ function drawTextObject(
   container.innerHTML =
     object.richText;
 
-  let currentX =
-    object.x;
-
-  let currentY =
-    object.y;
-
   function drawNode(
     node,
     inheritedColor
   ) {
 
+    /*
+      Texto normal.
+    */
     if (
       node.nodeType ===
       Node.TEXT_NODE
     ) {
 
       const text =
-        node.nodeValue || "";
+        node.nodeValue ||
+        "";
 
-      const parts =
+      const lines =
         text.split("\n");
 
       for (
         let i = 0;
-        i < parts.length;
+        i < lines.length;
         i++
       ) {
 
-        if (i > 0) {
+        if (
+          i > 0
+        ) {
 
           currentX =
             object.x;
@@ -746,47 +883,40 @@ function drawTextObject(
 
         }
 
-        if (
-          parts[i].length
-        ) {
-
-          c.fillStyle =
-            inheritedColor ||
-            object.color ||
-            "#fff";
-
-          c.fillText(
-            parts[i],
-            currentX,
-            currentY
-          );
-
-          currentX +=
-            c.measureText(
-              parts[i]
-            ).width;
-
-        }
+        drawWrappedText(
+          lines[i],
+          inheritedColor ||
+          object.color ||
+          "#fff"
+        );
 
       }
 
       return;
     }
 
+    /*
+      Ignora nós que não sejam
+      elementos HTML.
+    */
     if (
       node.nodeType !==
       Node.ELEMENT_NODE
     ) {
 
       return;
+
     }
 
     let nodeColor =
       inheritedColor;
 
+    /*
+      <font color="">
+      */
     if (
       node.tagName ===
-      "FONT" &&
+        "FONT" &&
       node.getAttribute(
         "color"
       )
@@ -799,6 +929,9 @@ function drawTextObject(
 
     }
 
+    /*
+      style="color: ..."
+      */
     if (
       node.style &&
       node.style.color
@@ -809,6 +942,9 @@ function drawTextObject(
 
     }
 
+    /*
+      <br>
+      */
     if (
       node.tagName ===
       "BR"
@@ -821,8 +957,13 @@ function drawTextObject(
         lineHeight;
 
       return;
+
     }
 
+    /*
+      Percorre os filhos,
+      preservando a cor herdada.
+    */
     for (
       const child
       of node.childNodes
@@ -837,6 +978,10 @@ function drawTextObject(
 
   }
 
+  /*
+    Percorre todo o conteúdo
+    formatado.
+  */
   for (
     const child
     of container.childNodes
