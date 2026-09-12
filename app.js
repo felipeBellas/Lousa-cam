@@ -194,7 +194,15 @@ let dragOffsetY =
 
 let resizeStart =
   null;
+/* =========================================================
+   GESTO COM DOIS DEDOS
+   ========================================================= */
 
+let activePointers =
+  new Map();
+
+let pinchState =
+  null;
 
 /* =========================================================
    COLAR
@@ -3025,6 +3033,353 @@ function scaleRichTextFontSizes(
 }
 
 /* =========================================================
+   MANIPULAÇÃO COM DOIS DEDOS
+   ========================================================= */
+
+function getPinchInfo() {
+
+  if (
+    activePointers.size < 2
+  ) {
+    return null;
+  }
+
+  const points =
+    Array.from(
+      activePointers.values()
+    );
+
+  const p1 =
+    points[0];
+
+  const p2 =
+    points[1];
+
+  const dx =
+    p2.x - p1.x;
+
+  const dy =
+    p2.y - p1.y;
+
+  return {
+
+    distance:
+      Math.sqrt(
+        dx * dx +
+        dy * dy
+      ),
+
+    centerX:
+      (
+        p1.x +
+        p2.x
+      ) / 2,
+
+    centerY:
+      (
+        p1.y +
+        p2.y
+      ) / 2
+
+  };
+
+}
+
+
+function beginPinchGesture() {
+
+  if (
+    activePointers.size !== 2
+  ) {
+    return false;
+  }
+
+  const object =
+    getObjectById(
+      selectedObjectId
+    );
+
+  if (!object) {
+    return false;
+  }
+
+  const info =
+    getPinchInfo();
+
+  if (
+    !info ||
+    info.distance < 10
+  ) {
+    return false;
+  }
+
+  /*
+    Se o texto estiver sendo editado,
+    encerra somente a edição.
+    A formatação permanece preservada.
+  */
+  if (
+    editingObjectId
+  ) {
+    finishTextEditing();
+  }
+
+  /*
+    Evita que o primeiro dedo deixe
+    um traço de caneta ao iniciar
+    o gesto com dois dedos.
+  */
+  if (drawing) {
+
+    drawing =
+      false;
+
+    currentStroke =
+      null;
+
+  }
+
+  pointerMode =
+    "pinch";
+
+  pointerMoved =
+    true;
+
+  pinchState = {
+
+    objectId:
+      object.id,
+
+    startDistance:
+      info.distance,
+
+    startCenterX:
+      info.centerX,
+
+    startCenterY:
+      info.centerY,
+
+    x:
+      object.x,
+
+    y:
+      object.y,
+
+    width:
+      object.width,
+
+    height:
+      object.height,
+
+    fontSize:
+      object.fontSize || 24,
+
+    richText:
+      object.richText || null
+
+  };
+
+  hideObjectCancel();
+
+  redraw();
+
+  return true;
+}
+
+
+function updatePinchGesture() {
+
+  if (!pinchState) {
+    return;
+  }
+
+  const object =
+    getObjectById(
+      pinchState.objectId
+    );
+
+  if (!object) {
+    return;
+  }
+
+  const info =
+    getPinchInfo();
+
+  if (
+    !info ||
+    pinchState.startDistance <= 0
+  ) {
+    return;
+  }
+
+  let scale =
+    info.distance /
+    pinchState.startDistance;
+
+  /*
+    Impede tamanhos absurdamente
+    pequenos ou grandes.
+  */
+  scale =
+    clamp(
+      scale,
+      0.25,
+      5
+    );
+
+  const newWidth =
+    Math.max(
+      50,
+      pinchState.width *
+      scale
+    );
+
+  const newHeight =
+    Math.max(
+      35,
+      pinchState.height *
+      scale
+    );
+
+  /*
+    O centro acompanha os dois dedos.
+    Assim o usuário também pode
+    reposicionar naturalmente o objeto.
+  */
+  const centerOffsetX =
+    info.centerX -
+    pinchState.startCenterX;
+
+  const centerOffsetY =
+    info.centerY -
+    pinchState.startCenterY;
+
+  object.width =
+    newWidth;
+
+  object.height =
+    newHeight;
+
+  object.x =
+    pinchState.x +
+    centerOffsetX -
+    (
+      newWidth -
+      pinchState.width
+    ) / 2;
+
+  object.y =
+    pinchState.y +
+    centerOffsetY -
+    (
+      newHeight -
+      pinchState.height
+    ) / 2;
+
+
+  /*
+    TEXTO:
+    aumenta também a fonte.
+  */
+  if (
+    object.type ===
+    "text"
+  ) {
+
+    object.fontSize =
+      Math.max(
+        8,
+        pinchState.fontSize *
+        scale
+      );
+
+    /*
+      Usa a função criada na etapa
+      anterior, caso ela já exista.
+    */
+    if (
+      pinchState.richText &&
+      typeof scaleRichTextFontSizes ===
+        "function"
+    ) {
+
+      object.richText =
+        scaleRichTextFontSizes(
+          pinchState.richText,
+          scale,
+          pinchState.fontSize
+        );
+
+    }
+
+  }
+
+  updateCancelPosition();
+
+  redraw();
+}
+
+
+function endPinchGesture() {
+
+  /*
+    Libera todos os pointers envolvidos.
+  */
+  activePointers
+    .forEach(
+      (point, pointerId) => {
+
+        try {
+
+          if (
+            canvas.hasPointerCapture(
+              pointerId
+            )
+          ) {
+
+            canvas.releasePointerCapture(
+              pointerId
+            );
+
+          }
+
+        } catch (error) {
+
+          console.log(
+            error
+          );
+
+        }
+
+      }
+    );
+
+  activePointers.clear();
+
+  pinchState =
+    null;
+
+  pointerMode =
+    null;
+
+  activePointerId =
+    null;
+
+  pointerStart =
+    null;
+
+  pointerMoved =
+    false;
+
+  drawing =
+    false;
+
+  currentStroke =
+    null;
+
+  redraw();
+}
+/* =========================================================
    EVENTOS DE POINTER DA LOUSA
    ========================================================= */
 
@@ -3032,28 +3387,74 @@ canvas.addEventListener(
   "pointerdown",
   event => {
 
-    if (
-      activePointerId !== null
-    ) {
-
-      return;
-
-    }
-
-
-    activePointerId =
-      event.pointerId;
-
-
-    canvas.setPointerCapture(
-      event.pointerId
-    );
-
-
     const point =
       getPointerPosition(
         event
       );
+
+    /*
+      Guarda cada dedo separadamente.
+    */
+    if (
+      event.pointerType ===
+      "touch"
+    ) {
+
+      activePointers.set(
+        event.pointerId,
+        point
+      );
+
+    }
+
+    try {
+
+      canvas.setPointerCapture(
+        event.pointerId
+      );
+
+    } catch (error) {
+
+      console.log(
+        error
+      );
+
+    }
+
+    /*
+      Quando o segundo dedo tocar,
+      começa o redimensionamento
+      do objeto selecionado.
+    */
+    if (
+      event.pointerType ===
+        "touch" &&
+      activePointers.size === 2
+    ) {
+
+      if (
+        beginPinchGesture()
+      ) {
+
+        return;
+
+      }
+
+    }
+
+    /*
+      Com mouse ou apenas um dedo,
+      mantém exatamente o sistema
+      original.
+    */
+    if (
+      activePointerId !== null
+    ) {
+      return;
+    }
+
+    activePointerId =
+      event.pointerId;
 
 
     pointerStart = {
@@ -3235,6 +3636,46 @@ canvas.addEventListener(
   "pointermove",
   event => {
 
+    const point =
+      getPointerPosition(
+        event
+      );
+
+    /*
+      Atualiza a posição de cada dedo.
+    */
+    if (
+      activePointers.has(
+        event.pointerId
+      )
+    ) {
+
+      activePointers.set(
+        event.pointerId,
+        point
+      );
+
+    }
+
+    /*
+      Se dois dedos estiverem manipulando
+      um objeto, o movimento normal
+      fica temporariamente suspenso.
+    */
+    if (
+      pinchState
+    ) {
+
+      updatePinchGesture();
+
+      return;
+
+    }
+
+    /*
+      Com apenas um pointer,
+      funcionamento original.
+    */
     if (
       event.pointerId !==
       activePointerId
@@ -3243,12 +3684,6 @@ canvas.addEventListener(
       return;
 
     }
-
-
-    const point =
-      getPointerPosition(
-        event
-      );
 
 
     if (!pointerStart) {
@@ -3555,6 +3990,25 @@ canvas.addEventListener(
   "pointerup",
   event => {
 
+    /*
+      Se estávamos usando dois dedos,
+      encerra o gesto sem executar
+      toque, colar, desenho ou edição.
+    */
+    if (
+      pinchState
+    ) {
+
+      endPinchGesture();
+
+      return;
+
+    }
+
+    activePointers.delete(
+      event.pointerId
+    );
+
     if (
       event.pointerId !==
       activePointerId
@@ -3715,6 +4169,20 @@ canvas.addEventListener(
   "pointercancel",
   event => {
 
+    if (
+      pinchState
+    ) {
+
+      endPinchGesture();
+
+      return;
+
+    }
+
+    activePointers.delete(
+      event.pointerId
+    );
+     
     if (
       drawing
     ) {
