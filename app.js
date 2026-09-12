@@ -366,10 +366,26 @@ function getPointerPosition(
 
 
 /* =========================================================
-   CANVAS
+   AJUSTAR CANVAS AO VIEWPORT
    ========================================================= */
-
 function fitCanvas() {
+
+  const viewport =
+    window.visualViewport ||
+    null;
+
+
+  const width =
+    viewport
+      ? viewport.width
+      : window.innerWidth;
+
+
+  const height =
+    viewport
+      ? viewport.height
+      : window.innerHeight;
+
 
   const dpr =
     Math.min(
@@ -380,23 +396,25 @@ function fitCanvas() {
 
   canvas.width =
     Math.round(
-      window.innerWidth *
+      width *
       dpr
     );
 
+
   canvas.height =
     Math.round(
-      window.innerHeight *
+      height *
       dpr
     );
 
 
   canvas.style.width =
-    window.innerWidth +
+    width +
     "px";
 
+
   canvas.style.height =
-    window.innerHeight +
+    height +
     "px";
 
 
@@ -412,30 +430,13 @@ function fitCanvas() {
 
   redraw();
 
+
   updateEditorPosition();
+
 
   updateCancelPosition();
 
 }
-
-
-window.addEventListener(
-  "resize",
-  fitCanvas
-);
-
-
-window.addEventListener(
-  "orientationchange",
-  () => {
-
-    setTimeout(
-      fitCanvas,
-      250
-    );
-
-  }
-);
 
 
 /* =========================================================
