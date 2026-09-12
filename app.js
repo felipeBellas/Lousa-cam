@@ -651,12 +651,10 @@ function drawStroke(
   ) {
 
     return;
-
   }
 
 
   c.save();
-
 
   c.lineCap =
     "round";
@@ -688,28 +686,113 @@ function drawStroke(
     stroke.width;
 
 
+  const points =
+    stroke.points;
+
+
+  /*
+    Um único ponto:
+    desenha como pequeno círculo.
+  */
+  if (
+    points.length === 1
+  ) {
+
+    c.beginPath();
+
+    c.arc(
+      points[0].x,
+      points[0].y,
+      stroke.width / 2,
+      0,
+      Math.PI * 2
+    );
+
+    if (
+      stroke.tool ===
+      "eraser"
+    ) {
+
+      c.fillStyle =
+        "#000";
+
+    } else {
+
+      c.fillStyle =
+        stroke.color;
+
+    }
+
+    c.fill();
+
+    c.restore();
+
+    return;
+  }
+
+
+  /*
+    TRAÇO SUAVIZADO
+
+    Em vez de unir cada ponto com
+    segmentos retos, usamos curvas
+    quadráticas entre os pontos.
+  */
   c.beginPath();
 
-
   c.moveTo(
-    stroke.points[0].x,
-    stroke.points[0].y
+    points[0].x,
+    points[0].y
   );
 
 
   for (
     let i = 1;
-    i < stroke.points.length;
+    i < points.length - 1;
     i++
   ) {
 
-    c.lineTo(
-      stroke.points[i].x,
-      stroke.points[i].y
+    const current =
+      points[i];
+
+    const next =
+      points[i + 1];
+
+    const midX =
+      (
+        current.x +
+        next.x
+      ) / 2;
+
+    const midY =
+      (
+        current.y +
+        next.y
+      ) / 2;
+
+
+    c.quadraticCurveTo(
+      current.x,
+      current.y,
+      midX,
+      midY
     );
 
   }
 
+
+  /*
+    Finaliza exatamente no último ponto.
+  */
+  const last =
+    points[
+      points.length - 1
+    ];
+
+  c.lineTo(
+    last.x,
+    last.y
+  );
 
   c.stroke();
 
@@ -4668,11 +4751,54 @@ function continueDrawing(
   ) {
 
     return;
+  }
+
+
+  const points =
+    currentStroke.points;
+
+  const lastPoint =
+    points[
+      points.length - 1
+    ];
+
+
+  /*
+    Distância entre o último ponto
+    registrado e o novo ponto.
+  */
+  const dx =
+    point.x -
+    lastPoint.x;
+
+  const dy =
+    point.y -
+    lastPoint.y;
+
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy
+    );
+
+
+  /*
+    Ignora micro movimentos involuntários
+    do dedo.
+
+    Isso reduz muito o "tremido"
+    das letras no celular.
+  */
+  if (
+    distance < 1.5
+  ) {
+
+    return;
 
   }
 
 
-  currentStroke.points.push({
+  points.push({
 
     x:
       point.x,
