@@ -1936,6 +1936,26 @@ function updateTextFormatToolbarPosition() {
     8;
 
 
+  /*
+    Usa o visualViewport no iPhone.
+    Quando o teclado aparece, ele representa
+    a área realmente visível da tela.
+  */
+  const viewport =
+    window.visualViewport ||
+    null;
+
+  const viewportWidth =
+    viewport
+      ? viewport.width
+      : window.innerWidth;
+
+  const viewportHeight =
+    viewport
+      ? viewport.height
+      : window.innerHeight;
+
+
   let left =
     editorRect.left;
 
@@ -1950,13 +1970,12 @@ function updateTextFormatToolbarPosition() {
     Impede que a barra saia
     pelas laterais da tela.
   */
-
   left =
     Math.max(
       6,
       Math.min(
         left,
-        window.innerWidth -
+        viewportWidth -
         toolbarRect.width -
         6
       )
@@ -1967,7 +1986,6 @@ function updateTextFormatToolbarPosition() {
     Se não houver espaço acima
     da caixa, coloca abaixo.
   */
-
   if (top < 6) {
 
     top =
@@ -1979,13 +1997,13 @@ function updateTextFormatToolbarPosition() {
 
   /*
     Impede que a barra saia
-    pela parte inferior.
+    pela parte inferior da área
+    realmente visível.
   */
-
   if (
     top +
     toolbarRect.height >
-    window.innerHeight - 6
+    viewportHeight - 6
   ) {
 
     top =
@@ -2006,7 +2024,6 @@ function updateTextFormatToolbarPosition() {
     `${top}px`;
 
 }
-
 /* =========================================================
    FINALIZAR TEXTO
    ========================================================= */
