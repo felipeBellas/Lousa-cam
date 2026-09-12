@@ -3121,30 +3121,33 @@ canvas.addEventListener(
     }
 
 
-    /* ===================================================
-       FORA DE OBJETO
-       =================================================== */
+/* ===================================================
+   FORA DE OBJETO
+   =================================================== */
+if (
+  editingObjectId
+) {
 
-    selectedObjectId =
-      null;
+  finishTextEditing();
 
+}
 
-    secondImageTapId =
-      null;
+selectedObjectId =
+  null;
 
+secondImageTapId =
+  null;
 
-    hideObjectCancel();
+hideObjectCancel();
 
-
-    /*
-      Não começa a desenhar imediatamente.
-      Primeiro aguardamos o movimento.
-      Se for um toque simples, o menu Colar aparece.
-    */
-
-    pointerMode =
-      "canvas";
-
+/*
+  Não começa a desenhar imediatamente.
+  Primeiro aguardamos o movimento.
+  Se for um toque simples, o menu Colar aparece.
+*/
+pointerMode =
+  "canvas";
+  
   }
 );
 
@@ -3940,17 +3943,36 @@ redoBtn.addEventListener(
 
 clearBtn.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
+    event.stopPropagation();
 
     /*
-      NÃO PARA A CÂMERA.
-      NÃO REINICIA A CÂMERA.
-      NÃO USA confirm().
+      Finaliza qualquer texto que
+      esteja sendo editado.
     */
-
     finishTextEditing();
 
+    /*
+      Garante que a caixa HTML
+      desapareça.
+    */
+    inlineEditor.classList.remove(
+      "show"
+    );
 
+    /*
+      Garante que a barra de
+      formatação desapareça.
+    */
+    textFormatToolbar.classList.remove(
+      "show"
+    );
+
+    /*
+      Limpa todos os objetos.
+    */
     strokes =
       [];
 
@@ -3960,26 +3982,33 @@ clearBtn.addEventListener(
     redoStack =
       [];
 
-
+    /*
+      Limpa todos os estados
+      relacionados à seleção.
+    */
     selectedObjectId =
       null;
-
 
     editingObjectId =
       null;
 
+    savedTextSelection =
+      null;
 
     secondImageTapId =
       null;
 
-
+    /*
+      Fecha menus.
+    */
     closeCanvasPasteMenu();
 
     hideObjectCancel();
 
-
+    /*
+      Redesenha a lousa vazia.
+    */
     redraw();
-
 
     toast(
       "Lousa limpa"
@@ -4428,17 +4457,13 @@ function changeSelectedFontSize(
     !editingObjectId ||
     !savedTextSelection
   ) {
-
     return false;
-
   }
 
   if (
     !restoreTextSelection()
   ) {
-
     return false;
-
   }
 
   const selection =
@@ -4448,22 +4473,16 @@ function changeSelectedFontSize(
     !selection ||
     selection.isCollapsed
   ) {
-
     return false;
-
   }
 
   const range =
     selection.getRangeAt(0);
 
   /*
-    Descobre o tamanho real do trecho
-    selecionado.
-
-    Se ele já estiver dentro de um
-    span com font-size, usa esse tamanho.
+    Descobre o tamanho REAL
+    do trecho selecionado.
   */
-
   let currentSize =
     parseFloat(
       window.getComputedStyle(
@@ -4471,28 +4490,30 @@ function changeSelectedFontSize(
       ).fontSize
     ) || 24;
 
-  const container =
-    range.commonAncestorContainer;
-
-  let element =
-    container.nodeType ===
-    Node.ELEMENT_NODE
-      ? container
-      : container.parentElement;
-
   /*
-    Procura o primeiro elemento
-    que realmente tenha font-size.
+    Se o trecho já estiver dentro
+    de um span formatado, usa o
+    tamanho desse trecho.
   */
+  let node =
+    range.startContainer;
 
-  while (
-    element &&
-    element !== inlineEditor
+  if (
+    node.nodeType ===
+    Node.TEXT_NODE
+  ) {
+    node =
+      node.parentElement;
+  }
+
+  if (
+    node &&
+    inlineEditor.contains(node)
   ) {
 
     const computed =
       window.getComputedStyle(
-        element
+        node
       );
 
     const size =
@@ -4501,26 +4522,13 @@ function changeSelectedFontSize(
       );
 
     if (
-      Number.isFinite(
-        size
-      )
+      Number.isFinite(size)
     ) {
-
       currentSize =
         size;
-
-      break;
-
     }
 
-    element =
-      element.parentElement;
-
   }
-
-  /*
-    Novo tamanho.
-  */
 
   const newSize =
     Math.max(
@@ -4533,10 +4541,9 @@ function changeSelectedFontSize(
     );
 
   /*
-    Cria o span somente no
-    trecho selecionado.
+    Cria o span somente
+    no trecho selecionado.
   */
-
   const span =
     document.createElement(
       "span"
@@ -4544,10 +4551,6 @@ function changeSelectedFontSize(
 
   span.style.fontSize =
     `${newSize}px`;
-
-  /*
-    Aplica o tamanho.
-  */
 
   try {
 
@@ -4558,11 +4561,9 @@ function changeSelectedFontSize(
   } catch (error) {
 
     /*
-      Se a seleção atravessar
-      elementos diferentes,
-      usa o comando nativo.
+      Seleções que atravessam
+      elementos diferentes.
     */
-
     document.execCommand(
       "styleWithCSS",
       false,
@@ -4578,31 +4579,38 @@ function changeSelectedFontSize(
   }
 
   /*
-    Salva novamente o HTML
-    formatado.
+    Recupera a seleção depois
+    da alteração.
   */
+  const newSelection =
+    window.getSelection();
 
+  if (
+    newSelection &&
+    newSelection.rangeCount
+  ) {
+
+    savedTextSelection =
+      newSelection
+        .getRangeAt(0)
+        .cloneRange();
+
+  }
+
+  /*
+    Salva imediatamente no objeto.
+  */
+  saveFormattedText();
+
+  /*
+    Atualiza a caixa na mesma hora.
+  */
   const object =
     getObjectById(
       editingObjectId
     );
 
   if (object) {
-
-    object.text =
-      inlineEditor.innerText
-        .replace(
-          /\u00a0/g,
-          " "
-        );
-
-    object.richText =
-      inlineEditor.innerHTML;
-
-    /*
-      RECALCULA A CAIXA
-      imediatamente.
-    */
 
     const dimensions =
       getTextDimensions(
@@ -4621,30 +4629,9 @@ function changeSelectedFontSize(
     inlineEditor.style.height =
       `${dimensions.height}px`;
 
-  }
-
-  /*
-    Mantém a seleção.
-  */
-
-  const newSelection =
-    window.getSelection();
-
-  if (
-    newSelection &&
-    newSelection.rangeCount
-  ) {
-
-    savedTextSelection =
-      newSelection
-        .getRangeAt(0)
-        .cloneRange();
+    updateEditorPosition();
 
   }
-
-  updateEditorPosition();
-
-  updateTextFormatToolbarPosition();
 
   redraw();
 
