@@ -82,6 +82,12 @@ const textFormatToolbar =
 const objectCancel =
   $("objectCancel");
 
+const objectLock =
+  $("objectLock");
+
+const unlockImagesButton =
+  $("unlockImagesButton");
+
 const undoBtn =
   $("undo");
 
@@ -504,6 +510,38 @@ function redraw() {
   );
 
 
+  /* =====================================================
+     CAMADA 1
+     IMAGENS FIXADAS
+     ===================================================== */
+
+  for (
+    const object
+    of objects
+  ) {
+
+    if (
+      object.type ===
+        "image" &&
+      object.locked ===
+        true
+    ) {
+
+      drawObject(
+        ctx,
+        object
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     CAMADA 2
+     TRAÇOS DA CANETA
+     ===================================================== */
+
   for (
     const stroke
     of strokes
@@ -517,33 +555,58 @@ function redraw() {
   }
 
 
-  for (
-  const object
-  of objects
-) {
+  /* =====================================================
+     CAMADA 3
+     OBJETOS NÃO FIXADOS
+     ===================================================== */
 
-  /*
-    Enquanto um texto está sendo editado,
-    ele já é mostrado pelo inlineEditor.
-    Não desenha o mesmo texto no Canvas,
-    evitando que as letras fiquem sobrepostas.
-  */
-  if (
-    object.id ===
-    editingObjectId
+  for (
+    const object
+    of objects
   ) {
 
-    continue;
+    /*
+      Imagem fixada já foi desenhada
+      na camada inferior.
+    */
+    if (
+      object.type ===
+        "image" &&
+      object.locked ===
+        true
+    ) {
+
+      continue;
+
+    }
+
+
+    /*
+      Enquanto um texto está sendo
+      editado, ele já é mostrado
+      pelo inlineEditor.
+    */
+    if (
+      object.id ===
+      editingObjectId
+    ) {
+
+      continue;
+
+    }
+
+
+    drawObject(
+      ctx,
+      object
+    );
 
   }
 
-  drawObject(
-    ctx,
-    object
-  );
 
-}
-
+  /* =====================================================
+     SELEÇÃO
+     ===================================================== */
 
   if (
     selectedObjectId &&
@@ -555,7 +618,11 @@ function redraw() {
         selectedObjectId
       );
 
-    if (selected) {
+
+    if (
+      selected &&
+      !selected.locked
+    ) {
 
       drawSelection(
         ctx,
@@ -1917,6 +1984,25 @@ function findObjectAt(
       objects[i];
 
 
+    /*
+      IMAGEM FIXADA
+
+      Continua sendo desenhada,
+      mas deixa de participar
+      da seleção pelo toque.
+    */
+    if (
+      object.type ===
+        "image" &&
+      object.locked ===
+        true
+    ) {
+
+      continue;
+
+    }
+
+
     if (
       objectContainsPoint(
         object,
@@ -1933,7 +2019,6 @@ function findObjectAt(
 
 
   return null;
-
 }
 
 
@@ -2739,6 +2824,9 @@ function createImageFromBlob(
             image:
               image,
 
+             locked:
+               false,
+             
             createdAt:
               Date.now()
 
@@ -6916,9 +7004,12 @@ function showObjectCancel(
     "show"
   );
 
+  objectLock.classList.add(
+    "show"
+  );
+
 
   updateCancelPosition();
-
 }
 
 
@@ -6963,13 +7054,29 @@ function updateCancelPosition() {
       10,
       object.y - 48
     )}px`;
+  
+   objectLock.style.left =
+  `${clamp(
+    object.x + 96,
+    100,
+    window.innerWidth - 100
+  )}px`;
 
+   objectLock.style.top =
+  `${Math.max(
+    10,
+    object.y - 48
+  )}px`;
 }
 
 
 function hideObjectCancel() {
 
   objectCancel.classList.remove(
+    "show"
+  );
+
+  objectLock.classList.remove(
     "show"
   );
 
@@ -7036,6 +7143,159 @@ objectCancel.addEventListener(
   }
 );
 
+ /* =========================================================
+   FIXAR IMAGEM
+   ========================================================= */
+
+objectLock.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    if (
+      !selectedObjectId
+    ) {
+
+      return;
+
+    }
+
+
+    const object =
+      getObjectById(
+        selectedObjectId
+      );
+
+
+    /*
+      Segurança:
+      somente imagens podem ser fixadas.
+    */
+    if (
+      !object ||
+      object.type !==
+        "image"
+    ) {
+
+      return;
+
+    }
+
+
+    object.locked =
+      true;
+
+
+    /*
+      Depois de fixar,
+      remove a seleção.
+    */
+    selectedObjectId =
+      null;
+
+    secondImageTapId =
+      null;
+
+
+    hideObjectCancel();
+
+
+    /*
+      Interrompe qualquer gesto ativo.
+    */
+    pinchState =
+      null;
+
+    activePointers.clear();
+
+    pointerMode =
+      null;
+
+    activePointerId =
+      null;
+
+
+    redraw();
+
+
+    toast(
+      "Imagem fixada"
+    );
+
+  }
+);
+
+/* =========================================================
+   DESBLOQUEAR IMAGENS
+   ========================================================= */
+
+unlockImagesButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    let unlockedCount =
+      0;
+
+
+    for (
+      const object
+      of objects
+    ) {
+
+      if (
+        object.type ===
+          "image" &&
+        object.locked ===
+          true
+      ) {
+
+        object.locked =
+          false;
+
+        unlockedCount++;
+
+      }
+
+    }
+
+
+    menuPanel.classList.remove(
+      "open"
+    );
+
+
+    redraw();
+
+
+    if (
+      unlockedCount > 0
+    ) {
+
+      toast(
+        unlockedCount === 1
+          ? "Imagem desbloqueada"
+          : `${unlockedCount} imagens desbloqueadas`
+      );
+
+    } else {
+
+      toast(
+        "Nenhuma imagem fixada"
+      );
+
+    }
+
+  }
+);
 
 /* =========================================================
    TOQUE FORA DOS PAINÉIS
@@ -7077,8 +7337,16 @@ document.addEventListener(
       ) ||
 
       objectCancel.contains(
-        event.target
-      )
+  event.target
+) ||
+
+objectLock.contains(
+  event.target
+) ||
+
+unlockImagesButton.contains(
+  event.target
+)
     ) {
 
       return;
