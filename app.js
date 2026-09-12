@@ -1733,7 +1733,6 @@ function updateTextFormatToolbarPosition() {
 /* =========================================================
    FINALIZAR TEXTO
    ========================================================= */
-
 function finishTextEditing() {
 
   if (!editingObjectId) {
@@ -1742,8 +1741,14 @@ function finishTextEditing() {
       "show"
     );
 
-    return;
+    textFormatToolbar.classList.remove(
+      "show"
+    );
 
+    savedTextSelection =
+      null;
+
+    return;
   }
 
 
@@ -1755,12 +1760,12 @@ function finishTextEditing() {
 
   if (object) {
 
-  object.text =
-    inlineEditor.innerText
-      .replace(/\u00a0/g, " ");
+    object.text =
+      inlineEditor.innerText
+        .replace(/\u00a0/g, " ");
 
-  object.richText =
-    inlineEditor.innerHTML;
+    object.richText =
+      inlineEditor.innerHTML;
 
     /*
       Mantém dimensões redimensionadas.
@@ -1772,7 +1777,6 @@ function finishTextEditing() {
 
     const height =
       inlineEditor.offsetHeight;
-
 
     object.width =
       Math.max(
@@ -1808,23 +1812,46 @@ function finishTextEditing() {
   }
 
 
+  /*
+    Esconde o editor e a barra.
+  */
+
   inlineEditor.classList.remove(
-  "show"
-);
+    "show"
+  );
 
-textFormatToolbar.classList.remove(
-  "show"
-);
-
-
-editingObjectId =
-  null;
-
-savedTextSelection =
-  null;
+  textFormatToolbar.classList.remove(
+    "show"
+  );
 
 
-redraw();
+  /*
+    Encerra a edição.
+  */
+
+  editingObjectId =
+    null;
+
+
+  /*
+    Remove a seleção da caixa.
+    O texto continuará normalmente
+    desenhado no Canvas.
+  */
+
+  selectedObjectId =
+    null;
+
+
+  /*
+    Limpa a seleção de texto salva.
+  */
+
+  savedTextSelection =
+    null;
+
+
+  redraw();
 
 }
 
