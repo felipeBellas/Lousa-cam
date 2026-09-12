@@ -2962,7 +2962,67 @@ async function pasteFromClipboard(
   return false;
 
 }
+/* =========================================================
+   REDIMENSIONAR TEXTO PROPORCIONALMENTE
+   ========================================================= */
 
+function scaleRichTextFontSizes(
+  html,
+  scale,
+  baseFontSize = 24
+) {
+
+  if (!html) {
+    return html;
+  }
+
+  const container =
+    document.createElement("div");
+
+  container.innerHTML =
+    html;
+
+  const elements =
+    container.querySelectorAll("*");
+
+  elements.forEach(
+    element => {
+
+      /*
+        Se o trecho possui tamanho de fonte próprio,
+        aumenta ou diminui proporcionalmente.
+      */
+      if (
+        element.style &&
+        element.style.fontSize
+      ) {
+
+        const originalSize =
+          parseFloat(
+            element.style.fontSize
+          );
+
+        if (
+          Number.isFinite(
+            originalSize
+          )
+        ) {
+
+          element.style.fontSize =
+            `${Math.max(
+              8,
+              originalSize * scale
+            )}px`;
+
+        }
+
+      }
+
+    }
+  );
+
+  return container.innerHTML;
+}
 
 /* =========================================================
    EVENTOS DE POINTER DA LOUSA
@@ -3081,21 +3141,27 @@ canvas.addEventListener(
           "resize";
 
 
-        resizeStart = {
+       resizeStart = {
 
-          x:
-            point.x,
+  x:
+    point.x,
 
-          y:
-            point.y,
+  y:
+    point.y,
 
-          width:
-            object.width,
+  width:
+    object.width,
 
-          height:
-            object.height
+  height:
+    object.height,
 
-        };
+  fontSize:
+    object.fontSize || 24,
+
+  richText:
+    object.richText || null
+
+};
 
 
         redraw();
@@ -3241,20 +3307,134 @@ canvas.addEventListener(
       }
 
 
-      object.width =
-        Math.max(
-          50,
-          resizeStart.width +
-          dx
-        );
+      /*
+  TEXTO:
+  redimensionamento proporcional.
+  Evita deformação da caixa e mudança
+  indesejada do formato ao puxar o canto.
+*/
+if (
+  object.type ===
+  "text"
+) {
 
+  const startWidth =
+    Math.max(
+      50,
+      resizeStart.width
+    );
 
-      object.height =
-        Math.max(
-          35,
-          resizeStart.height +
-          dy
-        );
+  const startHeight =
+    Math.max(
+      35,
+      resizeStart.height
+    );
+
+  /*
+    Calcula quanto o usuário afastou
+    o canto da caixa.
+  */
+  const scaleX =
+    (
+      resizeStart.width +
+      dx
+    ) /
+    startWidth;
+
+  const scaleY =
+    (
+      resizeStart.height +
+      dy
+    ) /
+    startHeight;
+
+  /*
+    Usa o movimento dominante.
+
+    Dessa maneira largura e altura
+    permanecem proporcionais.
+  */
+  let scale =
+    Math.abs(dx) >=
+    Math.abs(dy)
+      ? scaleX
+      : scaleY;
+
+  /*
+    Limites para evitar texto
+    extremamente pequeno ou enorme.
+  */
+  scale =
+    clamp(
+      scale,
+      0.25,
+      5
+    );
+
+  object.width =
+    Math.max(
+      50,
+      resizeStart.width *
+      scale
+    );
+
+  object.height =
+    Math.max(
+      35,
+      resizeStart.height *
+      scale
+    );
+
+  object.fontSize =
+    Math.max(
+      8,
+      resizeStart.fontSize *
+      scale
+    );
+
+  /*
+    Se houver partes com tamanhos
+    diferentes definidos pelos comandos
+    A+ e A-, elas também acompanham
+    proporcionalmente.
+  */
+  if (
+    resizeStart.richText
+  ) {
+
+    object.richText =
+      scaleRichTextFontSizes(
+        resizeStart.richText,
+        scale,
+        resizeStart.fontSize
+      );
+
+  }
+
+}
+
+/*
+  IMAGEM:
+  mantém exatamente o comportamento
+  atual nesta primeira etapa.
+*/
+else {
+
+  object.width =
+    Math.max(
+      50,
+      resizeStart.width +
+      dx
+    );
+
+  object.height =
+    Math.max(
+      35,
+      resizeStart.height +
+      dy
+    );
+
+}
 
 
       if (
