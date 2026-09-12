@@ -3060,16 +3060,24 @@ function getPinchInfo() {
 
   const dy =
     p2.y - p1.y;
-
+  
+  const angle =
+  Math.atan2(
+    dy,
+    dx
+  );
   return {
-
+    
     distance:
       Math.sqrt(
         dx * dx +
         dy * dy
       ),
-
-    centerX:
+      
+     angle:
+       angle,
+    
+     centerX:
       (
         p1.x +
         p2.x
