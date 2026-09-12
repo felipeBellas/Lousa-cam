@@ -463,16 +463,31 @@ function redraw() {
 
 
   for (
-    const object
-    of objects
+  const object
+  of objects
+) {
+
+  /*
+    Enquanto um texto está sendo editado,
+    ele já é mostrado pelo inlineEditor.
+    Não desenha o mesmo texto no Canvas,
+    evitando que as letras fiquem sobrepostas.
+  */
+  if (
+    object.id ===
+    editingObjectId
   ) {
 
-    drawObject(
-      ctx,
-      object
-    );
+    continue;
 
   }
+
+  drawObject(
+    ctx,
+    object
+  );
+
+}
 
 
   if (
