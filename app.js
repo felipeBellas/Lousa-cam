@@ -2180,11 +2180,17 @@ function updateTextFormatToolbarPosition() {
     `${top}px`;
 
 }
+
 /* =========================================================
    FINALIZAR TEXTO
    ========================================================= */
 function finishTextEditing() {
 
+  /*
+    Se não existe texto sendo editado,
+    apenas garante que os elementos
+    visuais desapareçam.
+  */
   if (!editingObjectId) {
 
     inlineEditor.classList.remove(
@@ -2198,6 +2204,11 @@ function finishTextEditing() {
     savedTextSelection =
       null;
 
+    selectedObjectId =
+      null;
+
+    redraw();
+
     return;
   }
 
@@ -2208,6 +2219,10 @@ function finishTextEditing() {
     );
 
 
+  /*
+    Salva o conteúdo atual antes
+    de encerrar a edição.
+  */
   if (object) {
 
     object.text =
@@ -2217,41 +2232,34 @@ function finishTextEditing() {
     object.richText =
       inlineEditor.innerHTML;
 
-/*
-  Recalcula as dimensões finais
-  considerando os spans com
-  tamanhos diferentes.
-*/
-const dimensions =
-  getTextDimensions(
-    object
-  );
 
-object.width =
-  Math.max(
-    60,
-    dimensions.width
-  );
+    /*
+      Recalcula as dimensões considerando
+      os spans com tamanhos diferentes.
+    */
+    const dimensions =
+      getTextDimensions(
+        object
+      );
 
-object.height =
-  Math.max(
-    35,
-    dimensions.height
-  );
 
+    object.width =
+      Math.max(
+        60,
+        dimensions.width
+      );
 
     object.height =
       Math.max(
         35,
-        height
+        dimensions.height
       );
 
 
     /*
-      Se o texto foi criado vazio,
-      calcula um tamanho inicial.
+      Se o texto estiver vazio,
+      mantém uma caixa mínima.
     */
-
     if (
       object.text.length === 0
     ) {
@@ -2268,9 +2276,9 @@ object.height =
 
 
   /*
-    Esconde o editor e a barra.
+    ESCONDE COMPLETAMENTE
+    A CAIXA E A BARRA.
   */
-
   inlineEditor.classList.remove(
     "show"
   );
@@ -2281,31 +2289,32 @@ object.height =
 
 
   /*
-    Encerra a edição.
+    Encerra o modo de edição.
   */
-
   editingObjectId =
     null;
 
 
   /*
-    Remove a seleção da caixa.
-    O texto continuará normalmente
-    desenhado no Canvas.
+    Remove a seleção visual
+    da caixa de texto.
   */
-
   selectedObjectId =
     null;
 
 
   /*
-    Limpa a seleção de texto salva.
+    Remove a seleção de texto
+    armazenada.
   */
-
   savedTextSelection =
     null;
 
 
+  /*
+    Redesenha somente o texto
+    no Canvas.
+  */
   redraw();
 
 }
@@ -4448,17 +4457,57 @@ function applyTextFormat(
 /* =========================================================
    TAMANHO DA FONTE
    ========================================================= */
-
 function changeSelectedFontSize(
   delta
 ) {
 
   if (
-    !editingObjectId ||
+    !editingObjectId
+  ) {
+    return false;
+  }
+
+
+  /*
+    Primeiro tenta usar a seleção
+    que está atualmente ativa.
+  */
+  const selection =
+    window.getSelection();
+
+
+  /*
+    Se existe uma seleção válida
+    dentro do editor, salva imediatamente.
+  */
+  if (
+    selection &&
+    selection.rangeCount > 0 &&
+    !selection.isCollapsed &&
+    inlineEditor.contains(
+      selection.anchorNode
+    )
+  ) {
+
+    savedTextSelection =
+      selection
+        .getRangeAt(0)
+        .cloneRange();
+
+  }
+
+
+  /*
+    Se a seleção atual não estiver
+    disponível, recupera a última
+    seleção salva.
+  */
+  if (
     !savedTextSelection
   ) {
     return false;
   }
+
 
   if (
     !restoreTextSelection()
@@ -4466,124 +4515,241 @@ function changeSelectedFontSize(
     return false;
   }
 
-  const selection =
+
+  const activeSelection =
     window.getSelection();
 
+
   if (
-    !selection ||
-    selection.isCollapsed
+    !activeSelection ||
+    activeSelection.rangeCount === 0 ||
+    activeSelection.isCollapsed
   ) {
     return false;
   }
 
+
   const range =
-    selection.getRangeAt(0);
+    activeSelection.getRangeAt(0);
+
 
   /*
-    Descobre o tamanho REAL
-    do trecho selecionado.
+    Encontra todos os nós de texto
+    atingidos pela seleção.
   */
-  let currentSize =
-    parseFloat(
-      window.getComputedStyle(
-        inlineEditor
-      ).fontSize
-    ) || 24;
+  const walker =
+    document.createTreeWalker(
+      inlineEditor,
+      NodeFilter.SHOW_TEXT
+    );
 
-  /*
-    Se o trecho já estiver dentro
-    de um span formatado, usa o
-    tamanho desse trecho.
-  */
-  let node =
-    range.startContainer;
 
-  if (
-    node.nodeType ===
-    Node.TEXT_NODE
-  ) {
-    node =
-      node.parentElement;
-  }
+  const textNodes = [];
 
-  if (
-    node &&
-    inlineEditor.contains(node)
+  let node;
+
+  while (
+    (node =
+      walker.nextNode())
   ) {
 
-    const computed =
-      window.getComputedStyle(
+    if (
+      range.intersectsNode(node)
+    ) {
+
+      textNodes.push(
         node
       );
 
-    const size =
-      parseFloat(
-        computed.fontSize
-      );
-
-    if (
-      Number.isFinite(size)
-    ) {
-      currentSize =
-        size;
     }
 
   }
 
-  const newSize =
-    Math.max(
-      10,
-      Math.min(
-        96,
-        currentSize +
-        delta
-      )
-    );
+
+  if (
+    !textNodes.length
+  ) {
+    return false;
+  }
+
 
   /*
-    Cria o span somente
-    no trecho selecionado.
+    Trabalha de trás para frente
+    para não destruir os offsets
+    dos nós seguintes.
   */
-  const span =
-    document.createElement(
-      "span"
-    );
+  for (
+    let i =
+      textNodes.length - 1;
+    i >= 0;
+    i--
+  ) {
 
-  span.style.fontSize =
-    `${newSize}px`;
+    let textNode =
+      textNodes[i];
 
-  try {
 
-    range.surroundContents(
-      span
-    );
+    let start =
+      0;
 
-  } catch (error) {
+    let end =
+      textNode.textContent.length;
+
+
+    if (
+      textNode ===
+      range.startContainer
+    ) {
+
+      start =
+        range.startOffset;
+
+    }
+
+
+    if (
+      textNode ===
+      range.endContainer
+    ) {
+
+      end =
+        range.endOffset;
+
+    }
+
 
     /*
-      Seleções que atravessam
-      elementos diferentes.
+      Ignora partes fora da seleção.
     */
-    document.execCommand(
-      "styleWithCSS",
-      false,
-      true
+    if (
+      start >= end
+    ) {
+      continue;
+    }
+
+
+    /*
+      Divide o texto no final
+      da seleção.
+    */
+    if (
+      end <
+      textNode.textContent.length
+    ) {
+
+      textNode =
+        textNode.splitText(
+          end
+        );
+
+    }
+
+
+    /*
+      Divide novamente no início
+      da seleção.
+    */
+    if (
+      start > 0
+    ) {
+
+      textNode =
+        textNode.previousSibling;
+
+      if (
+        !textNode ||
+        textNode.nodeType !==
+          Node.TEXT_NODE
+      ) {
+        continue;
+      }
+
+    }
+
+
+    /*
+      Descobre o tamanho atual
+      REAL daquele trecho.
+    */
+    const parent =
+      textNode.parentElement;
+
+
+    let currentSize =
+      parseFloat(
+        window.getComputedStyle(
+          parent || inlineEditor
+        ).fontSize
+      );
+
+
+    if (
+      !Number.isFinite(
+        currentSize
+      )
+    ) {
+
+      currentSize =
+        parseFloat(
+          window.getComputedStyle(
+            inlineEditor
+          ).fontSize
+        ) || 24;
+
+    }
+
+
+    /*
+      Calcula o novo tamanho.
+    */
+    const newSize =
+      Math.max(
+        10,
+        Math.min(
+          96,
+          currentSize + delta
+        )
+      );
+
+
+    /*
+      Cria o span somente para
+      o trecho selecionado.
+    */
+    const span =
+      document.createElement(
+        "span"
+      );
+
+
+    span.style.fontSize =
+      `${newSize}px`;
+
+
+    /*
+      Coloca o trecho dentro
+      do novo span.
+    */
+    textNode.parentNode.insertBefore(
+      span,
+      textNode
     );
 
-    document.execCommand(
-      "fontSize",
-      false,
-      "4"
+
+    span.appendChild(
+      textNode
     );
 
   }
 
+
   /*
-    Recupera a seleção depois
-    da alteração.
+    Recria a seleção no texto
+    modificado.
   */
   const newSelection =
     window.getSelection();
+
 
   if (
     newSelection &&
@@ -4597,45 +4763,25 @@ function changeSelectedFontSize(
 
   }
 
+
   /*
-    Salva imediatamente no objeto.
+    Salva o texto formatado
+    e recalcula a caixa.
   */
   saveFormattedText();
 
+
   /*
-    Atualiza a caixa na mesma hora.
+    Garante atualização imediata
+    da posição e dimensões.
   */
-  const object =
-    getObjectById(
-      editingObjectId
-    );
-
-  if (object) {
-
-    const dimensions =
-      getTextDimensions(
-        object
-      );
-
-    object.width =
-      dimensions.width;
-
-    object.height =
-      dimensions.height;
-
-    inlineEditor.style.width =
-      `${dimensions.width}px`;
-
-    inlineEditor.style.height =
-      `${dimensions.height}px`;
-
-    updateEditorPosition();
-
-  }
+  updateEditorPosition();
 
   redraw();
 
+
   return true;
+
 }
 
 
@@ -4651,18 +4797,48 @@ textFormatToolbar
     button => {
 
       button.addEventListener(
-        "pointerdown",
-        event => {
+  "pointerdown",
+  event => {
 
-          /*
-            Evita que o toque no botão
-            destrua a seleção do texto.
-          */
+    /*
+      Guarda imediatamente a seleção
+      atual ANTES do Safari/iPhone
+      transferir o foco para o botão.
+    */
+    if (
+      editingObjectId
+    ) {
 
-          event.preventDefault();
+      const selection =
+        window.getSelection();
 
-        }
-      );
+      if (
+        selection &&
+        selection.rangeCount > 0 &&
+        !selection.isCollapsed &&
+        inlineEditor.contains(
+          selection.anchorNode
+        )
+      ) {
+
+        savedTextSelection =
+          selection
+            .getRangeAt(0)
+            .cloneRange();
+
+      }
+
+    }
+
+
+    /*
+      Impede que o toque no botão
+      destrua a seleção.
+    */
+    event.preventDefault();
+
+  }
+);
 
 
       button.addEventListener(
