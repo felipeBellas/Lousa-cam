@@ -3730,6 +3730,14 @@ canvas.addEventListener(
   "pointerdown",
   event => {
 
+    /*
+      Ao tocar na lousa,
+      fecha automaticamente
+      o painel da caneta/ferramentas
+      e o menu principal.
+    */
+    closePanels();
+
     const point =
       getPointerPosition(
         event
