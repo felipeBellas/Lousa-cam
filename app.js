@@ -1385,7 +1385,6 @@ inlineEditor.addEventListener(
 
     }
 
-
     const object =
       getObjectById(
         editingObjectId
@@ -1399,29 +1398,59 @@ inlineEditor.addEventListener(
     }
 
 
+    /*
+      Salva o texto atual.
+    */
     object.text =
       inlineEditor.innerText
-       .replace(/\u00a0/g, " ");
+        .replace(/\u00a0/g, " ");
 
-    object.width =
-      Math.max(
-        60,
-        inlineEditor.offsetWidth
+
+    /*
+      Calcula novamente o tamanho
+      necessário para o conteúdo.
+    */
+    const dimensions =
+      getTextDimensions(
+        object
       );
 
+
+    /*
+      Atualiza o objeto.
+    */
+    object.width =
+      dimensions.width;
 
     object.height =
-      Math.max(
-        35,
-        inlineEditor.offsetHeight
-      );
+      dimensions.height;
 
 
+    /*
+      Faz a caixa visual acompanhar
+      imediatamente o texto.
+    */
+    inlineEditor.style.width =
+      `${dimensions.width}px`;
+
+    inlineEditor.style.height =
+      `${dimensions.height}px`;
+
+
+    /*
+      Mantém o editor na posição
+      correta.
+    */
+    updateEditorPosition();
+
+
+    /*
+      Atualiza a lousa.
+    */
     redraw();
 
   }
 );
-
 
 /* =========================================================
    BLUR DO EDITOR
