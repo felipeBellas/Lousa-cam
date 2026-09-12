@@ -4456,6 +4456,7 @@ function applyTextFormat(
 /* =========================================================
    TAMANHO DA FONTE
    ========================================================= */
+
 function changeSelectedFontSize(
   delta
 ) {
@@ -4467,17 +4468,13 @@ function changeSelectedFontSize(
   }
 
 
-  /*
-    Primeiro tenta usar a seleção
-    que está atualmente ativa.
-  */
   const selection =
     window.getSelection();
 
 
   /*
-    Se existe uma seleção válida
-    dentro do editor, salva imediatamente.
+    Se houver uma seleção ativa válida,
+    salva imediatamente.
   */
   if (
     selection &&
@@ -4497,9 +4494,9 @@ function changeSelectedFontSize(
 
 
   /*
-    Se a seleção atual não estiver
-    disponível, recupera a última
-    seleção salva.
+    Recupera a seleção salva caso
+    o toque no A+ ou A- tenha feito
+    o Safari perder a seleção visual.
   */
   if (
     !savedTextSelection
@@ -4533,15 +4530,111 @@ function changeSelectedFontSize(
 
 
   /*
-    Encontra todos os nós de texto
-    atingidos pela seleção.
+    =====================================================
+    GUARDA A POSIÇÃO DA SELEÇÃO
+    =====================================================
+
+    Em vez de confiar na seleção do Safari
+    depois da alteração do HTML, guardamos
+    a posição absoluta do início e do fim
+    dentro do texto do editor.
   */
+
+  function getTextOffset(
+    root,
+    container,
+    offset
+  ) {
+
+    const walker =
+      document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT
+      );
+
+    let total = 0;
+    let node;
+
+    while (
+      (node =
+        walker.nextNode())
+    ) {
+
+      if (
+        node === container
+      ) {
+
+        return (
+          total +
+          offset
+        );
+
+      }
+
+      total +=
+        node.textContent.length;
+
+    }
+
+    /*
+      Caso o container seja um
+      elemento, calcula a posição
+      percorrendo seus filhos.
+    */
+
+    const tempRange =
+      document.createRange();
+
+    try {
+
+      tempRange.selectNodeContents(
+        root
+      );
+
+      tempRange.setEnd(
+        container,
+        offset
+      );
+
+      return (
+        tempRange.toString().length
+      );
+
+    } catch (error) {
+
+      return total;
+
+    }
+
+  }
+
+
+  const startOffset =
+    getTextOffset(
+      inlineEditor,
+      range.startContainer,
+      range.startOffset
+    );
+
+  const endOffset =
+    getTextOffset(
+      inlineEditor,
+      range.endContainer,
+      range.endOffset
+    );
+
+
+  /*
+    =====================================================
+    ENCONTRA OS NÓS DE TEXTO
+    =====================================================
+  */
+
   const walker =
     document.createTreeWalker(
       inlineEditor,
       NodeFilter.SHOW_TEXT
     );
-
 
   const textNodes = [];
 
@@ -4553,7 +4646,9 @@ function changeSelectedFontSize(
   ) {
 
     if (
-      range.intersectsNode(node)
+      range.intersectsNode(
+        node
+      )
     ) {
 
       textNodes.push(
@@ -4574,9 +4669,9 @@ function changeSelectedFontSize(
 
   /*
     Trabalha de trás para frente
-    para não destruir os offsets
-    dos nós seguintes.
+    para preservar os offsets.
   */
+
   for (
     let i =
       textNodes.length - 1;
@@ -4620,6 +4715,7 @@ function changeSelectedFontSize(
     /*
       Ignora partes fora da seleção.
     */
+
     if (
       start >= end
     ) {
@@ -4631,6 +4727,7 @@ function changeSelectedFontSize(
       Divide o texto no final
       da seleção.
     */
+
     if (
       end <
       textNode.textContent.length
@@ -4648,6 +4745,7 @@ function changeSelectedFontSize(
       Divide novamente no início
       da seleção.
     */
+
     if (
       start > 0
     ) {
@@ -4660,7 +4758,9 @@ function changeSelectedFontSize(
         textNode.nodeType !==
           Node.TEXT_NODE
       ) {
+
         continue;
+
       }
 
     }
@@ -4668,8 +4768,9 @@ function changeSelectedFontSize(
 
     /*
       Descobre o tamanho atual
-      REAL daquele trecho.
+      daquele trecho.
     */
+
     const parent =
       textNode.parentElement;
 
@@ -4677,7 +4778,8 @@ function changeSelectedFontSize(
     let currentSize =
       parseFloat(
         window.getComputedStyle(
-          parent || inlineEditor
+          parent ||
+            inlineEditor
         ).fontSize
       );
 
@@ -4701,12 +4803,14 @@ function changeSelectedFontSize(
     /*
       Calcula o novo tamanho.
     */
+
     const newSize =
       Math.max(
         10,
         Math.min(
           96,
-          currentSize + delta
+          currentSize +
+            delta
         )
       );
 
@@ -4715,6 +4819,7 @@ function changeSelectedFontSize(
       Cria o span somente para
       o trecho selecionado.
     */
+
     const span =
       document.createElement(
         "span"
@@ -4729,6 +4834,7 @@ function changeSelectedFontSize(
       Coloca o trecho dentro
       do novo span.
     */
+
     textNode.parentNode.insertBefore(
       span,
       textNode
@@ -4743,22 +4849,173 @@ function changeSelectedFontSize(
 
 
   /*
-    Recria a seleção no texto
-    modificado.
+    =====================================================
+    RESTAURA A SELEÇÃO
+    =====================================================
+
+    O Safari pode ter perdido a seleção
+    durante a alteração dos spans.
+
+    Por isso ela é reconstruída usando
+    os offsets de texto salvos antes.
   */
-  const newSelection =
-    window.getSelection();
+
+  function restoreRangeFromOffsets(
+    root,
+    start,
+    end
+  ) {
+
+    const walker =
+      document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT
+      );
+
+    let current = 0;
+
+    let startNode =
+      null;
+
+    let endNode =
+      null;
+
+    let startPosition =
+      0;
+
+    let endPosition =
+      0;
+
+    let currentNode;
+
+
+    while (
+      (currentNode =
+        walker.nextNode())
+    ) {
+
+      const length =
+        currentNode.textContent.length;
+
+      /*
+        Localiza o início.
+      */
+
+      if (
+        startNode === null &&
+        start >= current &&
+        start <=
+          current + length
+      ) {
+
+        startNode =
+          currentNode;
+
+        startPosition =
+          start - current;
+
+      }
+
+
+      /*
+        Localiza o final.
+      */
+
+      if (
+        end >= current &&
+        end <=
+          current + length
+      ) {
+
+        endNode =
+          currentNode;
+
+        endPosition =
+          end - current;
+
+        break;
+
+      }
+
+
+      current +=
+        length;
+
+    }
+
+
+    if (
+      !startNode ||
+      !endNode
+    ) {
+      return null;
+    }
+
+
+    const newRange =
+      document.createRange();
+
+
+    newRange.setStart(
+      startNode,
+      Math.min(
+        startPosition,
+        startNode.textContent.length
+      )
+    );
+
+
+    newRange.setEnd(
+      endNode,
+      Math.min(
+        endPosition,
+        endNode.textContent.length
+      )
+    );
+
+
+    return newRange;
+
+  }
+
+
+  /*
+    Cria novamente a seleção.
+  */
+
+  const restoredRange =
+    restoreRangeFromOffsets(
+      inlineEditor,
+      startOffset,
+      endOffset
+    );
 
 
   if (
-    newSelection &&
-    newSelection.rangeCount
+    restoredRange
   ) {
 
+    const finalSelection =
+      window.getSelection();
+
+
+    inlineEditor.focus();
+
+
+    finalSelection.removeAllRanges();
+
+    finalSelection.addRange(
+      restoredRange
+    );
+
+
+    /*
+      Salva a seleção para o
+      próximo toque em A+ ou A-.
+    */
+
     savedTextSelection =
-      newSelection
-        .getRangeAt(0)
-        .cloneRange();
+      restoredRange.cloneRange();
 
   }
 
@@ -4767,13 +5024,15 @@ function changeSelectedFontSize(
     Salva o texto formatado
     e recalcula a caixa.
   */
+
   saveFormattedText();
 
 
   /*
-    Garante atualização imediata
-    da posição e dimensões.
+    Atualiza imediatamente
+    posição e dimensões.
   */
+
   updateEditorPosition();
 
   redraw();
@@ -4782,7 +5041,6 @@ function changeSelectedFontSize(
   return true;
 
 }
-
 
 /* =========================================================
    BOTÕES DA BARRA
