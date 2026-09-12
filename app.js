@@ -1694,15 +1694,18 @@ function finishTextEditing() {
 
 
   inlineEditor.classList.remove(
-    "show"
-  );
+  "show"
+);
 
 
-  editingObjectId =
-    null;
+editingObjectId =
+  null;
+
+selectedObjectId =
+  null;
 
 
-  redraw();
+redraw();
 
 }
 
