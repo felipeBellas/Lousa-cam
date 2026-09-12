@@ -641,7 +641,6 @@ function drawObject(
 /* =========================================================
    TEXTO
    ========================================================= */
-
 function drawTextObject(
   c,
   object
@@ -649,71 +648,119 @@ function drawTextObject(
 
   c.save();
 
-  const fontSize =
+
+  const baseFontSize =
     object.fontSize ||
     24;
 
-  c.font =
-    `${fontSize}px Arial, sans-serif`;
-
-  c.textBaseline =
-    "top";
 
   const lineHeight =
-    fontSize * 1.15;
+    baseFontSize * 1.15;
 
-  /*
-    Largura interna da caixa.
-    O texto nunca poderá ultrapassar
-    essa largura.
-  */
+
   const maxWidth =
     Math.max(
       40,
       object.width - 10
     );
 
+
+  let currentX =
+    object.x;
+
+  let currentY =
+    object.y;
+
+
   /*
-    Desenha um trecho de texto,
-    quebrando automaticamente quando
-    atingir a largura da caixa.
+    Desenha um trecho de texto
+    respeitando:
+
+    - cor
+    - negrito
+    - itálico
+    - sublinhado
+    - tamanho da fonte
   */
-  function drawWrappedText(
+  function drawTextSegment(
     text,
-    textColor
+    style
   ) {
 
     if (!text) {
       return;
     }
 
-    const words =
-      text.split(/(\s+)/);
+
+    const fontSize =
+      style.fontSize ||
+      baseFontSize;
+
+
+    const fontWeight =
+      style.fontWeight ||
+      "normal";
+
+
+    const fontStyle =
+      style.fontStyle ||
+      "normal";
+
+
+    const textColor =
+      style.color ||
+      object.color ||
+      "#fff";
+
+
+    const underline =
+      style.underline ||
+      false;
+
+
+    c.font =
+      `${fontStyle} ${fontWeight} ${fontSize}px Arial, sans-serif`;
+
+
+    c.textBaseline =
+      "top";
+
+
+    /*
+      Divide mantendo os espaços.
+    */
+    const parts =
+      text.split(
+        /(\s+)/
+      );
+
 
     for (
-      const word
-      of words
+      const part
+      of parts
     ) {
 
       if (
-        word === ""
+        part === ""
       ) {
         continue;
       }
 
+
       /*
-        Quebra de linha explícita.
+        Quebra de linha.
       */
       if (
-        word.includes("\n")
+        part.includes("\n")
       ) {
 
-        const pieces =
-          word.split("\n");
+        const lines =
+          part.split("\n");
+
 
         for (
           let i = 0;
-          i < pieces.length;
+          i < lines.length;
           i++
         ) {
 
@@ -725,17 +772,18 @@ function drawTextObject(
               object.x;
 
             currentY +=
-              lineHeight;
+              fontSize * 1.15;
 
           }
 
+
           if (
-            pieces[i]
+            lines[i]
           ) {
 
-            drawWrappedText(
-              pieces[i],
-              textColor
+            drawTextSegment(
+              lines[i],
+              style
             );
 
           }
@@ -745,22 +793,23 @@ function drawTextObject(
         continue;
       }
 
-      const wordWidth =
+
+      const partWidth =
         c.measureText(
-          word
+          part
         ).width;
 
+
       /*
-        Se a palavra não couber
-        na linha atual, passa para
-        a próxima linha.
+        Se o trecho não couber,
+        passa para a próxima linha.
       */
       if (
         currentX >
           object.x &&
         currentX -
           object.x +
-          wordWidth >
+          partWidth >
           maxWidth
       ) {
 
@@ -768,139 +817,152 @@ function drawTextObject(
           object.x;
 
         currentY +=
-          lineHeight;
+          fontSize * 1.15;
 
       }
 
+
       c.fillStyle =
-        textColor ||
-        object.color ||
-        "#fff";
+        textColor;
+
 
       c.fillText(
-        word,
+        part,
         currentX,
         currentY
       );
 
+
+      /*
+        Sublinhado.
+      */
+      if (
+        underline &&
+        part.trim() !== ""
+      ) {
+
+        const underlineY =
+          currentY +
+          fontSize +
+          2;
+
+
+        c.strokeStyle =
+          textColor;
+
+
+        c.lineWidth =
+          Math.max(
+            1,
+            fontSize / 16
+          );
+
+
+        c.beginPath();
+
+        c.moveTo(
+          currentX,
+          underlineY
+        );
+
+        c.lineTo(
+          currentX +
+            partWidth,
+          underlineY
+        );
+
+        c.stroke();
+
+      }
+
+
       currentX +=
-        wordWidth;
+        partWidth;
 
     }
 
   }
 
-  let currentX =
-    object.x;
-
-  let currentY =
-    object.y;
 
   /*
-    Texto sem richText.
+    Texto simples sem HTML.
   */
   if (
     !object.richText
   ) {
 
-    const lines =
+    drawTextSegment(
       String(
         object.text ||
         ""
-      ).split("\n");
+      ),
+      {
+        color:
+          object.color ||
+          "#fff",
+        fontSize:
+          baseFontSize,
+        fontWeight:
+          "normal",
+        fontStyle:
+          "normal",
+        underline:
+          false
+      }
+    );
 
-    for (
-      const line
-      of lines
-    ) {
-
-      drawWrappedText(
-        line,
-        object.color ||
-        "#fff"
-      );
-
-      currentX =
-        object.x;
-
-      currentY +=
-        lineHeight;
-
-    }
 
     c.restore();
 
     return;
   }
 
+
   /*
-    Texto com cores diferentes.
-    Mantém FONT, style.color,
-    quebras de linha e faz
-    quebra automática dentro
-    da caixa.
+    Converte o HTML salvo pelo
+    contenteditable em texto
+    desenhável no Canvas.
   */
   const container =
     document.createElement(
       "div"
     );
 
+
   container.innerHTML =
     object.richText;
 
+
+  /*
+    Renderiza cada nó preservando
+    as características herdadas.
+  */
   function drawNode(
     node,
-    inheritedColor
+    inheritedStyle
   ) {
 
     /*
-      Texto normal.
+      Nó de texto.
     */
     if (
       node.nodeType ===
       Node.TEXT_NODE
     ) {
 
-      const text =
+      drawTextSegment(
         node.nodeValue ||
-        "";
-
-      const lines =
-        text.split("\n");
-
-      for (
-        let i = 0;
-        i < lines.length;
-        i++
-      ) {
-
-        if (
-          i > 0
-        ) {
-
-          currentX =
-            object.x;
-
-          currentY +=
-            lineHeight;
-
-        }
-
-        drawWrappedText(
-          lines[i],
-          inheritedColor ||
-          object.color ||
-          "#fff"
-        );
-
-      }
+          "",
+        inheritedStyle
+      );
 
       return;
     }
 
+
     /*
-      Ignora nós que não sejam
-      elementos HTML.
+      Ignora outros tipos
+      de nós.
     */
     if (
       node.nodeType !==
@@ -908,15 +970,44 @@ function drawTextObject(
     ) {
 
       return;
+    }
+
+
+    /*
+      Copia o estilo herdado.
+    */
+    const style = {
+      color:
+        inheritedStyle.color,
+
+      fontSize:
+        inheritedStyle.fontSize,
+
+      fontWeight:
+        inheritedStyle.fontWeight,
+
+      fontStyle:
+        inheritedStyle.fontStyle,
+
+      underline:
+        inheritedStyle.underline
+    };
+
+
+    /*
+      COR
+    */
+    if (
+      node.style &&
+      node.style.color
+    ) {
+
+      style.color =
+        node.style.color;
 
     }
 
-    let nodeColor =
-      inheritedColor;
 
-    /*
-      <font color="">
-      */
     if (
       node.tagName ===
         "FONT" &&
@@ -925,29 +1016,187 @@ function drawTextObject(
       )
     ) {
 
-      nodeColor =
+      style.color =
         node.getAttribute(
           "color"
         );
 
     }
 
+
     /*
-      style="color: ..."
-      */
+      TAMANHO
+    */
     if (
       node.style &&
-      node.style.color
+      node.style.fontSize
     ) {
 
-      nodeColor =
-        node.style.color;
+      const size =
+        parseFloat(
+          node.style.fontSize
+        );
+
+
+      if (
+        Number.isFinite(
+          size
+        )
+      ) {
+
+        style.fontSize =
+          size;
+
+      }
 
     }
 
+
     /*
-      <br>
-      */
+      Suporte ao <font size="">
+      caso o Safari produza esse
+      formato.
+    */
+    if (
+      node.tagName ===
+        "FONT" &&
+      node.getAttribute(
+        "size"
+      )
+    ) {
+
+      const htmlSize =
+        Number(
+          node.getAttribute(
+            "size"
+          )
+        );
+
+
+      const htmlSizes = {
+        1: 10,
+        2: 13,
+        3: 16,
+        4: 18,
+        5: 24,
+        6: 32,
+        7: 48
+      };
+
+
+      if (
+        htmlSizes[
+          htmlSize
+        ]
+      ) {
+
+        style.fontSize =
+          htmlSizes[
+            htmlSize
+          ];
+
+      }
+
+    }
+
+
+    /*
+      NEGRITO
+    */
+    if (
+      node.tagName ===
+        "B" ||
+      node.tagName ===
+        "STRONG"
+    ) {
+
+      style.fontWeight =
+        "bold";
+
+    }
+
+
+    if (
+      node.style &&
+      (
+        node.style.fontWeight ===
+          "bold" ||
+        node.style.fontWeight ===
+          "700" ||
+        node.style.fontWeight ===
+          "600" ||
+        node.style.fontWeight ===
+          "800" ||
+        node.style.fontWeight ===
+          "900"
+      )
+    ) {
+
+      style.fontWeight =
+        "bold";
+
+    }
+
+
+    /*
+      ITÁLICO
+    */
+    if (
+      node.tagName ===
+        "I" ||
+      node.tagName ===
+        "EM"
+    ) {
+
+      style.fontStyle =
+        "italic";
+
+    }
+
+
+    if (
+      node.style &&
+      node.style.fontStyle ===
+        "italic"
+    ) {
+
+      style.fontStyle =
+        "italic";
+
+    }
+
+
+    /*
+      SUBLINHADO
+    */
+    if (
+      node.tagName ===
+        "U"
+    ) {
+
+      style.underline =
+        true;
+
+    }
+
+
+    if (
+      node.style &&
+      node.style.textDecoration
+        .includes(
+          "underline"
+        )
+    ) {
+
+      style.underline =
+        true;
+
+    }
+
+
+    /*
+      Quebra de linha HTML.
+    */
     if (
       node.tagName ===
       "BR"
@@ -957,15 +1206,17 @@ function drawTextObject(
         object.x;
 
       currentY +=
-        lineHeight;
+        style.fontSize *
+        1.15;
 
       return;
 
     }
 
+
     /*
-      Percorre os filhos,
-      preservando a cor herdada.
+      Percorre os filhos
+      mantendo a formatação.
     */
     for (
       const child
@@ -974,16 +1225,41 @@ function drawTextObject(
 
       drawNode(
         child,
-        nodeColor
+        style
       );
 
     }
 
   }
 
+
   /*
-    Percorre todo o conteúdo
-    formatado.
+    Estilo inicial.
+  */
+  const initialStyle = {
+
+    color:
+      object.color ||
+      "#fff",
+
+    fontSize:
+      baseFontSize,
+
+    fontWeight:
+      "normal",
+
+    fontStyle:
+      "normal",
+
+    underline:
+      false
+
+  };
+
+
+  /*
+    Renderiza o conteúdo
+    formatado inteiro.
   */
   for (
     const child
@@ -992,11 +1268,11 @@ function drawTextObject(
 
     drawNode(
       child,
-      object.color ||
-      "#fff"
+      initialStyle
     );
 
   }
+
 
   c.restore();
 
