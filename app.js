@@ -156,6 +156,13 @@ let selectedObjectId =
 let editingObjectId =
   null;
 
+/*
+  Guarda a seleção de texto para que
+  ela não seja perdida ao abrir
+  o painel de ferramentas.
+*/
+let savedTextSelection =
+  null;
 
 /* =========================================================
    INTERAÇÃO
@@ -624,56 +631,213 @@ function drawTextObject(
 
   c.save();
 
-
   const fontSize =
     object.fontSize ||
     24;
 
-
   c.font =
     `${fontSize}px Arial, sans-serif`;
-
 
   c.textBaseline =
     "top";
 
-
-  c.fillStyle =
-    object.color ||
-    "#fff";
-
-
-  const lines =
-    String(
-      object.text ||
-      ""
-    ).split("\n");
-
-
   const lineHeight =
     fontSize * 1.15;
 
+  /*
+    Se o texto não possui formatação
+    por trecho, mantém exatamente
+    o comportamento anterior.
+  */
+  if (!object.richText) {
 
-  for (
-    let i = 0;
-    i < lines.length;
-    i++
+    c.fillStyle =
+      object.color ||
+      "#fff";
+
+    const lines =
+      String(
+        object.text ||
+        ""
+      ).split("\n");
+
+    for (
+      let i = 0;
+      i < lines.length;
+      i++
+    ) {
+
+      c.fillText(
+        lines[i],
+        object.x,
+        object.y +
+        i * lineHeight
+      );
+
+    }
+
+    c.restore();
+
+    return;
+  }
+
+  /*
+    Cria uma estrutura temporária
+    para ler as cores dos trechos.
+  */
+  const container =
+    document.createElement(
+      "div"
+    );
+
+  container.innerHTML =
+    object.richText;
+
+  let currentX =
+    object.x;
+
+  let currentY =
+    object.y;
+
+  function drawNode(
+    node,
+    inheritedColor
   ) {
 
-    c.fillText(
-      lines[i],
-      object.x,
-      object.y +
-      i * lineHeight
+    if (
+      node.nodeType ===
+      Node.TEXT_NODE
+    ) {
+
+      const text =
+        node.nodeValue || "";
+
+      const parts =
+        text.split("\n");
+
+      for (
+        let i = 0;
+        i < parts.length;
+        i++
+      ) {
+
+        if (i > 0) {
+
+          currentX =
+            object.x;
+
+          currentY +=
+            lineHeight;
+
+        }
+
+        if (
+          parts[i].length
+        ) {
+
+          c.fillStyle =
+            inheritedColor ||
+            object.color ||
+            "#fff";
+
+          c.fillText(
+            parts[i],
+            currentX,
+            currentY
+          );
+
+          currentX +=
+            c.measureText(
+              parts[i]
+            ).width;
+
+        }
+
+      }
+
+      return;
+    }
+
+    if (
+      node.nodeType !==
+      Node.ELEMENT_NODE
+    ) {
+
+      return;
+    }
+
+    let nodeColor =
+      inheritedColor;
+
+    if (
+      node.tagName ===
+      "FONT" &&
+      node.getAttribute(
+        "color"
+      )
+    ) {
+
+      nodeColor =
+        node.getAttribute(
+          "color"
+        );
+
+    }
+
+    if (
+      node.style &&
+      node.style.color
+    ) {
+
+      nodeColor =
+        node.style.color;
+
+    }
+
+    if (
+      node.tagName ===
+      "BR"
+    ) {
+
+      currentX =
+        object.x;
+
+      currentY +=
+        lineHeight;
+
+      return;
+    }
+
+    for (
+      const child
+      of node.childNodes
+    ) {
+
+      drawNode(
+        child,
+        nodeColor
+      );
+
+    }
+
+  }
+
+  for (
+    const child
+    of container.childNodes
+  ) {
+
+    drawNode(
+      child,
+      object.color ||
+      "#fff"
     );
 
   }
 
-
   c.restore();
 
 }
-
 
 /* =========================================================
    IMAGEM
@@ -1068,9 +1232,18 @@ function beginTextEditing(
   editingObjectId =
     object.id;
 
+  if (object.richText) {
+
+  inlineEditor.innerHTML =
+    object.richText;
+
+} else {
+
   inlineEditor.innerText =
     object.text ||
     "";
+
+}
 
   inlineEditor.style.color =
     object.color ||
@@ -1307,9 +1480,12 @@ function finishTextEditing() {
 
   if (object) {
 
-    object.text =
-  inlineEditor.innerText
-    .replace(/\u00a0/g, " ");
+  object.text =
+    inlineEditor.innerText
+      .replace(/\u00a0/g, " ");
+
+  object.richText =
+    inlineEditor.innerHTML;
 
     /*
       Mantém dimensões redimensionadas.
@@ -1382,7 +1558,6 @@ inlineEditor.addEventListener(
     if (!editingObjectId) {
 
       return;
-
     }
 
     const object =
@@ -1390,63 +1565,49 @@ inlineEditor.addEventListener(
         editingObjectId
       );
 
-
     if (!object) {
 
       return;
-
     }
 
-
     /*
-      Salva o texto atual.
+      Texto simples para manter
+      compatibilidade com o objeto.
     */
     object.text =
       inlineEditor.innerText
         .replace(/\u00a0/g, " ");
 
+    /*
+      Guarda as cores aplicadas
+      aos trechos selecionados.
+    */
+    object.richText =
+      inlineEditor.innerHTML;
 
     /*
-      Calcula novamente o tamanho
-      necessário para o conteúdo.
+      Mantém o ajuste automático
+      da caixa de texto.
     */
     const dimensions =
       getTextDimensions(
         object
       );
 
-
-    /*
-      Atualiza o objeto.
-    */
     object.width =
       dimensions.width;
 
     object.height =
       dimensions.height;
 
-
-    /*
-      Faz a caixa visual acompanhar
-      imediatamente o texto.
-    */
     inlineEditor.style.width =
       `${dimensions.width}px`;
 
     inlineEditor.style.height =
       `${dimensions.height}px`;
 
-
-    /*
-      Mantém o editor na posição
-      correta.
-    */
     updateEditorPosition();
 
-
-    /*
-      Atualiza a lousa.
-    */
     redraw();
 
   }
@@ -3068,6 +3229,154 @@ clearBtn.addEventListener(
    CORES
    ========================================================= */
 
+
+/*
+  Seleção de texto usada pelo editor.
+*/
+document.addEventListener(
+  "selectionchange",
+  () => {
+
+    if (
+      !editingObjectId
+    ) {
+
+      return;
+    }
+
+    const selection =
+      window.getSelection();
+
+    if (
+      !selection ||
+      selection.rangeCount === 0
+    ) {
+
+      return;
+    }
+
+    const range =
+      selection.getRangeAt(0);
+
+    if (
+      inlineEditor.contains(
+        range.commonAncestorContainer
+      )
+    ) {
+
+      savedTextSelection =
+        range.cloneRange();
+
+    }
+
+  }
+);
+
+
+/*
+  Aplica uma cor somente ao
+  trecho selecionado.
+*/
+function applyTextColor(
+  selectedColor
+) {
+
+  if (
+    !editingObjectId
+  ) {
+
+    return false;
+  }
+
+  if (
+    !savedTextSelection
+  ) {
+
+    return false;
+  }
+
+  const selection =
+    window.getSelection();
+
+  selection.removeAllRanges();
+
+  selection.addRange(
+    savedTextSelection
+  );
+
+  /*
+    Garante que existe
+    realmente um trecho selecionado.
+  */
+  if (
+    selection.isCollapsed
+  ) {
+
+    return false;
+  }
+
+  /*
+    Usa o mecanismo nativo do
+    navegador para colorir a seleção.
+    Isso funciona especialmente bem
+    no Safari/iPhone.
+  */
+  document.execCommand(
+    "foreColor",
+    false,
+    selectedColor
+  );
+
+  const object =
+    getObjectById(
+      editingObjectId
+    );
+
+  if (object) {
+
+    object.text =
+      inlineEditor.innerText
+        .replace(/\u00a0/g, " ");
+
+    object.richText =
+      inlineEditor.innerHTML;
+
+    const dimensions =
+      getTextDimensions(
+        object
+      );
+
+    object.width =
+      dimensions.width;
+
+    object.height =
+      dimensions.height;
+
+    inlineEditor.style.width =
+      `${dimensions.width}px`;
+
+    inlineEditor.style.height =
+      `${dimensions.height}px`;
+  }
+
+  /*
+    Mantém a seleção depois
+    de aplicar a cor.
+  */
+  savedTextSelection =
+    selection
+      .getRangeAt(0)
+      .cloneRange();
+
+  redraw();
+
+  return true;
+}
+
+
+/*
+  Cores da lousa.
+*/
 document
   .querySelectorAll(
     ".color"
@@ -3075,10 +3384,61 @@ document
   .forEach(
     button => {
 
+      /*
+        Impede que o toque no botão
+        destrua a seleção antes de
+        aplicarmos a cor.
+      */
+      button.addEventListener(
+        "pointerdown",
+        event => {
+
+          if (
+            editingObjectId
+          ) {
+
+            event.preventDefault();
+
+          }
+
+        }
+      );
+
       button.addEventListener(
         "click",
         () => {
 
+          const selectedColor =
+            button.dataset.color;
+
+          /*
+            Se houver texto selecionado,
+            muda somente a seleção.
+          */
+          if (
+            editingObjectId &&
+            savedTextSelection
+          ) {
+
+            const changed =
+              applyTextColor(
+                selectedColor
+              );
+
+            if (changed) {
+
+              return;
+
+            }
+
+          }
+
+          /*
+            Caso não esteja editando
+            texto, mantém exatamente
+            o funcionamento anterior
+            da cor da caneta.
+          */
           document
             .querySelectorAll(
               ".color"
@@ -3090,19 +3450,15 @@ document
                 )
             );
 
-
           button.classList.add(
             "active"
           );
 
-
           color =
-            button.dataset.color;
-
+            selectedColor;
 
           tool =
             "pen";
-
 
           updateToolName();
 
@@ -3111,7 +3467,6 @@ document
 
     }
   );
-
 
 /* =========================================================
    ESPESSURA
