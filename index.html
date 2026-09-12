@@ -700,7 +700,186 @@
       display: block;
 
     }
+    
+    /* =====================================================
+   BARRA DE FORMATAÇÃO DO TEXTO
+   ===================================================== */
 
+#textFormatToolbar {
+
+  position: fixed;
+
+  display: none;
+
+  z-index: 90;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 5px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(22, 22, 26, 0.94);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  box-shadow:
+    0 8px 24px
+    rgba(0, 0, 0, 0.45);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  pointer-events: auto;
+
+  touch-action: manipulation;
+
+}
+
+#textFormatToolbar.show {
+
+  display: flex;
+
+}
+
+#textFormatToolbar button {
+
+  width: 34px;
+
+  height: 34px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color: #fff;
+
+  font-family:
+    Arial,
+    sans-serif;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+
+  -webkit-user-select: none;
+
+  user-select: none;
+
+}
+
+#textFormatToolbar button:active {
+
+  background:
+    rgba(255, 255, 255, 0.22);
+
+  transform:
+    scale(0.94);
+
+}
+
+#textFormatToolbar .format-separator {
+
+  width: 1px;
+
+  height: 24px;
+
+  margin:
+    0 2px;
+
+  background:
+    rgba(255, 255, 255, 0.18);
+
+}
+
+#textFormatToolbar .format-color {
+
+  width: 24px;
+
+  height: 24px;
+
+  border-radius: 50%;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.65);
+
+  margin: 0 2px;
+
+}
+
+#textFormatToolbar .format-color.white {
+
+  background: #fff;
+
+}
+
+#textFormatToolbar .format-color.red {
+
+  background: #ff3b30;
+
+}
+
+#textFormatToolbar .format-color.yellow {
+
+  background: #ffcc00;
+
+}
+
+#textFormatToolbar .format-color.green {
+
+  background: #34c759;
+
+}
+
+#textFormatToolbar .format-color.blue {
+
+  background: #0a84ff;
+
+}
+
+@media (max-width: 520px) {
+
+  #textFormatToolbar {
+
+    gap: 2px;
+
+    padding: 4px;
+
+  }
+
+  #textFormatToolbar button {
+
+    width: 31px;
+
+    height: 31px;
+
+  }
+
+}
 
     /* =====================================================
        CANCELAR IMAGEM
@@ -1273,17 +1452,109 @@
 
 
     <!-- =================================================
-         EDITOR DE TEXTO
-         ================================================= -->
+     BARRA DE FORMATAÇÃO DO TEXTO
+     ================================================= -->
 
-    <div
-      id="inlineEditor"
-      contenteditable="true"
-      spellcheck="true"
-      role="textbox"
-      aria-label="Editar texto">
-    </div>
+<div id="textFormatToolbar">
 
+  <button
+    type="button"
+    data-format="bold"
+    aria-label="Negrito"
+    title="Negrito">
+    B
+  </button>
+
+  <button
+    type="button"
+    data-format="italic"
+    aria-label="Itálico"
+    title="Itálico">
+    <i>I</i>
+  </button>
+
+  <button
+    type="button"
+    data-format="underline"
+    aria-label="Sublinhado"
+    title="Sublinhado">
+    <u>U</u>
+  </button>
+
+  <span class="format-separator"></span>
+
+  <button
+    type="button"
+    data-format="decrease"
+    aria-label="Diminuir tamanho"
+    title="Diminuir tamanho">
+    A−
+  </button>
+
+  <button
+    type="button"
+    data-format="increase"
+    aria-label="Aumentar tamanho"
+    title="Aumentar tamanho">
+    A+
+  </button>
+
+  <span class="format-separator"></span>
+
+  <button
+    type="button"
+    class="format-color white"
+    data-color="#fff"
+    aria-label="Branco"
+    title="Branco">
+  </button>
+
+  <button
+    type="button"
+    class="format-color red"
+    data-color="#ff3b30"
+    aria-label="Vermelho"
+    title="Vermelho">
+  </button>
+
+  <button
+    type="button"
+    class="format-color yellow"
+    data-color="#ffcc00"
+    aria-label="Amarelo"
+    title="Amarelo">
+  </button>
+
+  <button
+    type="button"
+    class="format-color green"
+    data-color="#34c759"
+    aria-label="Verde"
+    title="Verde">
+  </button>
+
+  <button
+    type="button"
+    class="format-color blue"
+    data-color="#0a84ff"
+    aria-label="Azul"
+    title="Azul">
+  </button>
+
+</div>
+
+
+<!-- =================================================
+     EDITOR DE TEXTO
+     ================================================= -->
+
+<div
+  id="inlineEditor"
+  contenteditable="true"
+  spellcheck="true"
+  role="textbox"
+  aria-label="Editar texto">
+</div>
 
     <!-- =================================================
          BOTÃO GRAVAR
