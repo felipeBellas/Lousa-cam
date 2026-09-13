@@ -956,7 +956,11 @@ function drawTextObject(
       style.fontStyle ||
       "normal";
 
-
+    const fontFamily =
+    style.fontFamily ||
+    object.fontFamily ||
+      "Arial";
+     
     const textColor =
       style.color ||
       object.color ||
@@ -969,8 +973,7 @@ function drawTextObject(
 
 
     c.font =
-      `${fontStyle} ${fontWeight} ${fontSize}px Arial, sans-serif`;
-
+  `${fontStyle} ${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
 
     c.textBaseline =
       "top";
@@ -1154,10 +1157,16 @@ function drawTextObject(
           baseFontSize,
         fontWeight:
           "normal",
-        fontStyle:
+        
+         fontStyle:
           "normal",
+
+        fontFamily:
+        object.fontFamily ||
+           "Arial",
+
         underline:
-          false
+            false
       }
     );
 
@@ -1227,23 +1236,71 @@ function drawTextObject(
       Copia o estilo herdado.
     */
     const style = {
-      color:
-        inheritedStyle.color,
 
-      fontSize:
-        inheritedStyle.fontSize,
+  color:
+    inheritedStyle.color,
 
-      fontWeight:
-        inheritedStyle.fontWeight,
+  fontSize:
+    inheritedStyle.fontSize,
 
-      fontStyle:
-        inheritedStyle.fontStyle,
+  fontWeight:
+    inheritedStyle.fontWeight,
 
-      underline:
-        inheritedStyle.underline
-    };
+  fontStyle:
+    inheritedStyle.fontStyle,
+
+  fontFamily:
+    inheritedStyle.fontFamily,
+
+  underline:
+    inheritedStyle.underline
+
+};
+
+/*
+  FONTE
+*/
+if (
+  node.style &&
+  node.style.fontFamily
+) {
+
+  style.fontFamily =
+    node.style.fontFamily
+      .replace(
+        /["']/g,
+        ""
+      )
+      .split(",")[0]
+      .trim();
+
+}
 
 
+/*
+  Suporte ao <font face="">
+*/
+if (
+  node.tagName ===
+    "FONT" &&
+  node.getAttribute(
+    "face"
+  )
+) {
+
+  style.fontFamily =
+    node
+      .getAttribute(
+        "face"
+      )
+      .replace(
+        /["']/g,
+        ""
+      )
+      .split(",")[0]
+      .trim();
+
+}
     /*
       COR
     */
@@ -1501,8 +1558,12 @@ function drawTextObject(
     fontStyle:
       "normal",
 
-    underline:
-      false
+    fontFamily:
+     object.fontFamily ||
+       "Arial",
+
+underline:
+  false
 
   };
 
@@ -1709,8 +1770,12 @@ function getTextDimensions(
 
     ctx.save();
 
+    const baseFontFamily =
+    object.fontFamily ||
+      "Arial";
+
     ctx.font =
-      `${baseFontSize}px Arial, sans-serif`;
+   `${baseFontSize}px "${baseFontFamily}", sans-serif`;
 
     const lines =
       text.split("\n");
@@ -1802,7 +1867,9 @@ function getTextDimensions(
     "pre-wrap";
 
   measure.style.fontFamily =
-    "Arial, sans-serif";
+  object.fontFamily
+    ? `"${object.fontFamily}", sans-serif`
+    : "Arial, sans-serif";
 
   measure.style.fontSize =
     `${baseFontSize}px`;
@@ -6189,6 +6256,198 @@ function changeSelectedFontSize(
 }
 
 /* =========================================================
+   ALTERAR FONTE DO TEXTO
+   ========================================================= */
+
+function changeSelectedFontFamily(
+  fontFamily
+) {
+
+  if (
+    !editingObjectId ||
+    !fontFamily
+  ) {
+
+    return false;
+
+  }
+
+
+  const object =
+    getObjectById(
+      editingObjectId
+    );
+
+
+  if (!object) {
+
+    return false;
+
+  }
+
+
+  /*
+    Se existe uma seleção salva,
+    aplica somente ao trecho.
+  */
+  if (
+    savedTextSelection
+  ) {
+
+    if (
+      restoreTextSelection()
+    ) {
+
+      try {
+
+        document.execCommand(
+          "styleWithCSS",
+          false,
+          true
+        );
+
+      } catch (error) {
+
+        console.log(
+          "styleWithCSS:",
+          error
+        );
+
+      }
+
+
+      document.execCommand(
+        "fontName",
+        false,
+        fontFamily
+      );
+
+
+      const selection =
+        window.getSelection();
+
+
+      if (
+        selection &&
+        selection.rangeCount > 0
+      ) {
+
+        savedTextSelection =
+          selection
+            .getRangeAt(0)
+            .cloneRange();
+
+      }
+
+
+      saveFormattedText();
+
+      return true;
+
+    }
+
+  }
+
+
+  /*
+    Sem trecho selecionado:
+    altera a fonte base da caixa inteira.
+  */
+  object.fontFamily =
+    fontFamily;
+
+
+  inlineEditor.style.fontFamily =
+    `"${fontFamily}", sans-serif`;
+
+
+  /*
+    Aplica também ao conteúdo atual.
+  */
+  const range =
+    document.createRange();
+
+  range.selectNodeContents(
+    inlineEditor
+  );
+
+
+  const selection =
+    window.getSelection();
+
+  selection.removeAllRanges();
+
+  selection.addRange(
+    range
+  );
+
+
+  savedTextSelection =
+    range.cloneRange();
+
+
+  try {
+
+    document.execCommand(
+      "styleWithCSS",
+      false,
+      true
+    );
+
+  } catch (error) {
+
+    console.log(
+      "styleWithCSS:",
+      error
+    );
+
+  }
+
+
+  document.execCommand(
+    "fontName",
+    false,
+    fontFamily
+  );
+
+
+  object.richText =
+    inlineEditor.innerHTML;
+
+
+  /*
+    Coloca o cursor novamente
+    no fim do texto.
+  */
+  const finalRange =
+    document.createRange();
+
+  finalRange.selectNodeContents(
+    inlineEditor
+  );
+
+  finalRange.collapse(
+    false
+  );
+
+
+  selection.removeAllRanges();
+
+  selection.addRange(
+    finalRange
+  );
+
+
+  savedTextSelection =
+    null;
+
+
+  saveFormattedText();
+
+  return true;
+}
+
+/* =========================================================
    BOTÕES DA BARRA
    ========================================================= */
 
@@ -6295,6 +6554,107 @@ textFormatToolbar
     }
   );
 
+/* =========================================================
+   SELETOR DE FONTES
+   ========================================================= */
+
+if (
+  textFontSelect
+) {
+
+  textFontSelect.addEventListener(
+    "pointerdown",
+    () => {
+
+      if (
+        !editingObjectId
+      ) {
+
+        return;
+
+      }
+
+
+      const selection =
+        window.getSelection();
+
+
+      if (
+        selection &&
+        selection.rangeCount > 0 &&
+        !selection.isCollapsed &&
+        inlineEditor.contains(
+          selection.anchorNode
+        )
+      ) {
+
+        savedTextSelection =
+          selection
+            .getRangeAt(0)
+            .cloneRange();
+
+      }
+
+    }
+  );
+
+
+  textFontSelect.addEventListener(
+    "change",
+    event => {
+
+      event.stopPropagation();
+
+
+      const fontFamily =
+        event.target.value;
+
+
+      changeSelectedFontFamily(
+        fontFamily
+      );
+
+
+      /*
+        Aguarda a fonte ficar disponível
+        antes de redesenhar o Canvas.
+      */
+      if (
+        document.fonts &&
+        document.fonts.load
+      ) {
+
+        document.fonts
+          .load(
+            `24px "${fontFamily}"`
+          )
+          .then(
+            () => {
+
+              saveFormattedText();
+
+              redraw();
+
+            }
+          )
+          .catch(
+            () => {
+
+              redraw();
+
+            }
+          );
+
+      } else {
+
+        redraw();
+
+      }
+
+    }
+  );
+
+}
 
 /* =========================================================
    CORES DA BARRA
