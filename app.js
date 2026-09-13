@@ -175,7 +175,12 @@ let editingObjectId =
 */
 let savedTextSelection =
   null;
-
+/*
+  Impede que controles da barra
+  encerrem a edição do texto no iPhone.
+*/
+let textToolbarInteraction =
+  false;
 /* =========================================================
    INTERAÇÃO
    ========================================================= */
@@ -2866,6 +2871,24 @@ inlineEditor.addEventListener(
 
     setTimeout(() => {
 
+      /*
+        Se o usuário tocou em algum
+        controle da barra de texto,
+        NÃO encerra a edição.
+      */
+      if (
+        textToolbarInteraction
+      ) {
+
+        return;
+
+      }
+
+
+      /*
+        Fora da barra:
+        mantém o comportamento original.
+      */
       if (
         document.activeElement !==
         inlineEditor
@@ -2875,7 +2898,7 @@ inlineEditor.addEventListener(
 
       }
 
-    }, 80);
+    }, 120);
 
   }
 );
@@ -6562,9 +6585,14 @@ if (
   textFontSelect
 ) {
 
+  /*
+    Antes de o Safari abrir o seletor,
+    informa que continuamos trabalhando
+    dentro da barra de edição.
+  */
   textFontSelect.addEventListener(
     "pointerdown",
-    () => {
+    event => {
 
       if (
         !editingObjectId
@@ -6575,23 +6603,37 @@ if (
       }
 
 
+      textToolbarInteraction =
+        true;
+
+
+      /*
+        Guarda a seleção atual do texto,
+        caso exista.
+      */
       const selection =
         window.getSelection();
 
 
       if (
         selection &&
-        selection.rangeCount > 0 &&
-        !selection.isCollapsed &&
-        inlineEditor.contains(
-          selection.anchorNode
-        )
+        selection.rangeCount > 0
       ) {
 
-        savedTextSelection =
-          selection
-            .getRangeAt(0)
-            .cloneRange();
+        const range =
+          selection.getRangeAt(0);
+
+
+        if (
+          inlineEditor.contains(
+            range.commonAncestorContainer
+          )
+        ) {
+
+          savedTextSelection =
+            range.cloneRange();
+
+        }
 
       }
 
@@ -6599,12 +6641,33 @@ if (
   );
 
 
+  /*
+    iPhone/Safari também pode disparar
+    touchstart antes do seletor nativo.
+  */
+  textFontSelect.addEventListener(
+    "touchstart",
+    () => {
+
+      if (
+        editingObjectId
+      ) {
+
+        textToolbarInteraction =
+          true;
+
+      }
+
+    },
+    {
+      passive: true
+    }
+  );
+
+
   textFontSelect.addEventListener(
     "change",
     event => {
-
-      event.stopPropagation();
-
 
       const fontFamily =
         event.target.value;
@@ -6616,45 +6679,111 @@ if (
 
 
       /*
-        Aguarda a fonte ficar disponível
-        antes de redesenhar o Canvas.
+        Aguarda o seletor do iPhone fechar
+        e devolve o foco ao texto.
       */
-      if (
-        document.fonts &&
-        document.fonts.load
-      ) {
+      setTimeout(
+        () => {
 
-        document.fonts
-          .load(
-            `24px "${fontFamily}"`
-          )
-          .then(
+          if (
+            editingObjectId
+          ) {
+
+            inlineEditor.focus({
+              preventScroll: true
+            });
+
+
+            updateEditorPosition();
+
+            updateTextFormatToolbarPosition();
+
+            redraw();
+
+          }
+
+
+          /*
+            Libera novamente o blur normal.
+          */
+          setTimeout(
             () => {
 
-              saveFormattedText();
+              textToolbarInteraction =
+                false;
 
-              redraw();
-
-            }
-          )
-          .catch(
-            () => {
-
-              redraw();
-
-            }
+            },
+            250
           );
 
-      } else {
+        },
+        80
+      );
 
-        redraw();
+    }
+  );
 
-      }
+
+  /*
+    Segurança para quando o usuário
+    fecha o seletor sem mudar a fonte.
+  */
+  textFontSelect.addEventListener(
+    "pointerup",
+    () => {
+
+      setTimeout(
+        () => {
+
+          textToolbarInteraction =
+            false;
+
+        },
+        600
+      );
 
     }
   );
 
 }
+
+/* =========================================================
+   PROTEGER BARRA DE TEXTO NO IPHONE
+   ========================================================= */
+
+textFormatToolbar.addEventListener(
+  "pointerdown",
+  () => {
+
+    if (
+      editingObjectId
+    ) {
+
+      textToolbarInteraction =
+        true;
+
+    }
+
+  }
+);
+
+
+textFormatToolbar.addEventListener(
+  "pointerup",
+  () => {
+
+    setTimeout(
+      () => {
+
+        textToolbarInteraction =
+          false;
+
+      },
+      300
+    );
+
+  }
+);
 
 /* =========================================================
    CORES DA BARRA
