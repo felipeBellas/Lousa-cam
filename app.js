@@ -79,6 +79,9 @@ const inlineEditor =
 const textFormatToolbar =
   $("textFormatToolbar");
 
+const textFontSelect =
+  $("textFontSelect");
+
 const objectCancel =
   $("objectCancel");
 
@@ -2142,10 +2145,13 @@ function createTextObject(
       color,
 
     fontSize:
-      24,
+  24,
 
-    createdAt:
-      Date.now()
+fontFamily:
+  "Arial",
+
+createdAt:
+  Date.now()
 
   };
 
@@ -2224,7 +2230,22 @@ function beginTextEditing(
 
   inlineEditor.style.fontSize =
     `${object.fontSize || 24}px`;
+   
+  inlineEditor.style.fontFamily =
+  object.fontFamily
+    ? `"${object.fontFamily}", sans-serif`
+    : "Arial, sans-serif";
 
+   if (
+  textFontSelect
+) {
+
+  textFontSelect.value =
+    object.fontFamily ||
+    "Arial";
+
+}
+   
   inlineEditor.style.width =
     `${Math.max(
       80,
