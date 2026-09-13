@@ -54,7 +54,22 @@
 
   <title>Lousa Cam 2.0</title>
 
+  <!-- =================================================
+     FONTES MANUSCRITAS
+     ================================================= -->
 
+<link
+  rel="preconnect"
+  href="https://fonts.googleapis.com">
+
+<link
+  rel="preconnect"
+  href="https://fonts.gstatic.com"
+  crossorigin>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Handlee&family=Patrick+Hand&family=Schoolbell&display=swap"
+  rel="stylesheet">
   <style>
 
     :root {
@@ -714,7 +729,7 @@ body {
    ===================================================== */
 
 #textFormatToolbar {
-
+  
   position: fixed;
 
   display: none;
@@ -745,13 +760,93 @@ body {
 
   -webkit-backdrop-filter:
     blur(18px);
+    
+  max-width:
+    calc(100vw - 12px);
 
+  overflow-x: auto;
+
+  overflow-y: hidden;
+
+  scrollbar-width: none;
+  
   pointer-events: auto;
 
   touch-action: manipulation;
 
 }
 
+    #textFormatToolbar::-webkit-scrollbar {
+
+  display: none;
+
+}
+
+
+/* =====================================================
+   SELETOR DE FONTES
+   ===================================================== */
+
+#textFontSelect {
+
+  height: 34px;
+
+  min-width: 88px;
+
+  max-width: 105px;
+
+  padding:
+    0 8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.16);
+
+  border-radius: 8px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color: #fff;
+
+  font-size: 13px;
+
+  outline: none;
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+
+}
+
+
+#textFontSelect option {
+
+  background:
+    #1c1c1e;
+
+  color:
+    #fff;
+
+}
+
+
+@media (max-width: 520px) {
+
+  #textFontSelect {
+
+    height: 31px;
+
+    min-width: 82px;
+
+    max-width: 92px;
+
+    font-size: 12px;
+
+  }
+
+}
+    
 #textFormatToolbar.show {
 
   display: flex;
@@ -1621,7 +1716,32 @@ body {
     aria-label="Azul"
     title="Azul">
   </button>
+  <span class="format-separator"></span>
 
+
+<select
+  id="textFontSelect"
+  aria-label="Fonte"
+  title="Fonte">
+
+  <option value="Arial">
+    Normal
+  </option>
+
+  <option value="Patrick Hand">
+    Professor
+  </option>
+
+  <option value="Schoolbell">
+    Quadro
+  </option>
+
+  <option value="Handlee">
+    Manuscrita
+  </option>
+
+</select>
+  
 </div>
 
 
