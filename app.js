@@ -7884,8 +7884,11 @@ objectLock.addEventListener(
 
   }
 );
+
 /* =========================================================
    PAINEL BIOLOGIA
+   Fica alinhado ao Menu principal e logo abaixo dele.
+   Não altera as demais funções do Lousa Cam.
    ========================================================= */
 
 biologyButton.addEventListener(
@@ -7897,20 +7900,41 @@ biologyButton.addEventListener(
 
 
     /*
-      Fecha o menu principal.
+      Primeiro mantém o menu principal aberto
+      durante o cálculo da posição.
     */
-    menuPanel.classList.remove(
+    menuPanel.classList.add(
       "open"
     );
 
     menuPanel.setAttribute(
       "aria-hidden",
-      "true"
+      "false"
     );
 
 
     /*
-      Abre o painel Biologia.
+      Mede a posição real do Menu.
+      Assim o painel Biologia acompanha
+      exatamente a posição atual do Menu.
+    */
+    const menuRect =
+      menuPanel.getBoundingClientRect();
+
+
+    /*
+      Posiciona Biologia logo abaixo
+      do Menu principal.
+    */
+    biologyPanel.style.left =
+      `${menuRect.left}px`;
+
+    biologyPanel.style.top =
+      `${menuRect.bottom + 10}px`;
+
+
+    /*
+      Agora abre o painel Biologia.
     */
     biologyPanel.classList.add(
       "open"
@@ -7921,29 +7945,29 @@ biologyButton.addEventListener(
       "false"
     );
 
+
+    /*
+      Depois que o painel abrir,
+      garante novamente a posição.
+    */
+    requestAnimationFrame(
+      () => {
+
+        const currentMenuRect =
+          menuPanel.getBoundingClientRect();
+
+        biologyPanel.style.left =
+          `${currentMenuRect.left}px`;
+
+        biologyPanel.style.top =
+          `${currentMenuRect.bottom + 10}px`;
+
+      }
+    );
+
   }
 );
 
-
-biologyCloseButton.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-    event.stopPropagation();
-
-
-    biologyPanel.classList.remove(
-      "open"
-    );
-
-    biologyPanel.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-  }
-);
 /* =========================================================
    DESBLOQUEAR IMAGENS
    ========================================================= */
