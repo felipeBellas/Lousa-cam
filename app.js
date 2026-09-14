@@ -7884,7 +7884,66 @@ objectLock.addEventListener(
 
   }
 );
+/* =========================================================
+   PAINEL BIOLOGIA
+   ========================================================= */
 
+biologyButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+
+    /*
+      Fecha o menu principal.
+    */
+    menuPanel.classList.remove(
+      "open"
+    );
+
+    menuPanel.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+
+    /*
+      Abre o painel Biologia.
+    */
+    biologyPanel.classList.add(
+      "open"
+    );
+
+    biologyPanel.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+  }
+);
+
+
+biologyCloseButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+
+    biologyPanel.classList.remove(
+      "open"
+    );
+
+    biologyPanel.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+);
 /* =========================================================
    DESBLOQUEAR IMAGENS
    ========================================================= */
@@ -7981,6 +8040,10 @@ document.addEventListener(
 
     if (
       menuPanel.contains(
+        event.target
+      ) ||
+
+      biologyPanel.contains(
         event.target
       ) ||
 
