@@ -7887,9 +7887,30 @@ objectLock.addEventListener(
 
 /* =========================================================
    PAINEL BIOLOGIA
-   Fica alinhado ao Menu principal e logo abaixo dele.
-   Não altera as demais funções do Lousa Cam.
+   O MENU PRINCIPAL PERMANECE ABERTO
    ========================================================= */
+
+function updateBiologyPanelPosition() {
+
+  if (
+    !menuPanel.classList.contains(
+      "open"
+    )
+  ) {
+    return;
+  }
+
+  const menuRect =
+    menuPanel.getBoundingClientRect();
+
+  biologyPanel.style.left =
+    `${menuRect.left}px`;
+
+  biologyPanel.style.top =
+    `${menuRect.bottom + 10}px`;
+
+}
+
 
 biologyButton.addEventListener(
   "click",
@@ -7898,10 +7919,8 @@ biologyButton.addEventListener(
     event.preventDefault();
     event.stopPropagation();
 
-
     /*
-      Primeiro mantém o menu principal aberto
-      durante o cálculo da posição.
+      Mantém o Menu principal aberto.
     */
     menuPanel.classList.add(
       "open"
@@ -7914,27 +7933,7 @@ biologyButton.addEventListener(
 
 
     /*
-      Mede a posição real do Menu.
-      Assim o painel Biologia acompanha
-      exatamente a posição atual do Menu.
-    */
-    const menuRect =
-      menuPanel.getBoundingClientRect();
-
-
-    /*
-      Posiciona Biologia logo abaixo
-      do Menu principal.
-    */
-    biologyPanel.style.left =
-      `${menuRect.left}px`;
-
-    biologyPanel.style.top =
-      `${menuRect.bottom + 10}px`;
-
-
-    /*
-      Agora abre o painel Biologia.
+      Abre o painel Biologia.
     */
     biologyPanel.classList.add(
       "open"
@@ -7947,23 +7946,10 @@ biologyButton.addEventListener(
 
 
     /*
-      Depois que o painel abrir,
-      garante novamente a posição.
+      Posiciona Biologia abaixo
+      do Menu principal.
     */
-    requestAnimationFrame(
-      () => {
-
-        const currentMenuRect =
-          menuPanel.getBoundingClientRect();
-
-        biologyPanel.style.left =
-          `${currentMenuRect.left}px`;
-
-        biologyPanel.style.top =
-          `${currentMenuRect.bottom + 10}px`;
-
-      }
-    );
+    updateBiologyPanelPosition();
 
   }
 );
