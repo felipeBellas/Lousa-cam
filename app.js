@@ -91,6 +91,18 @@ const objectLock =
 const unlockImagesButton =
   $("unlockImagesButton");
 
+const biologyButton =
+  $("biologyButton");
+
+const biologyPanel =
+  $("biologyPanel");
+
+const biologyCloseButton =
+  $("biologyCloseButton");
+
+const biologyCategories =
+  $("biologyCategories");
+
 const undoBtn =
   $("undo");
 
