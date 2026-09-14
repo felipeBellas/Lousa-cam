@@ -543,6 +543,30 @@ body {
 
     }
 
+/* =====================================================
+   POSIÇÃO DO MENU PRINCIPAL
+   Fica diretamente abaixo do botão de três linhas.
+   Não altera os demais painéis.
+   ===================================================== */
+
+#menuPanel {
+  top:
+    max(
+      64px,
+      calc(
+        env(safe-area-inset-top)
+        + 52px
+      )
+    );
+
+  left:
+    max(
+      16px,
+      env(safe-area-inset-left)
+    );
+
+  right: auto;
+}
 
     .panel.open {
 
