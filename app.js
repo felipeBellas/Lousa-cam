@@ -8228,66 +8228,108 @@ document.addEventListener(
 );
 
 /* =========================================================
-   SINCRONIZAR LAYOUT APÓS ROTAÇÃO
-   iPhone / PWA
+   RECUPERAR VÍDEO APÓS ROTAÇÃO — iPhone / PWA
    ========================================================= */
 
 let orientationTimer = null;
 
 
-function syncOrientationLayout() {
+async function syncOrientationLayout() {
 
-  clearTimeout(orientationTimer);
-
-  /*
-    O Safari/PWA do iPhone precisa terminar
-    a rotação antes de fornecer as dimensões
-    definitivas da tela.
-  */
-  orientationTimer = setTimeout(() => {
-
-    const app =
-      document.getElementById("app");
-
-    if (!app) {
-      return;
-    }
+  clearTimeout(
+    orientationTimer
+  );
 
 
-    /*
-      Remove dimensões/transformações residuais
-      deixadas pela orientação anterior.
-    */
-    app.style.width = "";
-    app.style.height = "";
-    app.style.transform = "";
+  orientationTimer =
+    setTimeout(
+      async () => {
+
+        /*
+          Primeiro sincroniza somente o Canvas.
+        */
+        fitCanvas();
 
 
-    /*
-      Força o navegador a recalcular
-      o layout do app.
-    */
-    void app.offsetHeight;
+        /*
+          Se não existe câmera ativa,
+          não há nada para recuperar.
+        */
+        if (!stream) {
+          return;
+        }
 
 
-    /*
-      Sincroniza o Canvas com
-      as novas dimensões da tela.
-    */
-    fitCanvas();
+        const videoTrack =
+          stream.getVideoTracks()[0];
 
 
-    /*
-      Reposiciona somente os elementos
-      que dependem das dimensões da tela.
-    */
-    updateEditorPosition();
+        /*
+          Se o stream continua vivo,
+          NÃO solicitamos uma nova câmera.
 
-    updateCancelPosition();
+          Apenas reconectamos o mesmo
+          MediaStream ao elemento <video>.
+        */
+        if (
+          videoTrack &&
+          videoTrack.readyState === "live"
+        ) {
 
-    redraw();
+          try {
 
-  }, 450);
+            /*
+              No iOS/PWA, depois da rotação
+              o elemento <video> pode perder
+              a apresentação do MediaStream,
+              embora a track continue ativa.
+            */
+
+            if (
+              video.srcObject !== stream
+            ) {
+
+              video.srcObject =
+                stream;
+
+            }
+
+
+            video.muted =
+              true;
+
+
+            video.setAttribute(
+              "playsinline",
+              ""
+            );
+
+
+            await video.play();
+
+
+          } catch (error) {
+
+            console.log(
+              "Recuperação do vídeo:",
+              error
+            );
+
+          }
+
+        }
+
+
+        redraw();
+
+        updateEditorPosition();
+
+        updateCancelPosition();
+
+
+      },
+      500
+    );
 
 }
 
@@ -8296,6 +8338,9 @@ window.addEventListener(
   "orientationchange",
   syncOrientationLayout
 );
+
+
+
 /* =========================================================
    DIAGNÓSTICO TEMPORÁRIO DE ROTAÇÃO
    ========================================================= */
