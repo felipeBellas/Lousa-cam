@@ -7417,7 +7417,21 @@ await video.play();
 
 
 /*
+  iOS / WebKit:
+  força uma recomposição visual do vídeo
+  depois da troca frontal/traseira.
+
+  Não altera resolução, MediaStream,
+  aspectRatio ou tamanho do elemento.
+*/
+video.style.objectFit = "fill";
+
+void video.offsetHeight;
+
+
+/*
   Espera a primeira composição do novo vídeo.
+  Mantemos o await já existente.
 */
 await new Promise(
   resolve =>
@@ -7430,7 +7444,12 @@ await new Promise(
 );
 
 
+/*
+  Restaura o preenchimento da câmera.
+*/
+video.style.objectFit = "cover";
 
+void video.offsetHeight;
 
 
 /*
@@ -7441,7 +7460,6 @@ video.classList.toggle(
   requestedFacingMode ===
     "user"
 );
-
 
 /*
   Aguarda um pouco para observar
