@@ -6994,19 +6994,62 @@ function closePanels() {
 
 /* =========================================================
    INVERTER CÂMERA
+   Troca segura entre frontal e traseira
    ========================================================= */
+
+let cameraSwitching = false;
 
 flipBtn.addEventListener(
   "click",
   async () => {
 
-    facingMode =
+    /*
+      Evita dois comandos de troca ao mesmo tempo.
+      Isso é especialmente importante no iPhone/PWA.
+    */
+    if (cameraSwitching) {
+      return;
+    }
+
+    cameraSwitching = true;
+
+    const previousFacingMode =
+      facingMode;
+
+    const nextFacingMode =
       facingMode === "user"
         ? "environment"
         : "user";
 
+    try {
 
-    await startCamera();
+      const success =
+        await startCamera(
+          nextFacingMode,
+          true
+        );
+
+      /*
+        Só confirmamos a nova câmera
+        depois que ela realmente abriu.
+      */
+      if (success) {
+
+        facingMode =
+          nextFacingMode;
+
+      } else {
+
+        facingMode =
+          previousFacingMode;
+
+      }
+
+    } finally {
+
+      cameraSwitching = false;
+
+    }
 
   }
 );
@@ -7016,7 +7059,10 @@ flipBtn.addEventListener(
    CÂMERA
    ========================================================= */
 
-async function startCamera() {
+async function startCamera(
+  requestedFacingMode = facingMode,
+  isSwitchingCamera = false
+) {
 
   if (
     !navigator.mediaDevices ||
@@ -7028,28 +7074,89 @@ async function startCamera() {
     );
 
     return false;
+  }
+
+
+  /*
+    Guarda a câmera atual.
+
+    Na troca frontal/traseira,
+    primeiro encerramos completamente
+    o dispositivo que está em uso.
+  */
+  const previousStream =
+    stream;
+
+
+  if (
+    isSwitchingCamera &&
+    previousStream
+  ) {
+
+    previousStream
+      .getTracks()
+      .forEach(
+        track => {
+          try {
+            track.stop();
+          } catch (error) {
+            console.warn(
+              "Erro ao encerrar track:",
+              error
+            );
+          }
+        }
+      );
+
+
+    /*
+      Desconecta o stream antigo
+      do elemento de vídeo antes
+      de solicitar a outra câmera.
+    */
+    video.srcObject =
+      null;
+
+    stream =
+      null;
+
+
+    /*
+      Pequeno intervalo para o WebKit/iOS
+      liberar o dispositivo anterior.
+    */
+    await new Promise(
+      resolve =>
+        setTimeout(
+          resolve,
+          180
+        )
+    );
 
   }
 
 
-  try {
+  /*
+    Função interna responsável
+    por solicitar a câmera.
+  */
+  async function openCamera(
+    withAudio
+  ) {
 
     const newStream =
       await navigator.mediaDevices
         .getUserMedia({
 
           video: {
-  facingMode: 
-     facingMode
-},
+            facingMode:
+              requestedFacingMode
+          },
 
-          audio: true
+          audio:
+            withAudio
 
         });
-
-
-    const oldStream =
-      stream;
 
 
     stream =
@@ -7059,17 +7166,105 @@ async function startCamera() {
     video.srcObject =
       stream;
 
-
     video.muted =
       true;
+
+    video.playsInline =
+      true;
+
+
+    /*
+      Aguarda os metadados da nova câmera.
+      Evita chamar play() enquanto o vídeo
+      ainda não conhece suas dimensões.
+    */
+    if (
+      video.readyState < 1
+    ) {
+
+      await new Promise(
+        resolve => {
+
+          const handleMetadata =
+            () => {
+
+              video.removeEventListener(
+                "loadedmetadata",
+                handleMetadata
+              );
+
+              resolve();
+
+            };
+
+
+          video.addEventListener(
+            "loadedmetadata",
+            handleMetadata,
+            { once: true }
+          );
+
+
+          /*
+            Proteção para não ficar preso
+            caso o iOS não dispare o evento.
+          */
+          setTimeout(
+            resolve,
+            1000
+          );
+
+        }
+      );
+
+    }
 
 
     await video.play();
 
 
-    if (oldStream) {
+    /*
+      Espelhamento somente na frontal.
+    */
+    video.classList.toggle(
+      "mirror",
+      requestedFacingMode ===
+        "user"
+    );
 
-      oldStream
+
+    return true;
+
+  }
+
+
+  /*
+    PRIMEIRA TENTATIVA
+    câmera + microfone
+  */
+  try {
+
+    await openCamera(
+      true
+    );
+
+
+    /*
+      Se startCamera() foi chamado
+      normalmente e havia um stream
+      anterior, encerramos esse stream
+      somente depois que o novo abriu.
+
+      Na troca de câmera ele já foi
+      encerrado anteriormente.
+    */
+    if (
+      !isSwitchingCamera &&
+      previousStream &&
+      previousStream !== stream
+    ) {
+
+      previousStream
         .getTracks()
         .forEach(
           track =>
@@ -7079,107 +7274,109 @@ async function startCamera() {
     }
 
 
-    video.classList.toggle(
-      "mirror",
-      facingMode ===
-        "user"
-    );
-
-
     toast(
       "Câmera ativa"
     );
-
 
     return true;
 
   } catch (error) {
 
     console.error(
+      "Primeira tentativa da câmera:",
       error
     );
 
-
-    /*
-      Segunda tentativa sem áudio.
-    */
-
-    try {
-
-      const newStream =
-        await navigator.mediaDevices
-          .getUserMedia({
-
-          video: {
-  facingMode: 
-     facingMode
-},
-
-            audio: false
-
-          });
+  }
 
 
-      const oldStream =
-        stream;
+  /*
+    Se algum stream incompleto tiver
+    sido criado durante a tentativa,
+    encerramos antes do fallback.
+  */
+  if (stream) {
 
+    stream
+      .getTracks()
+      .forEach(
+        track => {
 
-      stream =
-        newStream;
+          try {
+            track.stop();
+          } catch (error) {
+            console.warn(error);
+          }
 
-
-      video.srcObject =
-        stream;
-
-
-      video.muted =
-        true;
-
-
-      await video.play();
-
-
-      if (oldStream) {
-
-        oldStream
-          .getTracks()
-          .forEach(
-            track =>
-              track.stop()
-          );
-
-      }
-
-
-      video.classList.toggle(
-        "mirror",
-        facingMode ===
-          "user"
+        }
       );
 
-
-      toast(
-        "Câmera ativa — microfone indisponível"
-      );
+  }
 
 
-      return true;
+  video.srcObject =
+    null;
 
-    } catch (secondError) {
-
-      console.error(
-        secondError
-      );
+  stream =
+    null;
 
 
-      toast(
-        "Não foi possível acessar a câmera"
-      );
+  /*
+    SEGUNDA TENTATIVA
+    câmera sem áudio
+  */
+  try {
+
+    await openCamera(
+      false
+    );
 
 
-      return false;
+    toast(
+      "Câmera ativa — microfone indisponível"
+    );
+
+    return true;
+
+  } catch (secondError) {
+
+    console.error(
+      "Segunda tentativa da câmera:",
+      secondError
+    );
+
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(
+          track => {
+
+            try {
+              track.stop();
+            } catch (error) {
+              console.warn(error);
+            }
+
+          }
+        );
 
     }
+
+
+    stream =
+      null;
+
+    video.srcObject =
+      null;
+
+
+    toast(
+      "Não foi possível acessar a câmera"
+    );
+
+    return false;
 
   }
 
