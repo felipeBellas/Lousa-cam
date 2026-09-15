@@ -7040,8 +7040,17 @@ async function startCamera() {
 
           video: {
 
-  facingMode:
-    facingMode
+  facingMode: {
+    ideal: facingMode
+  },
+
+  width: {
+    ideal: 1920
+  },
+
+  height: {
+    ideal: 1080
+  }
 
 },
 
@@ -7114,8 +7123,17 @@ async function startCamera() {
 
           video: {
 
-  facingMode:
-    facingMode
+  facingMode: {
+    ideal: facingMode
+  },
+
+  width: {
+    ideal: 1920
+  },
+
+  height: {
+    ideal: 1080
+  }
 
 },
 
