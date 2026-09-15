@@ -97,8 +97,8 @@ const biologyButton =
 const biologyPanel =
   $("biologyPanel");
 
-const biologyCloseButton =
-  $("biologyCloseButton");
+const biologyBackButton =
+  $("biologyBackButton");
 
 const biologyCategories =
   $("biologyCategories");
@@ -7887,31 +7887,13 @@ objectLock.addEventListener(
 
 /* =========================================================
    PAINEL BIOLOGIA
-   O MENU PRINCIPAL PERMANECE ABERTO
+   NAVEGAÇÃO MENU → BIOLOGIA → MENU
    ========================================================= */
 
-function updateBiologyPanelPosition() {
 
-  if (
-    !menuPanel.classList.contains(
-      "open"
-    )
-  ) {
-    return;
-  }
-
-  const menuRect =
-    menuPanel.getBoundingClientRect();
-
-  biologyPanel.style.left =
-    `${menuRect.left}px`;
-
-  biologyPanel.style.top =
-    `${menuRect.bottom + 10}px`;
-
-}
-
-
+/*
+  MENU PRINCIPAL → BIOLOGIA
+*/
 biologyButton.addEventListener(
   "click",
   event => {
@@ -7919,21 +7901,24 @@ biologyButton.addEventListener(
     event.preventDefault();
     event.stopPropagation();
 
+
     /*
-      Mantém o Menu principal aberto.
+      Esconde o menu principal.
+      Ele não é encerrado:
+      apenas avançamos para Biologia.
     */
-    menuPanel.classList.add(
+    menuPanel.classList.remove(
       "open"
     );
 
     menuPanel.setAttribute(
       "aria-hidden",
-      "false"
+      "true"
     );
 
 
     /*
-      Abre o painel Biologia.
+      Abre Biologia.
     */
     biologyPanel.classList.add(
       "open"
@@ -7944,12 +7929,45 @@ biologyButton.addEventListener(
       "false"
     );
 
+  }
+);
+
+
+/*
+  BIOLOGIA → MENU PRINCIPAL
+*/
+biologyBackButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+    event.stopPropagation();
+
 
     /*
-      Posiciona Biologia abaixo
-      do Menu principal.
+      Fecha somente Biologia.
     */
-    updateBiologyPanelPosition();
+    biologyPanel.classList.remove(
+      "open"
+    );
+
+    biologyPanel.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+
+    /*
+      Retorna ao menu principal.
+    */
+    menuPanel.classList.add(
+      "open"
+    );
+
+    menuPanel.setAttribute(
+      "aria-hidden",
+      "false"
+    );
 
   }
 );
