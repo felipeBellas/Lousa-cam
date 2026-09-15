@@ -8228,114 +8228,131 @@ document.addEventListener(
 );
 
 /* =========================================================
-   ROTAÇÃO — iPHONE / PWA
-   Recuperação simples da apresentação da câmera
+   ROTAÇÃO DE TELA — iPHONE / PWA
+   Aguarda o viewport estabilizar
+   NÃO reinicia nem reconecta a câmera
    ========================================================= */
 
-let cameraRotationTimer = null;
+let rotationResizeTimer = null;
+let lastRotationWidth = window.innerWidth;
+let lastRotationHeight = window.innerHeight;
+
+function stabilizeAfterRotation() {
+
+  clearTimeout(rotationResizeTimer);
+
+  rotationResizeTimer = setTimeout(() => {
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    /*
+      O Safari/iOS pode disparar eventos enquanto
+      o viewport ainda está mudando.
+
+      Se as dimensões ainda mudaram desde a última
+      verificação, aguardamos novamente.
+    */
+    if (
+      width !== lastRotationWidth ||
+      height !== lastRotationHeight
+    ) {
+
+      lastRotationWidth = width;
+      lastRotationHeight = height;
+
+      stabilizeAfterRotation();
+
+      return;
+    }
+
+    /*
+      O viewport estabilizou.
+
+      Remove qualquer transformação deixada
+      pelo tratamento do teclado.
+    */
+    const app =
+      document.getElementById("app");
+
+    if (app) {
+      app.style.transform = "";
+    }
+
+    /*
+      Ajusta apenas a lousa para as dimensões
+      finais da tela.
+
+      NÃO toca no MediaStream.
+      NÃO executa startCamera().
+      NÃO altera video.srcObject.
+    */
+    fitCanvas();
+
+    updateEditorPosition();
+
+    updateTextFormatToolbarPosition();
+
+    updateCancelPosition();
+
+    redraw();
+
+  }, 250);
+
+}
+
+
+function beginRotationStabilization() {
+
+  clearTimeout(rotationResizeTimer);
+
+  lastRotationWidth =
+    window.innerWidth;
+
+  lastRotationHeight =
+    window.innerHeight;
+
+  /*
+    A primeira verificação ocorre depois que
+    o Safari teve tempo de iniciar a rotação.
+  */
+  rotationResizeTimer =
+    setTimeout(
+      stabilizeAfterRotation,
+      150
+    );
+
+}
+
 
 window.addEventListener(
   "orientationchange",
+  beginRotationStabilization
+);
+
+
+/*
+  No iPhone/PWA, resize pode ocorrer depois
+  de orientationchange.
+*/
+window.addEventListener(
+  "resize",
   () => {
 
-    clearTimeout(
-      cameraRotationTimer
-    );
+    if (
+      window.innerWidth !== lastRotationWidth ||
+      window.innerHeight !== lastRotationHeight
+    ) {
 
-    cameraRotationTimer =
-      setTimeout(
-        async () => {
+      lastRotationWidth =
+        window.innerWidth;
 
-          /*
-            Ajusta somente o Canvas
-            para a nova orientação.
-          */
-          fitCanvas();
+      lastRotationHeight =
+        window.innerHeight;
 
+      stabilizeAfterRotation();
 
-          /*
-            Sem câmera ativa:
-            não há nada para recuperar.
-          */
-          if (!stream) {
-            return;
-          }
-
-
-          const videoTrack =
-            stream.getVideoTracks()[0];
-
-
-          /*
-            Se a track morreu,
-            reinicia a câmera.
-          */
-          if (
-            !videoTrack ||
-            videoTrack.readyState !== "live"
-          ) {
-
-            await startCamera();
-
-            return;
-          }
-
-
-          try {
-
-            /*
-              Força o elemento VIDEO a abandonar
-              a apresentação anterior.
-            */
-            video.pause();
-
-            video.srcObject = null;
-
-
-            /*
-              Aguarda um ciclo de renderização.
-            */
-            await new Promise(
-              resolve =>
-                requestAnimationFrame(
-                  () =>
-                    requestAnimationFrame(
-                      resolve
-                    )
-                )
-            );
-
-
-            /*
-              Reconecta o MESMO MediaStream.
-            */
-            video.srcObject =
-              stream;
-
-            video.muted =
-              true;
-
-            video.playsInline =
-              true;
-
-            await video.play();
-
-
-          } catch (error) {
-
-            console.log(
-              "Recuperação após rotação:",
-              error
-            );
-
-          }
-
-
-          redraw();
-
-        },
-        600
-      );
+    }
 
   }
 );
