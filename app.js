@@ -8227,6 +8227,75 @@ document.addEventListener(
   }
 );
 
+/* =========================================================
+   SINCRONIZAR LAYOUT APÓS ROTAÇÃO
+   iPhone / PWA
+   ========================================================= */
+
+let orientationTimer = null;
+
+
+function syncOrientationLayout() {
+
+  clearTimeout(orientationTimer);
+
+  /*
+    O Safari/PWA do iPhone precisa terminar
+    a rotação antes de fornecer as dimensões
+    definitivas da tela.
+  */
+  orientationTimer = setTimeout(() => {
+
+    const app =
+      document.getElementById("app");
+
+    if (!app) {
+      return;
+    }
+
+
+    /*
+      Remove dimensões/transformações residuais
+      deixadas pela orientação anterior.
+    */
+    app.style.width = "";
+    app.style.height = "";
+    app.style.transform = "";
+
+
+    /*
+      Força o navegador a recalcular
+      o layout do app.
+    */
+    void app.offsetHeight;
+
+
+    /*
+      Sincroniza o Canvas com
+      as novas dimensões da tela.
+    */
+    fitCanvas();
+
+
+    /*
+      Reposiciona somente os elementos
+      que dependem das dimensões da tela.
+    */
+    updateEditorPosition();
+
+    updateCancelPosition();
+
+    redraw();
+
+  }, 450);
+
+}
+
+
+window.addEventListener(
+  "orientationchange",
+  syncOrientationLayout
+);
 
 /* =========================================================
    INICIALIZAÇÃO
