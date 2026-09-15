@@ -6996,7 +6996,119 @@ function closePanels() {
    INVERTER CÂMERA
    Troca segura entre frontal e traseira
    ========================================================= */
+/* =========================================================
+   DIAGNÓSTICO TEMPORÁRIO DA CÂMERA — iPHONE / PWA
+   Remover após os testes
+   ========================================================= */
 
+function showCameraDiagnostic(label = "") {
+
+  let debugBox =
+    document.getElementById("cameraDebugBox");
+
+  if (!debugBox) {
+
+    debugBox =
+      document.createElement("div");
+
+    debugBox.id =
+      "cameraDebugBox";
+
+    debugBox.style.position =
+      "fixed";
+
+    debugBox.style.left =
+      "8px";
+
+    debugBox.style.bottom =
+      "90px";
+
+    debugBox.style.zIndex =
+      "99999";
+
+    debugBox.style.background =
+      "rgba(0,0,0,0.82)";
+
+    debugBox.style.color =
+      "#00ff88";
+
+    debugBox.style.padding =
+      "8px";
+
+    debugBox.style.borderRadius =
+      "6px";
+
+    debugBox.style.fontFamily =
+      "monospace";
+
+    debugBox.style.fontSize =
+      "11px";
+
+    debugBox.style.lineHeight =
+      "1.35";
+
+    debugBox.style.pointerEvents =
+      "none";
+
+    debugBox.style.whiteSpace =
+      "pre";
+
+    document.body.appendChild(
+      debugBox
+    );
+
+  }
+
+
+  const track =
+    stream?.getVideoTracks?.()[0];
+
+  const settings =
+    track?.getSettings?.() || {};
+
+  const rect =
+    video.getBoundingClientRect();
+
+  const app =
+    document.getElementById("app");
+
+  const appRect =
+    app?.getBoundingClientRect();
+
+
+  const vv =
+    window.visualViewport;
+
+
+  debugBox.textContent =
+`TESTE: ${label}
+
+facing: ${facingMode}
+track: ${track?.readyState || "sem track"}
+
+STREAM
+${settings.width || "?"} x ${settings.height || "?"}
+ratio: ${settings.aspectRatio || "?"}
+mode: ${settings.facingMode || "?"}
+
+VIDEO REAL
+${video.videoWidth} x ${video.videoHeight}
+
+VIDEO TELA
+${Math.round(rect.width)} x ${Math.round(rect.height)}
+
+APP
+${appRect ? Math.round(appRect.width) : "?"} x ${appRect ? Math.round(appRect.height) : "?"}
+
+WINDOW
+${window.innerWidth} x ${window.innerHeight}
+
+VIEWPORT
+${vv ? Math.round(vv.width) : "?"} x ${vv ? Math.round(vv.height) : "?"}
+
+readyState: ${video.readyState}
+paused: ${video.paused}`;
+}
 let cameraSwitching = false;
 
 flipBtn.addEventListener(
