@@ -7017,10 +7017,27 @@ async function startCamera() {
 
           video: {
 
-            facingMode:
-              facingMode
+  facingMode: {
+    ideal:
+      facingMode
+  },
 
-          },
+  aspectRatio: {
+    ideal:
+      9 / 16
+  },
+
+  width: {
+    ideal:
+      1080
+  },
+
+  height: {
+    ideal:
+      1920
+  }
+
+},
 
           audio: true
 
@@ -7091,10 +7108,27 @@ async function startCamera() {
 
             video: {
 
-              facingMode:
-                facingMode
+  facingMode: {
+    ideal:
+      facingMode
+  },
 
-            },
+  aspectRatio: {
+    ideal:
+      9 / 16
+  },
+
+  width: {
+    ideal:
+      1080
+  },
+
+  height: {
+    ideal:
+      1920
+  }
+
+},
 
             audio: false
 
