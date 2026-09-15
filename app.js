@@ -8296,7 +8296,139 @@ window.addEventListener(
   "orientationchange",
   syncOrientationLayout
 );
+/* =========================================================
+   DIAGNÓSTICO TEMPORÁRIO DE ROTAÇÃO
+   ========================================================= */
 
+const rotationDebug =
+  document.createElement("div");
+
+rotationDebug.id =
+  "rotationDebug";
+
+rotationDebug.style.cssText = `
+  position: fixed;
+  left: 8px;
+  bottom: 80px;
+  z-index: 99999;
+  background: rgba(0,0,0,.75);
+  color: #00ff88;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: 11px monospace;
+  line-height: 1.35;
+  pointer-events: none;
+`;
+
+document.body.appendChild(
+  rotationDebug
+);
+
+
+function showRotationDebug() {
+
+  const app =
+    document.getElementById("app");
+
+  const video =
+    document.getElementById("video");
+
+  const appRect =
+    app?.getBoundingClientRect();
+
+  const videoRect =
+    video?.getBoundingClientRect();
+
+  const vv =
+    window.visualViewport;
+
+
+  rotationDebug.innerHTML = `
+
+    window:
+    ${window.innerWidth}
+    ×
+    ${window.innerHeight}
+
+    <br>
+
+    viewport:
+    ${Math.round(vv?.width || 0)}
+    ×
+    ${Math.round(vv?.height || 0)}
+
+    <br>
+
+    app:
+    ${Math.round(appRect?.width || 0)}
+    ×
+    ${Math.round(appRect?.height || 0)}
+
+    <br>
+
+    video:
+    ${Math.round(videoRect?.width || 0)}
+    ×
+    ${Math.round(videoRect?.height || 0)}
+
+    <br>
+
+    stream:
+    ${video?.videoWidth || 0}
+    ×
+    ${video?.videoHeight || 0}
+
+  `;
+}
+
+
+window.addEventListener(
+  "resize",
+  () => {
+
+    setTimeout(
+      showRotationDebug,
+      500
+    );
+
+  }
+);
+
+
+window.addEventListener(
+  "orientationchange",
+  () => {
+
+    setTimeout(
+      showRotationDebug,
+      700
+    );
+
+  }
+);
+
+
+if (window.visualViewport) {
+
+  window.visualViewport.addEventListener(
+    "resize",
+    () => {
+
+      setTimeout(
+        showRotationDebug,
+        500
+      );
+
+    }
+  );
+
+}
+
+
+setTimeout(
+  showRotationDebug,
+  1500
+);
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
