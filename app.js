@@ -7271,68 +7271,163 @@ async function startCamera(
         });
 
 
-    stream =
-      newStream;
+stream =
+  newStream;
 
 
-    video.srcObject =
-      stream;
+/*
+  =========================================================
+  iPHONE / PWA — CONEXÃO SEGURA DO NOVO MEDIASTREAM
+  =========================================================
 
-    video.muted =
-      true;
+  O diagnóstico mostrou que:
 
-    video.playsInline =
-      true;
+  - o stream continua 480 x 640;
+  - videoWidth/videoHeight continuam 480 x 640;
+  - o elemento continua ocupando 393 x 793;
+  - readyState permanece 4.
+
+  Portanto, não alteramos resolução ou tamanho.
+
+  Apenas garantimos uma nova apresentação do MediaStream
+  depois da troca frontal/traseira.
+*/
+
+
+/*
+  Desconecta completamente a apresentação anterior.
+*/
+video.pause();
+
+video.srcObject =
+  null;
+
+
+/*
+  Permite que o WebKit conclua a remoção
+  da apresentação anterior.
+*/
+await new Promise(
+  resolve =>
+    requestAnimationFrame(
+      () =>
+        requestAnimationFrame(
+          resolve
+        )
+    )
+);
+
+
+/*
+  Conecta o novo MediaStream.
+*/
+video.srcObject =
+  stream;
+
+video.muted =
+  true;
+
+video.playsInline =
+  true;
+
+
+/*
+  IMPORTANTE:
+
+  Não usamos readyState antigo como referência.
+
+  Depois de substituir srcObject, esperamos explicitamente
+  pelos metadados do NOVO MediaStream.
+*/
+await new Promise(
+  resolve => {
+
+    let finished =
+      false;
+
+
+    const finish =
+      () => {
+
+        if (finished) {
+          return;
+        }
+
+        finished =
+          true;
+
+        video.removeEventListener(
+          "loadedmetadata",
+          handleMetadata
+        );
+
+        resolve();
+
+      };
+
+
+    const handleMetadata =
+      () => {
+
+        finish();
+
+      };
+
+
+    video.addEventListener(
+      "loadedmetadata",
+      handleMetadata,
+      { once: true }
+    );
 
 
     /*
-      Aguarda os metadados da nova câmera.
-      Evita chamar play() enquanto o vídeo
-      ainda não conhece suas dimensões.
+      Proteção para WebKit:
+      se loadedmetadata já tiver ocorrido
+      muito rapidamente.
     */
     if (
-      video.readyState < 1
+      video.videoWidth > 0 &&
+      video.videoHeight > 0
     ) {
 
-      await new Promise(
-        resolve => {
-
-          const handleMetadata =
-            () => {
-
-              video.removeEventListener(
-                "loadedmetadata",
-                handleMetadata
-              );
-
-              resolve();
-
-            };
-
-
-          video.addEventListener(
-            "loadedmetadata",
-            handleMetadata,
-            { once: true }
-          );
-
-
-          /*
-            Proteção para não ficar preso
-            caso o iOS não dispare o evento.
-          */
-          setTimeout(
-            resolve,
-            1000
-          );
-
-        }
+      requestAnimationFrame(
+        finish
       );
 
     }
 
 
-    await video.play();
+    /*
+      Segurança para nunca bloquear o aplicativo.
+    */
+    setTimeout(
+      finish,
+      1200
+    );
+
+  }
+);
+
+
+/*
+  Inicia a reprodução do NOVO stream.
+*/
+await video.play();
+
+
+/*
+  Espera a primeira composição do novo vídeo.
+*/
+await new Promise(
+  resolve =>
+    requestAnimationFrame(
+      () =>
+        requestAnimationFrame(
+          resolve
+        )
+    )
+);
 
 
 
