@@ -8228,82 +8228,95 @@ document.addEventListener(
 );
 
 /* =========================================================
-   RECUPERAR VÍDEO APÓS ROTAÇÃO — iPhone / PWA
+   ROTAÇÃO — iPHONE / PWA
+   Recuperação simples da apresentação da câmera
    ========================================================= */
 
-let orientationTimer = null;
+let cameraRotationTimer = null;
+
+window.addEventListener(
+  "orientationchange",
+  () => {
+
+    clearTimeout(
+      cameraRotationTimer
+    );
+
+    cameraRotationTimer =
+      setTimeout(
+        async () => {
+
+          /*
+            Ajusta somente o Canvas
+            para a nova orientação.
+          */
+          fitCanvas();
 
 
-async function syncOrientationLayout() {
-
-  clearTimeout(
-    orientationTimer
-  );
-
-
-  orientationTimer =
-    setTimeout(
-      async () => {
-
-        /*
-          Primeiro sincroniza somente o Canvas.
-        */
-        fitCanvas();
+          /*
+            Sem câmera ativa:
+            não há nada para recuperar.
+          */
+          if (!stream) {
+            return;
+          }
 
 
-        /*
-          Se não existe câmera ativa,
-          não há nada para recuperar.
-        */
-        if (!stream) {
-          return;
-        }
+          const videoTrack =
+            stream.getVideoTracks()[0];
 
 
-        const videoTrack =
-          stream.getVideoTracks()[0];
+          /*
+            Se a track morreu,
+            reinicia a câmera.
+          */
+          if (
+            !videoTrack ||
+            videoTrack.readyState !== "live"
+          ) {
 
+            await startCamera();
 
-        /*
-          Se o stream continua vivo,
-          NÃO solicitamos uma nova câmera.
+            return;
+          }
 
-          Apenas reconectamos o mesmo
-          MediaStream ao elemento <video>.
-        */
-        if (
-          videoTrack &&
-          videoTrack.readyState === "live"
-        ) {
 
           try {
 
             /*
-              No iOS/PWA, depois da rotação
-              o elemento <video> pode perder
-              a apresentação do MediaStream,
-              embora a track continue ativa.
+              Força o elemento VIDEO a abandonar
+              a apresentação anterior.
             */
+            video.pause();
 
-            if (
-              video.srcObject !== stream
-            ) {
+            video.srcObject = null;
 
-              video.srcObject =
-                stream;
 
-            }
+            /*
+              Aguarda um ciclo de renderização.
+            */
+            await new Promise(
+              resolve =>
+                requestAnimationFrame(
+                  () =>
+                    requestAnimationFrame(
+                      resolve
+                    )
+                )
+            );
 
+
+            /*
+              Reconecta o MESMO MediaStream.
+            */
+            video.srcObject =
+              stream;
 
             video.muted =
               true;
 
-
-            video.setAttribute(
-              "playsinline",
-              ""
-            );
-
+            video.playsInline =
+              true;
 
             await video.play();
 
@@ -8311,169 +8324,22 @@ async function syncOrientationLayout() {
           } catch (error) {
 
             console.log(
-              "Recuperação do vídeo:",
+              "Recuperação após rotação:",
               error
             );
 
           }
 
-        }
 
+          redraw();
 
-        redraw();
-
-        updateEditorPosition();
-
-        updateCancelPosition();
-
-
-      },
-      500
-    );
-
-}
-
-
-window.addEventListener(
-  "orientationchange",
-  syncOrientationLayout
-);
-
-
-
-/* =========================================================
-   DIAGNÓSTICO TEMPORÁRIO DE ROTAÇÃO
-   ========================================================= */
-
-const rotationDebug =
-  document.createElement("div");
-
-rotationDebug.id =
-  "rotationDebug";
-
-rotationDebug.style.cssText = `
-  position: fixed;
-  left: 8px;
-  bottom: 80px;
-  z-index: 99999;
-  background: rgba(0,0,0,.75);
-  color: #00ff88;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font: 11px monospace;
-  line-height: 1.35;
-  pointer-events: none;
-`;
-
-document.body.appendChild(
-  rotationDebug
-);
-
-
-function showRotationDebug() {
-
-  const app =
-    document.getElementById("app");
-
-  const video =
-    document.getElementById("video");
-
-  const appRect =
-    app?.getBoundingClientRect();
-
-  const videoRect =
-    video?.getBoundingClientRect();
-
-  const vv =
-    window.visualViewport;
-
-
-  rotationDebug.innerHTML = `
-
-    window:
-    ${window.innerWidth}
-    ×
-    ${window.innerHeight}
-
-    <br>
-
-    viewport:
-    ${Math.round(vv?.width || 0)}
-    ×
-    ${Math.round(vv?.height || 0)}
-
-    <br>
-
-    app:
-    ${Math.round(appRect?.width || 0)}
-    ×
-    ${Math.round(appRect?.height || 0)}
-
-    <br>
-
-    video:
-    ${Math.round(videoRect?.width || 0)}
-    ×
-    ${Math.round(videoRect?.height || 0)}
-
-    <br>
-
-    stream:
-    ${video?.videoWidth || 0}
-    ×
-    ${video?.videoHeight || 0}
-
-  `;
-}
-
-
-window.addEventListener(
-  "resize",
-  () => {
-
-    setTimeout(
-      showRotationDebug,
-      500
-    );
-
-  }
-);
-
-
-window.addEventListener(
-  "orientationchange",
-  () => {
-
-    setTimeout(
-      showRotationDebug,
-      700
-    );
-
-  }
-);
-
-
-if (window.visualViewport) {
-
-  window.visualViewport.addEventListener(
-    "resize",
-    () => {
-
-      setTimeout(
-        showRotationDebug,
-        500
+        },
+        600
       );
 
-    }
-  );
-
-}
-
-
-setTimeout(
-  showRotationDebug,
-  1500
+  }
 );
+
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
