@@ -7418,11 +7418,8 @@ await video.play();
 
 /*
   iOS / WebKit:
-  força uma recomposição visual do vídeo
-  depois da troca frontal/traseira.
-
-  Não altera resolução, MediaStream,
-  aspectRatio ou tamanho do elemento.
+  força a recomposição visual sem manter
+  o estado intermediário por dois frames.
 */
 video.style.objectFit = "fill";
 
@@ -7430,22 +7427,17 @@ void video.offsetHeight;
 
 
 /*
-  Espera a primeira composição do novo vídeo.
-  Mantemos o await já existente.
+  Um único frame é suficiente para o WebKit
+  reconhecer a mudança de composição.
 */
 await new Promise(
   resolve =>
-    requestAnimationFrame(
-      () =>
-        requestAnimationFrame(
-          resolve
-        )
-    )
+    requestAnimationFrame(resolve)
 );
 
 
 /*
-  Restaura o preenchimento da câmera.
+  Retorna imediatamente ao modo normal.
 */
 video.style.objectFit = "cover";
 
