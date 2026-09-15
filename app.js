@@ -7427,17 +7427,23 @@ void video.offsetHeight;
 
 
 /*
-  Um único frame é suficiente para o WebKit
-  reconhecer a mudança de composição.
+  iOS / WebKit:
+  dois frames foram necessários nos testes
+  para estabilizar a composição do novo stream.
 */
 await new Promise(
   resolve =>
-    requestAnimationFrame(resolve)
+    requestAnimationFrame(
+      () =>
+        requestAnimationFrame(
+          resolve
+        )
+    )
 );
 
 
 /*
-  Retorna imediatamente ao modo normal.
+  Retorna ao preenchimento normal.
 */
 video.style.objectFit = "cover";
 
