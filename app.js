@@ -7367,7 +7367,26 @@ video.classList.toggle(
     "user"
 );
 
-    return true;
+
+/*
+  Aguarda um pouco para observar
+  o estado final do vídeo no iPhone.
+*/
+setTimeout(
+  () => {
+
+    showCameraDiagnostic(
+      requestedFacingMode === "user"
+        ? "FRONTAL"
+        : "TRASEIRA"
+    );
+
+  },
+  700
+);
+
+
+return true;
 
   }
 
