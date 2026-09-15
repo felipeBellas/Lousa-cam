@@ -455,34 +455,57 @@ function fitCanvas() {
 
 /* =========================================================
    CORRIGIR DESLOCAMENTO DO VIEWPORT NO iOS
+   Somente quando o teclado estiver alterando o viewport.
+   Não transformar o app durante rotação.
    ========================================================= */
 
 function compensateVisualViewport() {
 
-  if (
-    !window.visualViewport
-  ) {
+  if (!window.visualViewport) {
     return;
   }
 
   const viewport =
     window.visualViewport;
 
+  const app =
+    document.getElementById("app");
+
+  if (!app) {
+    return;
+  }
+
+
+  /*
+    Detecta se o viewport foi reduzido
+    significativamente pelo teclado virtual.
+
+    Na rotação normal do iPhone,
+    NÃO aplicamos transform ao #app.
+  */
+  const keyboardOpen =
+    viewport.height <
+    window.innerHeight * 0.75;
+
+
+  if (!keyboardOpen) {
+
+    /*
+      Muito importante:
+      remove qualquer transformação
+      que tenha ficado da situação anterior.
+    */
+    app.style.transform = "";
+
+    return;
+  }
+
+
   const offsetTop =
     viewport.offsetTop || 0;
 
   const offsetLeft =
     viewport.offsetLeft || 0;
-
-
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-  if (!app) {
-    return;
-  }
 
 
   app.style.transform =
