@@ -7017,25 +7017,8 @@ async function startCamera() {
 
           video: {
 
-  facingMode: {
-    ideal:
-      facingMode
-  },
-
-  aspectRatio: {
-    ideal:
-      9 / 16
-  },
-
-  width: {
-    ideal:
-      1080
-  },
-
-  height: {
-    ideal:
-      1920
-  }
+  facingMode:
+    facingMode
 
 },
 
@@ -7106,27 +7089,10 @@ async function startCamera() {
         await navigator.mediaDevices
           .getUserMedia({
 
-            video: {
+          video: {
 
-  facingMode: {
-    ideal:
-      facingMode
-  },
-
-  aspectRatio: {
-    ideal:
-      9 / 16
-  },
-
-  width: {
-    ideal:
-      1080
-  },
-
-  height: {
-    ideal:
-      1920
-  }
+  facingMode:
+    facingMode
 
 },
 
