@@ -7039,19 +7039,8 @@ async function startCamera() {
         .getUserMedia({
 
           video: {
-
-  facingMode: {
-    ideal: facingMode
-  },
-
-  width: {
-    ideal: 1920
-  },
-
-  height: {
-    ideal: 1080
-  }
-
+  facingMode: 
+     facingMode
 },
 
           audio: true
@@ -7122,19 +7111,8 @@ async function startCamera() {
           .getUserMedia({
 
           video: {
-
-  facingMode: {
-    ideal: facingMode
-  },
-
-  width: {
-    ideal: 1920
-  },
-
-  height: {
-    ideal: 1080
-  }
-
+  facingMode: 
+     facingMode
 },
 
             audio: false
