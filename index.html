@@ -648,7 +648,6 @@ body {
 /* =====================================================
    PAINEL BIOLOGIA
    ===================================================== */
-
 #biologyPanel {
 
   width:
@@ -658,6 +657,15 @@ body {
     min(520px, calc(100vh - 110px));
 
   overflow-y:
+    auto;
+
+  left:
+    max(
+      16px,
+      env(safe-area-inset-left)
+    );
+
+  right:
     auto;
 
 }
