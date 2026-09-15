@@ -7223,15 +7223,37 @@ async function startCamera(
     await video.play();
 
 
-    /*
-      Espelhamento somente na frontal.
-    */
-    video.classList.toggle(
-      "mirror",
-      requestedFacingMode ===
-        "user"
-    );
+/*
+  iPhone / PWA:
+  força o elemento de vídeo a recalcular
+  sua área depois da troca de câmera.
 
+  Não altera resolução da câmera.
+  Não altera proporção do MediaStream.
+*/
+video.style.width = "100%";
+video.style.height = "100%";
+video.style.left = "0";
+video.style.top = "0";
+
+void video.offsetHeight;
+
+requestAnimationFrame(() => {
+
+  video.style.width = "100%";
+  video.style.height = "100%";
+
+});
+
+
+/*
+  Espelhamento somente na frontal.
+*/
+video.classList.toggle(
+  "mirror",
+  requestedFacingMode ===
+    "user"
+);
 
     return true;
 
