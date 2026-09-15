@@ -8204,7 +8204,93 @@ document.addEventListener(
   }
 );
 
+/* =========================================================
+   AJUSTE SEGURO DE VIEWPORT / ROTAÇÃO
+   ========================================================= */
 
+let viewportResizeTimer =
+  null;
+
+
+function refreshViewportLayout() {
+
+  clearTimeout(
+    viewportResizeTimer
+  );
+
+
+  viewportResizeTimer =
+    setTimeout(
+      () => {
+
+        /*
+          Aguarda o iPhone terminar
+          a mudança de orientação antes
+          de recalcular o Canvas.
+        */
+        fitCanvas();
+
+        compensateVisualViewport();
+
+        updateEditorPosition();
+
+        updateCancelPosition();
+
+        redraw();
+
+      },
+      180
+    );
+
+}
+
+
+/*
+  Redimensionamento normal da janela.
+*/
+window.addEventListener(
+  "resize",
+  refreshViewportLayout
+);
+
+
+/*
+  Rotação física do aparelho.
+*/
+window.addEventListener(
+  "orientationchange",
+  () => {
+
+    clearTimeout(
+      viewportResizeTimer
+    );
+
+
+    /*
+      Safari/PWA pode precisar de um
+      pouco mais de tempo para entregar
+      as dimensões finais.
+    */
+    viewportResizeTimer =
+      setTimeout(
+        () => {
+
+          fitCanvas();
+
+          compensateVisualViewport();
+
+          updateEditorPosition();
+
+          updateCancelPosition();
+
+          redraw();
+
+        },
+        320
+      );
+
+  }
+);
 /* =========================================================
    INICIALIZAÇÃO
    ========================================================= */
