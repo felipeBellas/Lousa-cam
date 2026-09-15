@@ -6946,6 +6946,22 @@ function closePanels() {
     "open"
   );
 
+  menuPanel.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+
+  biologyPanel.classList.remove(
+    "open"
+  );
+
+  biologyPanel.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+
   toolsPanel.classList.remove(
     "open"
   );
