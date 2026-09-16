@@ -7392,34 +7392,7 @@ stream =
   newStream;
 
 
-/*
-  =========================================================
-  TESTE 1 — CONEXÃO DIRETA DO NOVO STREAM
-  Baseado no comportamento da versão estável
-  =========================================================
-*/
 
-/*
-  Desconecta completamente a apresentação anterior.
-*/
-video.pause();
-
-video.srcObject =
-  null;
-
-/*
-  Permite que o WebKit conclua a remoção
-  da apresentação anterior.
-*/
-await new Promise(
-  resolve =>
-    requestAnimationFrame(
-      () =>
-        requestAnimationFrame(
-          resolve
-        )
-    )
-);
 
 /*
   Conecta o novo MediaStream.
