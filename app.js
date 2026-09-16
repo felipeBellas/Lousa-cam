@@ -7765,7 +7765,58 @@ if (recordingMimeType) {
 
 
     mediaRecorder.onstop =
-      saveRecording;
+  async () => {
+
+    /*
+      Primeiro finaliza/salva
+      a gravação.
+    */
+    saveRecording();
+
+
+    /*
+      Depois devolve o stream ativo
+      para a visualização da câmera.
+    */
+    if (
+      stream &&
+      stream.getVideoTracks().some(
+        track =>
+          track.readyState === "live"
+      )
+    ) {
+
+      video.srcObject =
+        stream;
+
+      video.muted =
+        true;
+
+      video.playsInline =
+        true;
+
+      video.classList.toggle(
+        "mirror",
+        facingMode === "user"
+      );
+
+      try {
+
+        await video.play();
+
+      } catch (error) {
+
+        console.warn(
+          "Não foi possível retomar a câmera:",
+          error
+        );
+
+      }
+
+    }
+
+  };
+     
 
 
     mediaRecorder.start();
@@ -7979,44 +8030,6 @@ function stopRecording() {
 
   }
 
-
-  /*
-    Mantém a câmera ativa e reconecta
-    sua apresentação após encerrar
-    a gravação.
-  */
-  if (
-    stream &&
-    stream.getVideoTracks().some(
-      track =>
-        track.readyState === "live"
-    )
-  ) {
-
-    video.srcObject =
-      stream;
-
-    video.muted =
-      true;
-
-    video.playsInline =
-      true;
-
-    video.classList.toggle(
-      "mirror",
-      facingMode === "user"
-    );
-
-    video.play().catch(
-      error => {
-        console.warn(
-          "Não foi possível retomar a câmera:",
-          error
-        );
-      }
-    );
-
-  }
 
 
   toast(
