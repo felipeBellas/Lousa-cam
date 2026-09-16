@@ -7688,27 +7688,53 @@ stream
 
 
     let options = {};
+    
+    let recordingMimeType = "";
 
 
-    if (
-      MediaRecorder.isTypeSupported(
-        "video/webm;codecs=vp9,opus"
-      )
-    ) {
+/*
+  Preferência para MP4.
 
-      options.mimeType =
-        "video/webm;codecs=vp9,opus";
+  Safari/iPhone trabalha melhor
+  com MP4 para reprodução e
+  compartilhamento do vídeo.
+*/
+if (
+  MediaRecorder.isTypeSupported(
+    "video/mp4"
+  )
+) {
 
-    } else if (
-      MediaRecorder.isTypeSupported(
-        "video/webm"
-      )
-    ) {
+  recordingMimeType =
+    "video/mp4";
 
-      options.mimeType =
-        "video/webm";
+} else if (
+  MediaRecorder.isTypeSupported(
+    "video/webm;codecs=vp9,opus"
+  )
+) {
 
-    }
+  recordingMimeType =
+    "video/webm;codecs=vp9,opus";
+
+} else if (
+  MediaRecorder.isTypeSupported(
+    "video/webm"
+  )
+) {
+
+  recordingMimeType =
+    "video/webm";
+
+}
+
+
+if (recordingMimeType) {
+
+  options.mimeType =
+    recordingMimeType;
+
+}
 
 
     mediaRecorder =
@@ -8046,8 +8072,15 @@ function saveRecording() {
     url;
 
 
-  link.download =
-    `lousa-cam-${Date.now()}.webm`;
+ const extension =
+  blob.type.includes("mp4")
+    ? "mp4"
+    : "webm";
+
+
+link.download =
+  `lousa-cam-${Date.now()}.${extension}`;
+   
 
 
   document.body.appendChild(
