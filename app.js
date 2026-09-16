@@ -7547,17 +7547,6 @@ await new Promise(
 
 
 /*
-  TESTE 4:
-  define o espelhamento ANTES
-  de iniciar a reprodução do novo stream.
-*/
-video.classList.toggle(
-  "mirror",
-  requestedFacingMode ===
-    "user"
-);
-
-/*
   Inicia a reprodução do NOVO stream.
 */
 await video.play();
@@ -7599,7 +7588,14 @@ video.style.objectFit = "cover";
 
 void video.offsetHeight;
 
-
+/*
+  Espelhamento somente na frontal.
+*/
+video.classList.toggle(
+  "mirror",
+  requestedFacingMode ===
+    "user"
+);
 
 /*
   Aguarda um pouco para observar
