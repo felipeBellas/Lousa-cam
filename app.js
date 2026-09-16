@@ -7350,25 +7350,52 @@ async function startCamera(
     stream;
 
 
-  if (
-    isSwitchingCamera &&
-    previousStream
-  ) {
+if (
+  isSwitchingCamera &&
+  previousStream
+) {
 
-    previousStream
-      .getTracks()
-      .forEach(
-        track => {
-          try {
-            track.stop();
-          } catch (error) {
-            console.warn(
-              "Erro ao encerrar track:",
-              error
-            );
-          }
+  previousStream
+    .getTracks()
+    .forEach(
+      track => {
+        try {
+          track.stop();
+        } catch (error) {
+          console.warn(
+            "Erro ao encerrar track:",
+            error
+          );
         }
-      );
+      }
+    );
+
+
+  /*
+    Desconecta o stream antigo
+    do elemento de vídeo antes
+    de solicitar a outra câmera.
+  */
+  video.srcObject =
+    null;
+
+  stream =
+    null;
+
+
+  /*
+    Pequeno intervalo para o WebKit/iOS
+    liberar o dispositivo anterior.
+  */
+  await new Promise(
+    resolve =>
+      setTimeout(
+        resolve,
+        180
+      )
+  );
+
+}
 
 
     /*
