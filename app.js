@@ -7237,85 +7237,174 @@ function createCameraTransitionFrame() {
 
 let cameraSwitching = false;
 
+/*
+  =========================================================
+  TESTE 6 — TROCA MÍNIMA DE CÂMERA
+  =========================================================
+
+  Objetivo:
+  testar a troca frontal/traseira sem:
+
+  - cameraTransitionFrame
+  - startCamera() durante a troca
+  - pausa intermediária
+  - espera de 180 ms
+  - loadedmetadata
+  - fill
+  - requestAnimationFrame duplo
+  - cover forçado
+
+  A abertura inicial da câmera continua
+  utilizando startCamera() normalmente.
+*/
 flipBtn.addEventListener(
   "click",
   async () => {
 
-    /*
-      Evita dois comandos de troca ao mesmo tempo.
-      Isso é especialmente importante no iPhone/PWA.
-    */
     if (cameraSwitching) {
       return;
     }
 
     cameraSwitching = true;
 
-    const transitionFrame =
-  createCameraTransitionFrame();
 
     const previousFacingMode =
       facingMode;
+
 
     const nextFacingMode =
       facingMode === "user"
         ? "environment"
         : "user";
 
+
     try {
 
-      const success =
-        await startCamera(
-          nextFacingMode,
-          true
-        );
-
       /*
-        Só confirmamos a nova câmera
-        depois que ela realmente abriu.
+        Encerra o stream atual.
       */
-      if (success) {
+      if (stream) {
 
-        facingMode =
-          nextFacingMode;
-
-      } else {
-
-        facingMode =
-          previousFacingMode;
+        stream
+          .getTracks()
+          .forEach(
+            track => track.stop()
+          );
 
       }
 
+
+      /*
+        Solicita diretamente
+        a nova câmera.
+      */
+      let newStream;
+
+      try {
+
+        newStream =
+          await navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                facingMode: {
+                  ideal:
+                    nextFacingMode
+                }
+              },
+              audio: true
+            });
+
+      } catch (audioError) {
+
+        /*
+          Fallback sem áudio.
+        */
+        newStream =
+          await navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                facingMode: {
+                  ideal:
+                    nextFacingMode
+                }
+              },
+              audio: false
+            });
+
+      }
+
+
+      /*
+        Troca direta do stream.
+      */
+      stream =
+        newStream;
+
+
+      video.srcObject =
+        stream;
+
+
+      video.muted =
+        true;
+
+
+      video.playsInline =
+        true;
+
+
+      /*
+        Espelhamento somente
+        na câmera frontal.
+      */
+      video.classList.toggle(
+        "mirror",
+        nextFacingMode ===
+          "user"
+      );
+
+
+      /*
+        Reprodução direta.
+
+        Nenhuma correção visual
+        será executada depois.
+      */
+      await video.play();
+
+
+      /*
+        Confirma a nova câmera.
+      */
+      facingMode =
+        nextFacingMode;
+
+
+    } catch (error) {
+
+      console.error(
+        "Erro no TESTE 6:",
+        error
+      );
+
+
+      facingMode =
+        previousFacingMode;
+
+
+      toast(
+        "Não foi possível trocar a câmera"
+      );
+
     } finally {
 
-  /*
-    Neste ponto startCamera() já terminou.
-    O vídeo novo já passou pela recomposição
-    fill → 2 frames → cover.
-  */
-  if (transitionFrame) {
+      cameraSwitching =
+        false;
 
-    /*
-      Espera mais um frame somente para
-      garantir que o cover já foi pintado.
-    */
-    await new Promise(
-      resolve =>
-        requestAnimationFrame(resolve)
-    );
-
-    transitionFrame.remove();
-
-  }
-
-
-  cameraSwitching = false;
-
-}
+    }
 
   }
 );
-
 
 /* =========================================================
    CÂMERA
