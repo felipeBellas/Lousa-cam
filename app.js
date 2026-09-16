@@ -7427,50 +7427,11 @@ stream =
 
 /*
   =========================================================
-  iPHONE / PWA — CONEXÃO SEGURA DO NOVO MEDIASTREAM
+  TESTE 1 — CONEXÃO DIRETA DO NOVO STREAM
+  Baseado no comportamento da versão estável
   =========================================================
-
-  O diagnóstico mostrou que:
-
-  - o stream continua 480 x 640;
-  - videoWidth/videoHeight continuam 480 x 640;
-  - o elemento continua ocupando 393 x 793;
-  - readyState permanece 4.
-
-  Portanto, não alteramos resolução ou tamanho.
-
-  Apenas garantimos uma nova apresentação do MediaStream
-  depois da troca frontal/traseira.
 */
 
-
-/*
-  Desconecta completamente a apresentação anterior.
-*/
-video.pause();
-
-video.srcObject =
-  null;
-
-
-/*
-  Permite que o WebKit conclua a remoção
-  da apresentação anterior.
-*/
-await new Promise(
-  resolve =>
-    requestAnimationFrame(
-      () =>
-        requestAnimationFrame(
-          resolve
-        )
-    )
-);
-
-
-/*
-  Conecta o novo MediaStream.
-*/
 video.srcObject =
   stream;
 
