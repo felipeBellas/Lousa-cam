@@ -7561,28 +7561,7 @@ await new Promise(
 await video.play();
 
 
-/*
-  TESTE 3:
-  aguarda o primeiro quadro real
-  da nova câmera antes de forçar
-  a recomposição visual.
-*/
-if (
-  typeof video.requestVideoFrameCallback ===
-  "function"
-) {
 
-  await new Promise(
-    resolve => {
-
-      video.requestVideoFrameCallback(
-        () => resolve()
-      );
-
-    }
-  );
-
-}
 
 
 /*
