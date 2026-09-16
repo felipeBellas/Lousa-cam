@@ -7398,15 +7398,6 @@ if (
 }
 
 
-    /*
-      Desconecta o stream antigo
-      do elemento de vídeo antes
-      de solicitar a outra câmera.
-    */
-
-
-  }
-
 
   /*
     Função interna responsável
