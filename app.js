@@ -7432,6 +7432,31 @@ stream =
   =========================================================
 */
 
+/*
+  Desconecta completamente a apresentação anterior.
+*/
+video.pause();
+
+video.srcObject =
+  null;
+
+/*
+  Permite que o WebKit conclua a remoção
+  da apresentação anterior.
+*/
+await new Promise(
+  resolve =>
+    requestAnimationFrame(
+      () =>
+        requestAnimationFrame(
+          resolve
+        )
+    )
+);
+
+/*
+  Conecta o novo MediaStream.
+*/
 video.srcObject =
   stream;
 
@@ -7440,7 +7465,6 @@ video.muted =
 
 video.playsInline =
   true;
-
 
 /*
   IMPORTANTE:
