@@ -7555,38 +7555,7 @@ await video.play();
 
 
 
-/*
-  iOS / WebKit:
-  força a recomposição visual sem manter
-  o estado intermediário por dois frames.
-*/
-video.style.objectFit = "fill";
 
-void video.offsetHeight;
-
-
-/*
-  iOS / WebKit:
-  dois frames foram necessários nos testes
-  para estabilizar a composição do novo stream.
-*/
-await new Promise(
-  resolve =>
-    requestAnimationFrame(
-      () =>
-        requestAnimationFrame(
-          resolve
-        )
-    )
-);
-
-
-/*
-  Retorna ao preenchimento normal.
-*/
-video.style.objectFit = "cover";
-
-void video.offsetHeight;
 
 /*
   Espelhamento somente na frontal.
