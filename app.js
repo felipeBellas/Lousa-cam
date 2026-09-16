@@ -7652,34 +7652,39 @@ async function startRecording() {
       new MediaStream();
 
 
-    stream
-      .getVideoTracks()
-      .forEach(
-        track =>
-          combinedStream.addTrack(
-            track
-          )
-      );
+/*
+  VÍDEO DA GRAVAÇÃO
+
+  A imagem final da câmera + lousa
+  já é produzida pelo renderCanvas.
+
+  Portanto, o MediaRecorder deve receber
+  somente a faixa de vídeo do canvas.
+*/
+canvasStream
+  .getVideoTracks()
+  .forEach(
+    track =>
+      combinedStream.addTrack(
+        track
+      )
+  );
 
 
-    canvasStream
-      .getVideoTracks()
-      .forEach(
-        track =>
-          combinedStream.addTrack(
-            track
-          )
-      );
+/*
+  ÁUDIO DA GRAVAÇÃO
 
-
-    stream
-      .getAudioTracks()
-      .forEach(
-        track =>
-          combinedStream.addTrack(
-            track
-          )
-      );
+  O áudio continua vindo diretamente
+  do MediaStream da câmera/microfone.
+*/
+stream
+  .getAudioTracks()
+  .forEach(
+    track =>
+      combinedStream.addTrack(
+        track
+      )
+  );
 
 
     let options = {};
