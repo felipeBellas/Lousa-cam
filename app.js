@@ -7376,24 +7376,7 @@ async function startCamera(
       do elemento de vídeo antes
       de solicitar a outra câmera.
     */
-    video.srcObject =
-      null;
 
-    stream =
-      null;
-
-
-    /*
-      Pequeno intervalo para o WebKit/iOS
-      liberar o dispositivo anterior.
-    */
-    await new Promise(
-      resolve =>
-        setTimeout(
-          resolve,
-          180
-        )
-    );
 
   }
 
