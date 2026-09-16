@@ -7949,6 +7949,45 @@ function stopRecording() {
   }
 
 
+  /*
+    Mantém a câmera ativa e reconecta
+    sua apresentação após encerrar
+    a gravação.
+  */
+  if (
+    stream &&
+    stream.getVideoTracks().some(
+      track =>
+        track.readyState === "live"
+    )
+  ) {
+
+    video.srcObject =
+      stream;
+
+    video.muted =
+      true;
+
+    video.playsInline =
+      true;
+
+    video.classList.toggle(
+      "mirror",
+      facingMode === "user"
+    );
+
+    video.play().catch(
+      error => {
+        console.warn(
+          "Não foi possível retomar a câmera:",
+          error
+        );
+      }
+    );
+
+  }
+
+
   toast(
     "Processando gravação"
   );
