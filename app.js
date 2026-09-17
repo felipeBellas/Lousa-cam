@@ -7818,31 +7818,6 @@ mediaRecorder.onstop =
     );
 
 
-    /*
-      Encerra somente as tracks
-      usadas pela gravação.
-    */
-    combinedStream
-      .getTracks()
-      .forEach(
-        track => {
-
-          try {
-
-            track.stop();
-
-          } catch (error) {
-
-            console.warn(
-              "Erro ao encerrar track da gravação:",
-              error
-            );
-
-          }
-
-        }
-      );
-
 
     recordingCanvasStream =
       null;
