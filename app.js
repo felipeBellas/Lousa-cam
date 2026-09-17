@@ -7848,60 +7848,7 @@ mediaRecorder.onstop =
       null;
 
   };
-    /*
-      Diagnóstico temporário.
-      Mantemos para confirmar
-      se paused voltou para false.
-    */
-    showRecordingDiagnostic(
-      "APÓS RETOMAR VIDEO"
-    );
 
-    /*
-      Encerra SOMENTE as tracks
-      pertencentes à gravação.
-
-      combinedStream contém:
-      - vídeo do renderCanvas
-      - clone do áudio
-
-      NÃO contém a track de vídeo
-      da câmera principal.
-    */
-    combinedStream
-      .getTracks()
-      .forEach(
-        track => {
-
-          try {
-
-            track.stop();
-
-          } catch (error) {
-
-            console.warn(
-              "Erro ao encerrar track da gravação:",
-              error
-            );
-
-          }
-
-        }
-      );
-
-
-    /*
-      Libera a referência do stream
-      auxiliar criado pelo canvas.
-
-      As tracks já foram encerradas
-      pelo combinedStream acima.
-    */
-    recordingCanvasStream =
-      null;
-
-  };
-     
 
 
     mediaRecorder.start();
