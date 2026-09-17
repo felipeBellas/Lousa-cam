@@ -7779,22 +7779,22 @@ mediaRecorder.onstop =
   async () => {
 
     /*
-      Salva normalmente a gravação.
+      Salva a gravação concluída.
     */
     saveRecording();
 
 
     /*
-      No iPhone, após MediaRecorder.stop(),
-      o elemento <video> está ficando pausado,
-      embora o MediaStream continue ativo.
+      No iPhone, o MediaRecorder.stop()
+      pode deixar o elemento <video>
+      pausado mesmo com o stream ainda ativo.
 
-      Retomamos SOMENTE o elemento de vídeo.
+      Retomamos SOMENTE o preview existente.
 
-      Não recria a câmera.
-      Não altera srcObject.
-      Não solicita nova permissão.
-      Não encerra nenhuma track.
+      NÃO recria a câmera.
+      NÃO troca srcObject.
+      NÃO encerra tracks.
+      NÃO solicita nova permissão.
     */
     if (
       video &&
@@ -7817,6 +7817,18 @@ mediaRecorder.onstop =
 
     }
 
+
+    /*
+      Libera apenas a referência
+      ao stream auxiliar do canvas.
+
+      IMPORTANTE:
+      não executar track.stop() aqui.
+    */
+    recordingCanvasStream =
+      null;
+
+  };
 
     /*
       Diagnóstico temporário.
@@ -8111,11 +8123,14 @@ function showRecordingDiagnostic(stage) {
 /* =========================================================
    PARAR GRAVAÇÃO
    ========================================================= */
-
 function stopRecording() {
 
-  showRecordingDiagnostic(
-    "ANTES DE PARAR"
+  recording =
+    false;
+
+
+  recordBtn.classList.remove(
+    "recording"
   );
 
   recording =
