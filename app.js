@@ -7778,11 +7778,11 @@ if (recordingMimeType) {
 mediaRecorder.onstop =
   () => {
 
-    /*
-      Finaliza e salva o vídeo.
-    */
-    saveRecording();
+    showRecordingDiagnostic(
+      "DEPOIS DE PARAR"
+    );
 
+    saveRecording();
 
     /*
       Encerra SOMENTE as tracks
@@ -8002,12 +8002,78 @@ function renderRecordingFrame() {
 
 }
 
+/* =========================================================
+   DIAGNÓSTICO TEMPORÁRIO DA CÂMERA / ÁUDIO
+   ========================================================= */
 
+function showRecordingDiagnostic(stage) {
+
+  const videoTrack =
+    stream?.getVideoTracks?.()[0];
+
+  const audioTrack =
+    stream?.getAudioTracks?.()[0];
+
+
+  const videoState =
+    videoTrack
+      ? [
+          `readyState=${videoTrack.readyState}`,
+          `enabled=${videoTrack.enabled}`,
+          `muted=${videoTrack.muted}`
+        ].join(" | ")
+      : "SEM TRACK";
+
+
+  const audioState =
+    audioTrack
+      ? [
+          `readyState=${audioTrack.readyState}`,
+          `enabled=${audioTrack.enabled}`,
+          `muted=${audioTrack.muted}`
+        ].join(" | ")
+      : "SEM TRACK";
+
+
+  const elementState = [
+    `readyState=${video.readyState}`,
+    `paused=${video.paused}`,
+    `videoWidth=${video.videoWidth}`,
+    `videoHeight=${video.videoHeight}`,
+    `srcObject=${video.srcObject === stream}`
+  ].join(" | ");
+
+
+  const message =
+    `${stage}\n\n` +
+    `STREAM: ${
+      stream
+        ? `active=${stream.active}`
+        : "NULL"
+    }\n\n` +
+    `VIDEO: ${videoState}\n\n` +
+    `AUDIO: ${audioState}\n\n` +
+    `VIDEO ELEMENT:\n${elementState}`;
+
+
+  console.log(
+    "LOUSA CAM DIAGNÓSTICO:",
+    message
+  );
+
+
+  alert(message);
+
+}
 /* =========================================================
    PARAR GRAVAÇÃO
    ========================================================= */
 
 function stopRecording() {
+
+  showRecordingDiagnostic(
+    "ANTES DE PARAR"
+  );
 
   recording =
     false;
