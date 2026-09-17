@@ -7685,10 +7685,16 @@ canvasStream
 stream
   .getAudioTracks()
   .forEach(
-    track =>
+    track => {
+
+      const recordingAudioTrack =
+        track.clone();
+
       combinedStream.addTrack(
-        track
-      )
+        recordingAudioTrack
+      );
+
+    }
   );
 
 
