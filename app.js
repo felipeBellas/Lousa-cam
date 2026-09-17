@@ -8125,6 +8125,10 @@ function showRecordingDiagnostic(stage) {
    ========================================================= */
 function stopRecording() {
 
+  showRecordingDiagnostic(
+    "ANTES DE PARAR"
+  );
+
   recording =
     false;
 
