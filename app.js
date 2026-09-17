@@ -7776,13 +7776,56 @@ if (recordingMimeType) {
 
 
 mediaRecorder.onstop =
-  () => {
+  async () => {
 
-    showRecordingDiagnostic(
-      "DEPOIS DE PARAR"
-    );
-
+    /*
+      Salva normalmente a gravação.
+    */
     saveRecording();
+
+
+    /*
+      No iPhone, após MediaRecorder.stop(),
+      o elemento <video> está ficando pausado,
+      embora o MediaStream continue ativo.
+
+      Retomamos SOMENTE o elemento de vídeo.
+
+      Não recria a câmera.
+      Não altera srcObject.
+      Não solicita nova permissão.
+      Não encerra nenhuma track.
+    */
+    if (
+      video &&
+      video.srcObject === stream &&
+      video.paused
+    ) {
+
+      try {
+
+        await video.play();
+
+      } catch (error) {
+
+        console.warn(
+          "Não foi possível retomar o preview da câmera:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /*
+      Diagnóstico temporário.
+      Mantemos para confirmar
+      se paused voltou para false.
+    */
+    showRecordingDiagnostic(
+      "APÓS RETOMAR VIDEO"
+    );
 
     /*
       Encerra SOMENTE as tracks
