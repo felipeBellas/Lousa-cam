@@ -263,6 +263,9 @@ let secondImageTapId =
 let mediaRecorder =
   null;
 
+let recordingCanvasStream =
+  null;
+
 let chunks =
   [];
 
@@ -7641,11 +7644,13 @@ async function startRecording() {
       video.videoHeight ||
       window.innerHeight;
 
+    recordingCanvasStream =
+      renderCanvas.captureStream(
+       30
+    );
 
     const canvasStream =
-      renderCanvas.captureStream(
-        30
-      );
+    recordingCanvasStream;
 
 
     const combinedStream =
@@ -7769,11 +7774,46 @@ mediaRecorder.onstop =
 
     /*
       Finaliza e salva o vídeo.
-
-      A câmera principal não é
-      reiniciada aqui.
     */
     saveRecording();
+
+
+    /*
+      Encerra somente o stream auxiliar
+      criado pelo renderCanvas.
+
+      NÃO encerra o stream principal
+      da câmera e do microfone.
+    */
+    if (
+      recordingCanvasStream
+    ) {
+
+      recordingCanvasStream
+        .getTracks()
+        .forEach(
+          track => {
+
+            try {
+
+              track.stop();
+
+            } catch (error) {
+
+              console.warn(
+                "Erro ao encerrar track da gravação:",
+                error
+              );
+
+            }
+
+          }
+        );
+
+      recordingCanvasStream =
+        null;
+
+    }
 
   };
      
