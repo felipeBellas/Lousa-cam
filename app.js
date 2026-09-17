@@ -7785,16 +7785,8 @@ mediaRecorder.onstop =
 
 
     /*
-      No iPhone, o MediaRecorder.stop()
-      pode deixar o elemento <video>
-      pausado mesmo com o stream ainda ativo.
-
-      Retomamos SOMENTE o preview existente.
-
-      NÃO recria a câmera.
-      NÃO troca srcObject.
-      NÃO encerra tracks.
-      NÃO solicita nova permissão.
+      Retoma somente o elemento <video>
+      caso ele tenha sido pausado.
     */
     if (
       video &&
@@ -7819,17 +7811,43 @@ mediaRecorder.onstop =
 
 
     /*
-      Libera apenas a referência
-      ao stream auxiliar do canvas.
-
-      IMPORTANTE:
-      não executar track.stop() aqui.
+      Diagnóstico temporário.
     */
+    showRecordingDiagnostic(
+      "APÓS RETOMAR VIDEO"
+    );
+
+
+    /*
+      Encerra somente as tracks
+      usadas pela gravação.
+    */
+    combinedStream
+      .getTracks()
+      .forEach(
+        track => {
+
+          try {
+
+            track.stop();
+
+          } catch (error) {
+
+            console.warn(
+              "Erro ao encerrar track da gravação:",
+              error
+            );
+
+          }
+
+        }
+      );
+
+
     recordingCanvasStream =
       null;
 
   };
-
     /*
       Diagnóstico temporário.
       Mantemos para confirmar
