@@ -7765,34 +7765,15 @@ if (recordingMimeType) {
 
 
 mediaRecorder.onstop =
-  async () => {
+  () => {
 
     /*
       Finaliza e salva o vídeo.
+
+      A câmera principal não é
+      reiniciada aqui.
     */
     saveRecording();
-
-
-    /*
-      Após a gravação, reabre a câmera
-      pelo fluxo normal do aplicativo.
-
-      Isso evita depender apenas de
-      recolocar o mesmo stream no vídeo,
-      que no iPhone permaneceu preto.
-    */
-    try {
-
-      await startCamera();
-
-    } catch (error) {
-
-      console.warn(
-        "Não foi possível reativar a câmera após a gravação:",
-        error
-      );
-
-    }
 
   };
      
