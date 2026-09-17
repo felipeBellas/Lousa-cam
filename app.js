@@ -7785,41 +7785,47 @@ mediaRecorder.onstop =
 
 
     /*
-      Encerra somente o stream auxiliar
-      criado pelo renderCanvas.
+      Encerra SOMENTE as tracks
+      pertencentes à gravação.
 
-      NÃO encerra o stream principal
-      da câmera e do microfone.
+      combinedStream contém:
+      - vídeo do renderCanvas
+      - clone do áudio
+
+      NÃO contém a track de vídeo
+      da câmera principal.
     */
-    if (
-      recordingCanvasStream
-    ) {
+    combinedStream
+      .getTracks()
+      .forEach(
+        track => {
 
-      recordingCanvasStream
-        .getTracks()
-        .forEach(
-          track => {
+          try {
 
-            try {
+            track.stop();
 
-              track.stop();
+          } catch (error) {
 
-            } catch (error) {
-
-              console.warn(
-                "Erro ao encerrar track da gravação:",
-                error
-              );
-
-            }
+            console.warn(
+              "Erro ao encerrar track da gravação:",
+              error
+            );
 
           }
-        );
 
-      recordingCanvasStream =
-        null;
+        }
+      );
 
-    }
+
+    /*
+      Libera a referência do stream
+      auxiliar criado pelo canvas.
+
+      As tracks já foram encerradas
+      pelo combinedStream acima.
+    */
+    recordingCanvasStream =
+      null;
 
   };
      
