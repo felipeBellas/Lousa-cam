@@ -7764,54 +7764,33 @@ if (recordingMimeType) {
       };
 
 
-    mediaRecorder.onstop =
+mediaRecorder.onstop =
   async () => {
 
     /*
-      Primeiro finaliza/salva
-      a gravação.
+      Finaliza e salva o vídeo.
     */
     saveRecording();
 
 
     /*
-      Depois devolve o stream ativo
-      para a visualização da câmera.
+      Após a gravação, reabre a câmera
+      pelo fluxo normal do aplicativo.
+
+      Isso evita depender apenas de
+      recolocar o mesmo stream no vídeo,
+      que no iPhone permaneceu preto.
     */
-    if (
-      stream &&
-      stream.getVideoTracks().some(
-        track =>
-          track.readyState === "live"
-      )
-    ) {
+    try {
 
-      video.srcObject =
-        stream;
+      await startCamera();
 
-      video.muted =
-        true;
+    } catch (error) {
 
-      video.playsInline =
-        true;
-
-      video.classList.toggle(
-        "mirror",
-        facingMode === "user"
+      console.warn(
+        "Não foi possível reativar a câmera após a gravação:",
+        error
       );
-
-      try {
-
-        await video.play();
-
-      } catch (error) {
-
-        console.warn(
-          "Não foi possível retomar a câmera:",
-          error
-        );
-
-      }
 
     }
 
