@@ -7778,7 +7778,7 @@ mediaRecorder.onstop =
     /*
       Salva a gravação concluída.
     */
-    saveRecording();
+    // saveRecording();
 
 
     /*
