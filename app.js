@@ -7687,11 +7687,8 @@ stream
   .forEach(
     track => {
 
-      const recordingAudioTrack =
-        track.clone();
-
       combinedStream.addTrack(
-        recordingAudioTrack
+        track
       );
 
     }
