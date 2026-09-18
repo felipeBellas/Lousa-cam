@@ -7679,20 +7679,52 @@ canvasStream
 /*
   ÁUDIO DA GRAVAÇÃO
 
-  O áudio continua vindo diretamente
-  do MediaStream da câmera/microfone.
+  IMPORTANTE:
+
+  O MediaRecorder NÃO utiliza mais
+  a faixa de áudio pertencente ao
+  stream principal da câmera.
+
+  No iPhone/WebKit, essa faixa estava
+  sendo encerrada após a primeira
+  gravação.
+
+  Criamos um stream independente
+  somente para o microfone.
 */
-stream
-  .getAudioTracks()
-  .forEach(
-    track => {
+let recordingAudioStream =
+  null;
 
-      combinedStream.addTrack(
-        track
-      );
+try {
 
-    }
+  recordingAudioStream =
+    await navigator.mediaDevices
+      .getUserMedia({
+        video: false,
+        audio: true
+      });
+
+
+  recordingAudioStream
+    .getAudioTracks()
+    .forEach(
+      track => {
+
+        combinedStream.addTrack(
+          track
+        );
+
+      }
+    );
+
+} catch (error) {
+
+  console.warn(
+    "Microfone independente indisponível:",
+    error
   );
+
+}
 
 
     let options = {};
