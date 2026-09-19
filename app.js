@@ -266,6 +266,9 @@ let mediaRecorder =
 let recordingCanvasStream =
   null;
 
+let recordingAudioStream =
+  null;
+
 let chunks =
   [];
 
@@ -7692,8 +7695,7 @@ canvasStream
   Criamos um stream independente
   somente para o microfone.
 */
-let recordingAudioStream =
-  null;
+
 
 try {
 
@@ -7811,7 +7813,29 @@ mediaRecorder.onstop =
       Salva a gravação concluída.
     */
     // saveRecording();
+/*
+  Libera somente o microfone
+  independente usado pela gravação.
 
+  NÃO interfere no stream principal
+  da câmera.
+*/
+if (recordingAudioStream) {
+
+  recordingAudioStream
+    .getTracks()
+    .forEach(
+      track => {
+
+        track.stop();
+
+      }
+    );
+
+  recordingAudioStream =
+    null;
+
+}
 
     /*
       Retoma somente o elemento <video>
