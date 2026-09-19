@@ -8129,21 +8129,57 @@ function stopRecording() {
   }
 
 
-  if (
-    mediaRecorder &&
-    mediaRecorder.state !==
-      "inactive"
-  ) {
+if (
+  mediaRecorder &&
+  mediaRecorder.state !==
+    "inactive"
+) {
 
-    mediaRecorder.stop();
+  mediaRecorder.stop();
 
-  }
+}
 
 
+/*
+  Mantém o preview da câmera ativo
+  imediatamente após parar a gravação.
 
-  toast(
-    "Processando gravação"
+  Não recria o MediaStream e
+  não solicita novamente a câmera.
+*/
+if (
+  video &&
+  video.srcObject === stream &&
+  stream &&
+  stream.getVideoTracks().some(
+    track =>
+      track.readyState === "live"
+  )
+) {
+
+  video.muted =
+    true;
+
+  video.playsInline =
+    true;
+
+  video.play().catch(
+    error => {
+
+      console.warn(
+        "Não foi possível manter o preview:",
+        error
+      );
+
+    }
   );
+
+}
+
+
+toast(
+  "Processando gravação"
+);
 
 }
 
