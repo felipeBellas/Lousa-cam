@@ -7863,12 +7863,7 @@ if (recordingAudioStream) {
     }
 
 
-    /*
-      Diagnóstico temporário.
-    */
-    showRecordingDiagnostic(
-      "APÓS RETOMAR VIDEO"
-    );
+  
 
 
 
@@ -8118,9 +8113,6 @@ function showRecordingDiagnostic(stage) {
    ========================================================= */
 function stopRecording() {
 
-  showRecordingDiagnostic(
-    "ANTES DE PARAR"
-  );
 
   recording =
     false;
