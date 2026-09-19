@@ -7812,7 +7812,7 @@ mediaRecorder.onstop =
     /*
       Salva a gravação concluída.
     */
-    // saveRecording();
+   saveRecording();
 /*
   Libera somente o microfone
   independente usado pela gravação.
