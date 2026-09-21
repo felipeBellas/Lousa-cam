@@ -69,6 +69,9 @@ const toolsPanel =
 const textToolButton =
   $("textToolButton");
 
+const canvasMenu =
+  $("canvasMenu");
+
 
 const inlineEditor =
   $("inlineEditor");
@@ -227,7 +230,12 @@ let activePointers =
 let pinchState =
   null;
 
+/* =========================================================
+   COLAR
+   ========================================================= */
 
+let pastePosition =
+  null;
 
 /* =========================================================
    DUPLO TOQUE — COLAR
@@ -253,12 +261,6 @@ let secondImageTapId =
    ========================================================= */
 
 let mediaRecorder =
-  null;
-
-let recordingCanvasStream =
-  null;
-
-let recordingAudioStream =
   null;
 
 let chunks =
@@ -3111,6 +3113,264 @@ function createImageFromBlob(
 
 
 
+/* ===================================================
+   DUPLO TOQUE — COLAR
+   =================================================== */
+
+if (
+  pointerMode ===
+  "canvas" &&
+  !pointerMoved &&
+  duration <= 300
+) {
+
+  const now =
+    Date.now();
+
+  const distance =
+    Math.sqrt(
+      Math.pow(
+        point.x -
+        lastTapX,
+        2
+      ) +
+      Math.pow(
+        point.y -
+        lastTapY,
+        2
+      )
+    );
+
+  const isDoubleTap =
+    lastTapTime > 0 &&
+    now -
+      lastTapTime <=
+      DOUBLE_TAP_DELAY &&
+    distance <=
+      DOUBLE_TAP_DISTANCE;
+
+  if (isDoubleTap) {
+
+    lastTapTime = 0;
+
+    closeCanvasPasteMenu();
+
+    pasteFromClipboard(
+      point.x,
+      point.y
+    ).then(
+      success => {
+
+        if (success) {
+
+          toast(
+            "Conteúdo colado"
+          );
+
+        } else {
+
+          toast(
+            "Não foi possível colar"
+          );
+
+        }
+
+      }
+    );
+
+  } else {
+
+    lastTapTime =
+      now;
+
+    lastTapX =
+      point.x;
+
+    lastTapY =
+      point.y;
+
+  }
+
+}
+
+/* =========================================================
+   MENU COLAR
+   ========================================================= */
+
+function showCanvasPasteMenu(
+  x,
+  y
+) {
+
+  pastePosition = {
+
+    x:
+      x,
+
+    y:
+      y
+
+  };
+
+
+  canvasMenu.classList.add(
+    "open"
+  );
+
+
+  const rect =
+    canvas.getBoundingClientRect();
+
+
+  canvasMenu.style.left =
+    `${x}px`;
+
+
+  canvasMenu.style.top =
+    `${y}px`;
+
+
+  requestAnimationFrame(
+    () => {
+
+      const menuRect =
+        canvasMenu.getBoundingClientRect();
+
+
+      let left =
+        x;
+
+
+      let top =
+        y;
+
+
+      if (
+        left +
+        menuRect.width >
+        rect.width - 10
+      ) {
+
+        left =
+          rect.width -
+          menuRect.width -
+          10;
+
+      }
+
+
+      if (
+        top +
+        menuRect.height >
+        rect.height - 10
+      ) {
+
+        top =
+          rect.height -
+          menuRect.height -
+          10;
+
+      }
+
+
+      canvasMenu.style.left =
+        `${Math.max(
+          10,
+          left
+        )}px`;
+
+
+      canvasMenu.style.top =
+        `${Math.max(
+          10,
+          top
+        )}px`;
+
+    }
+  );
+
+}
+
+
+function closeCanvasPasteMenu() {
+
+  canvasMenu.classList.remove(
+    "open"
+  );
+
+  pastePosition =
+    null;
+
+}
+
+
+/* =========================================================
+   COLAR
+   ========================================================= */
+
+pasteButton.addEventListener(
+  "pointerdown",
+  event => {
+
+    event.stopPropagation();
+
+  }
+);
+
+
+pasteButton.addEventListener(
+  "click",
+  async event => {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+
+    const position =
+      pastePosition;
+
+
+    /*
+      Fecha antes de ler.
+    */
+
+    closeCanvasPasteMenu();
+
+
+    if (!position) {
+
+      return;
+
+    }
+
+
+    const success =
+      await pasteFromClipboard(
+        position.x,
+        position.y
+      );
+
+
+    closeCanvasPasteMenu();
+
+
+    if (success) {
+
+      toast(
+        "Conteúdo colado"
+      );
+
+    } else {
+
+      toast(
+        "Não foi possível colar"
+      );
+
+    }
+
+  }
+);
 
 
 /* =========================================================
@@ -4446,6 +4706,28 @@ canvas.addEventListener(
     }
 
 
+    /* ===================================================
+       TOQUE SIMPLES NO CANVAS
+       =================================================== */
+
+    if (
+      pointerMode ===
+      "canvas" &&
+      !pointerMoved
+    ) {
+
+      /*
+        Mostra somente Colar.
+      */
+
+      showCanvasPasteMenu(
+        point.x,
+        point.y
+      );
+
+    }
+
+
     pointerMode =
       null;
 
@@ -4706,6 +4988,8 @@ textToolButton.addEventListener(
 
     finishTextEditing();
 
+    closeCanvasPasteMenu();
+
     hideObjectCancel();
 
 
@@ -4754,6 +5038,8 @@ undoBtn.addEventListener(
   () => {
 
     finishTextEditing();
+
+    closeCanvasPasteMenu();
 
     hideObjectCancel();
 
@@ -4995,7 +5281,7 @@ clearBtn.addEventListener(
     /*
       Fecha menus.
     */
-   
+    closeCanvasPasteMenu();
 
     hideObjectCancel();
 
@@ -7355,13 +7641,11 @@ async function startRecording() {
       video.videoHeight ||
       window.innerHeight;
 
-    recordingCanvasStream =
-      renderCanvas.captureStream(
-       30
-    );
 
     const canvasStream =
-    recordingCanvasStream;
+      renderCanvas.captureStream(
+        30
+      );
 
 
     const combinedStream =
@@ -7390,51 +7674,17 @@ canvasStream
 /*
   ÁUDIO DA GRAVAÇÃO
 
-  IMPORTANTE:
-
-  O MediaRecorder NÃO utiliza mais
-  a faixa de áudio pertencente ao
-  stream principal da câmera.
-
-  No iPhone/WebKit, essa faixa estava
-  sendo encerrada após a primeira
-  gravação.
-
-  Criamos um stream independente
-  somente para o microfone.
+  O áudio continua vindo diretamente
+  do MediaStream da câmera/microfone.
 */
-
-
-try {
-
-  recordingAudioStream =
-    await navigator.mediaDevices
-      .getUserMedia({
-        video: false,
-        audio: true
-      });
-
-
-  recordingAudioStream
-    .getAudioTracks()
-    .forEach(
-      track => {
-
-        combinedStream.addTrack(
-          track
-        );
-
-      }
-    );
-
-} catch (error) {
-
-  console.warn(
-    "Microfone independente indisponível:",
-    error
+stream
+  .getAudioTracks()
+  .forEach(
+    track =>
+      combinedStream.addTrack(
+        track
+      )
   );
-
-}
 
 
     let options = {};
@@ -7515,115 +7765,18 @@ if (recordingMimeType) {
 
 
 mediaRecorder.onstop =
-  async () => {
+  () => {
 
     /*
-      Finaliza o vídeo e envia
-      para a Galeria Lousa Cam.
+      Finaliza e salva o vídeo.
 
-      NÃO inicia download.
+      A câmera principal não é
+      reiniciada aqui.
     */
-    if (
-      chunks.length
-    ) {
-
-      try {
-
-        const blob =
-          new Blob(
-            chunks,
-            {
-              type:
-                mediaRecorder.mimeType ||
-                "video/webm"
-            }
-          );
-
-
-        await saveVideoToGallery(
-          blob
-        );
-
-
-        toast(
-          "Vídeo salvo na Galeria"
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          "Erro ao salvar vídeo na Galeria:",
-          error
-        );
-
-
-        toast(
-          "Não foi possível salvar na Galeria"
-        );
-
-      }
-
-    }
-/*
-  Libera somente o microfone
-  independente usado pela gravação.
-
-  NÃO interfere no stream principal
-  da câmera.
-*/
-if (recordingAudioStream) {
-
-  recordingAudioStream
-    .getTracks()
-    .forEach(
-      track => {
-
-        track.stop();
-
-      }
-    );
-
-  recordingAudioStream =
-    null;
-
-}
-
-    /*
-      Retoma somente o elemento <video>
-      caso ele tenha sido pausado.
-    */
-    if (
-      video &&
-      video.srcObject === stream &&
-      video.paused
-    ) {
-
-      try {
-
-        await video.play();
-
-      } catch (error) {
-
-        console.warn(
-          "Não foi possível retomar o preview da câmera:",
-          error
-        );
-
-      }
-
-    }
-
-
-  
-
-
-
-    recordingCanvasStream =
-      null;
+    saveRecording();
 
   };
-
+     
 
 
     mediaRecorder.start();
@@ -7797,82 +7950,12 @@ function renderRecordingFrame() {
 
 }
 
-/* =========================================================
-   DIAGNÓSTICO TEMPORÁRIO DA CÂMERA / ÁUDIO
-   ========================================================= */
 
-function showRecordingDiagnostic(stage) {
-
-  const videoTrack =
-    stream?.getVideoTracks?.()[0];
-
-  const audioTrack =
-    stream?.getAudioTracks?.()[0];
-
-
-  const videoState =
-    videoTrack
-      ? [
-          `readyState=${videoTrack.readyState}`,
-          `enabled=${videoTrack.enabled}`,
-          `muted=${videoTrack.muted}`
-        ].join(" | ")
-      : "SEM TRACK";
-
-
-  const audioState =
-    audioTrack
-      ? [
-          `readyState=${audioTrack.readyState}`,
-          `enabled=${audioTrack.enabled}`,
-          `muted=${audioTrack.muted}`
-        ].join(" | ")
-      : "SEM TRACK";
-
-
-  const elementState = [
-    `readyState=${video.readyState}`,
-    `paused=${video.paused}`,
-    `videoWidth=${video.videoWidth}`,
-    `videoHeight=${video.videoHeight}`,
-    `srcObject=${video.srcObject === stream}`
-  ].join(" | ");
-
-
-  const message =
-    `${stage}\n\n` +
-    `STREAM: ${
-      stream
-        ? `active=${stream.active}`
-        : "NULL"
-    }\n\n` +
-    `VIDEO: ${videoState}\n\n` +
-    `AUDIO: ${audioState}\n\n` +
-    `VIDEO ELEMENT:\n${elementState}`;
-
-
-  console.log(
-    "LOUSA CAM DIAGNÓSTICO:",
-    message
-  );
-
-
-  alert(message);
-
-}
 /* =========================================================
    PARAR GRAVAÇÃO
    ========================================================= */
+
 function stopRecording() {
-
-
-  recording =
-    false;
-
-
-  recordBtn.classList.remove(
-    "recording"
-  );
 
   recording =
     false;
@@ -7897,229 +7980,25 @@ function stopRecording() {
   }
 
 
-if (
-  mediaRecorder &&
-  mediaRecorder.state !==
-    "inactive"
-) {
-
-  mediaRecorder.stop();
-
-}
-
-
-/*
-  Mantém o preview da câmera ativo
-  imediatamente após parar a gravação.
-
-  Não recria o MediaStream e
-  não solicita novamente a câmera.
-*/
-if (
-  video &&
-  video.srcObject === stream &&
-  stream &&
-  stream.getVideoTracks().some(
-    track =>
-      track.readyState === "live"
-  )
-) {
-
-  video.muted =
-    true;
-
-  video.playsInline =
-    true;
-
-  video.play().catch(
-    error => {
-
-      console.warn(
-        "Não foi possível manter o preview:",
-        error
-      );
-
-    }
-  );
-
-}
-
-
-toast(
-  "Processando gravação"
-);
-
-}
-
-/* =========================================================
-   GALERIA LOUSA CAM
-   ARMAZENAMENTO LOCAL DE VÍDEOS
-   ========================================================= */
-
-const GALLERY_DB_NAME =
-  "lousa-cam-gallery";
-
-const GALLERY_DB_VERSION =
-  1;
-
-const GALLERY_STORE_NAME =
-  "videos";
-
-
-function openGalleryDatabase() {
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const request =
-        indexedDB.open(
-          GALLERY_DB_NAME,
-          GALLERY_DB_VERSION
-        );
-
-
-      request.onupgradeneeded =
-        event => {
-
-          const db =
-            event.target.result;
-
-
-          if (
-            !db.objectStoreNames.contains(
-              GALLERY_STORE_NAME
-            )
-          ) {
-
-            db.createObjectStore(
-              GALLERY_STORE_NAME,
-              {
-                keyPath: "id"
-              }
-            );
-
-          }
-
-        };
-
-
-      request.onsuccess =
-        () => {
-
-          resolve(
-            request.result
-          );
-
-        };
-
-
-      request.onerror =
-        () => {
-
-          reject(
-            request.error
-          );
-
-        };
-
-    }
-  );
-
-}
-
-
-async function saveVideoToGallery(
-  blob
-) {
-
   if (
-    !blob ||
-    !blob.size
+    mediaRecorder &&
+    mediaRecorder.state !==
+      "inactive"
   ) {
 
-    throw new Error(
-      "Vídeo vazio"
-    );
+    mediaRecorder.stop();
 
   }
 
 
-  const db =
-    await openGalleryDatabase();
 
-
-  const videoItem = {
-
-    id:
-      makeId("video"),
-
-    createdAt:
-      Date.now(),
-
-    type:
-      blob.type ||
-      "video/webm",
-
-    size:
-      blob.size,
-
-    blob:
-      blob
-
-  };
-
-
-  return new Promise(
-    (resolve, reject) => {
-
-      const transaction =
-        db.transaction(
-          GALLERY_STORE_NAME,
-          "readwrite"
-        );
-
-
-      const store =
-        transaction.objectStore(
-          GALLERY_STORE_NAME
-        );
-
-
-      store.add(
-        videoItem
-      );
-
-
-      transaction.oncomplete =
-        () => {
-
-          db.close();
-
-          resolve(
-            videoItem
-          );
-
-        };
-
-
-      transaction.onerror =
-        () => {
-
-          const error =
-            transaction.error;
-
-          db.close();
-
-          reject(
-            error
-          );
-
-        };
-
-    }
+  toast(
+    "Processando gravação"
   );
 
 }
+
+
 /* =========================================================
    SALVAR GRAVAÇÃO
    ========================================================= */
@@ -8645,6 +8524,10 @@ document.addEventListener(
         event.target
       ) ||
 
+      canvasMenu.contains(
+        event.target
+      ) ||
+
       objectCancel.contains(
   event.target
 ) ||
@@ -8679,6 +8562,7 @@ unlockImagesButton.contains(
 
     closePanels();
 
+    closeCanvasPasteMenu();
 
   }
 );
