@@ -7798,6 +7798,19 @@ await new Promise(
     )
 );
 
+toast(
+  `VideoStorage: ${typeof VideoStorage}`,
+  5000
+);
+
+await new Promise(
+  resolve =>
+    setTimeout(
+      resolve,
+      5000
+    )
+);
+       
 await VideoStorage.saveVideo(
   blob
 );
