@@ -7813,9 +7813,14 @@ await VideoStorage.saveVideo(
         error
       );
 
-      toast(
-        "Não foi possível salvar o vídeo"
-      );
+     toast(
+  `ERRO: ${
+    error?.name ||
+    error?.message ||
+    "desconhecido"
+  }`,
+  6000
+);
 
     }
 
