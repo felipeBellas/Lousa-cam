@@ -7786,9 +7786,21 @@ mediaRecorder.onstop =
           }
         );
 
-      await VideoStorage.saveVideo(
-        blob
-      );
+     toast(
+  `Chunks: ${chunks.length} | Blob: ${blob.size} bytes`
+);
+
+await new Promise(
+  resolve =>
+    setTimeout(
+      resolve,
+      3000
+    )
+);
+
+await VideoStorage.saveVideo(
+  blob
+);
 
       toast(
         "Vídeo salvo na Galeria"
