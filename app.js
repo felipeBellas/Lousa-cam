@@ -3310,73 +3310,7 @@ function closeCanvasPasteMenu() {
 }
 
 
-/* =========================================================
-   COLAR
-   ========================================================= */
 
-pasteButton.addEventListener(
-  "pointerdown",
-  event => {
-
-    event.stopPropagation();
-
-  }
-);
-
-
-pasteButton.addEventListener(
-  "click",
-  async event => {
-
-    event.preventDefault();
-
-    event.stopPropagation();
-
-
-    const position =
-      pastePosition;
-
-
-    /*
-      Fecha antes de ler.
-    */
-
-    closeCanvasPasteMenu();
-
-
-    if (!position) {
-
-      return;
-
-    }
-
-
-    const success =
-      await pasteFromClipboard(
-        position.x,
-        position.y
-      );
-
-
-    closeCanvasPasteMenu();
-
-
-    if (success) {
-
-      toast(
-        "Conteúdo colado"
-      );
-
-    } else {
-
-      toast(
-        "Não foi possível colar"
-      );
-
-    }
-
-  }
-);
 
 
 /* =========================================================
