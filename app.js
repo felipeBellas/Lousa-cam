@@ -8767,7 +8767,6 @@ requestWakeLock();
    ========================================================= */
 
 if (
-  false &&
   "serviceWorker" in navigator
 ) {
 
