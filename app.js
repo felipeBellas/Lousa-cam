@@ -69,9 +69,6 @@ const toolsPanel =
 const textToolButton =
   $("textToolButton");
 
-const canvasMenu =
-  $("canvasMenu");
-
 
 const inlineEditor =
   $("inlineEditor");
@@ -230,12 +227,7 @@ let activePointers =
 let pinchState =
   null;
 
-/* =========================================================
-   COLAR
-   ========================================================= */
 
-let pastePosition =
-  null;
 
 /* =========================================================
    DUPLO TOQUE — COLAR
@@ -3119,198 +3111,6 @@ function createImageFromBlob(
 
 
 
-/* ===================================================
-   DUPLO TOQUE — COLAR
-   =================================================== */
-
-if (
-  pointerMode ===
-  "canvas" &&
-  !pointerMoved &&
-  duration <= 300
-) {
-
-  const now =
-    Date.now();
-
-  const distance =
-    Math.sqrt(
-      Math.pow(
-        point.x -
-        lastTapX,
-        2
-      ) +
-      Math.pow(
-        point.y -
-        lastTapY,
-        2
-      )
-    );
-
-  const isDoubleTap =
-    lastTapTime > 0 &&
-    now -
-      lastTapTime <=
-      DOUBLE_TAP_DELAY &&
-    distance <=
-      DOUBLE_TAP_DISTANCE;
-
-  if (isDoubleTap) {
-
-    lastTapTime = 0;
-
-    closeCanvasPasteMenu();
-
-    pasteFromClipboard(
-      point.x,
-      point.y
-    ).then(
-      success => {
-
-        if (success) {
-
-          toast(
-            "Conteúdo colado"
-          );
-
-        } else {
-
-          toast(
-            "Não foi possível colar"
-          );
-
-        }
-
-      }
-    );
-
-  } else {
-
-    lastTapTime =
-      now;
-
-    lastTapX =
-      point.x;
-
-    lastTapY =
-      point.y;
-
-  }
-
-}
-
-/* =========================================================
-   MENU COLAR
-   ========================================================= */
-
-function showCanvasPasteMenu(
-  x,
-  y
-) {
-
-  pastePosition = {
-
-    x:
-      x,
-
-    y:
-      y
-
-  };
-
-
-  canvasMenu.classList.add(
-    "open"
-  );
-
-
-  const rect =
-    canvas.getBoundingClientRect();
-
-
-  canvasMenu.style.left =
-    `${x}px`;
-
-
-  canvasMenu.style.top =
-    `${y}px`;
-
-
-  requestAnimationFrame(
-    () => {
-
-      const menuRect =
-        canvasMenu.getBoundingClientRect();
-
-
-      let left =
-        x;
-
-
-      let top =
-        y;
-
-
-      if (
-        left +
-        menuRect.width >
-        rect.width - 10
-      ) {
-
-        left =
-          rect.width -
-          menuRect.width -
-          10;
-
-      }
-
-
-      if (
-        top +
-        menuRect.height >
-        rect.height - 10
-      ) {
-
-        top =
-          rect.height -
-          menuRect.height -
-          10;
-
-      }
-
-
-      canvasMenu.style.left =
-        `${Math.max(
-          10,
-          left
-        )}px`;
-
-
-      canvasMenu.style.top =
-        `${Math.max(
-          10,
-          top
-        )}px`;
-
-    }
-  );
-
-}
-
-
-function closeCanvasPasteMenu() {
-
-  canvasMenu.classList.remove(
-    "open"
-  );
-
-  pastePosition =
-    null;
-
-}
-
-
-
 
 
 /* =========================================================
@@ -4646,28 +4446,6 @@ canvas.addEventListener(
     }
 
 
-    /* ===================================================
-       TOQUE SIMPLES NO CANVAS
-       =================================================== */
-
-    if (
-      pointerMode ===
-      "canvas" &&
-      !pointerMoved
-    ) {
-
-      /*
-        Mostra somente Colar.
-      */
-
-      showCanvasPasteMenu(
-        point.x,
-        point.y
-      );
-
-    }
-
-
     pointerMode =
       null;
 
@@ -4928,8 +4706,6 @@ textToolButton.addEventListener(
 
     finishTextEditing();
 
-    closeCanvasPasteMenu();
-
     hideObjectCancel();
 
 
@@ -4978,8 +4754,6 @@ undoBtn.addEventListener(
   () => {
 
     finishTextEditing();
-
-    closeCanvasPasteMenu();
 
     hideObjectCancel();
 
@@ -5221,7 +4995,7 @@ clearBtn.addEventListener(
     /*
       Fecha menus.
     */
-    closeCanvasPasteMenu();
+   
 
     hideObjectCancel();
 
@@ -8871,10 +8645,6 @@ document.addEventListener(
         event.target
       ) ||
 
-      canvasMenu.contains(
-        event.target
-      ) ||
-
       objectCancel.contains(
   event.target
 ) ||
@@ -8909,7 +8679,6 @@ unlockImagesButton.contains(
 
     closePanels();
 
-    closeCanvasPasteMenu();
 
   }
 );
