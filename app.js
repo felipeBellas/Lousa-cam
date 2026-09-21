@@ -7810,9 +7810,53 @@ mediaRecorder.onstop =
   async () => {
 
     /*
-      Salva a gravação concluída.
+      Finaliza o vídeo e envia
+      para a Galeria Lousa Cam.
+
+      NÃO inicia download.
     */
- //  saveRecording();
+    if (
+      chunks.length
+    ) {
+
+      try {
+
+        const blob =
+          new Blob(
+            chunks,
+            {
+              type:
+                mediaRecorder.mimeType ||
+                "video/webm"
+            }
+          );
+
+
+        await saveVideoToGallery(
+          blob
+        );
+
+
+        toast(
+          "Vídeo salvo na Galeria"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Erro ao salvar vídeo na Galeria:",
+          error
+        );
+
+
+        toast(
+          "Não foi possível salvar na Galeria"
+        );
+
+      }
+
+    }
 /*
   Libera somente o microfone
   independente usado pela gravação.
@@ -8199,7 +8243,175 @@ toast(
 
 }
 
+/* =========================================================
+   GALERIA LOUSA CAM
+   ARMAZENAMENTO LOCAL DE VÍDEOS
+   ========================================================= */
 
+const GALLERY_DB_NAME =
+  "lousa-cam-gallery";
+
+const GALLERY_DB_VERSION =
+  1;
+
+const GALLERY_STORE_NAME =
+  "videos";
+
+
+function openGalleryDatabase() {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const request =
+        indexedDB.open(
+          GALLERY_DB_NAME,
+          GALLERY_DB_VERSION
+        );
+
+
+      request.onupgradeneeded =
+        event => {
+
+          const db =
+            event.target.result;
+
+
+          if (
+            !db.objectStoreNames.contains(
+              GALLERY_STORE_NAME
+            )
+          ) {
+
+            db.createObjectStore(
+              GALLERY_STORE_NAME,
+              {
+                keyPath: "id"
+              }
+            );
+
+          }
+
+        };
+
+
+      request.onsuccess =
+        () => {
+
+          resolve(
+            request.result
+          );
+
+        };
+
+
+      request.onerror =
+        () => {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+async function saveVideoToGallery(
+  blob
+) {
+
+  if (
+    !blob ||
+    !blob.size
+  ) {
+
+    throw new Error(
+      "Vídeo vazio"
+    );
+
+  }
+
+
+  const db =
+    await openGalleryDatabase();
+
+
+  const videoItem = {
+
+    id:
+      makeId("video"),
+
+    createdAt:
+      Date.now(),
+
+    type:
+      blob.type ||
+      "video/webm",
+
+    size:
+      blob.size,
+
+    blob:
+      blob
+
+  };
+
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const transaction =
+        db.transaction(
+          GALLERY_STORE_NAME,
+          "readwrite"
+        );
+
+
+      const store =
+        transaction.objectStore(
+          GALLERY_STORE_NAME
+        );
+
+
+      store.add(
+        videoItem
+      );
+
+
+      transaction.oncomplete =
+        () => {
+
+          db.close();
+
+          resolve(
+            videoItem
+          );
+
+        };
+
+
+      transaction.onerror =
+        () => {
+
+          const error =
+            transaction.error;
+
+          db.close();
+
+          reject(
+            error
+          );
+
+        };
+
+    }
+  );
+
+}
 /* =========================================================
    SALVAR GRAVAÇÃO
    ========================================================= */
