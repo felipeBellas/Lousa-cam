@@ -7786,34 +7786,9 @@ mediaRecorder.onstop =
           }
         );
 
-     toast(
-  `Chunks: ${chunks.length} | Blob: ${blob.size} bytes`
-);
-
-await new Promise(
-  resolve =>
-    setTimeout(
-      resolve,
-      3000
-    )
-);
-
-toast(
-  `VideoStorage: ${typeof window.VideoStorage}`,
-  5000
-);
-
-await new Promise(
-  resolve =>
-    setTimeout(
-      resolve,
-      5000
-    )
-);
-       
-await window.VideoStorage.saveVideo(
-  blob
-);
+      await window.VideoStorage.saveVideo(
+        blob
+      );
 
       toast(
         "Vídeo salvo na Galeria"
@@ -7826,10 +7801,9 @@ await window.VideoStorage.saveVideo(
         error
       );
 
- toast(
-  `ERRO: ${error?.name || "Erro"} | ${error?.message || "sem mensagem"}`,
-  8000
-);
+      toast(
+        "Não foi possível salvar o vídeo"
+      );
 
     }
 
