@@ -7763,21 +7763,51 @@ if (recordingMimeType) {
 
       };
 
-
 mediaRecorder.onstop =
-  () => {
+  async () => {
 
     /*
-      Finaliza e salva o vídeo.
+      Finaliza a gravação e salva
+      o vídeo na Galeria interna.
 
-      A câmera principal não é
-      reiniciada aqui.
+      Nenhum download é iniciado aqui.
+      A câmera principal não é reiniciada.
     */
-    saveRecording();
+
+    try {
+
+      const blob =
+        new Blob(
+          chunks,
+          {
+            type:
+              mediaRecorder.mimeType ||
+              "video/webm"
+          }
+        );
+
+      await VideoStorage.saveVideo(
+        blob
+      );
+
+      toast(
+        "Vídeo salvo na Galeria"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Erro ao salvar vídeo na Galeria:",
+        error
+      );
+
+      toast(
+        "Não foi possível salvar o vídeo"
+      );
+
+    }
 
   };
-     
-
 
     mediaRecorder.start();
 
