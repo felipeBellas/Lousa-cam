@@ -12,7 +12,7 @@
    sem alterar a interface da Galeria.
    ========================================================= */
 
-const VideoStorage = (() => {
+window.VideoStorage = (() => {
 
   const DB_NAME =
     "lousa-cam-gallery";
