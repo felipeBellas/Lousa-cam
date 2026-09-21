@@ -1,4 +1,4 @@
-const CACHE_NAME = "lousa-cam-v20260911-02";
+const CACHE_NAME = "lousa-cam-v20260921-01";
 
 const APP_FILES = [
   "./",
