@@ -7799,7 +7799,7 @@ await new Promise(
 );
 
 toast(
-  `VideoStorage: ${typeof window.VideoStorage}`
+  `VideoStorage: ${typeof window.VideoStorage}`,
   5000
 );
 
