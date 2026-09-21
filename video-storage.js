@@ -138,8 +138,25 @@ const VideoStorage = (() => {
     }
 
 
-    const db =
-      await openDatabase();
+   let db;
+
+try {
+
+  db =
+    await openDatabase();
+
+} catch (error) {
+
+  throw new Error(
+    "OPEN_DB: " +
+    (
+      error?.name ||
+      error?.message ||
+      "erro desconhecido"
+    )
+  );
+
+}
 
 
     const video = {
