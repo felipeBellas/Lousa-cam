@@ -1,9 +1,10 @@
-const CACHE_NAME = "lousa-cam-v20260911-02";
+const CACHE_NAME = "lousa-cam-v20260921-01";
 
 const APP_FILES = [
   "./",
   "./index.html",
   "./app.js",
+  "./video-storage.js",
   "./manifest.json",
   "./logo.png"
 ];
@@ -74,11 +75,12 @@ self.addEventListener("fetch", event => {
 
   const url = new URL(request.url);
 
-  const isAppFile =
-    url.pathname.endsWith("/index.html") ||
-    url.pathname.endsWith("/app.js") ||
-    url.pathname.endsWith("/manifest.json") ||
-    url.pathname.endsWith("/sw.js");
+ const isAppFile =
+  url.pathname.endsWith("/index.html") ||
+  url.pathname.endsWith("/app.js") ||
+  url.pathname.endsWith("/video-storage.js") ||
+  url.pathname.endsWith("/manifest.json") ||
+  url.pathname.endsWith("/sw.js");
 
 
   /* =======================================================
