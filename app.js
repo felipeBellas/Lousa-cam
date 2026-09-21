@@ -7826,13 +7826,9 @@ await VideoStorage.saveVideo(
         error
       );
 
-     toast(
-  `ERRO: ${
-    error?.name ||
-    error?.message ||
-    "desconhecido"
-  }`,
-  6000
+ toast(
+  `ERRO: ${error?.name || "Erro"} | ${error?.message || "sem mensagem"}`,
+  8000
 );
 
     }
