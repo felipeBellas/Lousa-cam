@@ -253,17 +253,22 @@ body {
 
     #bottom {
 
-      left: 0;
+  left: 0;
 
-      right: 0;
+  right: 0;
 
-      bottom:
-        max(20px, env(safe-area-inset-bottom));
+  bottom:
+    max(
+      82px,
+      calc(
+        env(safe-area-inset-bottom)
+        + 82px
+      )
+    );
 
-      justify-content: center;
+  justify-content: center;
 
-    }
-
+}
 
     button {
 
@@ -427,6 +432,201 @@ body {
     }
 
 
+    /* =====================================================
+   NAVEGAÇÃO CÂMERA / GALERIA
+   Liquid Glass
+   ===================================================== */
+
+#modeDock {
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom:
+    max(
+      18px,
+      env(safe-area-inset-bottom)
+    );
+
+  transform:
+    translateX(-50%);
+
+  z-index: 35;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 3px;
+
+  padding: 4px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.20);
+
+  border-radius: 24px;
+
+  background:
+    rgba(28, 28, 30, 0.24);
+
+  backdrop-filter:
+    blur(22px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(22px)
+    saturate(180%);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.18);
+
+  pointer-events: auto;
+
+  opacity: 0.48;
+
+  transition:
+    opacity 0.25s ease,
+    background 0.25s ease;
+
+}
+
+
+#modeDock.active {
+
+  opacity: 1;
+
+  background:
+    rgba(28, 28, 30, 0.38);
+
+}
+
+
+#modeDock button {
+
+  width: auto;
+
+  min-width: 82px;
+
+  height: 38px;
+
+  padding:
+    0 15px;
+
+  border: 0;
+
+  border-radius: 19px;
+
+  background:
+    transparent;
+
+  box-shadow:
+    none;
+
+  color:
+    rgba(255, 255, 255, 0.72);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
+
+}
+
+
+#modeDock button.active {
+
+  color: #fff;
+
+  background:
+    rgba(255, 255, 255, 0.16);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.20);
+
+}
+
+
+/* =====================================================
+   CAMADA INTERNA DA GALERIA
+   ===================================================== */
+
+#galleryLayer {
+
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 20;
+
+  display: none;
+
+  overflow-y: auto;
+
+  background:
+    rgba(0, 0, 0, 0.94);
+
+  pointer-events: auto;
+
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    150px
+    max(16px, env(safe-area-inset-left));
+
+}
+
+
+#galleryLayer.show {
+
+  display: block;
+
+}
+
+
+#galleryLayer h1 {
+
+  margin:
+    8px 0 22px;
+
+  color: #fff;
+
+  font-size: 30px;
+
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
+
+}
+
+
+#galleryLayerContent {
+
+  width: 100%;
+
+}
+
+
+#galleryLayerContent p {
+
+  color:
+    rgba(255, 255, 255, 0.65);
+
+  text-align: center;
+
+  font-size: 15px;
+
+  margin:
+    24px 0;
+
+}
+    
     /* =====================================================
        STATUS
        ===================================================== */
@@ -2094,10 +2294,57 @@ body {
     </div>
 
 
+    <!-- =================================================
+         GALERIA INTERNA
+         A câmera permanece ativa por baixo.
+         ================================================= -->
+
+    <section
+      id="galleryLayer"
+      aria-hidden="true">
+
+      <h1>Galeria</h1>
+
+      <div id="galleryLayerContent">
+
+        <p>Galeria Lousa Cam</p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================================
+         NAVEGAÇÃO CÂMERA / GALERIA
+         ================================================= -->
+
+    <nav
+      id="modeDock"
+      aria-label="Navegação principal">
+
+      <button
+        id="cameraModeButton"
+        type="button"
+        class="active"
+        aria-pressed="true">
+
+        Câmera
+
+      </button>
+
+      <button
+        id="galleryModeButton"
+        type="button"
+        aria-pressed="false">
+
+        Galeria
+
+      </button>
+
+    </nav>
+
+
     <div id="status"></div>
-
-
-  </div>
 
 
   <!-- =================================================
@@ -2158,6 +2405,164 @@ body {
   onerror="alert('ERRO: video-storage.js NÃO CARREGOU')">
 </script>
 <script src="./app.js?v=20260915-01"></script>
+<script>
+
+(() => {
+
+  const modeDock =
+    document.getElementById(
+      "modeDock"
+    );
+
+  const cameraButton =
+    document.getElementById(
+      "cameraModeButton"
+    );
+
+  const galleryButton =
+    document.getElementById(
+      "galleryModeButton"
+    );
+
+  const galleryLayer =
+    document.getElementById(
+      "galleryLayer"
+    );
+
+  if (
+    !modeDock ||
+    !cameraButton ||
+    !galleryButton ||
+    !galleryLayer
+  ) {
+    return;
+  }
+
+
+  let dockTimer =
+    null;
+
+
+  function activateDock() {
+
+    modeDock.classList.add(
+      "active"
+    );
+
+    clearTimeout(
+      dockTimer
+    );
+
+    dockTimer =
+      setTimeout(
+        () => {
+
+          modeDock.classList.remove(
+            "active"
+          );
+
+        },
+        2200
+      );
+
+  }
+
+
+  function showCamera() {
+
+    galleryLayer.classList.remove(
+      "show"
+    );
+
+    galleryLayer.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    cameraButton.classList.add(
+      "active"
+    );
+
+    galleryButton.classList.remove(
+      "active"
+    );
+
+    cameraButton.setAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    galleryButton.setAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    activateDock();
+
+  }
+
+
+  function showGallery() {
+
+    galleryLayer.classList.add(
+      "show"
+    );
+
+    galleryLayer.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+    cameraButton.classList.remove(
+      "active"
+    );
+
+    galleryButton.classList.add(
+      "active"
+    );
+
+    cameraButton.setAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    galleryButton.setAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    activateDock();
+
+  }
+
+
+  cameraButton.addEventListener(
+    "click",
+    showCamera
+  );
+
+
+  galleryButton.addEventListener(
+    "click",
+    showGallery
+  );
+
+
+  modeDock.addEventListener(
+    "pointerdown",
+    activateDock
+  );
+
+
+  /*
+    O aplicativo sempre inicia
+    visualmente na Câmera.
+  */
+  showCamera();
+
+})();
+
+</script>
   
 </body>
 
