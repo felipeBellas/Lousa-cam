@@ -169,137 +169,42 @@ function createGalleryItem(
   video.src =
     videoURL;
 
-video.preload =
-  "auto";
+  video.preload =
+    "metadata";
 
-video.muted =
-  true;
+  video.muted =
+    true;
 
-video.playsInline =
-  true;
+  video.playsInline =
+    true;
 
-video.controls =
-  false;
-
-
-/*
-  MINIATURA DO VÍDEO
-
-  O Safari nem sempre exibe um frame
-  de um elemento <video> pausado.
-
-  Por isso geramos uma imagem de
-  pré-visualização usando canvas.
-*/
-const thumbnail =
-  document.createElement(
-    "canvas"
-  );
-
-thumbnail.className =
-  "gallery-thumbnail";
+  video.controls =
+    false;
 
 
-video.addEventListener(
-  "loadedmetadata",
-  () => {
+  /*
+    MINIATURA SALVA JUNTO
+    COM A GRAVAÇÃO.
+  */
+  const thumbnail =
+    document.createElement(
+      "img"
+    );
 
-    if (
-      !video.duration ||
-      !Number.isFinite(
-        video.duration
-      )
-    ) {
-      return;
-    }
+  thumbnail.className =
+    "gallery-thumbnail";
 
-
-    /*
-      Escolhe um ponto próximo
-      do início do vídeo.
-    */
-    const previewTime =
-      Math.min(
-        0.2,
-        video.duration / 2
-      );
+  thumbnail.alt =
+    "Prévia do vídeo";
 
 
-    try {
+  if (videoData.thumbnail) {
 
-      video.currentTime =
-        previewTime;
+    thumbnail.src =
+      videoData.thumbnail;
 
-    } catch (error) {
-
-      console.warn(
-        "Não foi possível posicionar o vídeo:",
-        error
-      );
-
-    }
-
-  },
-  {
-    once: true
   }
-);
 
-
-video.addEventListener(
-  "seeked",
-  () => {
-
-    if (
-      !video.videoWidth ||
-      !video.videoHeight
-    ) {
-      return;
-    }
-
-
-    thumbnail.width =
-      video.videoWidth;
-
-    thumbnail.height =
-      video.videoHeight;
-
-
-    const thumbnailContext =
-      thumbnail.getContext(
-        "2d"
-      );
-
-
-    if (!thumbnailContext) {
-      return;
-    }
-
-
-    try {
-
-      thumbnailContext.drawImage(
-        video,
-        0,
-        0,
-        thumbnail.width,
-        thumbnail.height
-      );
-
-    } catch (error) {
-
-      console.warn(
-        "Não foi possível criar a miniatura:",
-        error
-      );
-
-    }
-
-  },
-  {
-    once: true
-  }
-);
 
   /*
     Símbolo central de reprodução.
@@ -316,20 +221,20 @@ video.addEventListener(
     "▶";
 
 
- /*
-  Montagem do item.
-*/
-item.appendChild(
-  thumbnail
-);
+  /*
+    Montagem do item.
+  */
+  item.appendChild(
+    thumbnail
+  );
 
-item.appendChild(
-  video
-);
+  item.appendChild(
+    video
+  );
 
-item.appendChild(
-  play
-);
+  item.appendChild(
+    play
+  );
 
 
   /*
