@@ -169,23 +169,65 @@ function createGalleryItem(
   video.src =
     videoURL;
 
-  video.preload =
-    "metadata";
+ video.preload =
+  "auto";
 
-  video.muted =
-    true;
+video.muted =
+  true;
 
-  video.playsInline =
-    true;
+video.playsInline =
+  true;
+
+video.controls =
+  false;
 
 
-  /*
-    Não inicia reprodução automática.
-    Nesta etapa o vídeo funciona
-    apenas como miniatura.
-  */
-  video.controls =
-    false;
+/*
+  SAFARI / iPHONE
+
+  Depois que os metadados estiverem
+  disponíveis, avançamos alguns
+  décimos de segundo para que o Safari
+  renderize um frame do vídeo.
+*/
+video.addEventListener(
+  "loadedmetadata",
+  () => {
+
+    if (
+      video.duration &&
+      Number.isFinite(
+        video.duration
+      )
+    ) {
+
+      const previewTime =
+        Math.min(
+          0.2,
+          video.duration / 2
+        );
+
+      try {
+
+        video.currentTime =
+          previewTime;
+
+      } catch (error) {
+
+        console.warn(
+          "Não foi possível gerar a prévia:",
+          error
+        );
+
+      }
+
+    }
+
+  },
+  {
+    once: true
+  }
+);
 
 
   /*
