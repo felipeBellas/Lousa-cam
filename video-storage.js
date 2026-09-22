@@ -122,9 +122,10 @@ window.VideoStorage = (() => {
      SALVAR VÍDEO
      ======================================================= */
 
-  async function saveVideo(
-    blob
-  ) {
+ async function saveVideo(
+  blob,
+  thumbnail = null
+) {
 
     if (
       !blob ||
@@ -171,11 +172,14 @@ try {
         blob.type ||
         "video/webm",
 
-      size:
-        blob.size,
+     size:
+  blob.size,
 
-      blob:
-        blob
+blob:
+  blob,
+
+thumbnail:
+  thumbnail
 
     };
 
