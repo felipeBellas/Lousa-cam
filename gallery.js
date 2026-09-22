@@ -169,7 +169,7 @@ function createGalleryItem(
   video.src =
     videoURL;
 
- video.preload =
+video.preload =
   "auto";
 
 video.muted =
@@ -183,43 +183,59 @@ video.controls =
 
 
 /*
-  SAFARI / iPHONE
+  MINIATURA DO VÍDEO
 
-  Depois que os metadados estiverem
-  disponíveis, avançamos alguns
-  décimos de segundo para que o Safari
-  renderize um frame do vídeo.
+  O Safari nem sempre exibe um frame
+  de um elemento <video> pausado.
+
+  Por isso geramos uma imagem de
+  pré-visualização usando canvas.
 */
+const thumbnail =
+  document.createElement(
+    "canvas"
+  );
+
+thumbnail.className =
+  "gallery-thumbnail";
+
+
 video.addEventListener(
   "loadedmetadata",
   () => {
 
     if (
-      video.duration &&
-      Number.isFinite(
+      !video.duration ||
+      !Number.isFinite(
         video.duration
       )
     ) {
+      return;
+    }
 
-      const previewTime =
-        Math.min(
-          0.2,
-          video.duration / 2
-        );
 
-      try {
+    /*
+      Escolhe um ponto próximo
+      do início do vídeo.
+    */
+    const previewTime =
+      Math.min(
+        0.2,
+        video.duration / 2
+      );
 
-        video.currentTime =
-          previewTime;
 
-      } catch (error) {
+    try {
 
-        console.warn(
-          "Não foi possível gerar a prévia:",
-          error
-        );
+      video.currentTime =
+        previewTime;
 
-      }
+    } catch (error) {
+
+      console.warn(
+        "Não foi possível posicionar o vídeo:",
+        error
+      );
 
     }
 
@@ -229,6 +245,61 @@ video.addEventListener(
   }
 );
 
+
+video.addEventListener(
+  "seeked",
+  () => {
+
+    if (
+      !video.videoWidth ||
+      !video.videoHeight
+    ) {
+      return;
+    }
+
+
+    thumbnail.width =
+      video.videoWidth;
+
+    thumbnail.height =
+      video.videoHeight;
+
+
+    const thumbnailContext =
+      thumbnail.getContext(
+        "2d"
+      );
+
+
+    if (!thumbnailContext) {
+      return;
+    }
+
+
+    try {
+
+      thumbnailContext.drawImage(
+        video,
+        0,
+        0,
+        thumbnail.width,
+        thumbnail.height
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "Não foi possível criar a miniatura:",
+        error
+      );
+
+    }
+
+  },
+  {
+    once: true
+  }
+);
 
   /*
     Símbolo central de reprodução.
@@ -245,16 +316,20 @@ video.addEventListener(
     "▶";
 
 
-  /*
-    Montagem do item.
-  */
-  item.appendChild(
-    video
-  );
+ /*
+  Montagem do item.
+*/
+item.appendChild(
+  thumbnail
+);
 
-  item.appendChild(
-    play
-  );
+item.appendChild(
+  video
+);
+
+item.appendChild(
+  play
+);
 
 
   /*
