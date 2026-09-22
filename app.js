@@ -7786,9 +7786,39 @@ mediaRecorder.onstop =
           }
         );
 
-      await window.VideoStorage.saveVideo(
-        blob
+      let thumbnail =
+  null;
+
+if (
+  renderCanvas &&
+  renderCanvas.width &&
+  renderCanvas.height
+) {
+
+  try {
+
+    thumbnail =
+      renderCanvas.toDataURL(
+        "image/jpeg",
+        0.75
       );
+
+  } catch (error) {
+
+    console.warn(
+      "Não foi possível criar a miniatura:",
+      error
+    );
+
+  }
+
+}
+
+
+await window.VideoStorage.saveVideo(
+  blob,
+  thumbnail
+);
 
       toast(
         "Vídeo salvo na Galeria"
