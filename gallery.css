@@ -406,7 +406,8 @@ header h1 {
 
   color: #fff;
 
-  font-size: 26px;
+  font-size: 18px;
+  letter-spacing: 1px;
   line-height: 1;
 
   backdrop-filter:
