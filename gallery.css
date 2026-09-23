@@ -524,3 +524,128 @@ header h1 {
 .gallery-delete-video {
   color: #ff453a;
 }
+
+/* =========================================================
+   MODO DE SELEÇÃO
+   ========================================================= */
+
+.gallery-toolbar {
+  position: relative;
+
+  z-index: 5;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  width: 100%;
+
+  margin:
+    0
+    0
+    14px;
+}
+
+
+.gallery-toolbar button {
+  min-height: 36px;
+
+  padding:
+    0
+    13px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  border-radius: 18px;
+
+  background:
+    rgba(28, 28, 30, 0.62);
+
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  backdrop-filter:
+    blur(18px)
+    saturate(160%);
+
+  -webkit-backdrop-filter:
+    blur(18px)
+    saturate(160%);
+}
+
+
+.gallery-select-all {
+  color:
+    rgba(255, 255, 255, 0.86);
+}
+
+
+/* CÍRCULO SOBRE A MINIATURA */
+
+.gallery-selection-indicator {
+  position: absolute;
+
+  top: 10px;
+  right: 10px;
+
+  z-index: 4;
+
+  display: none;
+
+  width: 28px;
+  height: 28px;
+
+  align-items: center;
+  justify-content: center;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.92);
+
+  border-radius: 50%;
+
+  background:
+    rgba(0, 0, 0, 0.35);
+
+  color: #fff;
+
+  font-size: 17px;
+  font-weight: 700;
+
+  pointer-events: none;
+
+  backdrop-filter:
+    blur(8px);
+
+  -webkit-backdrop-filter:
+    blur(8px);
+}
+
+
+/*
+  O círculo aparece somente
+  durante o modo de seleção.
+*/
+
+.gallery-toolbar:has(
+  .gallery-select-all:not([hidden])
+)
+~ .gallery-grid
+.gallery-selection-indicator {
+  display: flex;
+}
+
+
+.gallery-selection-indicator.selected {
+  background:
+    rgba(255, 255, 255, 0.92);
+
+  color: #000;
+}
