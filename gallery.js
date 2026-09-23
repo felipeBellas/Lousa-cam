@@ -4,9 +4,6 @@
    ESTADO DE SELEÇÃO DA GALERIA
    ========================================================= */
 
-let gallerySelectionMode =
-  false;
-
 const selectedGalleryVideos =
   new Set();
 
@@ -53,10 +50,12 @@ async function loadGallery() {
     /*
       Nenhum vídeo salvo.
     */
-    if (
+      if (
       !videos ||
       videos.length === 0
     ) {
+
+      selectedGalleryVideos.clear();
 
       galleryContent.innerHTML =
         "<p>Nenhum vídeo salvo.</p>";
@@ -76,7 +75,7 @@ async function loadGallery() {
     grid.className =
       "gallery-grid";
 
-        /*
+    /*
       BARRA DE CONTROLES DA GALERIA
     */
     const toolbar =
@@ -88,23 +87,9 @@ async function loadGallery() {
       "gallery-toolbar";
 
 
-    const selectButton =
-      document.createElement(
-        "button"
-      );
-
-    selectButton.type =
-      "button";
-
-    selectButton.className =
-      "gallery-select-button";
-
-    selectButton.textContent =
-      gallerySelectionMode
-        ? "Cancelar"
-        : "Selecionar";
-
-
+    /*
+      SELECIONAR TUDO
+    */
     const selectAllButton =
       document.createElement(
         "button"
@@ -120,20 +105,30 @@ async function loadGallery() {
       "Selecionar tudo";
 
 
-    if (!gallerySelectionMode) {
+    /*
+      LIMPAR SELECIONADOS
+    */
+    const clearButton =
+      document.createElement(
+        "button"
+      );
 
-      selectAllButton.hidden =
-        true;
+    clearButton.type =
+      "button";
 
-    }
+    clearButton.className =
+      "gallery-clear-selected";
 
+    clearButton.textContent =
+      "Limpar";
 
-    toolbar.appendChild(
-      selectButton
-    );
 
     toolbar.appendChild(
       selectAllButton
+    );
+
+    toolbar.appendChild(
+      clearButton
     );
     /*
       Cria cada miniatura.
@@ -172,25 +167,8 @@ async function loadGallery() {
       grid
     );
 
-         /*
-      ATIVAR / CANCELAR SELEÇÃO
-    */
-    selectButton.addEventListener(
-      "click",
-      async () => {
-
-        gallerySelectionMode =
-          !gallerySelectionMode;
-
-        selectedGalleryVideos.clear();
-
-        await loadGallery();
-      }
-    );
-
-
     /*
-      SELECIONAR TODOS
+      SELECIONAR / DESMARCAR TODOS
     */
     selectAllButton.addEventListener(
       "click",
@@ -224,6 +202,84 @@ async function loadGallery() {
 
 
         await loadGallery();
+      }
+    );
+
+
+    /*
+      LIMPAR VÍDEOS SELECIONADOS
+    */
+    clearButton.addEventListener(
+      "click",
+      async () => {
+
+        if (
+          selectedGalleryVideos.size === 0
+        ) {
+
+          window.alert(
+            "Selecione pelo menos um vídeo."
+          );
+
+          return;
+        }
+
+
+        const totalSelected =
+          selectedGalleryVideos.size;
+
+
+        const confirmed =
+          window.confirm(
+            totalSelected === 1
+              ? "Excluir o vídeo selecionado da Galeria?"
+              : `Excluir os ${totalSelected} vídeos selecionados da Galeria?`
+          );
+
+
+        if (!confirmed) {
+          return;
+        }
+
+
+        try {
+
+          const idsToDelete =
+            Array.from(
+              selectedGalleryVideos
+            );
+
+
+          for (
+            const videoId
+            of idsToDelete
+          ) {
+
+            await window.VideoStorage.deleteVideo(
+              videoId
+            );
+
+          }
+
+
+          selectedGalleryVideos.clear();
+
+
+          await loadGallery();
+
+
+        } catch (error) {
+
+          console.error(
+            "Erro ao excluir vídeos selecionados:",
+            error
+          );
+
+          window.alert(
+            "Não foi possível excluir os vídeos selecionados."
+          );
+
+        }
       }
     );
 
@@ -386,48 +442,50 @@ function createGalleryItem(
     item.dataset.videoId =
     videoData.id;
 
-   item.addEventListener(
+     item.addEventListener(
     "click",
     async () => {
 
       /*
-        Modo normal:
-        abre o vídeo.
+        Se já existem vídeos selecionados,
+        o toque serve para marcar/desmarcar.
       */
-      if (!gallerySelectionMode) {
+      if (
+        selectedGalleryVideos.size > 0
+      ) {
 
-        openGalleryVideo(
-          videoData
-        );
+        if (
+          selectedGalleryVideos.has(
+            videoData.id
+          )
+        ) {
+
+          selectedGalleryVideos.delete(
+            videoData.id
+          );
+
+        } else {
+
+          selectedGalleryVideos.add(
+            videoData.id
+          );
+
+        }
+
+
+        await loadGallery();
 
         return;
       }
 
 
       /*
-        Modo seleção:
-        marca ou desmarca.
+        Sem seleção ativa,
+        o toque abre normalmente o vídeo.
       */
-      if (
-        selectedGalleryVideos.has(
-          videoData.id
-        )
-      ) {
-
-        selectedGalleryVideos.delete(
-          videoData.id
-        );
-
-      } else {
-
-        selectedGalleryVideos.add(
-          videoData.id
-        );
-
-      }
-
-
-      await loadGallery();
+      openGalleryVideo(
+        videoData
+      );
     }
   );
 
