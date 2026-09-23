@@ -586,6 +586,9 @@ header h1 {
     rgba(255, 255, 255, 0.86);
 }
 
+.gallery-clear-selected {
+  color: #ff453a;
+}
 
 /* CÍRCULO SOBRE A MINIATURA */
 
@@ -629,21 +632,10 @@ header h1 {
 }
 
 
-/*
-  O círculo aparece somente
-  durante o modo de seleção.
-*/
-
-.gallery-toolbar:has(
-  .gallery-select-all:not([hidden])
-)
-~ .gallery-grid
-.gallery-selection-indicator {
-  display: flex;
-}
-
 
 .gallery-selection-indicator.selected {
+  display: flex;
+
   background:
     rgba(255, 255, 255, 0.92);
 
