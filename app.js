@@ -7632,14 +7632,50 @@ async function startRecording() {
     }
 
 
-    renderCanvas.width =
-      video.videoWidth ||
+        /*
+      O vídeo gravado deve seguir
+      a mesma proporção visual
+      da tela do Lousa Cam.
+
+      Mantemos uma resolução limitada
+      para evitar gravações excessivamente
+      pesadas no iPhone.
+    */
+
+    const viewportWidth =
       window.innerWidth;
+
+    const viewportHeight =
+      window.innerHeight;
+
+
+    const maxRecordingSize =
+      1920;
+
+
+    const recordingScale =
+      Math.min(
+        1,
+        maxRecordingSize /
+          Math.max(
+            viewportWidth,
+            viewportHeight
+          )
+      );
+
+
+    renderCanvas.width =
+      Math.round(
+        viewportWidth *
+        recordingScale
+      );
 
 
     renderCanvas.height =
-      video.videoHeight ||
-      window.innerHeight;
+      Math.round(
+        viewportHeight *
+        recordingScale
+      );
 
 
     const canvasStream =
@@ -7937,13 +7973,91 @@ function renderRecordingFrame() {
     }
 
 
-    renderCtx.drawImage(
-      video,
-      0,
-      0,
-      width,
-      height
-    );
+        /*
+      Reproduz no vídeo gravado
+      o comportamento visual de
+      object-fit: cover da câmera.
+    */
+
+    const videoWidth =
+      video.videoWidth;
+
+    const videoHeight =
+      video.videoHeight;
+
+
+    if (
+      videoWidth > 0 &&
+      videoHeight > 0
+    ) {
+
+      const sourceRatio =
+        videoWidth /
+        videoHeight;
+
+      const targetRatio =
+        width /
+        height;
+
+
+      let sourceX =
+        0;
+
+      let sourceY =
+        0;
+
+      let sourceWidth =
+        videoWidth;
+
+      let sourceHeight =
+        videoHeight;
+
+
+      if (
+        sourceRatio >
+        targetRatio
+      ) {
+
+        sourceWidth =
+          videoHeight *
+          targetRatio;
+
+        sourceX =
+          (
+            videoWidth -
+            sourceWidth
+          ) / 2;
+
+      } else {
+
+        sourceHeight =
+          videoWidth /
+          targetRatio;
+
+        sourceY =
+          (
+            videoHeight -
+            sourceHeight
+          ) / 2;
+
+      }
+
+
+      renderCtx.drawImage(
+        video,
+
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+
+        0,
+        0,
+        width,
+        height
+      );
+
+    }
 
 
     renderCtx.restore();
