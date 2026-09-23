@@ -2509,7 +2509,15 @@ body {
 
 
   function showGallery() {
+   
+    if (
+    typeof window.loadGallery ===
+   "function"
+    ) {
 
+    window.loadGallery();
+
+    }
     galleryLayer.classList.add(
       "show"
     );
