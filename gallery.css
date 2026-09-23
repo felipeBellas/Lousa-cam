@@ -361,3 +361,165 @@ header h1 {
   -webkit-backdrop-filter:
     blur(18px);
 }
+
+/* =========================================================
+   MENU DE OPÇÕES DO VÍDEO
+   ========================================================= */
+
+.gallery-viewer-menu {
+  position: absolute;
+
+  top:
+    max(
+      18px,
+      env(safe-area-inset-top)
+    );
+
+  right:
+    max(
+      70px,
+      calc(
+        env(safe-area-inset-right)
+        + 70px
+      )
+    );
+
+  z-index: 103;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.18);
+
+  border-radius: 50%;
+
+  background:
+    rgba(28, 28, 30, 0.72);
+
+  color: #fff;
+
+  font-size: 26px;
+  line-height: 1;
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+}
+
+
+/* =========================================================
+   PAINEL BAIXAR / EXCLUIR
+   ========================================================= */
+
+.gallery-video-options {
+  position: absolute;
+
+  top:
+    max(
+      66px,
+      calc(
+        env(safe-area-inset-top)
+        + 66px
+      )
+    );
+
+  right:
+    max(
+      18px,
+      env(safe-area-inset-right)
+    );
+
+  z-index: 104;
+
+  display: none;
+
+  min-width: 150px;
+
+  padding: 6px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  border-radius: 16px;
+
+  background:
+    rgba(28, 28, 30, 0.88);
+
+  box-shadow:
+    0 10px 30px
+    rgba(0, 0, 0, 0.40);
+
+  backdrop-filter:
+    blur(22px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(22px)
+    saturate(180%);
+}
+
+
+.gallery-video-options.show {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.gallery-video-options button {
+  width: 100%;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  padding:
+    0 14px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background:
+    transparent;
+
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  text-align: left;
+
+  justify-content: flex-start;
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
+}
+
+
+.gallery-video-options button:active {
+  background:
+    rgba(255, 255, 255, 0.12);
+}
+
+
+.gallery-video-options
+.gallery-delete-video {
+  color: #ff453a;
+}
