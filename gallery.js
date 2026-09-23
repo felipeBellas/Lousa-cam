@@ -228,10 +228,124 @@ function createGalleryItem(
     Guarda o ID para as próximas
     etapas da Galeria.
   */
-  item.dataset.videoId =
+    item.dataset.videoId =
     videoData.id;
 
+  item.addEventListener(
+    "click",
+    () => {
+      openGalleryVideo(
+        videoData
+      );
+    }
+  );
 
   return item;
+}
 
+function openGalleryVideo(
+  videoData
+) {
+  const galleryLayer =
+    document.getElementById(
+      "galleryLayer"
+    );
+
+  if (!galleryLayer) {
+    return;
+  }
+
+  const viewer =
+    document.createElement(
+      "div"
+    );
+
+  viewer.className =
+    "gallery-viewer";
+
+  const videoURL =
+    URL.createObjectURL(
+      videoData.blob
+    );
+
+  const video =
+    document.createElement(
+      "video"
+    );
+
+  video.src =
+    videoURL;
+
+  video.controls =
+    true;
+
+  video.autoplay =
+    true;
+
+  video.playsInline =
+    true;
+
+  const closeButton =
+    document.createElement(
+      "button"
+    );
+
+  closeButton.type =
+    "button";
+
+  closeButton.className =
+    "gallery-viewer-close";
+
+  closeButton.textContent =
+    "×";
+
+  closeButton.setAttribute(
+    "aria-label",
+    "Fechar vídeo"
+  );
+
+  function closeViewer() {
+
+    video.pause();
+
+    URL.revokeObjectURL(
+      videoURL
+    );
+
+    viewer.remove();
+  }
+
+  closeButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      closeViewer();
+    }
+  );
+
+  viewer.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target === viewer
+      ) {
+        closeViewer();
+      }
+    }
+  );
+
+  viewer.appendChild(
+    video
+  );
+
+  viewer.appendChild(
+    closeButton
+  );
+
+  galleryLayer.appendChild(
+    viewer
+  );
 }
