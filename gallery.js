@@ -318,8 +318,8 @@ function openGalleryVideo(
   menuButton.className =
     "gallery-viewer-menu";
 
-  menuButton.textContent =
-    "⋮";
+    menuButton.textContent =
+    "•••";
 
   menuButton.setAttribute(
     "aria-label",
