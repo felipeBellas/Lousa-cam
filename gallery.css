@@ -551,11 +551,18 @@ header h1 {
 
 
 .gallery-toolbar button {
-  min-height: 36px;
+  height: 36px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
 
   padding:
     0
-    13px;
+    14px;
+
+  margin: 0;
 
   border:
     1px solid
@@ -568,8 +575,16 @@ header h1 {
 
   color: #fff;
 
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
+
+  line-height: 1;
+
+  text-align: center;
+  white-space: nowrap;
+
+  vertical-align: middle;
 
   backdrop-filter:
     blur(18px)
