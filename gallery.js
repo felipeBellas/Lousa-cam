@@ -1,18 +1,5 @@
 "use strict";
 
-/* =========================================================
-   LOUSA CAM
-   GALERIA DE VÍDEOS
-   ========================================================= */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    loadGallery();
-
-  }
-);
 
 
 /* =========================================================
@@ -22,9 +9,9 @@ document.addEventListener(
 async function loadGallery() {
 
   const galleryContent =
-    document.getElementById(
-      "galleryContent"
-    );
+  document.getElementById(
+    "galleryLayerContent"
+  );
 
 
   if (!galleryContent) {
