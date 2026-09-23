@@ -1,6 +1,14 @@
 "use strict";
 
+/* =========================================================
+   ESTADO DE SELEÇÃO DA GALERIA
+   ========================================================= */
 
+let gallerySelectionMode =
+  false;
+
+const selectedGalleryVideos =
+  new Set();
 
 /* =========================================================
    CARREGAR GALERIA
@@ -68,7 +76,65 @@ async function loadGallery() {
     grid.className =
       "gallery-grid";
 
+        /*
+      BARRA DE CONTROLES DA GALERIA
+    */
+    const toolbar =
+      document.createElement(
+        "div"
+      );
 
+    toolbar.className =
+      "gallery-toolbar";
+
+
+    const selectButton =
+      document.createElement(
+        "button"
+      );
+
+    selectButton.type =
+      "button";
+
+    selectButton.className =
+      "gallery-select-button";
+
+    selectButton.textContent =
+      gallerySelectionMode
+        ? "Cancelar"
+        : "Selecionar";
+
+
+    const selectAllButton =
+      document.createElement(
+        "button"
+      );
+
+    selectAllButton.type =
+      "button";
+
+    selectAllButton.className =
+      "gallery-select-all";
+
+    selectAllButton.textContent =
+      "Selecionar tudo";
+
+
+    if (!gallerySelectionMode) {
+
+      selectAllButton.hidden =
+        true;
+
+    }
+
+
+    toolbar.appendChild(
+      selectButton
+    );
+
+    toolbar.appendChild(
+      selectAllButton
+    );
     /*
       Cria cada miniatura.
     */
@@ -95,13 +161,71 @@ async function loadGallery() {
       "";
 
 
-    /*
-      Exibe a grade.
+       /*
+      Exibe controles e grade.
     */
+    galleryContent.appendChild(
+      toolbar
+    );
+
     galleryContent.appendChild(
       grid
     );
 
+         /*
+      ATIVAR / CANCELAR SELEÇÃO
+    */
+    selectButton.addEventListener(
+      "click",
+      async () => {
+
+        gallerySelectionMode =
+          !gallerySelectionMode;
+
+        selectedGalleryVideos.clear();
+
+        await loadGallery();
+      }
+    );
+
+
+    /*
+      SELECIONAR TODOS
+    */
+    selectAllButton.addEventListener(
+      "click",
+      async () => {
+
+        const allSelected =
+          videos.every(
+            videoData =>
+              selectedGalleryVideos.has(
+                videoData.id
+              )
+          );
+
+
+        selectedGalleryVideos.clear();
+
+
+        if (!allSelected) {
+
+          videos.forEach(
+            videoData => {
+
+              selectedGalleryVideos.add(
+                videoData.id
+              );
+
+            }
+          );
+
+        }
+
+
+        await loadGallery();
+      }
+    );
 
   } catch (error) {
 
@@ -207,6 +331,33 @@ function createGalleryItem(
   play.textContent =
     "▶";
 
+     /*
+    INDICADOR DE SELEÇÃO
+  */
+  const selectionIndicator =
+    document.createElement(
+      "div"
+    );
+
+  selectionIndicator.className =
+    "gallery-selection-indicator";
+
+
+  if (
+    selectedGalleryVideos.has(
+      videoData.id
+    )
+  ) {
+
+    selectionIndicator.classList.add(
+      "selected"
+    );
+
+    selectionIndicator.textContent =
+      "✓";
+
+  }
+
 
   /*
     Montagem do item.
@@ -223,6 +374,10 @@ function createGalleryItem(
     play
   );
 
+   item.appendChild(
+    selectionIndicator
+  );
+
 
   /*
     Guarda o ID para as próximas
@@ -231,12 +386,48 @@ function createGalleryItem(
     item.dataset.videoId =
     videoData.id;
 
-  item.addEventListener(
+   item.addEventListener(
     "click",
-    () => {
-      openGalleryVideo(
-        videoData
-      );
+    async () => {
+
+      /*
+        Modo normal:
+        abre o vídeo.
+      */
+      if (!gallerySelectionMode) {
+
+        openGalleryVideo(
+          videoData
+        );
+
+        return;
+      }
+
+
+      /*
+        Modo seleção:
+        marca ou desmarca.
+      */
+      if (
+        selectedGalleryVideos.has(
+          videoData.id
+        )
+      ) {
+
+        selectedGalleryVideos.delete(
+          videoData.id
+        );
+
+      } else {
+
+        selectedGalleryVideos.add(
+          videoData.id
+        );
+
+      }
+
+
+      await loadGallery();
     }
   );
 
