@@ -304,6 +304,73 @@ function openGalleryVideo(
     "Fechar vídeo"
   );
 
+     /*
+    MENU DE OPÇÕES DO VÍDEO
+  */
+  const menuButton =
+    document.createElement(
+      "button"
+    );
+
+  menuButton.type =
+    "button";
+
+  menuButton.className =
+    "gallery-viewer-menu";
+
+  menuButton.textContent =
+    "⋮";
+
+  menuButton.setAttribute(
+    "aria-label",
+    "Opções do vídeo"
+  );
+
+
+  const optionsMenu =
+    document.createElement(
+      "div"
+    );
+
+  optionsMenu.className =
+    "gallery-video-options";
+
+
+  const downloadButton =
+    document.createElement(
+      "button"
+    );
+
+  downloadButton.type =
+    "button";
+
+  downloadButton.textContent =
+    "Baixar";
+
+
+  const deleteButton =
+    document.createElement(
+      "button"
+    );
+
+  deleteButton.type =
+    "button";
+
+  deleteButton.textContent =
+    "Excluir";
+
+  deleteButton.className =
+    "gallery-delete-video";
+
+
+  optionsMenu.appendChild(
+    downloadButton
+  );
+
+  optionsMenu.appendChild(
+    deleteButton
+  );
+   
   function closeViewer() {
 
     video.pause();
@@ -315,6 +382,108 @@ function openGalleryVideo(
     viewer.remove();
   }
 
+     /*
+    ABRIR / FECHAR MENU
+  */
+  menuButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      optionsMenu.classList.toggle(
+        "show"
+      );
+    }
+  );
+
+
+  /*
+    BAIXAR VÍDEO
+  */
+  downloadButton.addEventListener(
+    "click",
+    event => {
+
+      event.stopPropagation();
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+      link.href =
+        videoURL;
+
+      const extension =
+        videoData.type &&
+        videoData.type.includes(
+          "mp4"
+        )
+          ? "mp4"
+          : "webm";
+
+      link.download =
+        `Lousa-Cam-${videoData.id}.${extension}`;
+
+      document.body.appendChild(
+        link
+      );
+
+      link.click();
+
+      link.remove();
+
+      optionsMenu.classList.remove(
+        "show"
+      );
+    }
+  );
+
+
+  /*
+    EXCLUIR VÍDEO
+  */
+  deleteButton.addEventListener(
+    "click",
+    async event => {
+
+      event.stopPropagation();
+
+      const confirmed =
+        window.confirm(
+          "Excluir este vídeo da Galeria?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        await window.VideoStorage.deleteVideo(
+          videoData.id
+        );
+
+        closeViewer();
+
+        await loadGallery();
+
+      } catch (error) {
+
+        console.error(
+          "Erro ao excluir vídeo:",
+          error
+        );
+
+        window.alert(
+          "Não foi possível excluir o vídeo."
+        );
+      }
+    }
+  );
+
+   
   closeButton.addEventListener(
     "click",
     event => {
@@ -337,8 +506,16 @@ function openGalleryVideo(
     }
   );
 
-  viewer.appendChild(
+    viewer.appendChild(
     video
+  );
+
+  viewer.appendChild(
+    menuButton
+  );
+
+  viewer.appendChild(
+    optionsMenu
   );
 
   viewer.appendChild(
