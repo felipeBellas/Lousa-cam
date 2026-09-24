@@ -1773,4 +1773,7 @@ openContextPanel(
   updateToolVisuals();
 
 
+applyPenToDrawingEngine();
+
+
 })();
