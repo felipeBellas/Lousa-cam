@@ -3,20 +3,23 @@
 
 /* =========================================================
    LOUSA CAM — PENCIL
-   ETAPA 2
+   ETAPA 3
 
-   Interface isolada.
+   Interface profissional completa.
 
-   Funções desta etapa:
-   - Mostrar / esconder a Pencil
+   IMPORTANTE:
+   Nesta etapa a Pencil ainda NÃO modifica
+   o motor de desenho do app.js.
+
+   Funções:
+   - Ativar / desativar Pencil
    - Expandir / recolher
-   - Arrastar pela tela
-   - Impedir que o arraste desenhe no canvas
-
-   Não controla desenho.
-   Não altera câmera.
-   Não altera canvas.
-   Não altera app.js.
+   - Arrastar
+   - Selecionar ferramentas
+   - Selecionar cor
+   - Selecionar espessura
+   - Régua visual
+   - Ocultar na Galeria
    ========================================================= */
 
 
@@ -39,13 +42,6 @@
     );
 
 
-  /*
-    Segurança:
-
-    Se o botão principal da caneta
-    não existir, não fazemos nada.
-  */
-
   if (!settingsButton) {
 
     console.warn(
@@ -59,9 +55,6 @@
 
   /* =======================================================
      EVITAR DUPLICAÇÃO
-
-     Segurança caso o script seja executado
-     novamente por algum motivo.
      ======================================================= */
 
   if (
@@ -73,6 +66,80 @@
     return;
 
   }
+
+
+  /* =======================================================
+     SVGs
+
+     Ícones próprios, vetoriais e monocromáticos.
+     ======================================================= */
+
+  const icons = {
+
+    toggle: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20l4.2-1 10.6-10.6a2.1 2.1 0 0 0 0-3l-.2-.2a2.1 2.1 0 0 0-3 0L5 15.8 4 20z"/>
+        <path d="M14.5 6.3l3.2 3.2"/>
+      </svg>
+    `,
+
+    pen: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3l5.8 5.8-7.9 7.9-4.6 1.2 1.2-4.6L14.4 5.4"/>
+        <path d="M6.5 13.3l4.2 4.2"/>
+        <path d="M12 3l2.4 2.4"/>
+      </svg>
+    `,
+
+    brush: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14.2 4.1c1.6-1.6 3.8-1.8 5.1-.5s1.1 3.5-.5 5.1l-7.4 7.4-3.5-3.5 6.3-8.5z"/>
+        <path d="M8 12.8c-2.5.4-4 1.8-4.3 4.4-.2 1.5-.8 2.4-1.7 2.8 2.8.5 5.4-.1 7-1.8 1.5-1.5 1.4-3.7-1-5.4z"/>
+      </svg>
+    `,
+
+    pencil: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20l1.1-4.6L15.8 4.7a2.3 2.3 0 0 1 3.2 0l.3.3a2.3 2.3 0 0 1 0 3.2L8.6 18.9 4 20z"/>
+        <path d="M14.3 6.2l3.5 3.5"/>
+        <path d="M5.1 15.4l3.5 3.5"/>
+      </svg>
+    `,
+
+    marker: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 17l-1.5-1.5a2 2 0 0 1 0-2.8L15.8 2.4l5.8 5.8L11.3 18.5a2 2 0 0 1-2.8 0L7 17z"/>
+        <path d="M4 20h9"/>
+        <path d="M14.3 4l5.7 5.7"/>
+      </svg>
+    `,
+
+    eraser: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7.2 19H18"/>
+        <path d="M3.8 14.8L13.5 5a2.1 2.1 0 0 1 3 0l2.5 2.5a2.1 2.1 0 0 1 0 3L10.5 19H8.1l-4.3-4.2z"/>
+        <path d="M11.5 7l5.5 5.5"/>
+      </svg>
+    `,
+
+    ruler: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="7" width="18" height="10" rx="2"/>
+        <path d="M7 7v4"/>
+        <path d="M11 7v2.5"/>
+        <path d="M15 7v4"/>
+        <path d="M19 7v2.5"/>
+      </svg>
+    `,
+
+    more: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14"/>
+        <path d="M5 12h14"/>
+      </svg>
+    `
+
+  };
 
 
   /* =======================================================
@@ -100,7 +167,7 @@
 
 
   /* =======================================================
-     BOTÃO DA PENCIL
+     BOTÃO PRINCIPAL
      ======================================================= */
 
   const pencilToggle =
@@ -117,18 +184,18 @@
     "button";
 
 
-  pencilToggle.textContent =
-    "✎";
+  pencilToggle.innerHTML =
+    icons.toggle;
 
 
   pencilToggle.setAttribute(
     "aria-label",
-    "Abrir Pencil"
+    "Expandir Pencil"
   );
 
 
   /* =======================================================
-     CONTEÚDO TEMPORÁRIO
+     CONTEÚDO
      ======================================================= */
 
   const pencilContent =
@@ -141,12 +208,57 @@
     "pencilContent";
 
 
-  pencilContent.textContent =
-    "Ferramentas";
+  const toolsBar =
+    document.createElement(
+      "div"
+    );
+
+
+  toolsBar.className =
+    "pencil-tools";
+
+
+  pencilContent.appendChild(
+    toolsBar
+  );
 
 
   /* =======================================================
-     MONTAGEM
+     PAINEL CONTEXTUAL
+     ======================================================= */
+
+  const contextPanel =
+    document.createElement(
+      "div"
+    );
+
+
+  contextPanel.id =
+    "pencilContextPanel";
+
+
+  /* =======================================================
+     RÉGUA
+     ======================================================= */
+
+  const ruler =
+    document.createElement(
+      "div"
+    );
+
+
+  ruler.id =
+    "pencilRuler";
+
+
+  ruler.innerHTML = `
+    <div class="pencil-ruler-ticks"></div>
+    <div class="pencil-ruler-line"></div>
+  `;
+
+
+  /* =======================================================
+     MONTAGEM PRINCIPAL
      ======================================================= */
 
   pencilFloat.appendChild(
@@ -159,14 +271,130 @@
   );
 
 
+  pencilFloat.appendChild(
+    contextPanel
+  );
+
+
+  document.body.appendChild(
+    ruler
+  );
+
+
   document.body.appendChild(
     pencilFloat
   );
 
 
   /* =======================================================
-     ESTADO
+     CONFIGURAÇÃO DAS FERRAMENTAS
      ======================================================= */
+
+  const drawingTools = [
+    "pen",
+    "brush",
+    "pencil",
+    "marker"
+  ];
+
+
+  const tools = [
+
+    {
+      id: "pen",
+      label: "Caneta",
+      icon: icons.pen
+    },
+
+    {
+      id: "brush",
+      label: "Pincel",
+      icon: icons.brush
+    },
+
+    {
+      id: "pencil",
+      label: "Lápis",
+      icon: icons.pencil
+    },
+
+    {
+      id: "marker",
+      label: "Marcador",
+      icon: icons.marker
+    },
+
+    {
+      id: "eraser",
+      label: "Borracha",
+      icon: icons.eraser
+    },
+
+    {
+      id: "ruler",
+      label: "Régua",
+      icon: icons.ruler
+    },
+
+    {
+      id: "more",
+      label: "Mais",
+      icon: icons.more
+    }
+
+  ];
+
+
+  /* =======================================================
+     ESTADO DE CADA FERRAMENTA
+     ======================================================= */
+
+  const toolSettings = {
+
+    pen: {
+      color: "#ffffff",
+      size: 3
+    },
+
+    brush: {
+      color: "#ffffff",
+      size: 10
+    },
+
+    pencil: {
+      color: "#ffffff",
+      size: 3
+    },
+
+    marker: {
+      color: "#ffcc00",
+      size: 16
+    },
+
+    eraser: {
+      size: 16
+    }
+
+  };
+
+
+  const sizeOptions =
+    [1, 3, 6, 10, 16];
+
+
+  const colorOptions = [
+    "#ffffff",
+    "#111111",
+    "#ff3b30",
+    "#007aff",
+    "#34c759",
+    "#ffcc00"
+  ];
+
+
+  let activeTool =
+    "pen";
+
 
   let pencilVisible =
     false;
@@ -175,6 +403,18 @@
   let pencilExpanded =
     false;
 
+
+  let rulerVisible =
+    false;
+
+
+  let contextTool =
+    null;
+
+
+  /* =======================================================
+     ARRASTE
+     ======================================================= */
 
   let dragging =
     false;
@@ -198,6 +438,598 @@
 
   const DRAG_THRESHOLD =
     6;
+
+
+  /* =======================================================
+     CRIAR BOTÕES
+     ======================================================= */
+
+  const toolButtons =
+    new Map();
+
+
+  tools.forEach(
+    tool => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.type =
+        "button";
+
+
+      button.className =
+        "pencil-tool";
+
+
+      button.dataset.tool =
+        tool.id;
+
+
+      button.innerHTML =
+        tool.icon;
+
+
+      button.setAttribute(
+        "aria-label",
+        tool.label
+      );
+
+
+      button.setAttribute(
+        "title",
+        tool.label
+      );
+
+
+      if (
+        drawingTools.includes(
+          tool.id
+        )
+      ) {
+
+        const colorIndicator =
+          document.createElement(
+            "span"
+          );
+
+
+        colorIndicator.className =
+          "pencil-tool-color";
+
+
+        button.appendChild(
+          colorIndicator
+        );
+
+      }
+
+
+      toolButtons.set(
+        tool.id,
+        button
+      );
+
+
+      toolsBar.appendChild(
+        button
+      );
+
+
+      if (
+        tool.id ===
+        "eraser"
+      ) {
+
+        const divider =
+          document.createElement(
+            "span"
+          );
+
+
+        divider.className =
+          "pencil-divider";
+
+
+        toolsBar.appendChild(
+          divider
+        );
+
+      }
+
+    }
+  );
+
+
+  /* =======================================================
+     ATUALIZAR VISUAL
+     ======================================================= */
+
+  function updateToolVisuals() {
+
+    toolButtons.forEach(
+      (
+        button,
+        id
+      ) => {
+
+        button.classList.toggle(
+          "active",
+          id === activeTool ||
+          (
+            id === "ruler" &&
+            rulerVisible
+          )
+        );
+
+
+        if (
+          drawingTools.includes(
+            id
+          )
+        ) {
+
+          button.style.setProperty(
+            "--pencil-tool-color",
+            toolSettings[id].color
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     PAINEL DE CONFIGURAÇÃO
+     ======================================================= */
+
+  function closeContextPanel() {
+
+    contextTool =
+      null;
+
+
+    contextPanel.classList.remove(
+      "show"
+    );
+
+  }
+
+
+  function openContextPanel(
+    toolId
+  ) {
+
+    contextTool =
+      toolId;
+
+
+    const settings =
+      toolSettings[
+        toolId
+      ];
+
+
+    if (!settings) {
+
+      closeContextPanel();
+
+      return;
+
+    }
+
+
+    const hasColor =
+      drawingTools.includes(
+        toolId
+      );
+
+
+    contextPanel.innerHTML =
+      "";
+
+
+    const title =
+      document.createElement(
+        "div"
+      );
+
+
+    title.className =
+      "pencil-context-title";
+
+
+    title.textContent =
+      tools.find(
+        tool =>
+          tool.id === toolId
+      )?.label ||
+      "Ferramenta";
+
+
+    contextPanel.appendChild(
+      title
+    );
+
+
+    /* -------------------------
+       ESPESSURA
+       ------------------------- */
+
+    const sizes =
+      document.createElement(
+        "div"
+      );
+
+
+    sizes.className =
+      "pencil-sizes";
+
+
+    sizeOptions.forEach(
+      size => {
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+
+        button.type =
+          "button";
+
+
+        button.className =
+          "pencil-size";
+
+
+        button.setAttribute(
+          "aria-label",
+          `Espessura ${size}`
+        );
+
+
+        button.classList.toggle(
+          "active",
+          settings.size === size
+        );
+
+
+        const dot =
+          document.createElement(
+            "span"
+          );
+
+
+        dot.className =
+          "pencil-size-dot";
+
+
+        const visualSize =
+          Math.max(
+            3,
+            Math.min(
+              15,
+              size
+            )
+          );
+
+
+        dot.style.width =
+          `${visualSize}px`;
+
+
+        dot.style.height =
+          `${visualSize}px`;
+
+
+        button.appendChild(
+          dot
+        );
+
+
+        button.addEventListener(
+          "click",
+          event => {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            settings.size =
+              size;
+
+
+            openContextPanel(
+              toolId
+            );
+
+          }
+        );
+
+
+        sizes.appendChild(
+          button
+        );
+
+      }
+    );
+
+
+    contextPanel.appendChild(
+      sizes
+    );
+
+
+    /* -------------------------
+       CORES
+       ------------------------- */
+
+    if (hasColor) {
+
+      const colors =
+        document.createElement(
+          "div"
+        );
+
+
+      colors.className =
+        "pencil-colors";
+
+
+      colorOptions.forEach(
+        color => {
+
+          const button =
+            document.createElement(
+              "button"
+            );
+
+
+          button.type =
+            "button";
+
+
+          button.className =
+            "pencil-color";
+
+
+          button.style.setProperty(
+            "--pencil-color",
+            color
+          );
+
+
+          button.classList.toggle(
+            "active",
+            settings.color === color
+          );
+
+
+          button.setAttribute(
+            "aria-label",
+            `Cor ${color}`
+          );
+
+
+          button.addEventListener(
+            "click",
+            event => {
+
+              event.preventDefault();
+
+              event.stopPropagation();
+
+
+              settings.color =
+                color;
+
+
+              updateToolVisuals();
+
+
+              openContextPanel(
+                toolId
+              );
+
+            }
+          );
+
+
+          colors.appendChild(
+            button
+          );
+
+        }
+      );
+
+
+      /* -----------------------
+         COR PERSONALIZADA
+         ----------------------- */
+
+      const custom =
+        document.createElement(
+          "label"
+        );
+
+
+      custom.className =
+        "pencil-custom-color";
+
+
+      custom.setAttribute(
+        "aria-label",
+        "Escolher outra cor"
+      );
+
+
+      const colorInput =
+        document.createElement(
+          "input"
+        );
+
+
+      colorInput.type =
+        "color";
+
+
+      colorInput.value =
+        settings.color;
+
+
+      colorInput.addEventListener(
+        "input",
+        event => {
+
+          settings.color =
+            event.target.value;
+
+
+          updateToolVisuals();
+
+        }
+      );
+
+
+      custom.appendChild(
+        colorInput
+      );
+
+
+      colors.appendChild(
+        custom
+      );
+
+
+      contextPanel.appendChild(
+        colors
+      );
+
+    }
+
+
+    contextPanel.classList.add(
+      "show"
+    );
+
+  }
+
+
+  /* =======================================================
+     SELEÇÃO DAS FERRAMENTAS
+     ======================================================= */
+
+  toolButtons.forEach(
+    (
+      button,
+      toolId
+    ) => {
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          if (
+            movedDuringPointer
+          ) {
+
+            movedDuringPointer =
+              false;
+
+            return;
+
+          }
+
+
+          /* -----------------------
+             RÉGUA
+             ----------------------- */
+
+          if (
+            toolId ===
+            "ruler"
+          ) {
+
+            rulerVisible =
+              !rulerVisible;
+
+
+            ruler.classList.toggle(
+              "show",
+              rulerVisible
+            );
+
+
+            closeContextPanel();
+
+            updateToolVisuals();
+
+            return;
+
+          }
+
+
+          /* -----------------------
+             MAIS
+             ----------------------- */
+
+          if (
+            toolId ===
+            "more"
+          ) {
+
+            closeContextPanel();
+
+            return;
+
+          }
+
+
+          /* -----------------------
+             FERRAMENTAS
+             ----------------------- */
+
+          if (
+            activeTool === toolId &&
+            contextTool === toolId
+          ) {
+
+            closeContextPanel();
+
+            return;
+
+          }
+
+
+          activeTool =
+            toolId;
+
+
+          updateToolVisuals();
+
+
+          openContextPanel(
+            toolId
+          );
+
+        }
+      );
+
+    }
+  );
 
 
   /* =======================================================
@@ -226,15 +1058,13 @@
     );
 
 
-    /*
-      Ao esconder, volta ao
-      estado compacto.
-    */
-
     if (!visible) {
 
       pencilExpanded =
         false;
+
+
+      closeContextPanel();
 
 
       pencilFloat.classList.remove(
@@ -273,11 +1103,12 @@
     );
 
 
-    /*
-      Depois de mudar o tamanho,
-      garantimos que a Pencil
-      continue dentro da tela.
-    */
+    if (!pencilExpanded) {
+
+      closeContextPanel();
+
+    }
+
 
     requestAnimationFrame(
       keepPencilInsideViewport
@@ -345,11 +1176,6 @@
       );
 
 
-    /*
-      Só convertemos para left/top
-      quando realmente for necessário.
-    */
-
     if (
       nextLeft !== rect.left ||
       nextTop !== rect.top ||
@@ -377,16 +1203,12 @@
 
 
   /* =======================================================
-     INÍCIO DO POSSÍVEL ARRASTE
+     INÍCIO DO ARRASTE
      ======================================================= */
 
   pencilFloat.addEventListener(
     "pointerdown",
     event => {
-
-      /*
-        Apenas o toque principal.
-      */
 
       if (
         event.button !== undefined &&
@@ -397,6 +1219,12 @@
 
       }
 
+
+      /*
+        Controles internos continuam
+        podendo receber seus próprios
+        cliques normalmente.
+      */
 
       const rect =
         pencilFloat.getBoundingClientRect();
@@ -424,11 +1252,6 @@
         rect.top;
 
 
-      /*
-        Guardamos o ponto inicial
-        para distinguir toque de arraste.
-      */
-
       pencilFloat.dataset.dragStartX =
         String(
           event.clientX
@@ -441,12 +1264,6 @@
         );
 
 
-      /*
-        Mantém os eventos de movimento
-        ligados à Pencil mesmo se o dedo
-        sair visualmente do componente.
-      */
-
       try {
 
         pencilFloat.setPointerCapture(
@@ -455,21 +1272,10 @@
 
       } catch (error) {
 
-        /*
-          Alguns navegadores podem
-          rejeitar pointer capture.
-          O arraste ainda pode continuar.
-        */
+        /* sem ação */
 
       }
 
-
-      /*
-        O canvas não deve receber
-        este gesto.
-      */
-
-      event.preventDefault();
 
       event.stopPropagation();
 
@@ -522,12 +1328,6 @@
         );
 
 
-      /*
-        Pequenos movimentos naturais
-        do dedo continuam sendo tratados
-        como toque.
-      */
-
       if (
         !movedDuringPointer &&
         distanceX <
@@ -535,8 +1335,6 @@
         distanceY <
           DRAG_THRESHOLD
       ) {
-
-        event.preventDefault();
 
         event.stopPropagation();
 
@@ -547,6 +1345,9 @@
 
       movedDuringPointer =
         true;
+
+
+      closeContextPanel();
 
 
       const rect =
@@ -604,12 +1405,6 @@
           maxTop
         );
 
-
-      /*
-        Ao iniciar o arraste,
-        left/top passam a controlar
-        a posição da Pencil.
-      */
 
       pencilFloat.style.left =
         `${newLeft}px`;
@@ -678,14 +1473,10 @@
 
     } catch (error) {
 
-      /*
-        Nenhuma ação necessária.
-      */
+      /* sem ação */
 
     }
 
-
-    event.preventDefault();
 
     event.stopPropagation();
 
@@ -705,10 +1496,9 @@
 
 
   /* =======================================================
-     BOTÃO PRINCIPAL DA CANETA
+     BOTÃO CANETA ORIGINAL
 
-     Intercepta o botão existente antes
-     do listener antigo do app.js.
+     Continua interceptando o painel antigo.
      ======================================================= */
 
   settingsButton.addEventListener(
@@ -721,11 +1511,6 @@
 
       event.stopImmediatePropagation();
 
-
-      /*
-        Garante que o painel antigo
-        fique fechado.
-      */
 
       if (oldToolsPanel) {
 
@@ -752,12 +1537,7 @@
 
 
   /* =======================================================
-     TOQUE NO BOTÃO DA PENCIL
-
-     Um toque expande/recolhe.
-
-     Se houve arraste, o click produzido
-     no final do gesto é ignorado.
+     BOTÃO PRINCIPAL DA PENCIL
      ======================================================= */
 
   pencilToggle.addEventListener(
@@ -788,7 +1568,7 @@
 
 
   /* =======================================================
-     EVITAR EVENTOS INDESEJADOS NO CANVAS
+     BLOQUEAR PROPAGAÇÃO PARA CANVAS
      ======================================================= */
 
   pencilFloat.addEventListener(
@@ -814,11 +1594,7 @@
 
 
   /* =======================================================
-     AJUSTE SE A ÁREA VISÍVEL MUDAR
-
-     Não altera câmera nem orientação.
-     Apenas impede a Pencil de ficar
-     fora da área visível.
+     RESIZE
      ======================================================= */
 
   window.addEventListener(
@@ -838,16 +1614,10 @@
 
     }
   );
+
+
   /* =======================================================
      VISIBILIDADE NA GALERIA
-
-     A Pencil pertence somente à tela Câmera.
-
-     Quando a Galeria interna estiver aberta,
-     a Pencil fica visualmente escondida.
-
-     Ao voltar para Câmera, ela reaparece
-     somente se já estava ativada antes.
      ======================================================= */
 
   const galleryLayer =
@@ -873,9 +1643,17 @@
             pencilFloat.style.display =
               "none";
 
+
+            ruler.style.display =
+              "none";
+
           } else {
 
             pencilFloat.style.display =
+              "";
+
+
+            ruler.style.display =
               "";
 
           }
@@ -895,5 +1673,13 @@
     );
 
   }
+
+
+  /* =======================================================
+     INICIALIZAÇÃO VISUAL
+     ======================================================= */
+
+  updateToolVisuals();
+
 
 })();
