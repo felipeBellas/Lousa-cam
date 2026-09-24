@@ -7011,171 +7011,142 @@ function closePanels() {
 
 let cameraSwitching = false;
 
-/*
-  =========================================================
-  TESTE 6 — TROCA MÍNIMA DE CÂMERA
-  =========================================================
+/* =========================================================
+   SELETOR DE LOUSA
+   ========================================================= */
 
-  Objetivo:
-  testar a troca frontal/traseira sem:
-
-  - cameraTransitionFrame
-  - startCamera() durante a troca
-  - pausa intermediária
-  - espera de 180 ms
-  - loadedmetadata
-  - fill
-  - requestAnimationFrame duplo
-  - cover forçado
-
-  A abertura inicial da câmera continua
-  utilizando startCamera() normalmente.
-*/
 flipBtn.addEventListener(
   "click",
-  async () => {
+  event => {
 
-    if (cameraSwitching) {
-      return;
-    }
-
-    cameraSwitching = true;
+    event.stopPropagation();
 
 
-    const previousFacingMode =
-      facingMode;
+    menuPanel.classList.remove(
+      "open"
+    );
+
+    toolsPanel.classList.remove(
+      "open"
+    );
+
+    biologyPanel.classList.remove(
+      "open"
+    );
 
 
-    const nextFacingMode =
-      facingMode === "user"
-        ? "environment"
-        : "user";
+    boardPanel.classList.toggle(
+      "open"
+    );
 
 
-    try {
+    boardPanel.setAttribute(
+      "aria-hidden",
+      boardPanel.classList.contains(
+        "open"
+      )
+        ? "false"
+        : "true"
+    );
 
-      /*
-        Encerra o stream atual.
-      */
-      if (stream) {
+  }
+);
 
-        stream
-          .getTracks()
-          .forEach(
-            track => track.stop()
-          );
+
+boardOptions.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      event => {
+
+        event.stopPropagation();
+
+
+        const selectedBoard =
+          button.dataset.board;
+
+
+        boardMode =
+          selectedBoard;
+
+
+        boardOptions.forEach(
+          option => {
+
+            option.classList.toggle(
+              "active",
+              option === button
+            );
+
+          }
+        );
+
+
+        if (
+          boardMode ===
+          "camera"
+        ) {
+
+          video.style.visibility =
+            "visible";
+
+          video.style.background =
+            "#000";
+
+        } else {
+
+          const boardColors = {
+
+            black:
+              "#111111",
+
+            green:
+              "#1f4d3a",
+
+            white:
+              "#f4f4f2"
+
+          };
+
+
+          video.style.visibility =
+            "hidden";
+
+          document.getElementById(
+            "app"
+          ).style.background =
+            boardColors[
+              boardMode
+            ];
+
+        }
+
+
+        if (
+          boardMode ===
+          "camera"
+        ) {
+
+          document.getElementById(
+            "app"
+          ).style.background =
+            "#000";
+
+        }
+
+
+        boardPanel.classList.remove(
+          "open"
+        );
+
+        boardPanel.setAttribute(
+          "aria-hidden",
+          "true"
+        );
 
       }
-
-
-      /*
-        Solicita diretamente
-        a nova câmera.
-      */
-      let newStream;
-
-      try {
-
-        newStream =
-          await navigator.mediaDevices
-            .getUserMedia({
-              video: {
-                facingMode: {
-                  ideal:
-                    nextFacingMode
-                }
-              },
-              audio: true
-            });
-
-      } catch (audioError) {
-
-        /*
-          Fallback sem áudio.
-        */
-        newStream =
-          await navigator.mediaDevices
-            .getUserMedia({
-              video: {
-                facingMode: {
-                  ideal:
-                    nextFacingMode
-                }
-              },
-              audio: false
-            });
-
-      }
-
-
-      /*
-        Troca direta do stream.
-      */
-      stream =
-        newStream;
-
-
-      video.srcObject =
-        stream;
-
-
-      video.muted =
-        true;
-
-
-      video.playsInline =
-        true;
-
-
-      /*
-        Espelhamento somente
-        na câmera frontal.
-      */
-      video.classList.toggle(
-        "mirror",
-        nextFacingMode ===
-          "user"
-      );
-
-
-      /*
-        Reprodução direta.
-
-        Nenhuma correção visual
-        será executada depois.
-      */
-      await video.play();
-
-
-      /*
-        Confirma a nova câmera.
-      */
-      facingMode =
-        nextFacingMode;
-
-
-    } catch (error) {
-
-      console.error(
-        "Erro no TESTE 6:",
-        error
-      );
-
-
-      facingMode =
-        previousFacingMode;
-
-
-      toast(
-        "Não foi possível trocar a câmera"
-      );
-
-    } finally {
-
-      cameraSwitching =
-        false;
-
-    }
+    );
 
   }
 );
