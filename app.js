@@ -7924,8 +7924,27 @@ function renderRecordingFrame() {
   );
 
 
+/*
+  FUNDO DA GRAVAÇÃO
+
+  Câmera:
+  mantém exatamente o enquadramento
+  atual com comportamento equivalente
+  a object-fit: cover.
+
+  Lousas:
+  substituem visualmente a câmera
+  por uma cor sólida, sem interferir
+  no stream da câmera.
+*/
+
+if (
+  boardMode ===
+  "camera"
+) {
+
   /*
-    Câmera.
+    CÂMERA
   */
 
   if (
@@ -7953,7 +7972,7 @@ function renderRecordingFrame() {
     }
 
 
-        /*
+    /*
       Reproduz no vídeo gravado
       o comportamento visual de
       object-fit: cover da câmera.
@@ -8043,6 +8062,48 @@ function renderRecordingFrame() {
     renderCtx.restore();
 
   }
+
+} else {
+
+  /*
+    LOUSA SÓLIDA
+  */
+
+  const recordingBoardColors = {
+
+    black:
+      "#111111",
+
+    green:
+      "#1f4d3a",
+
+    white:
+      "#f4f4f2"
+
+  };
+
+
+  renderCtx.save();
+
+
+  renderCtx.fillStyle =
+    recordingBoardColors[
+      boardMode
+    ] ||
+    "#111111";
+
+
+  renderCtx.fillRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  renderCtx.restore();
+
+}
 
 
   /*
