@@ -838,6 +838,62 @@
 
     }
   );
+  /* =======================================================
+     VISIBILIDADE NA GALERIA
 
+     A Pencil pertence somente à tela Câmera.
+
+     Quando a Galeria interna estiver aberta,
+     a Pencil fica visualmente escondida.
+
+     Ao voltar para Câmera, ela reaparece
+     somente se já estava ativada antes.
+     ======================================================= */
+
+  const galleryLayer =
+    document.getElementById(
+      "galleryLayer"
+    );
+
+
+  if (galleryLayer) {
+
+    const galleryObserver =
+      new MutationObserver(
+        () => {
+
+          const galleryIsOpen =
+            galleryLayer.classList.contains(
+              "show"
+            );
+
+
+          if (galleryIsOpen) {
+
+            pencilFloat.style.display =
+              "none";
+
+          } else {
+
+            pencilFloat.style.display =
+              "";
+
+          }
+
+        }
+      );
+
+
+    galleryObserver.observe(
+      galleryLayer,
+      {
+        attributes: true,
+        attributeFilter: [
+          "class"
+        ]
+      }
+    );
+
+  }
 
 })();
