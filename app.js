@@ -115,6 +115,13 @@ const clearBtn =
 const flipBtn =
   $("flip");
 
+const boardPanel =
+  $("boardPanel");
+
+const boardOptions =
+  document.querySelectorAll(
+    ".board-option"
+  );
 const widthInput =
   $("width");
 
@@ -139,6 +146,8 @@ let stream =
 /* =========================================================
    ESTADO DA LOUSA
    ========================================================= */
+let boardMode =
+  "camera";
 
 let drawing =
   false;
