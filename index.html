@@ -231,8 +231,10 @@ body {
         max(16px, env(safe-area-inset-right));
 
       top:
-        max(16px, env(safe-area-inset-top));
-
+  calc(
+    env(safe-area-inset-top)
+    + 12px
+  );
       justify-content:
         space-between;
 
@@ -286,21 +288,20 @@ body {
 
       color: #fff;
 
-     backdrop-filter:
-     blur(8px);
+    backdrop-filter:
+  blur(20px);
 
-    -webkit-backdrop-filter:
-     blur(8px);
+-webkit-backdrop-filter:
+  blur(20px);
 
-      display: flex;
+display: flex;
 
-      align-items: center;
+align-items: center;
 
-      justify-content: center;
+justify-content: center;
 
-     box-shadow:
-     0 2px 8px
-     rgba(0, 0, 0, 0.22);
+box-shadow:
+  0 8px 24px rgba(0, 0, 0, 0.35);
 
       cursor: pointer;
 
