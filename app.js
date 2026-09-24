@@ -115,6 +115,9 @@ const clearBtn =
 const flipBtn =
   $("flip");
 
+const boardBackground =
+  $("boardBackground");
+
 const boardPanel =
   $("boardPanel");
 
@@ -7083,55 +7086,52 @@ boardOptions.forEach(
         );
 
 
+        const boardColors = {
+
+          black:
+            "#111111",
+
+          green:
+            "#1f4d3a",
+
+          white:
+            "#f4f4f2"
+
+        };
+
+
         if (
           boardMode ===
           "camera"
         ) {
 
-          video.style.visibility =
-            "visible";
+          boardBackground.classList.remove(
+            "show"
+          );
 
-          video.style.background =
-            "#000";
+          boardBackground.style.background =
+            "transparent";
+
+          boardBackground.setAttribute(
+            "aria-hidden",
+            "true"
+          );
 
         } else {
 
-          const boardColors = {
-
-            black:
-              "#111111",
-
-            green:
-              "#1f4d3a",
-
-            white:
-              "#f4f4f2"
-
-          };
-
-
-          video.style.visibility =
-            "hidden";
-
-          document.getElementById(
-            "app"
-          ).style.background =
+          boardBackground.style.background =
             boardColors[
               boardMode
             ];
 
-        }
+          boardBackground.classList.add(
+            "show"
+          );
 
-
-        if (
-          boardMode ===
-          "camera"
-        ) {
-
-          document.getElementById(
-            "app"
-          ).style.background =
-            "#000";
+          boardBackground.setAttribute(
+            "aria-hidden",
+            "false"
+          );
 
         }
 
