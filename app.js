@@ -163,6 +163,92 @@ let color =
 
 let lineWidth =
   5;
+/* =========================================================
+   PENCIL — PONTE DE INTEGRAÇÃO
+   ETAPA 4A
+
+   Permite que a interface Pencil altere somente:
+   - ferramenta Caneta
+   - cor
+   - espessura
+
+   O motor de desenho continua pertencendo ao app.js.
+   ========================================================= */
+
+window.LousaCamPencil = {
+
+  setPen(
+    newColor,
+    newWidth
+  ) {
+
+    tool =
+      "pen";
+
+
+    if (
+      typeof newColor ===
+        "string" &&
+      newColor
+    ) {
+
+      color =
+        newColor;
+
+    }
+
+
+    const parsedWidth =
+      Number(
+        newWidth
+      );
+
+
+    if (
+      Number.isFinite(
+        parsedWidth
+      ) &&
+      parsedWidth > 0
+    ) {
+
+      lineWidth =
+        parsedWidth;
+
+    }
+
+
+    /*
+      Mantém o controle antigo sincronizado,
+      caso ele ainda exista no HTML.
+    */
+
+    if (widthInput) {
+
+      widthInput.value =
+        String(
+          lineWidth
+        );
+
+    }
+
+
+    /*
+      Mantém o nome da ferramenta antiga
+      coerente sem depender dela.
+    */
+
+    if (
+      typeof updateToolName ===
+        "function"
+    ) {
+
+      updateToolName();
+
+    }
+
+  }
+
+};
 
 
 /* =========================================================
