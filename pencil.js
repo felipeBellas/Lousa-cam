@@ -1095,17 +1095,26 @@ function applyPenToDrawingEngine() {
 
           }
 
-
-          activeTool =
-            toolId;
-
-
-          updateToolVisuals();
+activeTool =
+  toolId;
 
 
-          openContextPanel(
-            toolId
-          );
+updateToolVisuals();
+
+
+if (
+  toolId ===
+  "pen"
+) {
+
+  applyPenToDrawingEngine();
+
+}
+
+
+openContextPanel(
+  toolId
+);
 
         }
       );
