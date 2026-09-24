@@ -1,14 +1,17 @@
 /* =====================================================
    LOUSA CAM — PENCIL
-   ETAPA 1
+   ETAPA 3
 
-   Componente visual independente.
-   Não altera câmera, canvas ou ferramentas atuais.
+   Interface profissional flutuante.
+   Independente do motor de desenho.
    ===================================================== */
 
 
-#pencilFloat {
+/* =====================================================
+   CONTAINER PRINCIPAL
+   ===================================================== */
 
+#pencilFloat {
   position: fixed;
 
   left:
@@ -29,7 +32,6 @@
   z-index: 60;
 
   display: none;
-
   align-items: center;
 
   min-height: 58px;
@@ -43,26 +45,28 @@
   border-radius: 30px;
 
   background:
-    rgba(28, 28, 30, 0.72);
+    rgba(28, 28, 30, 0.78);
 
   backdrop-filter:
-    blur(22px)
+    blur(24px)
     saturate(180%);
 
   -webkit-backdrop-filter:
-    blur(22px)
+    blur(24px)
     saturate(180%);
 
   box-shadow:
-    0 10px 30px
-    rgba(0, 0, 0, 0.34);
+    0 10px 32px
+    rgba(0, 0, 0, 0.36);
 
   pointer-events: auto;
 
   user-select: none;
-
   -webkit-user-select: none;
 
+  touch-action: none;
+
+  box-sizing: border-box;
 }
 
 
@@ -71,35 +75,57 @@
    ===================================================== */
 
 #pencilFloat.show {
-
   display: flex;
-
 }
 
 
 /* =====================================================
-   ESTADO RECOLHIDO
+   COMPACTA
    ===================================================== */
 
 #pencilFloat.compact {
-
   width: 58px;
-
 }
 
 
 /* =====================================================
-   ESTADO EXPANDIDO
+   EXPANDIDA
    ===================================================== */
 
 #pencilFloat.expanded {
-
   width:
     min(
-      300px,
-      calc(100vw - 36px)
+      430px,
+      calc(100vw - 24px)
     );
+}
 
+
+/* =====================================================
+   BOTÕES — BASE
+   ===================================================== */
+
+#pencilFloat button {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color:
+    transparent;
 }
 
 
@@ -108,19 +134,12 @@
    ===================================================== */
 
 #pencilToggle {
-
-  flex:
-    0 0 46px;
+  flex: 0 0 46px;
 
   width: 46px;
-
   height: 46px;
 
-  padding: 0;
-
   border-radius: 23px;
-
-  border: 0;
 
   background:
     rgba(255, 255, 255, 0.12);
@@ -128,54 +147,488 @@
   box-shadow: none;
 
   backdrop-filter: none;
-
   -webkit-backdrop-filter: none;
+}
 
-  color: #ffffff;
 
-  font-size: 24px;
+#pencilToggle svg {
+  width: 23px;
+  height: 23px;
 
-  line-height: 1;
+  fill: none;
+  stroke: currentColor;
 
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 
 /* =====================================================
-   ÁREA EXPANDIDA
-
-   Nesta primeira etapa é apenas visual.
+   CONTEÚDO EXPANDIDO
    ===================================================== */
 
 #pencilContent {
-
   display: none;
 
   flex: 1;
-
-  align-items: center;
-
-  justify-content: center;
 
   min-width: 0;
 
   height: 46px;
 
-  padding:
-    0 12px;
+  margin-left: 4px;
 
-  color:
-    rgba(255, 255, 255, 0.72);
+  align-items: center;
 
-  font-size: 13px;
-
-  white-space: nowrap;
-
+  overflow: hidden;
 }
 
 
-#pencilFloat.expanded
-#pencilContent {
+#pencilFloat.expanded #pencilContent {
+  display: flex;
+}
 
+
+/* =====================================================
+   FAIXA DAS FERRAMENTAS
+   ===================================================== */
+
+.pencil-tools {
   display: flex;
 
+  align-items: center;
+
+  gap: 3px;
+
+  min-width: 0;
+
+  width: 100%;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scrollbar-width: none;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+
+.pencil-tools::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =====================================================
+   FERRAMENTA
+   ===================================================== */
+
+.pencil-tool {
+  position: relative;
+
+  flex:
+    0 0 40px;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 20px;
+
+  background: transparent;
+
+  transition:
+    background 140ms ease,
+    transform 120ms ease;
+}
+
+
+.pencil-tool:active {
+  transform: scale(0.94);
+}
+
+
+.pencil-tool.active {
+  background:
+    rgba(255, 255, 255, 0.19);
+}
+
+
+.pencil-tool svg {
+  width: 22px;
+  height: 22px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.75;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   INDICADOR DE COR DA FERRAMENTA
+   ===================================================== */
+
+.pencil-tool-color {
+  position: absolute;
+
+  left: 50%;
+  bottom: 3px;
+
+  width: 12px;
+  height: 3px;
+
+  border-radius: 2px;
+
+  transform:
+    translateX(-50%);
+
+  background:
+    var(
+      --pencil-tool-color,
+      #ffffff
+    );
+
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   DIVISOR
+   ===================================================== */
+
+.pencil-divider {
+  flex: 0 0 1px;
+
+  width: 1px;
+  height: 25px;
+
+  margin:
+    0 2px;
+
+  background:
+    rgba(255, 255, 255, 0.15);
+}
+
+
+/* =====================================================
+   PAINEL CONTEXTUAL
+   ===================================================== */
+
+#pencilContextPanel {
+  position: absolute;
+
+  left: 0;
+
+  bottom:
+    calc(100% + 10px);
+
+  display: none;
+
+  min-width: 210px;
+
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+
+  border-radius: 18px;
+
+  background:
+    rgba(28, 28, 30, 0.88);
+
+  backdrop-filter:
+    blur(24px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(24px)
+    saturate(180%);
+
+  box-shadow:
+    0 12px 32px
+    rgba(0, 0, 0, 0.36);
+
+  box-sizing: border-box;
+
+  touch-action: manipulation;
+}
+
+
+#pencilContextPanel.show {
+  display: block;
+}
+
+
+/* =====================================================
+   TÍTULO CONTEXTUAL
+   ===================================================== */
+
+.pencil-context-title {
+  margin:
+    0 0 10px;
+
+  color:
+    rgba(255, 255, 255, 0.68);
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.2px;
+}
+
+
+/* =====================================================
+   ESPESSURAS
+   ===================================================== */
+
+.pencil-sizes {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 7px;
+
+  margin-bottom: 12px;
+}
+
+
+.pencil-size {
+  flex: 1;
+
+  height: 34px;
+
+  border-radius: 17px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+
+.pencil-size.active {
+  background:
+    rgba(255, 255, 255, 0.20);
+}
+
+
+.pencil-size-dot {
+  display: block;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   CORES
+   ===================================================== */
+
+.pencil-colors {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex-wrap: wrap;
+}
+
+
+.pencil-color {
+  position: relative;
+
+  width: 28px;
+  height: 28px;
+
+  flex:
+    0 0 28px;
+
+  border-radius: 50%;
+
+  background:
+    var(
+      --pencil-color
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(255, 255, 255, 0.20);
+}
+
+
+.pencil-color.active::after {
+  content: "";
+
+  position: absolute;
+
+  inset: -4px;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.92);
+
+  border-radius: 50%;
+}
+
+
+/* =====================================================
+   SELETOR PERSONALIZADO
+   ===================================================== */
+
+.pencil-custom-color {
+  position: relative;
+
+  overflow: hidden;
+
+  width: 28px;
+  height: 28px;
+
+  flex:
+    0 0 28px;
+
+  border-radius: 50%;
+
+  background:
+    conic-gradient(
+      #ff3b30,
+      #ffcc00,
+      #34c759,
+      #00c7be,
+      #007aff,
+      #af52de,
+      #ff2d55,
+      #ff3b30
+    );
+}
+
+
+.pencil-custom-color input {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  opacity: 0;
+
+  cursor: pointer;
+}
+
+
+/* =====================================================
+   RÉGUA FLUTUANTE
+   ===================================================== */
+
+#pencilRuler {
+  position: fixed;
+
+  left: 50%;
+  top: 50%;
+
+  z-index: 55;
+
+  display: none;
+
+  width:
+    min(
+      320px,
+      calc(100vw - 40px)
+    );
+
+  height: 58px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.24);
+
+  border-radius: 8px;
+
+  background:
+    rgba(235, 235, 245, 0.22);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+  box-shadow:
+    0 8px 26px
+    rgba(0, 0, 0, 0.28);
+
+  pointer-events: none;
+}
+
+
+#pencilRuler.show {
+  display: block;
+}
+
+
+.pencil-ruler-line {
+  position: absolute;
+
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+
+  height: 1px;
+
+  background:
+    rgba(255, 255, 255, 0.85);
+}
+
+
+.pencil-ruler-ticks {
+  position: absolute;
+
+  left: 14px;
+  right: 14px;
+  top: 8px;
+
+  height: 18px;
+
+  opacity: 0.8;
+
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.85) 0,
+      rgba(255, 255, 255, 0.85) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+}
+
+
+/* =====================================================
+   ACESSIBILIDADE
+   ===================================================== */
+
+#pencilFloat button:focus-visible {
+  outline:
+    2px solid
+    rgba(255, 255, 255, 0.9);
+
+  outline-offset: 2px;
 }
