@@ -543,7 +543,59 @@
     }
   );
 
+ /* =======================================================
+   INTEGRAÇÃO COM O MOTOR — ETAPA 4A
 
+   Nesta etapa somente a Caneta
+   conversa com o app.js.
+   ======================================================= */
+
+function applyPenToDrawingEngine() {
+
+  if (
+    activeTool !==
+    "pen"
+  ) {
+
+    return;
+
+  }
+
+
+  const penSettings =
+    toolSettings.pen;
+
+
+  if (
+    !penSettings
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setPen !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte do app.js não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setPen(
+    penSettings.color,
+    penSettings.size
+  );
+
+}
   /* =======================================================
      ATUALIZAR VISUAL
      ======================================================= */
