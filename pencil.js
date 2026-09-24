@@ -957,18 +957,28 @@ function applyPenToDrawingEngine() {
         settings.color;
 
 
-      colorInput.addEventListener(
-        "input",
-        event => {
+  colorInput.addEventListener(
+  "input",
+  event => {
 
-          settings.color =
-            event.target.value;
+    settings.color =
+      event.target.value;
 
 
-          updateToolVisuals();
+    updateToolVisuals();
 
-        }
-      );
+
+    if (
+      toolId ===
+      "pen"
+    ) {
+
+      applyPenToDrawingEngine();
+
+    }
+
+  }
+);
 
 
       custom.appendChild(
