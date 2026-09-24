@@ -385,7 +385,173 @@ box-shadow:
 
     }
 
+    /* =====================================================
+   SELETOR DE LOUSA
+   ===================================================== */
 
+#boardPanel {
+
+  position: absolute;
+
+  top:
+    calc(
+      env(safe-area-inset-top)
+      + 58px
+    );
+
+  right:
+    max(
+      16px,
+      env(safe-area-inset-right)
+    );
+
+  z-index: 45;
+
+  display: none;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  width: 150px;
+
+  padding: 10px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius: 18px;
+
+  background:
+    rgba(22, 22, 26, 0.88);
+
+  backdrop-filter:
+    blur(20px);
+
+  -webkit-backdrop-filter:
+    blur(20px);
+
+  box-shadow:
+    0 12px 32px
+    rgba(0, 0, 0, 0.4);
+
+  pointer-events: auto;
+
+}
+
+
+#boardPanel.open {
+
+  display: flex;
+
+}
+
+
+.board-title {
+
+  padding:
+    2px 6px 6px;
+
+  color:
+    rgba(255, 255, 255, 0.58);
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+}
+
+
+#boardPanel button {
+
+  width: 100%;
+
+  height: 38px;
+
+  padding:
+    0 10px;
+
+  border-radius: 10px;
+
+  justify-content:
+    flex-start;
+
+  gap: 9px;
+
+  background:
+    transparent;
+
+  box-shadow: none;
+
+  font-size: 13px;
+
+  white-space: nowrap;
+
+}
+
+
+#boardPanel button.active {
+
+  background:
+    rgba(255, 255, 255, 0.14);
+
+}
+
+
+.board-dot {
+
+  width: 17px;
+
+  height: 17px;
+
+  flex:
+    0 0 17px;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.45);
+
+}
+
+
+.board-dot.camera {
+
+  background:
+    linear-gradient(
+      135deg,
+      #555,
+      #111
+    );
+
+}
+
+
+.board-dot.black {
+
+  background:
+    #111111;
+
+}
+
+
+.board-dot.green {
+
+  background:
+    #1f4d3a;
+
+}
+
+
+.board-dot.white {
+
+  background:
+    #f4f4f2;
+
+}
     /* =====================================================
        GRAVAÇÃO
        ===================================================== */
