@@ -582,6 +582,249 @@ box-shadow:
 
 }
     /* =====================================================
+   PENCIL FLUTUANTE
+   Interface independente do canvas.
+   ===================================================== */
+
+#pencilFloat {
+
+  position: absolute;
+
+  left: 24px;
+
+  bottom:
+    max(
+      150px,
+      calc(
+        env(safe-area-inset-bottom)
+        + 150px
+      )
+    );
+
+  z-index: 60;
+
+  display: none;
+
+  align-items: center;
+
+  height: 64px;
+
+  padding: 6px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.18);
+
+  border-radius: 32px;
+
+  background:
+    rgba(28, 28, 30, 0.72);
+
+  backdrop-filter:
+    blur(22px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(22px)
+    saturate(180%);
+
+  box-shadow:
+    0 10px 30px
+    rgba(0, 0, 0, 0.34);
+
+  pointer-events: auto;
+
+  touch-action: none;
+
+  -webkit-user-select: none;
+
+  user-select: none;
+
+  transition:
+    width 0.22s ease,
+    border-radius 0.22s ease,
+    background 0.22s ease;
+
+}
+
+
+#pencilFloat.show {
+
+  display: flex;
+
+}
+
+
+#pencilFloat.compact {
+
+  width: 64px;
+
+  justify-content: center;
+
+}
+
+
+#pencilFloat.expanded {
+
+  width:
+    min(
+      390px,
+      calc(100vw - 32px)
+    );
+
+  justify-content: flex-start;
+
+}
+
+
+/* =====================================================
+   BOTÃO PRINCIPAL DA PENCIL
+   ===================================================== */
+
+#pencilHandle {
+
+  flex:
+    0 0 50px;
+
+  width: 50px;
+
+  height: 50px;
+
+  border: 0;
+
+  border-radius: 25px;
+
+  background:
+    rgba(255, 255, 255, 0.10);
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
+
+  color: #fff;
+
+  font-size: 25px;
+
+  cursor: grab;
+
+}
+
+
+#pencilHandle:active {
+
+  cursor: grabbing;
+
+}
+
+
+/* =====================================================
+   CONTEÚDO EXPANDIDO
+   ===================================================== */
+
+#pencilContent {
+
+  display: none;
+
+  flex: 1;
+
+  min-width: 0;
+
+  height: 50px;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding:
+    0 8px;
+
+}
+
+
+#pencilFloat.expanded
+#pencilContent {
+
+  display: flex;
+
+}
+
+
+/* =====================================================
+   CORES DA PENCIL
+   ===================================================== */
+
+.pencil-color {
+
+  flex:
+    0 0 30px;
+
+  width: 30px;
+
+  height: 30px;
+
+  padding: 0;
+
+  border-radius: 50%;
+
+  border:
+    2px solid
+    rgba(255, 255, 255, 0.35);
+
+  box-shadow: none;
+
+  backdrop-filter: none;
+
+  -webkit-backdrop-filter: none;
+
+}
+
+
+.pencil-color.active {
+
+  border-color: #fff;
+
+  transform:
+    scale(1.10);
+
+}
+
+
+/* =====================================================
+   ESPESSURA
+   ===================================================== */
+
+#pencilWidth {
+
+  flex: 1;
+
+  min-width: 65px;
+
+  max-width: 105px;
+
+}
+
+
+/* =====================================================
+   BORRACHA DA PENCIL
+   ===================================================== */
+
+#pencilEraser {
+
+  flex:
+    0 0 38px;
+
+  width: 38px;
+
+  height: 38px;
+
+  border-radius: 19px;
+
+  box-shadow: none;
+
+}
+    /* =====================================================
        GRAVAÇÃO
        ===================================================== */
 
@@ -2301,6 +2544,98 @@ box-shadow:
 
 </div>
 
+    <!-- =================================================
+     PENCIL FLUTUANTE
+     ================================================= -->
+
+<div
+  id="pencilFloat"
+  class="compact"
+  aria-hidden="true">
+
+
+  <button
+    id="pencilHandle"
+    type="button"
+    aria-label="Abrir ferramentas da caneta"
+    title="Caneta">
+
+    ✎
+
+  </button>
+
+
+  <div id="pencilContent">
+
+
+    <button
+      class="pencil-color active"
+      type="button"
+      data-pencil-color="#fff"
+      aria-label="Branco"
+      style="background:#fff">
+    </button>
+
+
+    <button
+      class="pencil-color"
+      type="button"
+      data-pencil-color="#ff3b30"
+      aria-label="Vermelho"
+      style="background:#ff3b30">
+    </button>
+
+
+    <button
+      class="pencil-color"
+      type="button"
+      data-pencil-color="#ffcc00"
+      aria-label="Amarelo"
+      style="background:#ffcc00">
+    </button>
+
+
+    <button
+      class="pencil-color"
+      type="button"
+      data-pencil-color="#34c759"
+      aria-label="Verde"
+      style="background:#34c759">
+    </button>
+
+
+    <button
+      class="pencil-color"
+      type="button"
+      data-pencil-color="#0a84ff"
+      aria-label="Azul"
+      style="background:#0a84ff">
+    </button>
+
+
+    <input
+      id="pencilWidth"
+      type="range"
+      min="2"
+      max="32"
+      value="5"
+      aria-label="Espessura">
+
+
+    <button
+      id="pencilEraser"
+      type="button"
+      aria-label="Borracha"
+      title="Borracha">
+
+      ⌫
+
+    </button>
+
+
+  </div>
+
+</div>
     <!-- =================================================
          FERRAMENTAS
          ================================================= -->
