@@ -795,13 +795,23 @@ function applyPenToDrawingEngine() {
             event.stopPropagation();
 
 
-            settings.size =
-              size;
+           settings.size =
+               size;
 
 
-            openContextPanel(
-              toolId
-            );
+           if (
+                toolId ===
+                  "pen"
+           ) {
+
+           applyPenToDrawingEngine();
+
+           }
+
+
+           openContextPanel(
+           toolId
+           );
 
           }
         );
@@ -880,17 +890,27 @@ function applyPenToDrawingEngine() {
               event.stopPropagation();
 
 
-              settings.color =
+             settings.color =
                 color;
 
 
-              updateToolVisuals();
+            updateToolVisuals();
 
 
-              openContextPanel(
-                toolId
+             if (
+                toolId ===
+                     "pen"
+                ) {
+
+             applyPenToDrawingEngine();
+
+              }
+
+
+            openContextPanel(
+             toolId
               );
-
+               
             }
           );
 
