@@ -66,6 +66,32 @@ const settingsBtn =
 const toolsPanel =
   $("tools");
 
+
+/* =========================================================
+   PENCIL FLUTUANTE
+   ========================================================= */
+
+const pencilFloat =
+  $("pencilFloat");
+
+const pencilHandle =
+  $("pencilHandle");
+
+const pencilContent =
+  $("pencilContent");
+
+const pencilWidth =
+  $("pencilWidth");
+
+const pencilEraser =
+  $("pencilEraser");
+
+const pencilColors =
+  document.querySelectorAll(
+    ".pencil-color"
+  );
+
+
 const textToolButton =
   $("textToolButton");
 
