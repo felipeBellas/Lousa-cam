@@ -163,6 +163,8 @@ let color =
 
 let lineWidth =
   5;
+let strokeOpacity =
+  1;
 
 window.LousaCamPencil = {
 
