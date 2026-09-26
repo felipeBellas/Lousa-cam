@@ -2088,27 +2088,41 @@ if (
              ----------------------- */
 
           if (
-            toolId ===
-            "ruler"
-          ) {
+  toolId ===
+  "ruler"
+) {
 
-            rulerVisible =
-              !rulerVisible;
-
-
-            ruler.classList.toggle(
-              "show",
-              rulerVisible
-            );
+  rulerVisible =
+    !rulerVisible;
 
 
-            closeContextPanel();
+  ruler.classList.toggle(
+    "show",
+    rulerVisible
+  );
 
-            updateToolVisuals();
 
-            return;
+  if (rulerVisible) {
 
-          }
+    keepRulerInsideViewport();
+
+  } else {
+
+    rulerPointers.clear();
+
+    rulerGesture =
+      null;
+
+  }
+
+
+  closeContextPanel();
+
+  updateToolVisuals();
+
+  return;
+
+}
 
 
           /* -----------------------
