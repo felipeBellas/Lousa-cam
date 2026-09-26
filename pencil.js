@@ -906,11 +906,15 @@ function getRulerGeometry() {
     ruler.offsetHeight;
 
   /*
-    A linha visual está 10px
-    acima da borda inferior.
-  */
-  const guideOffsetY =
-    height / 2 - 10;
+  GUIA DE DESENHO DA RÉGUA
+
+  O traço deve acompanhar a borda
+  física inferior da Régua,
+  e não a linha branca interna.
+*/
+
+const guideOffsetY =
+  height / 2;
 
   return {
 
