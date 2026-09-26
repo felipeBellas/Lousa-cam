@@ -179,13 +179,12 @@ window.LousaCamPencil = {
   ) {
 
     tool =
-  "pen";
+      "pen";
 
-strokeOpacity =
-  1;
+    strokeOpacity =
+      1;
 
-
-if (
+    if (
       typeof newColor ===
         "string" &&
       newColor
@@ -196,12 +195,10 @@ if (
 
     }
 
-
     const parsedWidth =
       Number(
         newWidth
       );
-
 
     if (
       Number.isFinite(
@@ -215,7 +212,6 @@ if (
 
     }
 
-
     if (widthInput) {
 
       widthInput.value =
@@ -224,7 +220,6 @@ if (
         );
 
     }
-
 
     if (
       typeof updateToolName ===
@@ -248,15 +243,14 @@ if (
 
     tool =
       "eraser";
-     strokeOpacity =
-     1;
 
+    strokeOpacity =
+      1;
 
     const parsedWidth =
       Number(
         newWidth
       );
-
 
     if (
       Number.isFinite(
@@ -270,12 +264,6 @@ if (
 
     }
 
-
-    /*
-      Mantém o controle antigo
-      sincronizado.
-    */
-
     if (widthInput) {
 
       widthInput.value =
@@ -285,13 +273,7 @@ if (
 
     }
 
-
-    /*
-      Atualiza o nome da ferramenta
-      existente no app.js.
-    */
-
-       if (
+    if (
       typeof updateToolName ===
         "function"
     ) {
@@ -318,7 +300,6 @@ if (
     strokeOpacity =
       0.35;
 
-
     if (
       typeof newColor ===
         "string" &&
@@ -330,12 +311,10 @@ if (
 
     }
 
-
     const parsedWidth =
       Number(
         newWidth
       );
-
 
     if (
       Number.isFinite(
@@ -349,8 +328,7 @@ if (
 
     }
 
-
-        if (widthInput) {
+    if (widthInput) {
 
       widthInput.value =
         String(
@@ -363,7 +341,7 @@ if (
 
 
   /* =====================================================
-     LÁPIS — ETAPA 4D
+     LÁPIS
      ===================================================== */
 
   setPencil(
@@ -377,7 +355,6 @@ if (
     strokeOpacity =
       1;
 
-
     if (
       typeof newColor ===
         "string" &&
@@ -389,12 +366,10 @@ if (
 
     }
 
-
     const parsedWidth =
       Number(
         newWidth
       );
-
 
     if (
       Number.isFinite(
@@ -408,8 +383,7 @@ if (
 
     }
 
-
-       if (widthInput) {
+    if (widthInput) {
 
       widthInput.value =
         String(
@@ -422,7 +396,7 @@ if (
 
 
   /* =====================================================
-     PINCEL — ETAPA 4E
+     PINCEL
      ===================================================== */
 
   setBrush(
@@ -436,7 +410,6 @@ if (
     strokeOpacity =
       1;
 
-
     if (
       typeof newColor ===
         "string" &&
@@ -448,12 +421,10 @@ if (
 
     }
 
-
     const parsedWidth =
       Number(
         newWidth
       );
-
 
     if (
       Number.isFinite(
@@ -467,6 +438,87 @@ if (
 
     }
 
+    if (widthInput) {
+
+      widthInput.value =
+        String(
+          lineWidth
+        );
+
+    }
+
+  },
+
+
+  /* =====================================================
+     FORMAS — ETAPA 4H
+     ===================================================== */
+
+  setShape(
+    shapeType,
+    newColor,
+    newWidth
+  ) {
+
+    const allowedShapes = [
+      "line",
+      "arrow",
+      "rectangle",
+      "square",
+      "circle",
+      "ellipse",
+      "triangle",
+      "diamond",
+      "pentagon",
+      "hexagon",
+      "star",
+      "speech"
+    ];
+
+    if (
+      !allowedShapes.includes(
+        shapeType
+      )
+    ) {
+
+      return;
+
+    }
+
+    tool =
+      "shape:" +
+      shapeType;
+
+    strokeOpacity =
+      1;
+
+    if (
+      typeof newColor ===
+        "string" &&
+      newColor
+    ) {
+
+      color =
+        newColor;
+
+    }
+
+    const parsedWidth =
+      Number(
+        newWidth
+      );
+
+    if (
+      Number.isFinite(
+        parsedWidth
+      ) &&
+      parsedWidth > 0
+    ) {
+
+      lineWidth =
+        parsedWidth;
+
+    }
 
     if (widthInput) {
 
