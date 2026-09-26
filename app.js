@@ -7518,30 +7518,38 @@ function startDrawing(
 
     currentStroke = {
 
-      id:
-        makeId(
-          "shape"
-        ),
+  id:
+    makeId(
+      "shape"
+    ),
 
-      createdAt:
-        Date.now(),
+  createdAt:
+    Date.now(),
 
-      tool:
-        "shape",
+  tool:
+    "shape",
 
-      shape:
-        shapeType,
+  shape:
+    shapeType,
 
-      color:
-        color,
+  color:
+    color,
 
-      width:
-        lineWidth,
+  width:
+    lineWidth,
 
-      opacity:
-        1,
+  opacity:
+    1,
 
-      points: [
+  /*
+    ETAPA 4J
+    Toda nova forma começa
+    sem rotação.
+  */
+  rotation:
+    0,
+
+  points: [
 
         {
           x:
