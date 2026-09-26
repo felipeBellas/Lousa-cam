@@ -1086,7 +1086,7 @@ openContextPanel(
 
 
              settings.color =
-  color;
+                color;
 
 
 updateToolVisuals();
@@ -1108,6 +1108,16 @@ if (
 ) {
 
   applyMarkerToDrawingEngine();
+
+}
+
+               
+if (
+  toolId ===
+  "pencil"
+) {
+
+  applyPencilToDrawingEngine();
 
 }
 
@@ -1191,6 +1201,15 @@ if (
     applyMarkerToDrawingEngine();
 
 }
+     if (
+  toolId ===
+  "pencil"
+) {
+
+  applyPencilToDrawingEngine();
+
+}
+     
 
   }
 );
