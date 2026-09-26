@@ -350,6 +350,65 @@ if (
     }
 
 
+        if (widthInput) {
+
+      widthInput.value =
+        String(
+          lineWidth
+        );
+
+    }
+
+  },
+
+
+  /* =====================================================
+     LÁPIS — ETAPA 4D
+     ===================================================== */
+
+  setPencil(
+    newColor,
+    newWidth
+  ) {
+
+    tool =
+      "pencil";
+
+    strokeOpacity =
+      1;
+
+
+    if (
+      typeof newColor ===
+        "string" &&
+      newColor
+    ) {
+
+      color =
+        newColor;
+
+    }
+
+
+    const parsedWidth =
+      Number(
+        newWidth
+      );
+
+
+    if (
+      Number.isFinite(
+        parsedWidth
+      ) &&
+      parsedWidth > 0
+    ) {
+
+      lineWidth =
+        parsedWidth;
+
+    }
+
+
     if (widthInput) {
 
       widthInput.value =
