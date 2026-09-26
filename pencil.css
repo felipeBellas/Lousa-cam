@@ -530,7 +530,7 @@
 
 
 /* =====================================================
-   RÉGUA FLUTUANTE
+   RÉGUA FLUTUANTE — ETAPA 4F
    ===================================================== */
 
 #pencilRuler {
@@ -555,7 +555,11 @@
     translate(
       -50%,
       -50%
-    );
+    )
+    rotate(0deg);
+
+  transform-origin:
+    center center;
 
   border:
     1px solid
@@ -576,12 +580,27 @@
     0 8px 26px
     rgba(0, 0, 0, 0.28);
 
-  pointer-events: none;
+  /*
+    A Régua agora recebe gestos.
+  */
+  pointer-events: auto;
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  cursor: grab;
 }
 
 
 #pencilRuler.show {
   display: block;
+}
+
+
+#pencilRuler:active {
+  cursor: grabbing;
 }
 
 
@@ -595,7 +614,9 @@
   height: 1px;
 
   background:
-    rgba(255, 255, 255, 0.85);
+    rgba(255, 255, 255, 0.92);
+
+  pointer-events: none;
 }
 
 
@@ -618,8 +639,9 @@
       transparent 1px,
       transparent 10px
     );
-}
 
+  pointer-events: none;
+}
 
 /* =====================================================
    ACESSIBILIDADE
