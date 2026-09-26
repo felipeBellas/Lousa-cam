@@ -1596,6 +1596,35 @@ function redraw() {
 
   }
 
+
+  /* =====================================================
+     FORMA SELECIONADA — ETAPA 4I
+     ===================================================== */
+
+  if (
+    selectedShapeId &&
+    !editingObjectId
+  ) {
+
+    const selectedShape =
+      getShapeById(
+        selectedShapeId
+      );
+
+
+    if (
+      selectedShape
+    ) {
+
+      drawShapeSelection(
+        ctx,
+        selectedShape
+      );
+
+    }
+
+  }
+
 }
 
 /* =========================================================
@@ -6056,6 +6085,91 @@ canvas.addEventListener(
 
     }
 
+       /* ===================================================
+       FORMA — ETAPA 4I
+       =================================================== */
+
+    const touchedShape =
+      findShapeAt(
+        point.x,
+        point.y
+      );
+
+
+    if (
+      touchedShape
+    ) {
+
+      /*
+        Fecha eventual edição de texto
+        antes de manipular a forma.
+      */
+      if (
+        editingObjectId
+      ) {
+
+        finishTextEditing();
+
+      }
+
+
+      selectedObjectId =
+        null;
+
+
+      secondImageTapId =
+        null;
+
+
+      hideObjectCancel();
+
+
+      selectedShapeId =
+        touchedShape.id;
+
+
+      pointerMode =
+        "shape";
+
+
+      /*
+        Guarda uma cópia dos pontos
+        originais.
+
+        Assim o movimento sempre é
+        calculado a partir da posição
+        inicial e não acumula erro.
+      */
+      shapeDragStart = {
+
+        pointerX:
+          point.x,
+
+        pointerY:
+          point.y,
+
+        points:
+          touchedShape.points.map(
+            shapePoint => ({
+
+              x:
+                shapePoint.x,
+
+              y:
+                shapePoint.y
+
+            })
+          )
+
+      };
+
+
+      redraw();
+
+      return;
+
+    }
+
 
 /* ===================================================
    FORA DE OBJETO
@@ -6069,6 +6183,12 @@ if (
 }
 
 selectedObjectId =
+  null;
+
+selectedShapeId =
+  null;
+
+shapeDragStart =
   null;
 
 secondImageTapId =
@@ -6408,6 +6528,83 @@ else {
     }
 
 
+         /* ===================================================
+       MOVER FORMA — ETAPA 4I
+       =================================================== */
+
+    if (
+      pointerMode ===
+      "shape"
+    ) {
+
+      const shape =
+        getShapeById(
+          selectedShapeId
+        );
+
+
+      if (
+        !shape ||
+        !shapeDragStart
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        pointerMoved
+      ) {
+
+        const moveX =
+          point.x -
+          shapeDragStart.pointerX;
+
+
+        const moveY =
+          point.y -
+          shapeDragStart.pointerY;
+
+
+        /*
+          Move todos os pontos da forma
+          pela mesma distância.
+
+          Isso preserva:
+          - tamanho
+          - proporção
+          - direção
+          - formato
+          - espessura
+          - cor
+        */
+        shape.points =
+          shapeDragStart.points.map(
+            originalPoint => ({
+
+              x:
+                originalPoint.x +
+                moveX,
+
+              y:
+                originalPoint.y +
+                moveY
+
+            })
+          );
+
+
+        redraw();
+
+      }
+
+
+      return;
+
+    }
+
+
     /* ===================================================
        DESENHAR
        =================================================== */
@@ -6574,6 +6771,34 @@ canvas.addEventListener(
 
     }
 
+         /* ===================================================
+       FORMA — ETAPA 4I
+       =================================================== */
+
+    if (
+      pointerMode ===
+      "shape"
+    ) {
+
+      pointerMode =
+        null;
+
+
+      shapeDragStart =
+        null;
+
+
+      releasePointer(
+        event
+      );
+
+
+      redraw();
+
+      return;
+
+    }
+
 
     /* ===================================================
        DESENHO
@@ -6655,6 +6880,8 @@ canvas.addEventListener(
     pointerMode =
       null;
 
+    shapeDragStart =
+      null;
 
     resizeStart =
       null;
