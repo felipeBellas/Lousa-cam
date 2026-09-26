@@ -752,6 +752,57 @@ function applyPencilToDrawingEngine() {
 
 }
 
+   /* =======================================================
+   PINCEL — ETAPA 4E
+   ======================================================= */
+
+function applyBrushToDrawingEngine() {
+
+  if (
+    activeTool !==
+    "brush"
+  ) {
+
+    return;
+
+  }
+
+
+  const brushSettings =
+    toolSettings.brush;
+
+
+  if (
+    !brushSettings
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setBrush !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte do Pincel não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setBrush(
+    brushSettings.color,
+    brushSettings.size
+  );
+
+}
+
    
   /* =======================================================
      ATUALIZAR VISUAL
@@ -1001,6 +1052,19 @@ if (
 ) {
 
   applyPencilToDrawingEngine();
+
+}
+
+/*
+  PINCEL
+*/
+
+if (
+  toolId ===
+  "brush"
+) {
+
+  applyBrushToDrawingEngine();
 
 }
 
