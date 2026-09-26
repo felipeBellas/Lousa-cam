@@ -630,15 +630,6 @@ let shapeDragStart =
 let shapePinchState =
   null;
 
-/*
-  ETAPA 4J
-
-  Estado exclusivo da transformação
-  da forma com dois dedos.
-*/
-let shapePinchState =
-  null;
-
 
 /*
   Localiza uma forma pelo ID.
@@ -2551,6 +2542,53 @@ function drawShapeStroke(
 
 
   c.save();
+
+  /*
+  ETAPA 4J
+  Rotação visual da forma.
+*/
+const shapeBounds =
+  getShapeBounds(
+    stroke
+  );
+
+
+const shapeRotation =
+  stroke.rotation || 0;
+
+
+if (
+  shapeBounds &&
+  shapeRotation !== 0
+) {
+
+  const shapeCenterX =
+    shapeBounds.left +
+    shapeBounds.width / 2;
+
+
+  const shapeCenterY =
+    shapeBounds.top +
+    shapeBounds.height / 2;
+
+
+  c.translate(
+    shapeCenterX,
+    shapeCenterY
+  );
+
+
+  c.rotate(
+    shapeRotation
+  );
+
+
+  c.translate(
+    -shapeCenterX,
+    -shapeCenterY
+  );
+
+}
 
   c.globalCompositeOperation =
     "source-over";
