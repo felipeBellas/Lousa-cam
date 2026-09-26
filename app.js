@@ -5065,6 +5065,9 @@ function startDrawing(
     width:
       lineWidth,
 
+    opacity:
+      strokeOpacity,
+
     points: [
 
       {
