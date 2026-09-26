@@ -913,6 +913,12 @@ function drawStroke(
   c.lineJoin =
     "round";
 
+   c.globalAlpha =
+  typeof stroke.opacity ===
+    "number"
+    ? stroke.opacity
+    : 1;
+
 
   if (
     stroke.tool ===
