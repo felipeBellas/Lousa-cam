@@ -6370,25 +6370,51 @@ canvas.addEventListener(
     }
 
     /*
-      Quando o segundo dedo tocar,
-      começa o redimensionamento
-      do objeto selecionado.
-    */
-    if (
-      event.pointerType ===
-        "touch" &&
-      activePointers.size === 2
-    ) {
+  Quando o segundo dedo tocar,
+  verifica primeiro se existe
+  uma forma selecionada.
 
-      if (
-        beginPinchGesture()
-      ) {
+  ETAPA 4J:
+  formas usam seu próprio gesto.
 
-        return;
+  Texto/imagem continuam usando
+  exatamente o sistema anterior.
+*/
+if (
+  event.pointerType ===
+    "touch" &&
+  activePointers.size === 2
+) {
 
-      }
+  /*
+    PRIORIDADE 1:
+    forma selecionada.
+  */
+  if (
+    selectedShapeId &&
+    beginShapePinchGesture()
+  ) {
 
-    }
+    return;
+
+  }
+
+
+  /*
+    PRIORIDADE 2:
+    texto ou imagem.
+
+    Mantém o comportamento original.
+  */
+  if (
+    beginPinchGesture()
+  ) {
+
+    return;
+
+  }
+
+}
 
     /*
       Com mouse ou apenas um dedo,
@@ -6700,19 +6726,36 @@ canvas.addEventListener(
     }
 
     /*
-      Se dois dedos estiverem manipulando
-      um objeto, o movimento normal
-      fica temporariamente suspenso.
-    */
-    if (
-      pinchState
-    ) {
+  ETAPA 4J
 
-      updatePinchGesture();
+  Se dois dedos estiverem
+  transformando uma forma,
+  suspende o restante dos gestos.
+*/
+if (
+  shapePinchState
+) {
 
-      return;
+  updateShapePinchGesture();
 
-    }
+  return;
+
+}
+
+
+/*
+  Texto/imagem continuam usando
+  exatamente o gesto anterior.
+*/
+if (
+  pinchState
+) {
+
+  updatePinchGesture();
+
+  return;
+
+}
 
     /*
       Com apenas um pointer,
@@ -7110,19 +7153,35 @@ canvas.addEventListener(
   event => {
 
     /*
-      Se estávamos usando dois dedos,
-      encerra o gesto sem executar
-      toque, colar, desenho ou edição.
-    */
-    if (
-      pinchState
-    ) {
+  ETAPA 4J
 
-      endPinchGesture();
+  Finaliza primeiro uma eventual
+  transformação de forma.
+*/
+if (
+  shapePinchState
+) {
 
-      return;
+  endShapePinchGesture();
 
-    }
+  return;
+
+}
+
+
+/*
+  Texto/imagem continuam utilizando
+  o sistema original.
+*/
+if (
+  pinchState
+) {
+
+  endPinchGesture();
+
+  return;
+
+}
 
     activePointers.delete(
       event.pointerId
