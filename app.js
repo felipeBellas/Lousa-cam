@@ -1058,6 +1058,768 @@ function redraw() {
 
 }
 
+/* =========================================================
+   FORMAS — ETAPA 4H
+   ========================================================= */
+
+function drawShapeStroke(
+  c,
+  stroke
+) {
+
+  if (
+    !stroke ||
+    !stroke.shape ||
+    !stroke.points ||
+    stroke.points.length < 2
+  ) {
+
+    return false;
+
+  }
+
+
+  const start =
+    stroke.points[0];
+
+  const end =
+    stroke.points[
+      stroke.points.length - 1
+    ];
+
+
+  let x1 =
+    start.x;
+
+  let y1 =
+    start.y;
+
+  let x2 =
+    end.x;
+
+  let y2 =
+    end.y;
+
+
+  c.save();
+
+  c.globalCompositeOperation =
+    "source-over";
+
+  c.globalAlpha =
+    typeof stroke.opacity ===
+      "number"
+      ? stroke.opacity
+      : 1;
+
+  c.strokeStyle =
+    stroke.color ||
+    "#ffffff";
+
+  c.fillStyle =
+    stroke.color ||
+    "#ffffff";
+
+  c.lineWidth =
+    stroke.width ||
+    3;
+
+  c.lineCap =
+    "round";
+
+  c.lineJoin =
+    "round";
+
+
+  /* =====================================================
+     LINHA
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "line"
+  ) {
+
+    c.beginPath();
+
+    c.moveTo(
+      x1,
+      y1
+    );
+
+    c.lineTo(
+      x2,
+      y2
+    );
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     SETA
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "arrow"
+  ) {
+
+    const angle =
+      Math.atan2(
+        y2 - y1,
+        x2 - x1
+      );
+
+    const distance =
+      Math.hypot(
+        x2 - x1,
+        y2 - y1
+      );
+
+    const headLength =
+      Math.min(
+        28,
+        Math.max(
+          12,
+          distance * 0.18
+        )
+      );
+
+
+    c.beginPath();
+
+    c.moveTo(
+      x1,
+      y1
+    );
+
+    c.lineTo(
+      x2,
+      y2
+    );
+
+    c.stroke();
+
+
+    c.beginPath();
+
+    c.moveTo(
+      x2,
+      y2
+    );
+
+    c.lineTo(
+      x2 -
+        headLength *
+        Math.cos(
+          angle -
+          Math.PI / 6
+        ),
+
+      y2 -
+        headLength *
+        Math.sin(
+          angle -
+          Math.PI / 6
+        )
+    );
+
+    c.moveTo(
+      x2,
+      y2
+    );
+
+    c.lineTo(
+      x2 -
+        headLength *
+        Math.cos(
+          angle +
+          Math.PI / 6
+        ),
+
+      y2 -
+        headLength *
+        Math.sin(
+          angle +
+          Math.PI / 6
+        )
+    );
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  let left =
+    Math.min(
+      x1,
+      x2
+    );
+
+  let top =
+    Math.min(
+      y1,
+      y2
+    );
+
+  let width =
+    Math.abs(
+      x2 - x1
+    );
+
+  let height =
+    Math.abs(
+      y2 - y1
+    );
+
+
+  /* =====================================================
+     QUADRADO / CÍRCULO
+
+     Mantêm largura e altura iguais.
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+      "square" ||
+    stroke.shape ===
+      "circle"
+  ) {
+
+    const size =
+      Math.max(
+        width,
+        height
+      );
+
+    width =
+      size;
+
+    height =
+      size;
+
+
+    if (
+      x2 < x1
+    ) {
+
+      left =
+        x1 - size;
+
+    } else {
+
+      left =
+        x1;
+
+    }
+
+
+    if (
+      y2 < y1
+    ) {
+
+      top =
+        y1 - size;
+
+    } else {
+
+      top =
+        y1;
+
+    }
+
+  }
+
+
+  /* =====================================================
+     RETÂNGULO / QUADRADO
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+      "rectangle" ||
+    stroke.shape ===
+      "square"
+  ) {
+
+    c.strokeRect(
+      left,
+      top,
+      width,
+      height
+    );
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     CÍRCULO / ELIPSE
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+      "circle" ||
+    stroke.shape ===
+      "ellipse"
+  ) {
+
+    const centerX =
+      left +
+      width / 2;
+
+    const centerY =
+      top +
+      height / 2;
+
+
+    c.beginPath();
+
+    c.ellipse(
+      centerX,
+      centerY,
+      Math.max(
+        1,
+        width / 2
+      ),
+      Math.max(
+        1,
+        height / 2
+      ),
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     TRIÂNGULO
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "triangle"
+  ) {
+
+    c.beginPath();
+
+    c.moveTo(
+      left +
+        width / 2,
+      top
+    );
+
+    c.lineTo(
+      left +
+        width,
+      top +
+        height
+    );
+
+    c.lineTo(
+      left,
+      top +
+        height
+    );
+
+    c.closePath();
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     LOSANGO
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "diamond"
+  ) {
+
+    c.beginPath();
+
+    c.moveTo(
+      left +
+        width / 2,
+      top
+    );
+
+    c.lineTo(
+      left +
+        width,
+      top +
+        height / 2
+    );
+
+    c.lineTo(
+      left +
+        width / 2,
+      top +
+        height
+    );
+
+    c.lineTo(
+      left,
+      top +
+        height / 2
+    );
+
+    c.closePath();
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     POLÍGONO REGULAR
+     ===================================================== */
+
+  function drawPolygon(
+    sides
+  ) {
+
+    const centerX =
+      left +
+      width / 2;
+
+    const centerY =
+      top +
+      height / 2;
+
+    const radiusX =
+      width / 2;
+
+    const radiusY =
+      height / 2;
+
+
+    c.beginPath();
+
+
+    for (
+      let i = 0;
+      i < sides;
+      i++
+    ) {
+
+      const angle =
+        -Math.PI / 2 +
+        (
+          Math.PI * 2 *
+          i
+        ) /
+        sides;
+
+
+      const px =
+        centerX +
+        Math.cos(
+          angle
+        ) *
+        radiusX;
+
+      const py =
+        centerY +
+        Math.sin(
+          angle
+        ) *
+        radiusY;
+
+
+      if (
+        i === 0
+      ) {
+
+        c.moveTo(
+          px,
+          py
+        );
+
+      } else {
+
+        c.lineTo(
+          px,
+          py
+        );
+
+      }
+
+    }
+
+
+    c.closePath();
+
+    c.stroke();
+
+  }
+
+
+  /* =====================================================
+     PENTÁGONO
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "pentagon"
+  ) {
+
+    drawPolygon(
+      5
+    );
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     HEXÁGONO
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "hexagon"
+  ) {
+
+    drawPolygon(
+      6
+    );
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     ESTRELA
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "star"
+  ) {
+
+    const centerX =
+      left +
+      width / 2;
+
+    const centerY =
+      top +
+      height / 2;
+
+    const outerX =
+      width / 2;
+
+    const outerY =
+      height / 2;
+
+    const innerX =
+      outerX *
+      0.42;
+
+    const innerY =
+      outerY *
+      0.42;
+
+
+    c.beginPath();
+
+
+    for (
+      let i = 0;
+      i < 10;
+      i++
+    ) {
+
+      const outer =
+        i % 2 === 0;
+
+      const radiusX =
+        outer
+          ? outerX
+          : innerX;
+
+      const radiusY =
+        outer
+          ? outerY
+          : innerY;
+
+      const angle =
+        -Math.PI / 2 +
+        i *
+        Math.PI / 5;
+
+
+      const px =
+        centerX +
+        Math.cos(
+          angle
+        ) *
+        radiusX;
+
+      const py =
+        centerY +
+        Math.sin(
+          angle
+        ) *
+        radiusY;
+
+
+      if (
+        i === 0
+      ) {
+
+        c.moveTo(
+          px,
+          py
+        );
+
+      } else {
+
+        c.lineTo(
+          px,
+          py
+        );
+
+      }
+
+    }
+
+
+    c.closePath();
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     BALÃO DE FALA
+     ===================================================== */
+
+  if (
+    stroke.shape ===
+    "speech"
+  ) {
+
+    const radius =
+      Math.min(
+        18,
+        width / 6,
+        height / 6
+      );
+
+
+    const bodyHeight =
+      height *
+      0.78;
+
+
+    c.beginPath();
+
+
+    c.roundRect(
+      left,
+      top,
+      width,
+      bodyHeight,
+      Math.max(
+        2,
+        radius
+      )
+    );
+
+
+    c.stroke();
+
+
+    const tailX =
+      left +
+      width *
+      0.28;
+
+    const tailY =
+      top +
+      bodyHeight;
+
+
+    c.beginPath();
+
+    c.moveTo(
+      tailX,
+      tailY
+    );
+
+    c.lineTo(
+      tailX +
+        width *
+        0.04,
+      top +
+        height
+    );
+
+    c.lineTo(
+      tailX +
+        width *
+        0.18,
+      tailY
+    );
+
+    c.stroke();
+
+    c.restore();
+
+    return true;
+
+  }
+
+
+  c.restore();
+
+  return false;
+
+}
+
 
 /* =========================================================
    DESENHAR TRAÇO
@@ -1067,6 +1829,25 @@ function drawStroke(
   c,
   stroke
 ) {
+
+  /* =====================================================
+     FORMAS — ETAPA 4H
+     ===================================================== */
+
+  if (
+    stroke &&
+    stroke.shape
+  ) {
+
+    drawShapeStroke(
+      c,
+      stroke
+    );
+
+    return;
+
+  }
+
 
   if (
     !stroke.points ||
