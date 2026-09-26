@@ -6179,52 +6179,135 @@ function startDrawing(
   drawing =
     true;
 
-   /*
-  RÉGUA
 
-  Verifica somente no início
-  do traço se o usuário começou
-  próximo da linha-guia.
-*/
+  /* =====================================================
+     FORMAS — ETAPA 4H
+     ===================================================== */
 
-let drawingPoint =
-  point;
+  if (
+    typeof tool ===
+      "string" &&
+    tool.startsWith(
+      "shape:"
+    )
+  ) {
+
+    const shapeType =
+      tool.substring(
+        6
+      );
 
 
-let rulerGuided =
-  false;
+    currentStroke = {
+
+      id:
+        makeId(
+          "shape"
+        ),
+
+      createdAt:
+        Date.now(),
+
+      tool:
+        "shape",
+
+      shape:
+        shapeType,
+
+      color:
+        color,
+
+      width:
+        lineWidth,
+
+      opacity:
+        1,
+
+      points: [
+
+        {
+          x:
+            point.x,
+
+          y:
+            point.y
+        },
+
+        {
+          x:
+            point.x,
+
+          y:
+            point.y
+        }
+
+      ]
+
+    };
 
 
-if (
-  window.LousaCamPencil &&
-  typeof window.LousaCamPencil.projectPointToRuler ===
-    "function"
-) {
-
-  const projectedPoint =
-    window.LousaCamPencil.projectPointToRuler(
-      point,
-      false
+    strokes.push(
+      currentStroke
     );
 
 
-  if (projectedPoint) {
+    redoStack =
+      [];
 
-    drawingPoint =
-      projectedPoint;
 
-    rulerGuided =
-      true;
+    redraw();
+
+    return;
 
   }
 
-}
+
+  /* =====================================================
+     DESENHO NORMAL + RÉGUA
+     ===================================================== */
+
+  let drawingPoint =
+    point;
+
+
+  let rulerGuided =
+    false;
+
+
+  if (
+    window.LousaCamPencil &&
+    typeof window.LousaCamPencil.projectPointToRuler ===
+      "function"
+  ) {
+
+    const projectedPoint =
+      window.LousaCamPencil.projectPointToRuler(
+        point,
+        false
+      );
+
+
+    if (
+      projectedPoint
+    ) {
+
+      drawingPoint =
+        projectedPoint;
+
+      rulerGuided =
+        true;
+
+    }
+
+  }
 
 
   currentStroke = {
 
     id:
-      makeId("stroke"),
+      makeId(
+        "stroke"
+      ),
 
     createdAt:
       Date.now(),
@@ -6239,12 +6322,12 @@ if (
       lineWidth,
 
     opacity:
-  strokeOpacity,
+      strokeOpacity,
 
-rulerGuided:
-  rulerGuided,
+    rulerGuided:
+      rulerGuided,
 
-points: [
+    points: [
 
       {
 
@@ -6288,34 +6371,45 @@ function continueDrawing(
   }
 
 
+  /* =====================================================
+     FORMAS — PRÉ-VISUALIZAÇÃO
+     ===================================================== */
+
+  if (
+    currentStroke.shape
+  ) {
+
+    currentStroke.points[1] = {
+
+      x:
+        point.x,
+
+      y:
+        point.y
+
+    };
+
+
+    redraw();
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     DESENHO NORMAL + RÉGUA
+     ===================================================== */
+
   let drawingPoint =
     point;
 
-
-  /*
-    =====================================================
-    RÉGUA
-    =====================================================
-
-    Existem agora duas situações:
-
-    1. O traço já está guiado:
-       permanece preso à borda.
-
-    2. O traço ainda é livre:
-       verificamos se acabou de
-       alcançar a borda da Régua.
-  */
 
   if (
     window.LousaCamPencil &&
     typeof window.LousaCamPencil.projectPointToRuler ===
       "function"
   ) {
-
-    /*
-      Traço que já foi capturado.
-    */
 
     if (
       currentStroke.rulerGuided
@@ -6328,23 +6422,16 @@ function continueDrawing(
         );
 
 
-      if (projectedPoint) {
+      if (
+        projectedPoint
+      ) {
 
         drawingPoint =
           projectedPoint;
 
       }
 
-    }
-
-    /*
-      Traço ainda livre.
-
-      Permite que ele encontre
-      a Régua durante o movimento.
-    */
-
-    else {
+    } else {
 
       const projectedPoint =
         window.LousaCamPencil.projectPointToRuler(
@@ -6353,17 +6440,12 @@ function continueDrawing(
         );
 
 
-      if (projectedPoint) {
+      if (
+        projectedPoint
+      ) {
 
         drawingPoint =
           projectedPoint;
-
-
-        /*
-          A partir deste momento
-          o restante do mesmo traço
-          fica preso à Régua.
-        */
 
         currentStroke.rulerGuided =
           true;
@@ -6401,11 +6483,6 @@ function continueDrawing(
     );
 
 
-  /*
-    Mantém exatamente o filtro
-    contra micro movimentos.
-  */
-
   if (
     distance < 1.5
   ) {
@@ -6429,6 +6506,7 @@ function continueDrawing(
   redraw();
 
 }
+
 
 function finishDrawing() {
 
