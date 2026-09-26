@@ -6197,10 +6197,13 @@ secondImageTapId =
 hideObjectCancel();
 
 /*
-  Não começa a desenhar imediatamente.
-  Primeiro aguardamos o movimento.
-  Se for um toque simples, o menu Colar aparece.
+  ETAPA 4I
+  Remove imediatamente a seleção visual
+  da forma ao tocar em uma área vazia.
 */
+redraw();
+
+     
 pointerMode =
   "canvas";
   
