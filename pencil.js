@@ -917,8 +917,7 @@ if (
   applyPenToDrawingEngine();
 
 }
-
-
+             
 /*
   BORRACHA
 */
@@ -929,6 +928,19 @@ if (
 ) {
 
   applyEraserToDrawingEngine();
+
+}
+             
+/*
+  MARCADOR
+*/
+
+if (
+  toolId ===
+  "marker"
+) {
+
+  applyMarkerToDrawingEngine();
 
 }
 
