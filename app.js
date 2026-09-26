@@ -5455,35 +5455,87 @@ function continueDrawing(
   }
 
 
-  /*
-    Se este traço começou junto
-    à Régua, todos os pontos
-    seguintes continuam presos
-    à linha-guia.
-  */
-
   let drawingPoint =
     point;
 
 
+  /*
+    =====================================================
+    RÉGUA
+    =====================================================
+
+    Existem agora duas situações:
+
+    1. O traço já está guiado:
+       permanece preso à borda.
+
+    2. O traço ainda é livre:
+       verificamos se acabou de
+       alcançar a borda da Régua.
+  */
+
   if (
-    currentStroke.rulerGuided &&
     window.LousaCamPencil &&
     typeof window.LousaCamPencil.projectPointToRuler ===
       "function"
   ) {
 
-    const projectedPoint =
-      window.LousaCamPencil.projectPointToRuler(
-        point,
-        true
-      );
+    /*
+      Traço que já foi capturado.
+    */
+
+    if (
+      currentStroke.rulerGuided
+    ) {
+
+      const projectedPoint =
+        window.LousaCamPencil.projectPointToRuler(
+          point,
+          true
+        );
 
 
-    if (projectedPoint) {
+      if (projectedPoint) {
 
-      drawingPoint =
-        projectedPoint;
+        drawingPoint =
+          projectedPoint;
+
+      }
+
+    }
+
+    /*
+      Traço ainda livre.
+
+      Permite que ele encontre
+      a Régua durante o movimento.
+    */
+
+    else {
+
+      const projectedPoint =
+        window.LousaCamPencil.projectPointToRuler(
+          point,
+          false
+        );
+
+
+      if (projectedPoint) {
+
+        drawingPoint =
+          projectedPoint;
+
+
+        /*
+          A partir deste momento
+          o restante do mesmo traço
+          fica preso à Régua.
+        */
+
+        currentStroke.rulerGuided =
+          true;
+
+      }
 
     }
 
@@ -5499,11 +5551,6 @@ function continueDrawing(
       points.length - 1
     ];
 
-
-  /*
-    Distância entre o último ponto
-    registrado e o novo ponto.
-  */
 
   const dx =
     drawingPoint.x -
@@ -5522,7 +5569,7 @@ function continueDrawing(
 
 
   /*
-    Mantém o filtro original
+    Mantém exatamente o filtro
     contra micro movimentos.
   */
 
@@ -5549,7 +5596,6 @@ function continueDrawing(
   redraw();
 
 }
-
 
 function finishDrawing() {
 
