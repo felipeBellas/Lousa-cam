@@ -390,6 +390,100 @@
     "#ffcc00"
   ];
 
+   /* =======================================================
+   FORMAS — ETAPA 4H
+   ======================================================= */
+
+const shapeSettings = {
+
+  color:
+    "#ffffff",
+
+  size:
+    3,
+
+  selected:
+    "line"
+
+};
+
+
+const shapes = [
+
+  {
+    id: "line",
+    label: "Linha",
+    symbol: "╱"
+  },
+
+  {
+    id: "arrow",
+    label: "Seta",
+    symbol: "→"
+  },
+
+  {
+    id: "rectangle",
+    label: "Retângulo",
+    symbol: "▭"
+  },
+
+  {
+    id: "square",
+    label: "Quadrado",
+    symbol: "□"
+  },
+
+  {
+    id: "circle",
+    label: "Círculo",
+    symbol: "○"
+  },
+
+  {
+    id: "ellipse",
+    label: "Elipse",
+    symbol: "⬭"
+  },
+
+  {
+    id: "triangle",
+    label: "Triângulo",
+    symbol: "△"
+  },
+
+  {
+    id: "diamond",
+    label: "Losango",
+    symbol: "◇"
+  },
+
+  {
+    id: "pentagon",
+    label: "Pentágono",
+    symbol: "⬠"
+  },
+
+  {
+    id: "hexagon",
+    label: "Hexágono",
+    symbol: "⬡"
+  },
+
+  {
+    id: "star",
+    label: "Estrela",
+    symbol: "☆"
+  },
+
+  {
+    id: "speech",
+    label: "Balão",
+    symbol: "▢"
+  }
+
+];
+
 
   let activeTool =
     "pen";
