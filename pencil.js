@@ -650,6 +650,57 @@ function applyEraserToDrawingEngine() {
 
 }
 
+   /* =======================================================
+   MARCADOR — ETAPA 4C
+   ======================================================= */
+
+function applyMarkerToDrawingEngine() {
+
+  if (
+    activeTool !==
+    "marker"
+  ) {
+
+    return;
+
+  }
+
+
+  const markerSettings =
+    toolSettings.marker;
+
+
+  if (
+    !markerSettings
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setMarker !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte do marcador não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setMarker(
+    markerSettings.color,
+    markerSettings.size
+  );
+
+}
+
    
   /* =======================================================
      ATUALIZAR VISUAL
