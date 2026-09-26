@@ -1052,14 +1052,10 @@ if (
 }
 
 
-openContextPanel(
-  toolId
-);
-
 
             openContextPanel(
-             toolId
-              );
+               toolId
+            );
                
             }
           );
@@ -1285,6 +1281,20 @@ if (
 ) {
 
   applyEraserToDrawingEngine();
+
+}
+
+
+/*
+  MARCADOR
+*/
+
+if (
+  toolId ===
+  "marker"
+) {
+
+  applyMarkerToDrawingEngine();
 
 }
 
