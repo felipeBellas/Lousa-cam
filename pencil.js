@@ -701,6 +701,57 @@ function applyMarkerToDrawingEngine() {
 
 }
 
+   /* =======================================================
+   LÁPIS — ETAPA 4D
+   ======================================================= */
+
+function applyPencilToDrawingEngine() {
+
+  if (
+    activeTool !==
+    "pencil"
+  ) {
+
+    return;
+
+  }
+
+
+  const pencilSettings =
+    toolSettings.pencil;
+
+
+  if (
+    !pencilSettings
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setPencil !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte do Lápis não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setPencil(
+    pencilSettings.color,
+    pencilSettings.size
+  );
+
+}
+
    
   /* =======================================================
      ATUALIZAR VISUAL
@@ -1295,6 +1346,20 @@ if (
 ) {
 
   applyMarkerToDrawingEngine();
+
+}
+
+
+/*
+  LÁPIS
+*/
+
+if (
+  toolId ===
+  "pencil"
+) {
+
+  applyPencilToDrawingEngine();
 
 }
 
