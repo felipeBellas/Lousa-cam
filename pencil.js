@@ -596,6 +596,61 @@ function applyPenToDrawingEngine() {
   );
 
 }
+
+   /* =======================================================
+   BORRACHA — ETAPA 4B
+
+   Usa o motor de borracha já existente
+   no app.js.
+   ======================================================= */
+
+function applyEraserToDrawingEngine() {
+
+  if (
+    activeTool !==
+    "eraser"
+  ) {
+
+    return;
+
+  }
+
+
+  const eraserSettings =
+    toolSettings.eraser;
+
+
+  if (
+    !eraserSettings
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setEraser !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte da borracha não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setEraser(
+    eraserSettings.size
+  );
+
+}
+
+   
   /* =======================================================
      ATUALIZAR VISUAL
      ======================================================= */
