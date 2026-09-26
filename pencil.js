@@ -1026,20 +1026,35 @@ openContextPanel(
 
 
              settings.color =
-                color;
+  color;
 
 
-            updateToolVisuals();
+updateToolVisuals();
 
 
-             if (
-                toolId ===
-                     "pen"
-                ) {
+if (
+  toolId ===
+  "pen"
+) {
 
-             applyPenToDrawingEngine();
+  applyPenToDrawingEngine();
 
-              }
+}
+
+
+if (
+  toolId ===
+  "marker"
+) {
+
+  applyMarkerToDrawingEngine();
+
+}
+
+
+openContextPanel(
+  toolId
+);
 
 
             openContextPanel(
@@ -1111,6 +1126,15 @@ openContextPanel(
       applyPenToDrawingEngine();
 
     }
+     
+     if (
+  toolId ===
+  "marker"
+   ) {
+
+    applyMarkerToDrawingEngine();
+
+}
 
   }
 );
