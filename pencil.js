@@ -1896,14 +1896,20 @@ updateRulerTransform();
       ) => {
 
         button.classList.toggle(
-          "active",
-          id === activeTool ||
-          (
-            id === "ruler" &&
-            rulerVisible
-          )
-        );
+  "active",
 
+  id === activeTool ||
+
+  (
+    id === "ruler" &&
+    rulerVisible
+  ) ||
+
+  (
+    id === "more" &&
+    activeTool === "shape"
+  )
+);
 
         if (
           drawingTools.includes(
