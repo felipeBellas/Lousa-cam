@@ -2407,6 +2407,484 @@ if (
 
   }
 
+   /* =======================================================
+   FORMAS — ETAPA 4H
+   ======================================================= */
+
+function applyShapeToDrawingEngine(
+  shapeId
+) {
+
+  shapeSettings.selected =
+    shapeId;
+
+
+  if (
+    !window.LousaCamPencil ||
+    typeof window.LousaCamPencil.setShape !==
+      "function"
+  ) {
+
+    console.warn(
+      "Pencil: ponte das Formas não encontrada."
+    );
+
+    return;
+
+  }
+
+
+  window.LousaCamPencil.setShape(
+    shapeId,
+    shapeSettings.color,
+    shapeSettings.size
+  );
+
+}
+
+
+function openShapesPanel() {
+
+  contextTool =
+    "more";
+
+
+  contextPanel.innerHTML =
+    "";
+
+
+  /* -----------------------
+     TÍTULO
+     ----------------------- */
+
+  const title =
+    document.createElement(
+      "div"
+    );
+
+
+  title.className =
+    "pencil-context-title";
+
+
+  title.textContent =
+    "Formas";
+
+
+  contextPanel.appendChild(
+    title
+  );
+
+
+  /* -----------------------
+     FORMAS
+     ----------------------- */
+
+  const shapeGrid =
+    document.createElement(
+      "div"
+    );
+
+
+  shapeGrid.style.display =
+    "grid";
+
+
+  shapeGrid.style.gridTemplateColumns =
+    "repeat(4, 1fr)";
+
+
+  shapeGrid.style.gap =
+    "6px";
+
+
+  shapeGrid.style.padding =
+    "4px 0 8px";
+
+
+  shapes.forEach(
+    shape => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.type =
+        "button";
+
+
+      button.style.minWidth =
+        "42px";
+
+
+      button.style.height =
+        "42px";
+
+
+      button.style.border =
+        "1px solid rgba(255,255,255,.18)";
+
+
+      button.style.borderRadius =
+        "8px";
+
+
+      button.style.background =
+        shapeSettings.selected ===
+          shape.id
+          ? "rgba(255,255,255,.20)"
+          : "rgba(255,255,255,.06)";
+
+
+      button.style.color =
+        "#fff";
+
+
+      button.style.fontSize =
+        "22px";
+
+
+      button.style.display =
+        "flex";
+
+
+      button.style.alignItems =
+        "center";
+
+
+      button.style.justifyContent =
+        "center";
+
+
+      button.style.cursor =
+        "pointer";
+
+
+      button.textContent =
+        shape.symbol;
+
+
+      button.setAttribute(
+        "aria-label",
+        shape.label
+      );
+
+
+      button.setAttribute(
+        "title",
+        shape.label
+      );
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          activeTool =
+            "shape";
+
+
+          applyShapeToDrawingEngine(
+            shape.id
+          );
+
+
+          updateToolVisuals();
+
+
+          openShapesPanel();
+
+        }
+      );
+
+
+      shapeGrid.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  contextPanel.appendChild(
+    shapeGrid
+  );
+
+
+  /* -----------------------
+     ESPESSURA
+     ----------------------- */
+
+  const sizes =
+    document.createElement(
+      "div"
+    );
+
+
+  sizes.className =
+    "pencil-sizes";
+
+
+  sizeOptions.forEach(
+    size => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.type =
+        "button";
+
+
+      button.className =
+        "pencil-size";
+
+
+      button.classList.toggle(
+        "active",
+        shapeSettings.size ===
+          size
+      );
+
+
+      button.setAttribute(
+        "aria-label",
+        `Espessura ${size}`
+      );
+
+
+      const dot =
+        document.createElement(
+          "span"
+        );
+
+
+      dot.className =
+        "pencil-size-dot";
+
+
+      const visualSize =
+        Math.max(
+          3,
+          Math.min(
+            15,
+            size
+          )
+        );
+
+
+      dot.style.width =
+        `${visualSize}px`;
+
+
+      dot.style.height =
+        `${visualSize}px`;
+
+
+      button.appendChild(
+        dot
+      );
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          shapeSettings.size =
+            size;
+
+
+          applyShapeToDrawingEngine(
+            shapeSettings.selected
+          );
+
+
+          openShapesPanel();
+
+        }
+      );
+
+
+      sizes.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  contextPanel.appendChild(
+    sizes
+  );
+
+
+  /* -----------------------
+     CORES
+     ----------------------- */
+
+  const colors =
+    document.createElement(
+      "div"
+    );
+
+
+  colors.className =
+    "pencil-colors";
+
+
+  colorOptions.forEach(
+    shapeColor => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+
+      button.type =
+        "button";
+
+
+      button.className =
+        "pencil-color";
+
+
+      button.style.setProperty(
+        "--pencil-color",
+        shapeColor
+      );
+
+
+      button.classList.toggle(
+        "active",
+        shapeSettings.color ===
+          shapeColor
+      );
+
+
+      button.setAttribute(
+        "aria-label",
+        `Cor ${shapeColor}`
+      );
+
+
+      button.addEventListener(
+        "click",
+        event => {
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          shapeSettings.color =
+            shapeColor;
+
+
+          applyShapeToDrawingEngine(
+            shapeSettings.selected
+          );
+
+
+          openShapesPanel();
+
+        }
+      );
+
+
+      colors.appendChild(
+        button
+      );
+
+    }
+  );
+
+
+  /* -----------------------
+     COR PERSONALIZADA
+     ----------------------- */
+
+  const custom =
+    document.createElement(
+      "label"
+    );
+
+
+  custom.className =
+    "pencil-custom-color";
+
+
+  custom.setAttribute(
+    "aria-label",
+    "Escolher outra cor"
+  );
+
+
+  const colorInput =
+    document.createElement(
+      "input"
+    );
+
+
+  colorInput.type =
+    "color";
+
+
+  colorInput.value =
+    shapeSettings.color;
+
+
+  colorInput.addEventListener(
+    "input",
+    event => {
+
+      shapeSettings.color =
+        event.target.value;
+
+
+      applyShapeToDrawingEngine(
+        shapeSettings.selected
+      );
+
+    }
+  );
+
+
+  custom.appendChild(
+    colorInput
+  );
+
+
+  colors.appendChild(
+    custom
+  );
+
+
+  contextPanel.appendChild(
+    colors
+  );
+
+
+  contextPanel.classList.add(
+    "show"
+  );
+
+}
+
 
   /* =======================================================
      SELEÇÃO DAS FERRAMENTAS
