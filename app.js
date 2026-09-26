@@ -157,6 +157,8 @@ let drawing =
 
 let tool =
   "pen";
+strokeOpacity =
+  1;
 
 let color =
   "#fff";
@@ -244,6 +246,8 @@ window.LousaCamPencil = {
 
     tool =
       "eraser";
+     strokeOpacity =
+     1;
 
 
     const parsedWidth =
@@ -285,12 +289,71 @@ window.LousaCamPencil = {
       existente no app.js.
     */
 
-    if (
+       if (
       typeof updateToolName ===
         "function"
     ) {
 
       updateToolName();
+
+    }
+
+  },
+
+
+  /* =====================================================
+     MARCADOR
+     ===================================================== */
+
+  setMarker(
+    newColor,
+    newWidth
+  ) {
+
+    tool =
+      "marker";
+
+    strokeOpacity =
+      0.35;
+
+
+    if (
+      typeof newColor ===
+        "string" &&
+      newColor
+    ) {
+
+      color =
+        newColor;
+
+    }
+
+
+    const parsedWidth =
+      Number(
+        newWidth
+      );
+
+
+    if (
+      Number.isFinite(
+        parsedWidth
+      ) &&
+      parsedWidth > 0
+    ) {
+
+      lineWidth =
+        parsedWidth;
+
+    }
+
+
+    if (widthInput) {
+
+      widthInput.value =
+        String(
+          lineWidth
+        );
 
     }
 
