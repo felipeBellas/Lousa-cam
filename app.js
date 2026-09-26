@@ -963,6 +963,7 @@ function drawStroke(
   ) {
 
     return;
+
   }
 
 
@@ -974,11 +975,25 @@ function drawStroke(
   c.lineJoin =
     "round";
 
-   c.globalAlpha =
-  typeof stroke.opacity ===
-    "number"
-    ? stroke.opacity
-    : 1;
+
+  /*
+    OPACIDADE ORIGINAL DO TRAÇO
+
+    Mantém compatibilidade com:
+    - Caneta
+    - Marcador
+    - Borracha
+    - traços antigos
+  */
+  const baseOpacity =
+    typeof stroke.opacity ===
+      "number"
+      ? stroke.opacity
+      : 1;
+
+
+  c.globalAlpha =
+    baseOpacity;
 
 
   if (
@@ -1009,8 +1024,28 @@ function drawStroke(
 
 
   /*
-    Um único ponto:
-    desenha como pequeno círculo.
+    =====================================================
+    LÁPIS
+
+    O Lápis usa o mesmo caminho suavizado,
+    porém com duas camadas.
+
+    Camada principal:
+    grafite mais suave.
+
+    Segunda camada:
+    núcleo fino e irregular visualmente,
+    criando diferença em relação à Caneta.
+    =====================================================
+  */
+
+  const isPencil =
+    stroke.tool ===
+    "pencil";
+
+
+  /*
+    Um único ponto.
   */
   if (
     points.length === 1
@@ -1025,6 +1060,7 @@ function drawStroke(
       0,
       Math.PI * 2
     );
+
 
     if (
       stroke.tool ===
@@ -1041,83 +1077,154 @@ function drawStroke(
 
     }
 
+
+    if (isPencil) {
+
+      c.globalAlpha =
+        baseOpacity * 0.68;
+
+    }
+
+
     c.fill();
 
     c.restore();
 
     return;
+
   }
 
 
   /*
-    TRAÇO SUAVIZADO
-
-    Em vez de unir cada ponto com
-    segmentos retos, usamos curvas
-    quadráticas entre os pontos.
+    Função interna para construir
+    exatamente o mesmo caminho
+    suavizado já utilizado pela
+    Lousa Cam.
   */
-  c.beginPath();
+  function buildSmoothPath() {
 
-  c.moveTo(
-    points[0].x,
-    points[0].y
-  );
+    c.beginPath();
 
-
-  for (
-    let i = 1;
-    i < points.length - 1;
-    i++
-  ) {
-
-    const current =
-      points[i];
-
-    const next =
-      points[i + 1];
-
-    const midX =
-      (
-        current.x +
-        next.x
-      ) / 2;
-
-    const midY =
-      (
-        current.y +
-        next.y
-      ) / 2;
+    c.moveTo(
+      points[0].x,
+      points[0].y
+    );
 
 
-    c.quadraticCurveTo(
-      current.x,
-      current.y,
-      midX,
-      midY
+    for (
+      let i = 1;
+      i < points.length - 1;
+      i++
+    ) {
+
+      const current =
+        points[i];
+
+      const next =
+        points[i + 1];
+
+      const midX =
+        (
+          current.x +
+          next.x
+        ) / 2;
+
+      const midY =
+        (
+          current.y +
+          next.y
+        ) / 2;
+
+
+      c.quadraticCurveTo(
+        current.x,
+        current.y,
+        midX,
+        midY
+      );
+
+    }
+
+
+    const last =
+      points[
+        points.length - 1
+      ];
+
+
+    c.lineTo(
+      last.x,
+      last.y
     );
 
   }
 
 
   /*
-    Finaliza exatamente no último ponto.
-  */
-  const last =
-    points[
-      points.length - 1
-    ];
+    CANETA / MARCADOR / BORRACHA
 
-  c.lineTo(
-    last.x,
-    last.y
-  );
+    Mantém exatamente o comportamento
+    que já estava funcionando.
+  */
+  if (!isPencil) {
+
+    buildSmoothPath();
+
+    c.stroke();
+
+    c.restore();
+
+    return;
+
+  }
+
+
+  /*
+    =====================================================
+    APARÊNCIA DO LÁPIS
+    =====================================================
+  */
+
+  /*
+    Camada externa:
+    grafite suave.
+  */
+  c.globalAlpha =
+    baseOpacity * 0.48;
+
+  c.lineWidth =
+    stroke.width;
+
+  c.strokeStyle =
+    stroke.color;
+
+  buildSmoothPath();
 
   c.stroke();
+
+
+  /*
+    Camada interna:
+    aumenta a definição do centro
+    sem transformar o Lápis em Caneta.
+  */
+  c.globalAlpha =
+    baseOpacity * 0.34;
+
+  c.lineWidth =
+    Math.max(
+      0.7,
+      stroke.width * 0.55
+    );
+
+  buildSmoothPath();
+
+  c.stroke();
+
 
   c.restore();
 
 }
-
 
 /* =========================================================
    DESENHAR OBJETO
