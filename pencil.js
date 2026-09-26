@@ -995,6 +995,15 @@ if (
 
 }
 
+if (
+  toolId ===
+  "pencil"
+) {
+
+  applyPencilToDrawingEngine();
+
+}
+
 
 openContextPanel(
   toolId
