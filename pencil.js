@@ -252,10 +252,9 @@
 
 
   ruler.innerHTML = `
-    <div class="pencil-ruler-ticks"></div>
-    <div class="pencil-ruler-line"></div>
-  `;
-
+  <div class="pencil-ruler-scale"></div>
+  <div class="pencil-ruler-line"></div>
+`;
 
   /* =======================================================
      MONTAGEM PRINCIPAL
@@ -424,9 +423,23 @@ const rulerState = {
     window.innerHeight / 2,
 
   angle:
-    0
+    0,
+
+  width:
+    Math.min(
+      320,
+      window.innerWidth - 40
+    )
 
 };
+
+
+const RULER_MIN_WIDTH =
+  180;
+
+
+const RULER_MAX_WIDTH =
+  700;
 
 
 const rulerPointers =
@@ -849,12 +862,123 @@ function updateRulerTransform() {
   ruler.style.top =
     `${rulerState.y}px`;
 
+  ruler.style.width =
+    `${rulerState.width}px`;
+
   ruler.style.transform =
     `translate(-50%, -50%)
      rotate(${rulerState.angle}rad)`;
 
+  updateRulerScale();
+
 }
 
+   function updateRulerScale() {
+
+  const scale =
+    ruler.querySelector(
+      ".pencil-ruler-scale"
+    );
+
+
+  if (!scale) {
+
+    return;
+
+  }
+
+
+  scale.innerHTML =
+    "";
+
+
+  /*
+    Cada divisão principal ocupa
+    aproximadamente 40 px.
+
+    As subdivisões são criadas
+    visualmente pelo CSS.
+  */
+
+  const usableWidth =
+    Math.max(
+      0,
+      rulerState.width - 28
+    );
+
+
+  const majorSpacing =
+    40;
+
+
+  const divisions =
+    Math.floor(
+      usableWidth /
+      majorSpacing
+    );
+
+
+  for (
+    let i = 0;
+    i <= divisions;
+    i++
+  ) {
+
+    const mark =
+      document.createElement(
+        "div"
+      );
+
+
+    mark.className =
+      "pencil-ruler-major";
+
+
+    mark.style.left =
+      `${i * majorSpacing}px`;
+
+
+    const tick =
+      document.createElement(
+        "span"
+      );
+
+
+    tick.className =
+      "pencil-ruler-major-tick";
+
+
+    const number =
+      document.createElement(
+        "span"
+      );
+
+
+    number.className =
+      "pencil-ruler-number";
+
+
+    number.textContent =
+      String(i);
+
+
+    mark.appendChild(
+      tick
+    );
+
+
+    mark.appendChild(
+      number
+    );
+
+
+    scale.appendChild(
+      mark
+    );
+
+  }
+
+}
 
 /*
   Mantém o centro da Régua
@@ -1337,6 +1461,40 @@ ruler.addEventListener(
 
   }
 );
+
+   function getRulerPointerDistance() {
+
+  const points =
+    Array.from(
+      rulerPointers.values()
+    );
+
+
+  if (
+    points.length < 2
+  ) {
+
+    return 0;
+
+  }
+
+
+  const dx =
+    points[1].x -
+    points[0].x;
+
+
+  const dy =
+    points[1].y -
+    points[0].y;
+
+
+  return Math.hypot(
+    dx,
+    dy
+  );
+
+}
 
 
 ruler.addEventListener(
