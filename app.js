@@ -10014,6 +10014,202 @@ boardOptions.forEach(
 );
 
 /* =========================================================
+   ETAPA 4K.1
+   CÂMERA — RECOMPOSIÇÃO SEGURA NA ROTAÇÃO
+
+   Objetivo:
+   - não reiniciar a câmera;
+   - não trocar srcObject;
+   - não parar tracks;
+   - não solicitar nova permissão;
+   - apenas forçar o WebKit/iOS a recalcular
+     a superfície visual do vídeo.
+   ========================================================= */
+
+let cameraOrientationTimer = null;
+
+
+function refreshCameraViewport() {
+
+  /*
+    Só existe algo para atualizar
+    se a câmera já estiver ativa.
+  */
+  if (
+    !video ||
+    !stream ||
+    video.srcObject !== stream
+  ) {
+    return;
+  }
+
+
+  /*
+    IMPORTANTE:
+
+    Não alteramos:
+    - stream
+    - srcObject
+    - tracks
+    - facingMode
+
+    Apenas obrigamos o elemento VIDEO
+    a acompanhar novamente o tamanho
+    real do container depois da rotação.
+  */
+
+  video.style.width = "100%";
+  video.style.height = "100%";
+
+  video.style.objectFit = "cover";
+  video.style.objectPosition = "center center";
+
+
+  /*
+    Mantém somente o espelhamento
+    original da câmera frontal.
+
+    Não criamos nenhuma transformação
+    adicional durante a rotação.
+  */
+  if (
+    facingMode === "user"
+  ) {
+
+    video.classList.add(
+      "mirror"
+    );
+
+  } else {
+
+    video.classList.remove(
+      "mirror"
+    );
+
+  }
+
+
+  /*
+    Força uma leitura do layout.
+
+    Isso ajuda o WebKit a perceber
+    as novas dimensões do VIDEO depois
+    da mudança vertical/horizontal.
+  */
+  void video.offsetWidth;
+
+
+  /*
+    Dois frames dão ao navegador tempo
+    para concluir a nova composição
+    visual da orientação.
+  */
+  requestAnimationFrame(
+    () => {
+
+      requestAnimationFrame(
+        () => {
+
+          /*
+            NÃO recria o stream.
+
+            Apenas garante que o vídeo
+            existente continue reproduzindo.
+          */
+          if (
+            video.paused &&
+            video.srcObject
+          ) {
+
+            video.play().catch(
+              error => {
+
+                console.log(
+                  "Retomar preview após rotação:",
+                  error
+                );
+
+              }
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+function scheduleCameraViewportRefresh() {
+
+  clearTimeout(
+    cameraOrientationTimer
+  );
+
+
+  /*
+    O iOS altera as dimensões da viewport
+    em mais de uma etapa durante a rotação.
+
+    Esperamos a estabilização antes de
+    recompor o VIDEO.
+  */
+  cameraOrientationTimer =
+    setTimeout(
+      () => {
+
+        refreshCameraViewport();
+
+      },
+      180
+    );
+
+}
+
+
+/*
+  Evento normal de mudança de tamanho.
+  Também atende iPad e futuras WebViews.
+*/
+window.addEventListener(
+  "resize",
+  scheduleCameraViewportRefresh,
+  { passive: true }
+);
+
+
+/*
+  Evento específico de orientação.
+
+  Não reinicia a câmera.
+*/
+window.addEventListener(
+  "orientationchange",
+  scheduleCameraViewportRefresh,
+  { passive: true }
+);
+
+
+/*
+  Safari/iOS também pode atualizar
+  o visualViewport separadamente.
+*/
+if (
+  window.visualViewport
+) {
+
+  window.visualViewport.addEventListener(
+    "resize",
+    scheduleCameraViewportRefresh,
+    { passive: true }
+  );
+
+}
+
+/* =========================================================
    CÂMERA
    ========================================================= */
 
