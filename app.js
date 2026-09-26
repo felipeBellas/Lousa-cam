@@ -157,14 +157,13 @@ let drawing =
 
 let tool =
   "pen";
-strokeOpacity =
-  1;
 
 let color =
   "#fff";
 
 let lineWidth =
   5;
+
 let strokeOpacity =
   1;
 
@@ -180,10 +179,13 @@ window.LousaCamPencil = {
   ) {
 
     tool =
-      "pen";
+  "pen";
+
+strokeOpacity =
+  1;
 
 
-    if (
+if (
       typeof newColor ===
         "string" &&
       newColor
