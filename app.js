@@ -611,6 +611,546 @@ let pinchState =
   null;
 
 /* =========================================================
+   FORMAS — ETAPA 4I
+   SELEÇÃO E MOVIMENTO
+   ========================================================= */
+
+let selectedShapeId =
+  null;
+
+let shapeDragStart =
+  null;
+
+
+/*
+  Localiza uma forma pelo ID.
+*/
+function getShapeById(
+  id
+) {
+
+  if (!id) {
+    return null;
+  }
+
+  return (
+    strokes.find(
+      stroke =>
+        stroke.id === id &&
+        stroke.shape
+    ) ||
+    null
+  );
+
+}
+
+
+/*
+  Retorna os limites visuais da forma.
+
+  As formas da ETAPA 4H são construídas
+  utilizando dois pontos:
+  - ponto inicial
+  - ponto final
+*/
+function getShapeBounds(
+  stroke
+) {
+
+  if (
+    !stroke ||
+    !stroke.shape ||
+    !stroke.points ||
+    stroke.points.length < 2
+  ) {
+
+    return null;
+
+  }
+
+
+  const start =
+    stroke.points[0];
+
+  const end =
+    stroke.points[
+      stroke.points.length - 1
+    ];
+
+
+  let x1 =
+    start.x;
+
+  let y1 =
+    start.y;
+
+  let x2 =
+    end.x;
+
+  let y2 =
+    end.y;
+
+
+  let left =
+    Math.min(
+      x1,
+      x2
+    );
+
+  let top =
+    Math.min(
+      y1,
+      y2
+    );
+
+  let width =
+    Math.abs(
+      x2 - x1
+    );
+
+  let height =
+    Math.abs(
+      y2 - y1
+    );
+
+
+  /*
+    Quadrado e círculo usam a maior
+    dimensão durante o desenho.
+
+    Portanto a área de seleção precisa
+    reproduzir exatamente essa lógica.
+  */
+  if (
+    stroke.shape ===
+      "square" ||
+    stroke.shape ===
+      "circle"
+  ) {
+
+    const size =
+      Math.max(
+        width,
+        height
+      );
+
+
+    width =
+      size;
+
+    height =
+      size;
+
+
+    if (
+      x2 < x1
+    ) {
+
+      left =
+        x1 - size;
+
+    } else {
+
+      left =
+        x1;
+
+    }
+
+
+    if (
+      y2 < y1
+    ) {
+
+      top =
+        y1 - size;
+
+    } else {
+
+      top =
+        y1;
+
+    }
+
+  }
+
+
+  return {
+
+    left:
+      left,
+
+    top:
+      top,
+
+    right:
+      left + width,
+
+    bottom:
+      top + height,
+
+    width:
+      width,
+
+    height:
+      height
+
+  };
+
+}
+
+
+/*
+  Distância entre um ponto e
+  um segmento de reta.
+
+  Usado principalmente para facilitar
+  a seleção de Linha e Seta no iPhone.
+*/
+function distanceToSegment(
+  px,
+  py,
+  x1,
+  y1,
+  x2,
+  y2
+) {
+
+  const dx =
+    x2 - x1;
+
+  const dy =
+    y2 - y1;
+
+
+  if (
+    dx === 0 &&
+    dy === 0
+  ) {
+
+    return Math.hypot(
+      px - x1,
+      py - y1
+    );
+
+  }
+
+
+  const lengthSquared =
+    dx * dx +
+    dy * dy;
+
+
+  let t =
+    (
+      (
+        px - x1
+      ) *
+      dx +
+      (
+        py - y1
+      ) *
+      dy
+    ) /
+    lengthSquared;
+
+
+  t =
+    Math.max(
+      0,
+      Math.min(
+        1,
+        t
+      )
+    );
+
+
+  const nearestX =
+    x1 +
+    t * dx;
+
+  const nearestY =
+    y1 +
+    t * dy;
+
+
+  return Math.hypot(
+    px - nearestX,
+    py - nearestY
+  );
+
+}
+
+
+/*
+  Verifica se o ponto tocado pertence
+  à área selecionável de uma forma.
+*/
+function shapeContainsPoint(
+  stroke,
+  x,
+  y
+) {
+
+  if (
+    !stroke ||
+    !stroke.shape ||
+    !stroke.points ||
+    stroke.points.length < 2
+  ) {
+
+    return false;
+
+  }
+
+
+  const start =
+    stroke.points[0];
+
+  const end =
+    stroke.points[
+      stroke.points.length - 1
+    ];
+
+
+  /*
+    Tolerância propositalmente maior
+    que a espessura visual.
+
+    Isso facilita selecionar formas
+    usando o dedo.
+  */
+  const tolerance =
+    Math.max(
+      14,
+      (
+        stroke.width ||
+        3
+      ) + 10
+    );
+
+
+  /*
+    LINHA E SETA
+
+    Aqui não usamos somente uma caixa.
+    O toque precisa estar próximo
+    da linha propriamente dita.
+  */
+  if (
+    stroke.shape ===
+      "line" ||
+    stroke.shape ===
+      "arrow"
+  ) {
+
+    return (
+      distanceToSegment(
+        x,
+        y,
+        start.x,
+        start.y,
+        end.x,
+        end.y
+      ) <=
+      tolerance
+    );
+
+  }
+
+
+  const bounds =
+    getShapeBounds(
+      stroke
+    );
+
+
+  if (!bounds) {
+    return false;
+  }
+
+
+  /*
+    Para as demais formas usamos
+    a caixa delimitadora ampliada.
+
+    Isso torna o toque confortável
+    no iPhone.
+  */
+  return (
+
+    x >=
+      bounds.left -
+      tolerance &&
+
+    x <=
+      bounds.right +
+      tolerance &&
+
+    y >=
+      bounds.top -
+      tolerance &&
+
+    y <=
+      bounds.bottom +
+      tolerance
+
+  );
+
+}
+
+
+/*
+  Procura de trás para frente.
+
+  Assim, se duas formas estiverem
+  sobrepostas, selecionamos primeiro
+  a forma desenhada por último.
+*/
+function findShapeAt(
+  x,
+  y
+) {
+
+  for (
+    let i =
+      strokes.length - 1;
+
+    i >= 0;
+
+    i--
+  ) {
+
+    const stroke =
+      strokes[i];
+
+
+    if (
+      !stroke ||
+      !stroke.shape
+    ) {
+
+      continue;
+
+    }
+
+
+    if (
+      shapeContainsPoint(
+        stroke,
+        x,
+        y
+      )
+    ) {
+
+      return stroke;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/*
+  Desenha indicação visual da
+  forma atualmente selecionada.
+*/
+function drawShapeSelection(
+  c,
+  stroke
+) {
+
+  const bounds =
+    getShapeBounds(
+      stroke
+    );
+
+
+  if (!bounds) {
+    return;
+  }
+
+
+  const padding =
+    8;
+
+
+  c.save();
+
+
+  c.strokeStyle =
+    "rgba(255,255,255,.95)";
+
+
+  c.lineWidth =
+    2;
+
+
+  c.setLineDash([
+    6,
+    5
+  ]);
+
+
+  /*
+    Linha e seta podem ter direção
+    diagonal. Mesmo assim mostramos
+    uma área simples de seleção.
+  */
+  let selectionWidth =
+    bounds.width;
+
+  let selectionHeight =
+    bounds.height;
+
+
+  /*
+    Evita uma caixa praticamente
+    invisível em linhas horizontais
+    ou verticais.
+  */
+  selectionWidth =
+    Math.max(
+      4,
+      selectionWidth
+    );
+
+
+  selectionHeight =
+    Math.max(
+      4,
+      selectionHeight
+    );
+
+
+  c.strokeRect(
+
+    bounds.left -
+      padding,
+
+    bounds.top -
+      padding,
+
+    selectionWidth +
+      padding * 2,
+
+    selectionHeight +
+      padding * 2
+
+  );
+
+
+  c.setLineDash([]);
+
+
+  c.restore();
+
+}
+
+/* =========================================================
    COLAR
    ========================================================= */
 
