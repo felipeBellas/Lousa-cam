@@ -1005,51 +1005,114 @@ function projectPointToRuler(
 
 
   /*
-    Distância perpendicular
-    até a linha-guia.
+    A linha-guia fica na borda
+    inferior da Régua.
+  */
+
+  const guideY =
+    geometry.guideOffsetY;
+
+
+  /*
+    Limites horizontais úteis
+    da Régua.
+  */
+
+  const insideHorizontalRange =
+    localX >=
+      -geometry.halfWidth -
+        12 &&
+    localX <=
+      geometry.halfWidth +
+        12;
+
+
+  /*
+    Distância até a borda
+    de desenho.
   */
 
   const distanceToGuide =
     Math.abs(
       localY -
-      geometry.guideOffsetY
+      guideY
     );
 
 
   /*
-    O início do traço precisa
-    estar próximo da Régua.
+    Zona de atração.
+
+    Um valor moderado evita
+    que a Régua capture traços
+    feitos longe dela.
   */
 
   const SNAP_DISTANCE =
-    30;
+    26;
 
 
-  if (
-    !force &&
-    (
-      distanceToGuide >
-        SNAP_DISTANCE ||
+  /*
+    -------------------------------------------------------
+    INÍCIO DO TRAÇO
+    -------------------------------------------------------
 
-      localX <
-        -geometry.halfWidth -
-        12 ||
+    O traço entra no modo guiado quando:
 
-      localX >
-        geometry.halfWidth +
-        12
-    )
-  ) {
+    1. começa próximo da borda;
 
-    return null;
+    OU
+
+    2. começa dentro da área física
+       da Régua, próximo à sua largura.
+
+    Assim a Régua passa a agir como
+    uma barreira real.
+  */
+
+  if (!force) {
+
+    const nearGuide =
+      insideHorizontalRange &&
+      distanceToGuide <=
+        SNAP_DISTANCE;
+
+
+    /*
+      O corpo da Régua ocupa a região
+      acima da borda inferior.
+
+      localY menor que guideY significa
+      que o ponto entrou no corpo
+      visual da Régua.
+    */
+
+    const insideRulerBody =
+      insideHorizontalRange &&
+      localY <= guideY &&
+      localY >=
+        -geometry.guideOffsetY;
+
+
+    if (
+      !nearGuide &&
+      !insideRulerBody
+    ) {
+
+      return null;
+
+    }
 
   }
 
 
   /*
-    Impede que o traço ultrapasse
-    fisicamente as extremidades
-    da Régua.
+    -------------------------------------------------------
+    PROJEÇÃO HORIZONTAL
+    -------------------------------------------------------
+
+    Depois que o traço foi capturado,
+    ele permanece exatamente sobre
+    a borda.
   */
 
   const projectedX =
@@ -1063,12 +1126,12 @@ function projectPointToRuler(
 
 
   const projectedY =
-    geometry.guideOffsetY;
+    guideY;
 
 
   /*
-    Converte novamente
-    para coordenadas da tela.
+    Converte novamente para
+    coordenadas globais.
   */
 
   return {
