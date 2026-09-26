@@ -621,6 +621,15 @@ let selectedShapeId =
 let shapeDragStart =
   null;
 
+/*
+  ETAPA 4J
+
+  Estado exclusivo da transformação
+  da forma com dois dedos.
+*/
+let shapePinchState =
+  null;
+
 
 /*
   Localiza uma forma pelo ID.
@@ -1147,6 +1156,456 @@ function drawShapeSelection(
 
 
   c.restore();
+
+}
+
+/* =========================================================
+   FORMAS — ETAPA 4J
+   TRANSFORMAÇÃO COM DOIS DEDOS
+   ========================================================= */
+
+
+/*
+  Calcula o centro visual da forma.
+*/
+function getShapeCenter(
+  stroke
+) {
+
+  const bounds =
+    getShapeBounds(
+      stroke
+    );
+
+
+  if (!bounds) {
+
+    return null;
+
+  }
+
+
+  return {
+
+    x:
+      bounds.left +
+      bounds.width / 2,
+
+    y:
+      bounds.top +
+      bounds.height / 2
+
+  };
+
+}
+
+
+/*
+  Inicia o gesto de dois dedos
+  para a forma selecionada.
+*/
+function beginShapePinchGesture() {
+
+  if (
+    activePointers.size !== 2
+  ) {
+
+    return false;
+
+  }
+
+
+  const shape =
+    getShapeById(
+      selectedShapeId
+    );
+
+
+  if (!shape) {
+
+    return false;
+
+  }
+
+
+  const info =
+    getPinchInfo();
+
+
+  if (
+    !info ||
+    info.distance < 10
+  ) {
+
+    return false;
+
+  }
+
+
+  const center =
+    getShapeCenter(
+      shape
+    );
+
+
+  if (!center) {
+
+    return false;
+
+  }
+
+
+  /*
+    Se o primeiro dedo estava preparado
+    para movimentar a forma, interrompe
+    esse movimento e passa para o gesto
+    de dois dedos.
+  */
+  shapeDragStart =
+    null;
+
+
+  drawing =
+    false;
+
+  currentStroke =
+    null;
+
+
+  pointerMode =
+    "shapePinch";
+
+
+  pointerMoved =
+    true;
+
+
+  shapePinchState = {
+
+    shapeId:
+      shape.id,
+
+    startDistance:
+      info.distance,
+
+    startAngle:
+      info.angle,
+
+    startCenterX:
+      info.centerX,
+
+    startCenterY:
+      info.centerY,
+
+    shapeCenterX:
+      center.x,
+
+    shapeCenterY:
+      center.y,
+
+    /*
+      Guarda cópia independente dos
+      pontos originais.
+    */
+    points:
+      shape.points.map(
+        point => ({
+
+          x:
+            point.x,
+
+          y:
+            point.y
+
+        })
+      )
+
+  };
+
+
+  redraw();
+
+  return true;
+
+}
+
+
+/*
+  Atualiza tamanho, rotação e posição
+  da forma durante o gesto.
+*/
+function updateShapePinchGesture() {
+
+  if (!shapePinchState) {
+
+    return;
+
+  }
+
+
+  const shape =
+    getShapeById(
+      shapePinchState.shapeId
+    );
+
+
+  if (!shape) {
+
+    return;
+
+  }
+
+
+  const info =
+    getPinchInfo();
+
+
+  if (
+    !info ||
+    shapePinchState.startDistance <= 0
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    ESCALA
+  */
+  let scale =
+    info.distance /
+    shapePinchState.startDistance;
+
+
+  /*
+    Evita uma forma excessivamente
+    pequena ou gigantesca.
+  */
+  scale =
+    clamp(
+      scale,
+      0.20,
+      5
+    );
+
+
+  /*
+    ROTAÇÃO
+  */
+  let angleDelta =
+    info.angle -
+    shapePinchState.startAngle;
+
+
+  /*
+    Corrige a passagem de +180° para
+    -180° e vice-versa.
+  */
+  if (
+    angleDelta >
+    Math.PI
+  ) {
+
+    angleDelta -=
+      Math.PI * 2;
+
+  }
+
+  else if (
+    angleDelta <
+    -Math.PI
+  ) {
+
+    angleDelta +=
+      Math.PI * 2;
+
+  }
+
+
+  /*
+    O centro da transformação também
+    acompanha o centro dos dois dedos.
+
+    Portanto é possível:
+    - aumentar
+    - diminuir
+    - girar
+    - reposicionar
+
+    tudo no mesmo gesto.
+  */
+  const centerMoveX =
+    info.centerX -
+    shapePinchState.startCenterX;
+
+
+  const centerMoveY =
+    info.centerY -
+    shapePinchState.startCenterY;
+
+
+  const newCenterX =
+    shapePinchState.shapeCenterX +
+    centerMoveX;
+
+
+  const newCenterY =
+    shapePinchState.shapeCenterY +
+    centerMoveY;
+
+
+  const cos =
+    Math.cos(
+      angleDelta
+    );
+
+
+  const sin =
+    Math.sin(
+      angleDelta
+    );
+
+
+  /*
+    Transforma cada ponto original
+    ao redor do centro da forma.
+
+    Como todas as formas da 4H são
+    construídas a partir de seus pontos,
+    não precisamos alterar o sistema
+    original de desenho.
+  */
+  shape.points =
+    shapePinchState.points.map(
+      originalPoint => {
+
+        const relativeX =
+          (
+            originalPoint.x -
+            shapePinchState.shapeCenterX
+          ) *
+          scale;
+
+
+        const relativeY =
+          (
+            originalPoint.y -
+            shapePinchState.shapeCenterY
+          ) *
+          scale;
+
+
+        const rotatedX =
+          relativeX *
+          cos -
+          relativeY *
+          sin;
+
+
+        const rotatedY =
+          relativeX *
+          sin +
+          relativeY *
+          cos;
+
+
+        return {
+
+          x:
+            newCenterX +
+            rotatedX,
+
+          y:
+            newCenterY +
+            rotatedY
+
+        };
+
+      }
+    );
+
+
+  redraw();
+
+}
+
+
+/*
+  Finaliza o gesto de transformação
+  da forma.
+*/
+function endShapePinchGesture() {
+
+  activePointers
+    .forEach(
+      (
+        point,
+        pointerId
+      ) => {
+
+        try {
+
+          if (
+            canvas.hasPointerCapture(
+              pointerId
+            )
+          ) {
+
+            canvas.releasePointerCapture(
+              pointerId
+            );
+
+          }
+
+        } catch (error) {
+
+          console.log(
+            error
+          );
+
+        }
+
+      }
+    );
+
+
+  activePointers.clear();
+
+
+  shapePinchState =
+    null;
+
+
+  shapeDragStart =
+    null;
+
+
+  pointerMode =
+    null;
+
+
+  activePointerId =
+    null;
+
+
+  pointerStart =
+    null;
+
+
+  pointerMoved =
+    false;
+
+
+  drawing =
+    false;
+
+
+  currentStroke =
+    null;
+
+
+  redraw();
 
 }
 
