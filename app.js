@@ -1101,6 +1101,14 @@ function drawStroke(
   const isPencil =
     stroke.tool ===
     "pencil";
+   
+   /*
+  PINCEL
+*/
+
+const isBrush =
+  stroke.tool ===
+  "brush";
 
 
   /*
@@ -1225,7 +1233,10 @@ function drawStroke(
     Mantém exatamente o comportamento
     que já estava funcionando.
   */
-  if (!isPencil) {
+  if (
+  !isPencil &&
+  !isBrush
+) {
 
     buildSmoothPath();
 
@@ -1236,6 +1247,61 @@ function drawStroke(
     return;
 
   }
+
+   /*
+  =====================================================
+  APARÊNCIA DO PINCEL
+  =====================================================
+
+  Duas camadas suaves:
+  - corpo principal encorpado
+  - núcleo mais concentrado
+
+  Mantém o traço suave e diferencia
+  o Pincel da Caneta e do Lápis.
+*/
+
+if (isBrush) {
+
+  /*
+    Corpo externo do pincel.
+  */
+  c.globalAlpha =
+    baseOpacity * 0.58;
+
+  c.lineWidth =
+    stroke.width;
+
+  c.strokeStyle =
+    stroke.color;
+
+  buildSmoothPath();
+
+  c.stroke();
+
+
+  /*
+    Núcleo do pincel.
+  */
+  c.globalAlpha =
+    baseOpacity * 0.72;
+
+  c.lineWidth =
+    Math.max(
+      1,
+      stroke.width * 0.58
+    );
+
+  buildSmoothPath();
+
+  c.stroke();
+
+
+  c.restore();
+
+  return;
+
+}
 
 
   /*
