@@ -5451,11 +5451,48 @@ function continueDrawing(
   ) {
 
     return;
+
+  }
+
+
+  /*
+    Se este traço começou junto
+    à Régua, todos os pontos
+    seguintes continuam presos
+    à linha-guia.
+  */
+
+  let drawingPoint =
+    point;
+
+
+  if (
+    currentStroke.rulerGuided &&
+    window.LousaCamPencil &&
+    typeof window.LousaCamPencil.projectPointToRuler ===
+      "function"
+  ) {
+
+    const projectedPoint =
+      window.LousaCamPencil.projectPointToRuler(
+        point,
+        true
+      );
+
+
+    if (projectedPoint) {
+
+      drawingPoint =
+        projectedPoint;
+
+    }
+
   }
 
 
   const points =
     currentStroke.points;
+
 
   const lastPoint =
     points[
@@ -5467,13 +5504,15 @@ function continueDrawing(
     Distância entre o último ponto
     registrado e o novo ponto.
   */
+
   const dx =
-    point.x -
+    drawingPoint.x -
     lastPoint.x;
 
   const dy =
-    point.y -
+    drawingPoint.y -
     lastPoint.y;
+
 
   const distance =
     Math.sqrt(
@@ -5483,12 +5522,10 @@ function continueDrawing(
 
 
   /*
-    Ignora micro movimentos involuntários
-    do dedo.
-
-    Isso reduz muito o "tremido"
-    das letras no celular.
+    Mantém o filtro original
+    contra micro movimentos.
   */
+
   if (
     distance < 1.5
   ) {
@@ -5501,10 +5538,10 @@ function continueDrawing(
   points.push({
 
     x:
-      point.x,
+      drawingPoint.x,
 
     y:
-      point.y
+      drawingPoint.y
 
   });
 
