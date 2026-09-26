@@ -2962,18 +2962,31 @@ function openShapesPanel() {
           /* -----------------------
              MAIS
              ----------------------- */
+           
+           if (
+  toolId ===
+  "more"
+) {
 
-          if (
-            toolId ===
-            "more"
-          ) {
+  if (
+    contextTool ===
+    "more"
+  ) {
 
-            closeContextPanel();
+    closeContextPanel();
 
-            return;
+    return;
 
-          }
+  }
 
+
+  openShapesPanel();
+
+  return;
+
+}
+
+         
 
           /* -----------------------
              FERRAMENTAS
