@@ -851,23 +851,40 @@ function applyEraserToDrawingEngine() {
 
 
            settings.size =
-               size;
+                 size;
 
 
-           if (
-                toolId ===
-                  "pen"
-           ) {
+/*
+  CANETA
+*/
 
-           applyPenToDrawingEngine();
+if (
+  toolId ===
+  "pen"
+) {
 
-           }
+  applyPenToDrawingEngine();
+
+}
 
 
-           openContextPanel(
-           toolId
-           );
+/*
+  BORRACHA
+*/
 
+if (
+  toolId ===
+  "eraser"
+) {
+
+  applyEraserToDrawingEngine();
+
+}
+
+
+openContextPanel(
+  toolId
+);
           }
         );
 
@@ -1157,12 +1174,30 @@ activeTool =
 updateToolVisuals();
 
 
+/*
+  CANETA
+*/
+
 if (
   toolId ===
   "pen"
 ) {
 
   applyPenToDrawingEngine();
+
+}
+
+
+/*
+  BORRACHA
+*/
+
+if (
+  toolId ===
+  "eraser"
+) {
+
+  applyEraserToDrawingEngine();
 
 }
 
