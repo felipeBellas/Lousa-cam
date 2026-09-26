@@ -405,12 +405,40 @@
 
 
   let rulerVisible =
-    false;
+  false;
 
 
-  let contextTool =
-    null;
+/* =======================================================
+   RÉGUA — ETAPA 4F
 
+   Estado geométrico independente
+   do motor principal da lousa.
+   ======================================================= */
+
+const rulerState = {
+
+  x:
+    window.innerWidth / 2,
+
+  y:
+    window.innerHeight / 2,
+
+  angle:
+    0
+
+};
+
+
+const rulerPointers =
+  new Map();
+
+
+let rulerGesture =
+  null;
+
+
+let contextTool =
+  null;
 
   /* =======================================================
      ARRASTE
@@ -802,6 +830,701 @@ function applyBrushToDrawingEngine() {
   );
 
 }
+
+   /* =======================================================
+   RÉGUA — ETAPA 4F
+   ======================================================= */
+
+
+/*
+  Atualiza a posição e a rotação
+  visual da Régua.
+*/
+
+function updateRulerTransform() {
+
+  ruler.style.left =
+    `${rulerState.x}px`;
+
+  ruler.style.top =
+    `${rulerState.y}px`;
+
+  ruler.style.transform =
+    `translate(-50%, -50%)
+     rotate(${rulerState.angle}rad)`;
+
+}
+
+
+/*
+  Mantém o centro da Régua
+  dentro da área visível.
+*/
+
+function keepRulerInsideViewport() {
+
+  const margin =
+    30;
+
+  rulerState.x =
+    Math.min(
+      window.innerWidth - margin,
+      Math.max(
+        margin,
+        rulerState.x
+      )
+    );
+
+  rulerState.y =
+    Math.min(
+      window.innerHeight - margin,
+      Math.max(
+        margin,
+        rulerState.y
+      )
+    );
+
+  updateRulerTransform();
+
+}
+
+
+/*
+  Retorna informações geométricas
+  da linha-guia da Régua.
+
+  A linha branca visual fica
+  próxima à borda inferior.
+*/
+
+function getRulerGeometry() {
+
+  const width =
+    ruler.offsetWidth;
+
+  const height =
+    ruler.offsetHeight;
+
+  /*
+    A linha visual está 10px
+    acima da borda inferior.
+  */
+  const guideOffsetY =
+    height / 2 - 10;
+
+  return {
+
+    centerX:
+      rulerState.x,
+
+    centerY:
+      rulerState.y,
+
+    angle:
+      rulerState.angle,
+
+    halfWidth:
+      Math.max(
+        0,
+        width / 2 - 12
+      ),
+
+    guideOffsetY:
+      guideOffsetY
+
+  };
+
+}
+
+
+/*
+  Projeta um ponto do canvas
+  sobre a linha da Régua.
+
+  force = false:
+  só ativa quando o desenho começa
+  próximo da borda.
+
+  force = true:
+  mantém o restante daquele traço
+  preso à mesma linha.
+*/
+
+function projectPointToRuler(
+  point,
+  force = false
+) {
+
+  if (
+    !rulerVisible ||
+    !point
+  ) {
+
+    return null;
+
+  }
+
+
+  const geometry =
+    getRulerGeometry();
+
+
+  const cos =
+    Math.cos(
+      geometry.angle
+    );
+
+  const sin =
+    Math.sin(
+      geometry.angle
+    );
+
+
+  /*
+    Converte o ponto global
+    para coordenadas locais
+    da Régua.
+  */
+
+  const dx =
+    point.x -
+    geometry.centerX;
+
+  const dy =
+    point.y -
+    geometry.centerY;
+
+
+  const localX =
+    dx * cos +
+    dy * sin;
+
+  const localY =
+    -dx * sin +
+    dy * cos;
+
+
+  /*
+    Distância perpendicular
+    até a linha-guia.
+  */
+
+  const distanceToGuide =
+    Math.abs(
+      localY -
+      geometry.guideOffsetY
+    );
+
+
+  /*
+    O início do traço precisa
+    estar próximo da Régua.
+  */
+
+  const SNAP_DISTANCE =
+    30;
+
+
+  if (
+    !force &&
+    (
+      distanceToGuide >
+        SNAP_DISTANCE ||
+
+      localX <
+        -geometry.halfWidth -
+        12 ||
+
+      localX >
+        geometry.halfWidth +
+        12
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  /*
+    Impede que o traço ultrapasse
+    fisicamente as extremidades
+    da Régua.
+  */
+
+  const projectedX =
+    Math.max(
+      -geometry.halfWidth,
+      Math.min(
+        geometry.halfWidth,
+        localX
+      )
+    );
+
+
+  const projectedY =
+    geometry.guideOffsetY;
+
+
+  /*
+    Converte novamente
+    para coordenadas da tela.
+  */
+
+  return {
+
+    x:
+      geometry.centerX +
+      projectedX * cos -
+      projectedY * sin,
+
+    y:
+      geometry.centerY +
+      projectedX * sin +
+      projectedY * cos
+
+  };
+
+}
+
+
+/*
+  Expõe somente a projeção necessária
+  para o motor de desenho do app.js.
+
+  Não substitui as pontes existentes
+  de Caneta, Pincel, Lápis etc.
+*/
+
+window.LousaCamPencil.projectPointToRuler =
+  projectPointToRuler;
+
+
+/* =======================================================
+   GESTOS DA RÉGUA
+   ======================================================= */
+
+function getRulerPointerCenter() {
+
+  const points =
+    Array.from(
+      rulerPointers.values()
+    );
+
+
+  if (!points.length) {
+
+    return null;
+
+  }
+
+
+  if (points.length === 1) {
+
+    return {
+
+      x:
+        points[0].x,
+
+      y:
+        points[0].y
+
+    };
+
+  }
+
+
+  return {
+
+    x:
+      (
+        points[0].x +
+        points[1].x
+      ) / 2,
+
+    y:
+      (
+        points[0].y +
+        points[1].y
+      ) / 2
+
+  };
+
+}
+
+
+function getRulerPointerAngle() {
+
+  const points =
+    Array.from(
+      rulerPointers.values()
+    );
+
+
+  if (points.length < 2) {
+
+    return 0;
+
+  }
+
+
+  return Math.atan2(
+    points[1].y -
+      points[0].y,
+
+    points[1].x -
+      points[0].x
+  );
+
+}
+
+
+ruler.addEventListener(
+  "pointerdown",
+  event => {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+
+    rulerPointers.set(
+      event.pointerId,
+      {
+        x:
+          event.clientX,
+
+        y:
+          event.clientY
+      }
+    );
+
+
+    try {
+
+      ruler.setPointerCapture(
+        event.pointerId
+      );
+
+    } catch (error) {
+
+      /* sem ação */
+
+    }
+
+
+    const center =
+      getRulerPointerCenter();
+
+
+    if (
+      rulerPointers.size === 1
+    ) {
+
+      rulerGesture = {
+
+        type:
+          "move",
+
+        startPointerX:
+          center.x,
+
+        startPointerY:
+          center.y,
+
+        startX:
+          rulerState.x,
+
+        startY:
+          rulerState.y
+
+      };
+
+    } else {
+
+      rulerGesture = {
+
+        type:
+          "transform",
+
+        startCenterX:
+          center.x,
+
+        startCenterY:
+          center.y,
+
+        startX:
+          rulerState.x,
+
+        startY:
+          rulerState.y,
+
+        startAngle:
+          rulerState.angle,
+
+        pointerAngle:
+          getRulerPointerAngle()
+
+      };
+
+    }
+
+  }
+);
+
+
+ruler.addEventListener(
+  "pointermove",
+  event => {
+
+    if (
+      !rulerPointers.has(
+        event.pointerId
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    event.preventDefault();
+    event.stopPropagation();
+
+
+    rulerPointers.set(
+      event.pointerId,
+      {
+        x:
+          event.clientX,
+
+        y:
+          event.clientY
+      }
+    );
+
+
+    if (!rulerGesture) {
+
+      return;
+
+    }
+
+
+    const center =
+      getRulerPointerCenter();
+
+
+    /*
+      UM DEDO:
+      mover.
+    */
+
+    if (
+      rulerPointers.size === 1 &&
+      rulerGesture.type ===
+        "move"
+    ) {
+
+      rulerState.x =
+        rulerGesture.startX +
+        (
+          center.x -
+          rulerGesture.startPointerX
+        );
+
+      rulerState.y =
+        rulerGesture.startY +
+        (
+          center.y -
+          rulerGesture.startPointerY
+        );
+
+
+      keepRulerInsideViewport();
+
+      return;
+
+    }
+
+
+    /*
+      DOIS DEDOS:
+      mover + girar.
+    */
+
+    if (
+      rulerPointers.size >= 2
+    ) {
+
+      if (
+        rulerGesture.type !==
+        "transform"
+      ) {
+
+        rulerGesture = {
+
+          type:
+            "transform",
+
+          startCenterX:
+            center.x,
+
+          startCenterY:
+            center.y,
+
+          startX:
+            rulerState.x,
+
+          startY:
+            rulerState.y,
+
+          startAngle:
+            rulerState.angle,
+
+          pointerAngle:
+            getRulerPointerAngle()
+
+        };
+
+      }
+
+
+      const currentAngle =
+        getRulerPointerAngle();
+
+
+      rulerState.angle =
+        rulerGesture.startAngle +
+        (
+          currentAngle -
+          rulerGesture.pointerAngle
+        );
+
+
+      rulerState.x =
+        rulerGesture.startX +
+        (
+          center.x -
+          rulerGesture.startCenterX
+        );
+
+      rulerState.y =
+        rulerGesture.startY +
+        (
+          center.y -
+          rulerGesture.startCenterY
+        );
+
+
+      keepRulerInsideViewport();
+
+    }
+
+  }
+);
+
+
+function finishRulerPointer(
+  event
+) {
+
+  if (
+    !rulerPointers.has(
+      event.pointerId
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  event.preventDefault();
+  event.stopPropagation();
+
+
+  rulerPointers.delete(
+    event.pointerId
+  );
+
+
+  try {
+
+    if (
+      ruler.hasPointerCapture(
+        event.pointerId
+      )
+    ) {
+
+      ruler.releasePointerCapture(
+        event.pointerId
+      );
+
+    }
+
+  } catch (error) {
+
+    /* sem ação */
+
+  }
+
+
+  /*
+    Se ainda sobrou um dedo,
+    ele passa a controlar
+    novamente apenas o movimento.
+  */
+
+  if (
+    rulerPointers.size === 1
+  ) {
+
+    const center =
+      getRulerPointerCenter();
+
+
+    rulerGesture = {
+
+      type:
+        "move",
+
+      startPointerX:
+        center.x,
+
+      startPointerY:
+        center.y,
+
+      startX:
+        rulerState.x,
+
+      startY:
+        rulerState.y
+
+    };
+
+  } else {
+
+    rulerGesture =
+      null;
+
+  }
+
+}
+
+
+ruler.addEventListener(
+  "pointerup",
+  finishRulerPointer
+);
+
+
+ruler.addEventListener(
+  "pointercancel",
+  finishRulerPointer
+);
+
+
+updateRulerTransform();
 
    
   /* =======================================================
