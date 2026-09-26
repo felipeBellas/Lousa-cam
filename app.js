@@ -621,6 +621,15 @@ let selectedShapeId =
 let shapeDragStart =
   null;
 
+
+/* =========================================================
+   FORMAS — ETAPA 4J
+   REDIMENSIONAMENTO E ROTAÇÃO
+   ========================================================= */
+
+let shapePinchState =
+  null;
+
 /*
   ETAPA 4J
 
@@ -912,22 +921,71 @@ function shapeContainsPoint(
   }
 
 
-  const start =
-    stroke.points[0];
+  const bounds =
+    getShapeBounds(
+      stroke
+    );
 
-  const end =
-    stroke.points[
-      stroke.points.length - 1
-    ];
+
+  if (!bounds) {
+
+    return false;
+
+  }
+
+
+  const rotation =
+    stroke.rotation || 0;
+
+
+  const centerX =
+    bounds.left +
+    bounds.width / 2;
+
+
+  const centerY =
+    bounds.top +
+    bounds.height / 2;
 
 
   /*
-    Tolerância propositalmente maior
-    que a espessura visual.
+    Converte o ponto tocado para o
+    sistema local da forma.
 
-    Isso facilita selecionar formas
-    usando o dedo.
+    Aplicamos a rotação inversa.
   */
+  const dx =
+    x - centerX;
+
+
+  const dy =
+    y - centerY;
+
+
+  const cos =
+    Math.cos(
+      -rotation
+    );
+
+
+  const sin =
+    Math.sin(
+      -rotation
+    );
+
+
+  const localX =
+    centerX +
+    dx * cos -
+    dy * sin;
+
+
+  const localY =
+    centerY +
+    dx * sin +
+    dy * cos;
+
+
   const tolerance =
     Math.max(
       14,
@@ -939,11 +997,7 @@ function shapeContainsPoint(
 
 
   /*
-    LINHA E SETA
-
-    Aqui não usamos somente uma caixa.
-    O toque precisa estar próximo
-    da linha propriamente dita.
+    LINHA / SETA
   */
   if (
     stroke.shape ===
@@ -952,10 +1006,20 @@ function shapeContainsPoint(
       "arrow"
   ) {
 
+    const start =
+      stroke.points[0];
+
+
+    const end =
+      stroke.points[
+        stroke.points.length - 1
+      ];
+
+
     return (
       distanceToSegment(
-        x,
-        y,
+        localX,
+        localY,
         start.x,
         start.y,
         end.x,
@@ -967,46 +1031,30 @@ function shapeContainsPoint(
   }
 
 
-  const bounds =
-    getShapeBounds(
-      stroke
-    );
-
-
-  if (!bounds) {
-    return false;
-  }
-
-
   /*
-    Para as demais formas usamos
-    a caixa delimitadora ampliada.
-
-    Isso torna o toque confortável
-    no iPhone.
+    DEMAIS FORMAS
   */
   return (
 
-    x >=
+    localX >=
       bounds.left -
       tolerance &&
 
-    x <=
+    localX <=
       bounds.right +
       tolerance &&
 
-    y >=
+    localY >=
       bounds.top -
       tolerance &&
 
-    y <=
+    localY <=
       bounds.bottom +
       tolerance
 
   );
 
 }
-
 
 /*
   Procura de trás para frente.
@@ -1079,7 +1127,9 @@ function drawShapeSelection(
 
 
   if (!bounds) {
+
     return;
+
   }
 
 
@@ -1087,7 +1137,56 @@ function drawShapeSelection(
     8;
 
 
+  const rotation =
+    stroke.rotation || 0;
+
+
+  const centerX =
+    bounds.left +
+    bounds.width / 2;
+
+
+  const centerY =
+    bounds.top +
+    bounds.height / 2;
+
+
+  let selectionWidth =
+    Math.max(
+      4,
+      bounds.width
+    );
+
+
+  let selectionHeight =
+    Math.max(
+      4,
+      bounds.height
+    );
+
+
   c.save();
+
+
+  /*
+    A caixa acompanha exatamente
+    a rotação da forma.
+  */
+  c.translate(
+    centerX,
+    centerY
+  );
+
+
+  c.rotate(
+    rotation
+  );
+
+
+  c.translate(
+    -centerX,
+    -centerY
+  );
 
 
   c.strokeStyle =
@@ -1102,37 +1201,6 @@ function drawShapeSelection(
     6,
     5
   ]);
-
-
-  /*
-    Linha e seta podem ter direção
-    diagonal. Mesmo assim mostramos
-    uma área simples de seleção.
-  */
-  let selectionWidth =
-    bounds.width;
-
-  let selectionHeight =
-    bounds.height;
-
-
-  /*
-    Evita uma caixa praticamente
-    invisível em linhas horizontais
-    ou verticais.
-  */
-  selectionWidth =
-    Math.max(
-      4,
-      selectionWidth
-    );
-
-
-  selectionHeight =
-    Math.max(
-      4,
-      selectionHeight
-    );
 
 
   c.strokeRect(
@@ -1158,7 +1226,6 @@ function drawShapeSelection(
   c.restore();
 
 }
-
 /* =========================================================
    FORMAS — ETAPA 4J
    TRANSFORMAÇÃO COM DOIS DEDOS
@@ -1608,6 +1675,360 @@ function endShapePinchGesture() {
   redraw();
 
 }
+
+/* =========================================================
+   FORMAS — ETAPA 4J
+   GESTO COM DOIS DEDOS
+   ========================================================= */
+
+function beginShapePinchGesture() {
+
+  if (
+    activePointers.size !== 2
+  ) {
+
+    return false;
+
+  }
+
+
+  const shape =
+    getShapeById(
+      selectedShapeId
+    );
+
+
+  if (!shape) {
+
+    return false;
+
+  }
+
+
+  const info =
+    getPinchInfo();
+
+
+  if (
+    !info ||
+    info.distance < 10
+  ) {
+
+    return false;
+
+  }
+
+
+  const bounds =
+    getShapeBounds(
+      shape
+    );
+
+
+  if (!bounds) {
+
+    return false;
+
+  }
+
+
+  /*
+    Interrompe o movimento com
+    um dedo e passa para 2 dedos.
+  */
+  shapeDragStart =
+    null;
+
+
+  drawing =
+    false;
+
+
+  currentStroke =
+    null;
+
+
+  pointerMode =
+    "shapePinch";
+
+
+  pointerMoved =
+    true;
+
+
+  shapePinchState = {
+
+    shapeId:
+      shape.id,
+
+    startDistance:
+      info.distance,
+
+    startAngle:
+      info.angle,
+
+    startRotation:
+      shape.rotation || 0,
+
+    startCenterX:
+      info.centerX,
+
+    startCenterY:
+      info.centerY,
+
+    shapeCenterX:
+      bounds.left +
+      bounds.width / 2,
+
+    shapeCenterY:
+      bounds.top +
+      bounds.height / 2,
+
+    points:
+      shape.points.map(
+        point => ({
+
+          x:
+            point.x,
+
+          y:
+            point.y
+
+        })
+      )
+
+  };
+
+
+  redraw();
+
+
+  return true;
+
+}
+
+
+function updateShapePinchGesture() {
+
+  if (!shapePinchState) {
+
+    return;
+
+  }
+
+
+  const shape =
+    getShapeById(
+      shapePinchState.shapeId
+    );
+
+
+  if (!shape) {
+
+    return;
+
+  }
+
+
+  const info =
+    getPinchInfo();
+
+
+  if (
+    !info ||
+    shapePinchState.startDistance <= 0
+  ) {
+
+    return;
+
+  }
+
+
+  /* ===============================
+     ESCALA
+     =============================== */
+
+  let scale =
+    info.distance /
+    shapePinchState.startDistance;
+
+
+  scale =
+    clamp(
+      scale,
+      0.20,
+      5
+    );
+
+
+  /* ===============================
+     ROTAÇÃO
+     =============================== */
+
+  let angleDelta =
+    info.angle -
+    shapePinchState.startAngle;
+
+
+  if (
+    angleDelta >
+    Math.PI
+  ) {
+
+    angleDelta -=
+      Math.PI * 2;
+
+  }
+
+  else if (
+    angleDelta <
+    -Math.PI
+  ) {
+
+    angleDelta +=
+      Math.PI * 2;
+
+  }
+
+
+  shape.rotation =
+    shapePinchState.startRotation +
+    angleDelta;
+
+
+  /* ===============================
+     MOVIMENTO DO CENTRO
+     =============================== */
+
+  const centerMoveX =
+    info.centerX -
+    shapePinchState.startCenterX;
+
+
+  const centerMoveY =
+    info.centerY -
+    shapePinchState.startCenterY;
+
+
+  const newCenterX =
+    shapePinchState.shapeCenterX +
+    centerMoveX;
+
+
+  const newCenterY =
+    shapePinchState.shapeCenterY +
+    centerMoveY;
+
+
+  /*
+    Redimensiona os pontos sem aplicar
+    rotação neles.
+
+    A rotação fica exclusivamente em
+    shape.rotation.
+  */
+  shape.points =
+    shapePinchState.points.map(
+      originalPoint => ({
+
+        x:
+          newCenterX +
+          (
+            originalPoint.x -
+            shapePinchState.shapeCenterX
+          ) *
+          scale,
+
+        y:
+          newCenterY +
+          (
+            originalPoint.y -
+            shapePinchState.shapeCenterY
+          ) *
+          scale
+
+      })
+    );
+
+
+  redraw();
+
+}
+
+
+function endShapePinchGesture() {
+
+  activePointers.forEach(
+    (
+      point,
+      pointerId
+    ) => {
+
+      try {
+
+        if (
+          canvas.hasPointerCapture(
+            pointerId
+          )
+        ) {
+
+          canvas.releasePointerCapture(
+            pointerId
+          );
+
+        }
+
+      } catch (error) {
+
+        console.log(
+          error
+        );
+
+      }
+
+    }
+  );
+
+
+  activePointers.clear();
+
+
+  shapePinchState =
+    null;
+
+
+  shapeDragStart =
+    null;
+
+
+  pointerMode =
+    null;
+
+
+  activePointerId =
+    null;
+
+
+  pointerStart =
+    null;
+
+
+  pointerMoved =
+    false;
+
+
+  drawing =
+    false;
+
+
+  currentStroke =
+    null;
+
+
+  redraw();
+
+}
+
 
 /* =========================================================
    COLAR
