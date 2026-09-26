@@ -1432,30 +1432,36 @@ ruler.addEventListener(
 
     } else {
 
-      rulerGesture = {
+     rulerGesture = {
 
-        type:
-          "transform",
+  type:
+    "transform",
 
-        startCenterX:
-          center.x,
+  startCenterX:
+    center.x,
 
-        startCenterY:
-          center.y,
+  startCenterY:
+    center.y,
 
-        startX:
-          rulerState.x,
+  startX:
+    rulerState.x,
 
-        startY:
-          rulerState.y,
+  startY:
+    rulerState.y,
 
-        startAngle:
-          rulerState.angle,
+  startAngle:
+    rulerState.angle,
 
-        pointerAngle:
-          getRulerPointerAngle()
+  pointerAngle:
+    getRulerPointerAngle(),
 
-      };
+  startDistance:
+    getRulerPointerDistance(),
+
+  startWidth:
+    rulerState.width
+
+};
 
     }
 
@@ -1588,28 +1594,34 @@ ruler.addEventListener(
 
         rulerGesture = {
 
-          type:
-            "transform",
+  type:
+    "transform",
 
-          startCenterX:
-            center.x,
+  startCenterX:
+    center.x,
 
-          startCenterY:
-            center.y,
+  startCenterY:
+    center.y,
 
-          startX:
-            rulerState.x,
+  startX:
+    rulerState.x,
 
-          startY:
-            rulerState.y,
+  startY:
+    rulerState.y,
 
-          startAngle:
-            rulerState.angle,
+  startAngle:
+    rulerState.angle,
 
-          pointerAngle:
-            getRulerPointerAngle()
+  pointerAngle:
+    getRulerPointerAngle(),
 
-        };
+  startDistance:
+    getRulerPointerDistance(),
+
+  startWidth:
+    rulerState.width
+
+};
 
       }
 
@@ -1624,6 +1636,31 @@ ruler.addEventListener(
           currentAngle -
           rulerGesture.pointerAngle
         );
+
+       const currentDistance =
+  getRulerPointerDistance();
+
+
+if (
+  rulerGesture.startDistance > 0
+) {
+
+  const scaleFactor =
+    currentDistance /
+    rulerGesture.startDistance;
+
+
+  rulerState.width =
+    Math.max(
+      RULER_MIN_WIDTH,
+      Math.min(
+        RULER_MAX_WIDTH,
+        rulerGesture.startWidth *
+        scaleFactor
+      )
+    );
+
+}
 
 
       rulerState.x =
