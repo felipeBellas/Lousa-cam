@@ -5346,6 +5346,47 @@ function startDrawing(
   drawing =
     true;
 
+   /*
+  RÉGUA
+
+  Verifica somente no início
+  do traço se o usuário começou
+  próximo da linha-guia.
+*/
+
+let drawingPoint =
+  point;
+
+
+let rulerGuided =
+  false;
+
+
+if (
+  window.LousaCamPencil &&
+  typeof window.LousaCamPencil.projectPointToRuler ===
+    "function"
+) {
+
+  const projectedPoint =
+    window.LousaCamPencil.projectPointToRuler(
+      point,
+      false
+    );
+
+
+  if (projectedPoint) {
+
+    drawingPoint =
+      projectedPoint;
+
+    rulerGuided =
+      true;
+
+  }
+
+}
+
 
   currentStroke = {
 
@@ -5365,17 +5406,20 @@ function startDrawing(
       lineWidth,
 
     opacity:
-      strokeOpacity,
+  strokeOpacity,
 
-    points: [
+rulerGuided:
+  rulerGuided,
+
+points: [
 
       {
 
         x:
-          point.x,
+          drawingPoint.x,
 
         y:
-          point.y
+          drawingPoint.y
 
       }
 
