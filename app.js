@@ -409,6 +409,65 @@ if (
     }
 
 
+       if (widthInput) {
+
+      widthInput.value =
+        String(
+          lineWidth
+        );
+
+    }
+
+  },
+
+
+  /* =====================================================
+     PINCEL — ETAPA 4E
+     ===================================================== */
+
+  setBrush(
+    newColor,
+    newWidth
+  ) {
+
+    tool =
+      "brush";
+
+    strokeOpacity =
+      1;
+
+
+    if (
+      typeof newColor ===
+        "string" &&
+      newColor
+    ) {
+
+      color =
+        newColor;
+
+    }
+
+
+    const parsedWidth =
+      Number(
+        newWidth
+      );
+
+
+    if (
+      Number.isFinite(
+        parsedWidth
+      ) &&
+      parsedWidth > 0
+    ) {
+
+      lineWidth =
+        parsedWidth;
+
+    }
+
+
     if (widthInput) {
 
       widthInput.value =
