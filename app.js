@@ -7375,6 +7375,25 @@ canvas.addEventListener(
   "pointercancel",
   event => {
 
+    /*
+      ETAPA 4J
+      Cancela corretamente o gesto
+      de dois dedos da forma.
+    */
+    if (
+      shapePinchState
+    ) {
+
+      endShapePinchGesture();
+
+      return;
+
+    }
+
+
+    /*
+      Sistema original de texto/imagem.
+    */
     if (
       pinchState
     ) {
