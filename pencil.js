@@ -1185,6 +1185,19 @@ if (
 
 }
 
+/*
+  PINCEL
+*/
+
+if (
+  toolId ===
+  "brush"
+) {
+
+  applyBrushToDrawingEngine();
+
+}
+
 
 
             openContextPanel(
@@ -1271,6 +1284,19 @@ if (
 ) {
 
   applyPencilToDrawingEngine();
+
+}
+
+/*
+  PINCEL
+*/
+
+if (
+  toolId ===
+  "brush"
+) {
+
+  applyBrushToDrawingEngine();
 
 }
      
@@ -1452,6 +1478,19 @@ if (
 ) {
 
   applyPencilToDrawingEngine();
+
+}
+
+/*
+  PINCEL
+*/
+
+if (
+  toolId ===
+  "brush"
+) {
+
+  applyBrushToDrawingEngine();
 
 }
 
