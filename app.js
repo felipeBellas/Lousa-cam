@@ -11045,7 +11045,8 @@ await window.VideoStorage.saveVideo(
 
 
 /* =========================================================
-   RENDER DA GRAVAÇÃO
+   ETAPA 4K.3B
+   RENDER DA GRAVAÇÃO COM ORIENTAÇÃO FIXA
    ========================================================= */
 
 function renderRecordingFrame() {
@@ -11062,14 +11063,23 @@ function renderRecordingFrame() {
 
 
   /*
-    ETAPA 4K.2B
+    =====================================================
+    ORIENTAÇÃO LÓGICA DA GRAVAÇÃO
+    =====================================================
 
-    O arquivo mantém as dimensões
-    definidas no início da gravação.
+    renderCanvas foi dimensionado quando
+    o usuário apertou GRAVAR.
 
-    Porém a composição acompanha
-    corretamente o viewport atual
-    do Lousa Cam.
+    Essas dimensões NÃO mudam durante
+    a gravação.
+
+    Portanto:
+
+    - começou vertical -> permanece vertical
+    - começou horizontal -> permanece horizontal
+
+    A rotação física do iPhone não altera
+    a orientação do arquivo.
   */
 
   const width =
@@ -11079,11 +11089,44 @@ function renderRecordingFrame() {
     renderCanvas.height;
 
 
+  /*
+    O viewport atual continua sendo usado
+    somente para posicionar a lousa.
+
+    Ele NÃO determina mais o tamanho
+    da câmera dentro da gravação.
+  */
+
   const viewportWidth =
-    window.innerWidth;
+    Math.max(
+      1,
+      window.innerWidth
+    );
 
   const viewportHeight =
-    window.innerHeight;
+    Math.max(
+      1,
+      window.innerHeight
+    );
+
+
+  /*
+    =====================================================
+    LIMPEZA / FUNDO
+    =====================================================
+  */
+
+  renderCtx.save();
+
+
+  renderCtx.setTransform(
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+  );
 
 
   renderCtx.clearRect(
@@ -11094,67 +11137,9 @@ function renderRecordingFrame() {
   );
 
 
-  /*
-    =====================================================
-    TRANSFORMAÇÃO DO VIEWPORT ATUAL
-    PARA O QUADRO DA GRAVAÇÃO
-    =====================================================
-
-    Usamos escala uniforme.
-
-    Isso evita:
-    - deformação de círculos
-    - deformação de imagens
-    - texto esticado
-    - desenhos distorcidos
-  */
-
-  const scale =
-    Math.min(
-      width / viewportWidth,
-      height / viewportHeight
-    );
-
-
-  const contentWidth =
-    viewportWidth * scale;
-
-  const contentHeight =
-    viewportHeight * scale;
-
-
-  const offsetX =
-    (
-      width -
-      contentWidth
-    ) / 2;
-
-
-  const offsetY =
-    (
-      height -
-      contentHeight
-    ) / 2;
-
-
-  /*
-    =====================================================
-    FUNDO DA GRAVAÇÃO
-    =====================================================
-  */
-
-  renderCtx.save();
-
-
-  /*
-    Primeiro preenchemos completamente
-    o quadro da gravação.
-
-    Isso impede transparência residual
-    durante a mudança de orientação.
-  */
   renderCtx.fillStyle =
     "#000000";
+
 
   renderCtx.fillRect(
     0,
@@ -11171,38 +11156,111 @@ function renderRecordingFrame() {
     =====================================================
     CÂMERA
     =====================================================
+
+    A câmera é independente da orientação
+    atual do PWA.
+
+    Ela SEMPRE preenche completamente
+    o quadro fixo da gravação.
+
+    Quando a proporção da câmera é diferente
+    da proporção do quadro, usamos COVER:
+
+    - sem barras pretas
+    - sem câmera pequena no centro
+    - sem deformação
+    - apenas recorte do excedente
   */
 
   if (
     boardMode ===
-    "camera"
+    "camera" &&
+    video.readyState >= 2
   ) {
 
+    const videoWidth =
+      video.videoWidth;
+
+    const videoHeight =
+      video.videoHeight;
+
+
     if (
-      video.readyState >= 2
+      videoWidth > 0 &&
+      videoHeight > 0
     ) {
+
+      const sourceRatio =
+        videoWidth /
+        videoHeight;
+
+
+      const targetRatio =
+        width /
+        height;
+
+
+      let sourceX =
+        0;
+
+      let sourceY =
+        0;
+
+      let sourceWidth =
+        videoWidth;
+
+      let sourceHeight =
+        videoHeight;
+
+
+      /*
+        COVER
+
+        Recorta somente o excedente
+        necessário para preencher
+        completamente a gravação.
+      */
+
+      if (
+        sourceRatio >
+        targetRatio
+      ) {
+
+        sourceWidth =
+          videoHeight *
+          targetRatio;
+
+
+        sourceX =
+          (
+            videoWidth -
+            sourceWidth
+          ) / 2;
+
+      } else {
+
+        sourceHeight =
+          videoWidth /
+          targetRatio;
+
+
+        sourceY =
+          (
+            videoHeight -
+            sourceHeight
+          ) / 2;
+
+      }
+
 
       renderCtx.save();
 
 
       /*
-        A câmera deve preencher somente
-        a área correspondente ao viewport
-        atual dentro do quadro gravado.
+        Câmera frontal mantém
+        o espelhamento já utilizado
+        pelo Lousa Cam.
       */
-
-      const targetX =
-        offsetX;
-
-      const targetY =
-        offsetY;
-
-      const targetWidth =
-        contentWidth;
-
-      const targetHeight =
-        contentHeight;
-
 
       if (
         facingMode ===
@@ -11210,124 +11268,51 @@ function renderRecordingFrame() {
       ) {
 
         renderCtx.translate(
-          targetX +
-            targetWidth,
-          targetY
+          width,
+          0
         );
+
 
         renderCtx.scale(
           -1,
           1
         );
 
-      } else {
-
-        renderCtx.translate(
-          targetX,
-          targetY
-        );
-
       }
 
 
-      const videoWidth =
-        video.videoWidth;
+      renderCtx.drawImage(
+        video,
 
-      const videoHeight =
-        video.videoHeight;
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
 
-
-      if (
-        videoWidth > 0 &&
-        videoHeight > 0
-      ) {
-
-        /*
-          Mesmo comportamento visual
-          do object-fit: cover.
-        */
-
-        const sourceRatio =
-          videoWidth /
-          videoHeight;
-
-
-        const targetRatio =
-          targetWidth /
-          targetHeight;
-
-
-        let sourceX =
-          0;
-
-        let sourceY =
-          0;
-
-        let sourceWidth =
-          videoWidth;
-
-        let sourceHeight =
-          videoHeight;
-
-
-        if (
-          sourceRatio >
-          targetRatio
-        ) {
-
-          sourceWidth =
-            videoHeight *
-            targetRatio;
-
-          sourceX =
-            (
-              videoWidth -
-              sourceWidth
-            ) / 2;
-
-        } else {
-
-          sourceHeight =
-            videoWidth /
-            targetRatio;
-
-          sourceY =
-            (
-              videoHeight -
-              sourceHeight
-            ) / 2;
-
-        }
-
-
-        renderCtx.drawImage(
-          video,
-
-          sourceX,
-          sourceY,
-          sourceWidth,
-          sourceHeight,
-
-          0,
-          0,
-          targetWidth,
-          targetHeight
-        );
-
-      }
+        0,
+        0,
+        width,
+        height
+      );
 
 
       renderCtx.restore();
 
     }
 
-  } else {
+  }
 
-    /*
-      =====================================================
-      LOUSA SÓLIDA
-      =====================================================
-    */
+
+  /*
+    =====================================================
+    LOUSA SÓLIDA
+    =====================================================
+  */
+
+  else if (
+    boardMode !==
+    "camera"
+  ) {
 
     const recordingBoardColors = {
 
@@ -11354,10 +11339,10 @@ function renderRecordingFrame() {
 
 
     renderCtx.fillRect(
-      offsetX,
-      offsetY,
-      contentWidth,
-      contentHeight
+      0,
+      0,
+      width,
+      height
     );
 
 
@@ -11371,27 +11356,98 @@ function renderRecordingFrame() {
     LOUSA / DESENHOS / FORMAS / TEXTO / IMAGENS
     =====================================================
 
-    Utilizamos exatamente o mesmo
-    viewport que está sendo mostrado
-    na tela.
+    Aqui a lógica é diferente da câmera.
 
-    A transformação é uniforme.
+    A lousa acompanha o viewport atual
+    do aplicativo.
+
+    Depois transformamos esse viewport
+    para preencher o quadro fixo
+    da gravação.
+
+    Usamos COVER também aqui para manter
+    câmera e elementos no mesmo sistema
+    visual e evitar barras pretas.
   */
+
+
+  const overlayScale =
+    Math.max(
+      width /
+        viewportWidth,
+
+      height /
+        viewportHeight
+    );
+
+
+  const overlayWidth =
+    viewportWidth *
+    overlayScale;
+
+
+  const overlayHeight =
+    viewportHeight *
+    overlayScale;
+
+
+  const overlayOffsetX =
+    (
+      width -
+      overlayWidth
+    ) / 2;
+
+
+  const overlayOffsetY =
+    (
+      height -
+      overlayHeight
+    ) / 2;
+
 
   renderCtx.save();
 
 
+  /*
+    Impede que qualquer desenho
+    ultrapasse fisicamente o quadro
+    da gravação.
+  */
+
+  renderCtx.beginPath();
+
+
+  renderCtx.rect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  renderCtx.clip();
+
+
+  /*
+    Converte coordenadas da lousa atual
+    para o quadro fixo da gravação.
+  */
+
   renderCtx.translate(
-    offsetX,
-    offsetY
+    overlayOffsetX,
+    overlayOffsetY
   );
 
 
   renderCtx.scale(
-    scale,
-    scale
+    overlayScale,
+    overlayScale
   );
 
+
+  /*
+    DESENHOS / FORMAS
+  */
 
   for (
     const stroke
@@ -11405,6 +11461,10 @@ function renderRecordingFrame() {
 
   }
 
+
+  /*
+    TEXTOS / IMAGENS
+  */
 
   for (
     const object
@@ -11421,6 +11481,10 @@ function renderRecordingFrame() {
 
   renderCtx.restore();
 
+
+  /*
+    Próximo quadro.
+  */
 
   animationId =
     requestAnimationFrame(
