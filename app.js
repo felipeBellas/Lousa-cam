@@ -1743,6 +1743,181 @@ function getPointerPosition(
 
 
 /* =========================================================
+   ETAPA 4K.2A
+   VIEWPORT RESPONSIVO DA LOUSA
+   ========================================================= */
+
+/*
+  Guarda as últimas dimensões conhecidas
+  da área da lousa.
+
+  Quando o aparelho muda de orientação,
+  usamos a diferença entre os centros
+  para reposicionar a composição.
+
+  IMPORTANTE:
+  - não redimensiona desenhos
+  - não deforma formas
+  - não redimensiona imagens
+  - não altera tamanho do texto
+  - não interfere na câmera
+  - não interfere na gravação
+*/
+let lousaViewportWidth =
+  window.innerWidth;
+
+let lousaViewportHeight =
+  window.innerHeight;
+
+
+/*
+  Reposiciona toda a composição mantendo
+  a mesma relação com o centro da tela.
+*/
+function repositionLousaForViewport(
+  newWidth,
+  newHeight
+) {
+
+  const oldWidth =
+    lousaViewportWidth;
+
+  const oldHeight =
+    lousaViewportHeight;
+
+
+  if (
+    !oldWidth ||
+    !oldHeight ||
+    oldWidth === newWidth &&
+    oldHeight === newHeight
+  ) {
+
+    lousaViewportWidth =
+      newWidth;
+
+    lousaViewportHeight =
+      newHeight;
+
+    return;
+
+  }
+
+
+  /*
+    Deslocamento necessário para que
+    o centro antigo coincida com
+    o novo centro.
+  */
+  const deltaX =
+    (
+      newWidth -
+      oldWidth
+    ) / 2;
+
+  const deltaY =
+    (
+      newHeight -
+      oldHeight
+    ) / 2;
+
+
+  /*
+    TRAÇOS / FORMAS
+
+    Todos são compostos por pontos.
+    Deslocamos todos os pontos pela
+    mesma distância.
+  */
+  for (
+    const stroke
+    of strokes
+  ) {
+
+    if (
+      !stroke ||
+      !stroke.points
+    ) {
+
+      continue;
+
+    }
+
+
+    for (
+      const point
+      of stroke.points
+    ) {
+
+      point.x +=
+        deltaX;
+
+      point.y +=
+        deltaY;
+
+    }
+
+  }
+
+
+  /*
+    TEXTO / IMAGENS
+
+    Mantemos largura, altura, rotação
+    e demais propriedades.
+
+    Alteramos somente a posição.
+  */
+  for (
+    const object
+    of objects
+  ) {
+
+    if (!object) {
+
+      continue;
+
+    }
+
+
+    object.x +=
+      deltaX;
+
+    object.y +=
+      deltaY;
+
+  }
+
+
+  /*
+    Posição temporária do menu Colar,
+    caso exista durante a mudança.
+  */
+  if (pastePosition) {
+
+    pastePosition.x +=
+      deltaX;
+
+    pastePosition.y +=
+      deltaY;
+
+  }
+
+
+  /*
+    Atualiza as dimensões conhecidas
+    somente depois da transformação.
+  */
+  lousaViewportWidth =
+    newWidth;
+
+  lousaViewportHeight =
+    newHeight;
+
+}
+
+
+/* =========================================================
    AJUSTAR CANVAS AO VIEWPORT
    ========================================================= */
 function fitCanvas() {
@@ -1758,6 +1933,19 @@ function fitCanvas() {
 
   const height =
     window.innerHeight;
+
+
+  /*
+    ETAPA 4K.2A
+
+    Antes de redimensionar fisicamente
+    o canvas, reposicionamos a composição
+    para o novo centro da tela.
+  */
+  repositionLousaForViewport(
+    width,
+    height
+  );
 
 
   canvas.width =
