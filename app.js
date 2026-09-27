@@ -10216,27 +10216,35 @@ boardOptions.forEach(
 
 
 /* =========================================================
-   ETAPA 4K.3A
-   CÂMERA INDEPENDENTE DA ORIENTAÇÃO
+   ETAPA 4K.3C
+   PREVIEW DA CÂMERA COM MARGEM DE SEGURANÇA
    ========================================================= */
 
 /*
-  A câmera permanece como uma fonte contínua.
+  OBJETIVO:
 
-  Na mudança vertical / horizontal:
+  Amenizar as bordas pretas que podem aparecer
+  enquanto o iPhone / WebKit reorganiza a viewport
+  durante a mudança de orientação.
 
-  - NÃO reiniciamos a câmera
-  - NÃO trocamos srcObject
-  - NÃO paramos tracks
-  - NÃO chamamos getUserMedia
-  - NÃO rotacionamos o elemento <video>
-  - NÃO usamos timer para estabilizar a câmera
+  IMPORTANTE:
 
-  O elemento de vídeo apenas ocupa novamente
-  toda a área disponível.
+  - NÃO reinicia a câmera
+  - NÃO troca srcObject
+  - NÃO chama getUserMedia novamente
+  - NÃO interrompe MediaStream
+  - NÃO usa freeze frame
+  - NÃO usa timer
+  - NÃO rotaciona o vídeo
+  - NÃO interfere na gravação
+  - NÃO interfere no canvas
 
-  object-fit: cover é responsável por adaptar
-  o enquadramento às novas dimensões.
+  O vídeo fica ligeiramente maior que a viewport.
+
+  Assim existe uma pequena margem de imagem
+  fora da tela que pode ajudar a esconder
+  diferenças momentâneas de tamanho durante
+  a transição vertical / horizontal.
 */
 
 function fitCameraPreview() {
@@ -10247,25 +10255,34 @@ function fitCameraPreview() {
 
 
   /*
-    O vídeo ocupa sempre toda a área
-    disponível do aplicativo.
+    O vídeo permanece centralizado.
 
-    Não existe cálculo de orientação aqui.
+    Utilizamos 112% em vez de 100%.
+
+    Isso cria aproximadamente 6% de margem
+    para cada lado.
   */
+
   video.style.position =
     "absolute";
 
   video.style.left =
-    "0";
+    "-6%";
 
   video.style.top =
-    "0";
+    "-6%";
 
   video.style.width =
-    "100%";
+    "112%";
 
   video.style.height =
-    "100%";
+    "112%";
+
+
+  /*
+    COVER continua sendo responsável
+    pelo enquadramento da câmera.
+  */
 
   video.style.objectFit =
     "cover";
@@ -10273,24 +10290,35 @@ function fitCameraPreview() {
   video.style.objectPosition =
     "center center";
 
+
+  /*
+    Evita que o próprio elemento de vídeo
+    interfira nos gestos da lousa.
+  */
+
+  video.style.pointerEvents =
+    "none";
+
 }
 
 
 /*
-  Aplicação inicial.
-
-  Não interfere no MediaStream.
+  Aplica a configuração assim que
+  o aplicativo é carregado.
 */
+
 fitCameraPreview();
 
 
 /*
-  Quando o viewport realmente mudar,
-  apenas reafirmamos que o vídeo deve
-  ocupar a nova área disponível.
+  Quando a viewport mudar de tamanho,
+  apenas reafirmamos as dimensões
+  do elemento de vídeo.
 
-  Nenhuma operação é feita no stream.
+  O MediaStream continua exatamente
+  o mesmo.
 */
+
 window.addEventListener(
   "resize",
   () => {
