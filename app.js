@@ -10216,29 +10216,514 @@ boardOptions.forEach(
 
 
 /* =========================================================
-   ETAPA 4K.2B.1
-   ESTABILIZAÇÃO DO PREVIEW NA ROTAÇÃO
+   ETAPA 4K.2B.2
+   ESTABILIZAÇÃO VISUAL DA CÂMERA NA ROTAÇÃO
    ========================================================= */
+
+/*
+  Estratégia:
+
+  1. Antes da recomposição do vídeo pelo iOS,
+     capturamos o último quadro válido.
+
+  2. Esse quadro é colocado temporariamente
+     entre o vídeo e a lousa.
+
+  3. O vídeo real continua funcionando
+     normalmente por baixo.
+
+  4. Quando o viewport estabiliza,
+     removemos o quadro congelado.
+
+  IMPORTANTE:
+
+  - não reinicia câmera
+  - não troca srcObject
+  - não para tracks
+  - não chama getUserMedia
+  - não interfere no MediaRecorder
+  - não interfere no renderCanvas
+*/
+
 
 let previewRotationTimer =
   null;
 
-let previewStableWidth =
-  window.innerWidth;
 
-let previewStableHeight =
-  window.innerHeight;
+let previewFreezeCanvas =
+  null;
+
+
+let previewFreezeCtx =
+  null;
+
+
+let previewFreezeActive =
+  false;
 
 
 /*
-  Durante a rotação, o iOS pode passar
-  por dimensões intermediárias antes de
-  chegar ao viewport definitivo.
+  Cria o canvas temporário somente
+  quando ele for realmente necessário.
+*/
+function ensurePreviewFreezeCanvas() {
 
-  Não reiniciamos câmera.
-  Não trocamos srcObject.
-  Não paramos tracks.
-  Não chamamos getUserMedia.
+  if (previewFreezeCanvas) {
+
+    return;
+
+  }
+
+
+  previewFreezeCanvas =
+    document.createElement(
+      "canvas"
+    );
+
+
+  previewFreezeCanvas.id =
+    "previewFreezeCanvas";
+
+
+  previewFreezeCtx =
+    previewFreezeCanvas.getContext(
+      "2d",
+      {
+        alpha: false
+      }
+    );
+
+
+  /*
+    O vídeo está na camada inferior.
+
+    O boardBackground usa camada 2
+    e o canvas principal usa camada 3.
+
+    Portanto colocamos o frame congelado
+    logo acima do vídeo e abaixo da lousa.
+  */
+  previewFreezeCanvas.style.position =
+    "absolute";
+
+  previewFreezeCanvas.style.inset =
+    "0";
+
+  previewFreezeCanvas.style.width =
+    "100%";
+
+  previewFreezeCanvas.style.height =
+    "100%";
+
+  previewFreezeCanvas.style.zIndex =
+    "1";
+
+  previewFreezeCanvas.style.pointerEvents =
+    "none";
+
+  previewFreezeCanvas.style.display =
+    "none";
+
+  previewFreezeCanvas.style.background =
+    "#000";
+
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (app) {
+
+    /*
+      Inserimos depois do vídeo.
+
+      Assim, com o mesmo nível visual,
+      o frame temporário fica sobre
+      o vídeo e continua abaixo
+      das demais camadas.
+    */
+    if (
+      video.nextSibling
+    ) {
+
+      app.insertBefore(
+        previewFreezeCanvas,
+        video.nextSibling
+      );
+
+    } else {
+
+      app.appendChild(
+        previewFreezeCanvas
+      );
+
+    }
+
+  }
+
+}
+
+
+/*
+  Copia o último quadro válido
+  atualmente apresentado pela câmera.
+*/
+function capturePreviewFreezeFrame() {
+
+  if (
+    boardMode !==
+      "camera" ||
+    !video ||
+    !video.srcObject ||
+    video.readyState < 2 ||
+    video.videoWidth <= 0 ||
+    video.videoHeight <= 0
+  ) {
+
+    return false;
+
+  }
+
+
+  ensurePreviewFreezeCanvas();
+
+
+  if (
+    !previewFreezeCanvas ||
+    !previewFreezeCtx
+  ) {
+
+    return false;
+
+  }
+
+
+  const viewportWidth =
+    window.innerWidth;
+
+
+  const viewportHeight =
+    window.innerHeight;
+
+
+  if (
+    viewportWidth <= 0 ||
+    viewportHeight <= 0
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    DPR limitado para não criar
+    um canvas temporário excessivamente
+    grande durante a rotação.
+  */
+  const dpr =
+    Math.min(
+      window.devicePixelRatio || 1,
+      2
+    );
+
+
+  previewFreezeCanvas.width =
+    Math.round(
+      viewportWidth *
+      dpr
+    );
+
+
+  previewFreezeCanvas.height =
+    Math.round(
+      viewportHeight *
+      dpr
+    );
+
+
+  previewFreezeCanvas.style.width =
+    viewportWidth +
+    "px";
+
+
+  previewFreezeCanvas.style.height =
+    viewportHeight +
+    "px";
+
+
+  previewFreezeCtx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+
+
+  /*
+    Fundo de segurança.
+  */
+  previewFreezeCtx.fillStyle =
+    "#000000";
+
+
+  previewFreezeCtx.fillRect(
+    0,
+    0,
+    viewportWidth,
+    viewportHeight
+  );
+
+
+  const videoWidth =
+    video.videoWidth;
+
+
+  const videoHeight =
+    video.videoHeight;
+
+
+  const sourceRatio =
+    videoWidth /
+    videoHeight;
+
+
+  const targetRatio =
+    viewportWidth /
+    viewportHeight;
+
+
+  let sourceX =
+    0;
+
+
+  let sourceY =
+    0;
+
+
+  let sourceWidth =
+    videoWidth;
+
+
+  let sourceHeight =
+    videoHeight;
+
+
+  /*
+    Mesmo comportamento visual
+    de object-fit: cover.
+  */
+  if (
+    sourceRatio >
+    targetRatio
+  ) {
+
+    sourceWidth =
+      videoHeight *
+      targetRatio;
+
+
+    sourceX =
+      (
+        videoWidth -
+        sourceWidth
+      ) / 2;
+
+  } else {
+
+    sourceHeight =
+      videoWidth /
+      targetRatio;
+
+
+    sourceY =
+      (
+        videoHeight -
+        sourceHeight
+      ) / 2;
+
+  }
+
+
+  previewFreezeCtx.save();
+
+
+  /*
+    Mantém o mesmo espelhamento
+    visual da câmera frontal.
+  */
+  if (
+    facingMode ===
+    "user"
+  ) {
+
+    previewFreezeCtx.translate(
+      viewportWidth,
+      0
+    );
+
+
+    previewFreezeCtx.scale(
+      -1,
+      1
+    );
+
+  }
+
+
+  try {
+
+    previewFreezeCtx.drawImage(
+      video,
+
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+
+      0,
+      0,
+      viewportWidth,
+      viewportHeight
+    );
+
+  } catch (error) {
+
+    previewFreezeCtx.restore();
+
+    return false;
+
+  }
+
+
+  previewFreezeCtx.restore();
+
+
+  previewFreezeCanvas.style.display =
+    "block";
+
+
+  previewFreezeActive =
+    true;
+
+
+  return true;
+
+}
+
+
+/*
+  Remove o quadro temporário
+  depois que o vídeo real já teve
+  tempo para assumir o novo viewport.
+*/
+function releasePreviewFreeze() {
+
+  if (
+    !previewFreezeCanvas
+  ) {
+
+    previewFreezeActive =
+      false;
+
+    return;
+
+  }
+
+
+  previewFreezeCanvas.style.display =
+    "none";
+
+
+  previewFreezeActive =
+    false;
+
+}
+
+
+/*
+  Finaliza a mudança de orientação.
+
+  O stream permanece exatamente
+  o mesmo durante todo o processo.
+*/
+function finishCameraPreviewRotation() {
+
+  /*
+    Mantém o vídeo ocupando novamente
+    toda a estrutura normal do app.
+  */
+  video.style.position =
+    "absolute";
+
+
+  video.style.left =
+    "0";
+
+
+  video.style.top =
+    "0";
+
+
+  video.style.width =
+    "100%";
+
+
+  video.style.height =
+    "100%";
+
+
+  video.style.objectFit =
+    "cover";
+
+
+  /*
+    Mantém a correção 4K.1.
+  */
+  fitCanvas();
+
+
+  updateEditorPosition();
+
+
+  updateTextFormatToolbarPosition();
+
+
+  /*
+    Esperamos dois frames do navegador.
+
+    Isso permite que o WebKit termine
+    a composição do vídeo antes de
+    removermos a imagem congelada.
+  */
+  requestAnimationFrame(
+    () => {
+
+      requestAnimationFrame(
+        () => {
+
+          releasePreviewFreeze();
+
+        }
+      );
+
+    }
+  );
+
+
+  previewRotationTimer =
+    null;
+
+}
+
+
+/*
+  Trata os eventos intermediários
+  produzidos pelo iOS durante a rotação.
 */
 function stabilizeCameraPreview() {
 
@@ -10253,24 +10738,45 @@ function stabilizeCameraPreview() {
 
 
   /*
-    Mantém o elemento de vídeo cobrindo
-    completamente a tela durante a
-    recomposição do viewport.
+    Capturamos somente uma vez
+    por sequência de rotação.
+
+    Eventos resize posteriores não devem
+    substituir o quadro bom pelo quadro
+    intermediário com bordas pretas.
+  */
+  if (
+    !previewFreezeActive
+  ) {
+
+    capturePreviewFreezeFrame();
+
+  }
+
+
+  /*
+    O vídeo verdadeiro continua trabalhando
+    por baixo do frame congelado.
   */
   video.style.position =
     "absolute";
 
+
   video.style.left =
     "0";
+
 
   video.style.top =
     "0";
 
+
   video.style.width =
     "100vw";
 
+
   video.style.height =
     "100dvh";
+
 
   video.style.objectFit =
     "cover";
@@ -10282,64 +10788,23 @@ function stabilizeCameraPreview() {
 
 
   /*
-    O resize/orientationchange do iOS
-    pode disparar várias vezes.
+    Cada novo resize reinicia o contador.
 
-    Esperamos a sequência terminar antes
-    de considerar o viewport estabilizado.
+    Assim só retiramos o frame congelado
+    quando a sequência de resize do iOS
+    realmente parar.
   */
   previewRotationTimer =
     setTimeout(
-      () => {
-
-        previewStableWidth =
-          window.innerWidth;
-
-        previewStableHeight =
-          window.innerHeight;
-
-
-        /*
-          Mantemos cover, mas devolvemos
-          as dimensões para a estrutura
-          normal do aplicativo.
-        */
-        video.style.width =
-          "100%";
-
-        video.style.height =
-          "100%";
-
-        video.style.objectFit =
-          "cover";
-
-
-        /*
-          Sincroniza novamente o canvas
-          visível com o viewport final.
-
-          Esta chamada mantém a correção
-          4K.1.
-        */
-        fitCanvas();
-
-
-        updateEditorPosition();
-
-        updateTextFormatToolbarPosition();
-
-
-        previewRotationTimer =
-          null;
-
-      },
-      180
+      finishCameraPreviewRotation,
+      220
     );
 
 }
 
+
 /*
-  Mudança real da janela.
+  Mudança das dimensões reais da janela.
 */
 window.addEventListener(
   "resize",
@@ -10355,10 +10820,11 @@ window.addEventListener(
 
 
 /*
-  Aviso antecipado de mudança
-  de orientação.
+  orientationchange normalmente chega
+  antes dos últimos resize do iOS.
 
-  Não modifica o MediaStream.
+  É o melhor momento disponível para
+  tentar preservar o último quadro bom.
 */
 window.addEventListener(
   "orientationchange",
