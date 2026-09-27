@@ -10267,16 +10267,16 @@ function fitCameraPreview() {
     "absolute";
 
  video.style.left =
-  "-9%";
+  "-13%";
 
 video.style.top =
-  "-9%";
+  "-13%";
 
 video.style.width =
-  "118%";
+  "130%";
 
 video.style.height =
-  "118%";
+  "130%";
 
 
   /*
