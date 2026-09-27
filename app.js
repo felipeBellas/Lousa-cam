@@ -10216,46 +10216,41 @@ boardOptions.forEach(
 
 
 /* =========================================================
-   ETAPA 4K.2B.1
-   ESTABILIZAÇÃO DO PREVIEW NA ROTAÇÃO
+   ETAPA 4K.3A
+   CÂMERA INDEPENDENTE DA ORIENTAÇÃO
    ========================================================= */
 
-let previewRotationTimer =
-  null;
-
-let previewStableWidth =
-  window.innerWidth;
-
-let previewStableHeight =
-  window.innerHeight;
-
-
 /*
-  Durante a rotação, o iOS pode passar
-  por dimensões intermediárias antes de
-  chegar ao viewport definitivo.
+  A câmera permanece como uma fonte contínua.
 
-  Não reiniciamos câmera.
-  Não trocamos srcObject.
-  Não paramos tracks.
-  Não chamamos getUserMedia.
+  Na mudança vertical / horizontal:
+
+  - NÃO reiniciamos a câmera
+  - NÃO trocamos srcObject
+  - NÃO paramos tracks
+  - NÃO chamamos getUserMedia
+  - NÃO rotacionamos o elemento <video>
+  - NÃO usamos timer para estabilizar a câmera
+
+  O elemento de vídeo apenas ocupa novamente
+  toda a área disponível.
+
+  object-fit: cover é responsável por adaptar
+  o enquadramento às novas dimensões.
 */
-function stabilizeCameraPreview() {
 
-  if (
-    !video ||
-    !video.srcObject
-  ) {
+function fitCameraPreview() {
 
+  if (!video) {
     return;
-
   }
 
 
   /*
-    Mantém o elemento de vídeo cobrindo
-    completamente a tela durante a
-    recomposição do viewport.
+    O vídeo ocupa sempre toda a área
+    disponível do aplicativo.
+
+    Não existe cálculo de orientação aqui.
   */
   video.style.position =
     "absolute";
@@ -10267,104 +10262,40 @@ function stabilizeCameraPreview() {
     "0";
 
   video.style.width =
-    "100vw";
+    "100%";
 
   video.style.height =
-    "100dvh";
+    "100%";
 
   video.style.objectFit =
     "cover";
 
-
-  clearTimeout(
-    previewRotationTimer
-  );
-
-
-  /*
-    O resize/orientationchange do iOS
-    pode disparar várias vezes.
-
-    Esperamos a sequência terminar antes
-    de considerar o viewport estabilizado.
-  */
-  previewRotationTimer =
-    setTimeout(
-      () => {
-
-        previewStableWidth =
-          window.innerWidth;
-
-        previewStableHeight =
-          window.innerHeight;
-
-
-        /*
-          Mantemos cover, mas devolvemos
-          as dimensões para a estrutura
-          normal do aplicativo.
-        */
-        video.style.width =
-          "100%";
-
-        video.style.height =
-          "100%";
-
-        video.style.objectFit =
-          "cover";
-
-
-        /*
-          Sincroniza novamente o canvas
-          visível com o viewport final.
-
-          Esta chamada mantém a correção
-          4K.1.
-        */
-        fitCanvas();
-
-
-        updateEditorPosition();
-
-        updateTextFormatToolbarPosition();
-
-
-        previewRotationTimer =
-          null;
-
-      },
-      180
-    );
+  video.style.objectPosition =
+    "center center";
 
 }
 
+
 /*
-  Mudança real da janela.
+  Aplicação inicial.
+
+  Não interfere no MediaStream.
+*/
+fitCameraPreview();
+
+
+/*
+  Quando o viewport realmente mudar,
+  apenas reafirmamos que o vídeo deve
+  ocupar a nova área disponível.
+
+  Nenhuma operação é feita no stream.
 */
 window.addEventListener(
   "resize",
   () => {
 
-    stabilizeCameraPreview();
-
-  },
-  {
-    passive: true
-  }
-);
-
-
-/*
-  Aviso antecipado de mudança
-  de orientação.
-
-  Não modifica o MediaStream.
-*/
-window.addEventListener(
-  "orientationchange",
-  () => {
-
-    stabilizeCameraPreview();
+    fitCameraPreview();
 
   },
   {
