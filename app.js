@@ -10441,10 +10441,150 @@ stream =
   newStream;
 
 
+/* =========================================================
+   ETAPA 4K.3D
+   ENQUADRAMENTO MAIS ABERTO QUANDO DISPONÍVEL
+   ========================================================= */
+
+/*
+  Esta etapa é opcional.
+
+  Se a câmera disponibilizar zoom óptico/digital
+  abaixo de 1, tentamos utilizar o menor valor
+  permitido pelo próprio dispositivo.
+
+  Se não disponibilizar:
+
+  - nenhuma câmera é reiniciada
+  - nenhuma constraint obrigatória é aplicada
+  - nenhuma mensagem de erro é exibida
+  - a câmera continua funcionando normalmente
+*/
+
+try {
+
+  const videoTrack =
+    stream.getVideoTracks()[0];
+
+
+  if (
+    videoTrack &&
+    typeof videoTrack.getCapabilities ===
+      "function"
+  ) {
+
+    const capabilities =
+      videoTrack.getCapabilities();
+
+
+    console.log(
+      "Capacidades da câmera:",
+      capabilities
+    );
+
+
+    /*
+      Verifica se o navegador realmente
+      informou capacidade de zoom.
+    */
+
+    if (
+      capabilities.zoom &&
+      typeof capabilities.zoom.min ===
+        "number"
+    ) {
+
+      const minimumZoom =
+        capabilities.zoom.min;
+
+
+      console.log(
+        "Zoom mínimo disponível:",
+        minimumZoom
+      );
+
+
+      /*
+        Só tentamos abrir mais o enquadramento
+        quando o próprio dispositivo informa
+        um valor menor que 1.
+      */
+
+      if (
+        minimumZoom < 1 &&
+        typeof videoTrack.applyConstraints ===
+          "function"
+      ) {
+
+        try {
+
+          await videoTrack.applyConstraints({
+            advanced: [
+              {
+                zoom:
+                  minimumZoom
+              }
+            ]
+          });
+
+
+          console.log(
+            "Enquadramento aberto aplicado:",
+            minimumZoom
+          );
+
+        } catch (zoomError) {
+
+          /*
+            Falha no zoom NÃO pode impedir
+            o funcionamento da câmera.
+          */
+
+          console.warn(
+            "Não foi possível aplicar o enquadramento aberto:",
+            zoomError
+          );
+
+        }
+
+      } else {
+
+        console.log(
+          "Esta câmera não oferece zoom abaixo de 1."
+        );
+
+      }
+
+    } else {
+
+      console.log(
+        "Controle de zoom não disponibilizado por esta câmera."
+      );
+
+    }
+
+  }
+
+} catch (capabilityError) {
+
+  /*
+    Qualquer incompatibilidade desta função
+    é ignorada.
+
+    A câmera principal continua funcionando
+    normalmente.
+  */
+
+  console.warn(
+    "Não foi possível consultar as capacidades da câmera:",
+    capabilityError
+  );
+
+}
 
 
 /*
-  Conecta o novo MediaStream.
+  Conecta o MediaStream ao elemento de vídeo.
 */
 video.srcObject =
   stream;
