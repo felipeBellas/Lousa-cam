@@ -1874,6 +1874,19 @@ if (window.visualViewport) {
 
       compensateVisualViewport();
 
+      /*
+        ETAPA 4K.1
+
+        Mantém o canvas de visualização
+        sincronizado com o tamanho real
+        da tela após mudança de orientação.
+
+        Não reinicia a câmera.
+        Não altera o stream.
+        Não altera a gravação.
+      */
+      fitCanvas();
+
       updateEditorPosition();
 
       updateTextFormatToolbarPosition();
