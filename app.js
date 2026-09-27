@@ -10214,6 +10214,165 @@ boardOptions.forEach(
   }
 );
 
+
+/* =========================================================
+   ETAPA 4K.2B.1
+   ESTABILIZAÇÃO DO PREVIEW NA ROTAÇÃO
+   ========================================================= */
+
+let previewRotationTimer =
+  null;
+
+let previewStableWidth =
+  window.innerWidth;
+
+let previewStableHeight =
+  window.innerHeight;
+
+
+/*
+  Durante a rotação, o iOS pode passar
+  por dimensões intermediárias antes de
+  chegar ao viewport definitivo.
+
+  Não reiniciamos câmera.
+  Não trocamos srcObject.
+  Não paramos tracks.
+  Não chamamos getUserMedia.
+*/
+function stabilizeCameraPreview() {
+
+  if (
+    !video ||
+    !video.srcObject
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    Mantém o elemento de vídeo cobrindo
+    completamente a tela durante a
+    recomposição do viewport.
+  */
+  video.style.position =
+    "absolute";
+
+  video.style.left =
+    "0";
+
+  video.style.top =
+    "0";
+
+  video.style.width =
+    "100vw";
+
+  video.style.height =
+    "100dvh";
+
+  video.style.objectFit =
+    "cover";
+
+
+  clearTimeout(
+    previewRotationTimer
+  );
+
+
+  /*
+    O resize/orientationchange do iOS
+    pode disparar várias vezes.
+
+    Esperamos a sequência terminar antes
+    de considerar o viewport estabilizado.
+  */
+  previewRotationTimer =
+    setTimeout(
+      () => {
+
+        previewStableWidth =
+          window.innerWidth;
+
+        previewStableHeight =
+          window.innerHeight;
+
+
+        /*
+          Mantemos cover, mas devolvemos
+          as dimensões para a estrutura
+          normal do aplicativo.
+        */
+        video.style.width =
+          "100%";
+
+        video.style.height =
+          "100%";
+
+        video.style.objectFit =
+          "cover";
+
+
+        /*
+          Sincroniza novamente o canvas
+          visível com o viewport final.
+
+          Esta chamada mantém a correção
+          4K.1.
+        */
+        fitCanvas();
+
+
+        updateEditorPosition();
+
+        updateTextFormatToolbarPosition();
+
+
+        previewRotationTimer =
+          null;
+
+      },
+      180
+    );
+
+}
+
+/*
+  Mudança real da janela.
+*/
+window.addEventListener(
+  "resize",
+  () => {
+
+    stabilizeCameraPreview();
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+/*
+  Aviso antecipado de mudança
+  de orientação.
+
+  Não modifica o MediaStream.
+*/
+window.addEventListener(
+  "orientationchange",
+  () => {
+
+    stabilizeCameraPreview();
+
+  },
+  {
+    passive: true
+  }
+);
+
+
 /* =========================================================
    CÂMERA
    ========================================================= */
