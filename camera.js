@@ -1205,6 +1205,52 @@ async function start(
   }
 
 
+    /* =======================================================
+     C3.2D
+     AJUSTE OPCIONAL DE ENQUADRAMENTO / ZOOM
+
+     Ponte pública segura para a função interna
+     applyMinimumZoom().
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO solicita permissão
+     - NÃO troca srcObject
+     - NÃO executa getUserMedia
+     - NÃO reinicia MediaStream
+     - falhas continuam sendo opcionais
+     ======================================================= */
+
+  async function applyOpenFraming(
+    targetStream
+  ) {
+
+    if (!targetStream) {
+      return false;
+    }
+
+    try {
+
+      await applyMinimumZoom(
+        targetStream
+      );
+
+      return true;
+
+    } catch (error) {
+
+      console.warn(
+        "Não foi possível aplicar o enquadramento aberto:",
+        error
+      );
+
+      return false;
+
+    }
+
+  }
+
+
   /* =======================================================
      API PÚBLICA
 
@@ -1228,7 +1274,8 @@ async function start(
           getVideoTrack,
           getFacingMode,
           isActive,
-          fitPreview
+          fitPreview,
+          applyOpenFraming
 
         }),
 
