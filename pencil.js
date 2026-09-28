@@ -1384,7 +1384,48 @@ function projectPointToRuler(
 window.LousaCamPencil.projectPointToRuler =
   projectPointToRuler;
 
+/* =======================================================
+   RÉGUA — PONTE PARA GRAVAÇÃO
 
+   Expõe somente uma CÓPIA do estado visual.
+   Não permite que app.js altere a Régua.
+   ======================================================= */
+
+window.LousaCamPencil.getRulerRecordingState =
+  function () {
+
+    if (!rulerVisible) {
+
+      return null;
+
+    }
+
+
+    return {
+
+      visible:
+        true,
+
+      x:
+        rulerState.x,
+
+      y:
+        rulerState.y,
+
+      angle:
+        rulerState.angle,
+
+      width:
+        rulerState.width,
+
+      height:
+        ruler.offsetHeight || 58
+
+    };
+
+  };
+
+   
 /* =======================================================
    GESTOS DA RÉGUA
    ======================================================= */
