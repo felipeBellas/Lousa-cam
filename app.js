@@ -10594,13 +10594,46 @@ try {
 
 
     /*
-      Espelhamento somente na frontal.
-    */
-    video.classList.toggle(
-      "mirror",
-      requestedFacingMode ===
-        "user"
-    );
+  =========================================================
+  CÂMERA — C3.2E
+  ESPELHAMENTO DO PREVIEW
+
+  A regra visual frontal/traseira passa
+  a ser responsabilidade do camera.js.
+
+  IMPORTANTE:
+  - NÃO abre câmera
+  - NÃO altera stream
+  - NÃO troca srcObject
+  - NÃO solicita permissão
+  =========================================================
+*/
+
+if (
+  window.LousaCamCamera &&
+  typeof window.LousaCamCamera.applyMirror ===
+    "function"
+) {
+
+  window.LousaCamCamera.applyMirror(
+    requestedFacingMode
+  );
+
+} else {
+
+  /*
+    FALLBACK DE SEGURANÇA.
+
+    Mantém o comportamento estável anterior
+    caso o módulo da câmera não esteja disponível.
+  */
+  video.classList.toggle(
+    "mirror",
+    requestedFacingMode ===
+      "user"
+  );
+
+}
 
 
     return true;
