@@ -11612,6 +11612,299 @@ function renderRecordingFrame() {
   }
 
 
+  /* =========================================================
+     RÉGUA — GRAVAÇÃO
+
+     A Régua visual pertence ao DOM e por isso não entra
+     automaticamente no renderCanvas.
+
+     Aqui desenhamos somente sua representação visual
+     durante a gravação.
+
+     O funcionamento da Régua 4G permanece no pencil.js.
+     ========================================================= */
+
+  if (
+    window.LousaCamPencil &&
+    typeof window.LousaCamPencil
+      .getRulerRecordingState ===
+      "function"
+  ) {
+
+    const rulerRecordingState =
+      window.LousaCamPencil
+        .getRulerRecordingState();
+
+
+    if (
+      rulerRecordingState &&
+      rulerRecordingState.visible
+    ) {
+
+      const rulerWidth =
+        rulerRecordingState.width;
+
+      const rulerHeight =
+        rulerRecordingState.height || 58;
+
+
+      renderCtx.save();
+
+
+      /*
+        Centro e rotação exatamente iguais
+        aos utilizados pela Régua DOM.
+      */
+
+      renderCtx.translate(
+        rulerRecordingState.x,
+        rulerRecordingState.y
+      );
+
+
+      renderCtx.rotate(
+        rulerRecordingState.angle
+      );
+
+
+      /*
+        Corpo translúcido da Régua.
+      */
+
+      renderCtx.fillStyle =
+        "rgba(235, 235, 245, 0.22)";
+
+
+      renderCtx.strokeStyle =
+        "rgba(255, 255, 255, 0.24)";
+
+
+      renderCtx.lineWidth =
+        1;
+
+
+      const rulerLeft =
+        -rulerWidth / 2;
+
+
+      const rulerTop =
+        -rulerHeight / 2;
+
+
+      /*
+        Corpo.
+
+        Mantemos o desenho simples para
+        compatibilidade com Safari/iPhone.
+      */
+
+      renderCtx.beginPath();
+
+
+      if (
+        typeof renderCtx.roundRect ===
+        "function"
+      ) {
+
+        renderCtx.roundRect(
+          rulerLeft,
+          rulerTop,
+          rulerWidth,
+          rulerHeight,
+          8
+        );
+
+      } else {
+
+        renderCtx.rect(
+          rulerLeft,
+          rulerTop,
+          rulerWidth,
+          rulerHeight
+        );
+
+      }
+
+
+      renderCtx.fill();
+
+      renderCtx.stroke();
+
+
+      /*
+        Linha branca inferior.
+
+        CSS original:
+        left/right = 12px
+        bottom = 10px
+      */
+
+      renderCtx.beginPath();
+
+
+      renderCtx.strokeStyle =
+        "rgba(255, 255, 255, 0.92)";
+
+
+      renderCtx.lineWidth =
+        1;
+
+
+      renderCtx.moveTo(
+        rulerLeft + 12,
+        rulerTop +
+          rulerHeight -
+          10
+      );
+
+
+      renderCtx.lineTo(
+        rulerLeft +
+          rulerWidth -
+          12,
+        rulerTop +
+          rulerHeight -
+          10
+      );
+
+
+      renderCtx.stroke();
+
+
+      /*
+        Graduação.
+
+        No pencil.js:
+        - área útil = width - 28
+        - divisão principal = 40px
+        - subdivisão = 10px
+      */
+
+      const scaleLeft =
+        rulerLeft + 14;
+
+
+      const usableWidth =
+        Math.max(
+          0,
+          rulerWidth - 28
+        );
+
+
+      /*
+        Subdivisões de 10px.
+      */
+
+      renderCtx.strokeStyle =
+        "rgba(255, 255, 255, 0.72)";
+
+
+      renderCtx.lineWidth =
+        1;
+
+
+      for (
+        let position = 0;
+        position <= usableWidth;
+        position += 10
+      ) {
+
+        renderCtx.beginPath();
+
+
+        renderCtx.moveTo(
+          scaleLeft + position,
+          rulerTop
+        );
+
+
+        renderCtx.lineTo(
+          scaleLeft + position,
+          rulerTop + 10
+        );
+
+
+        renderCtx.stroke();
+
+      }
+
+
+      /*
+        Divisões principais + números.
+      */
+
+      const majorSpacing =
+        40;
+
+
+      const divisions =
+        Math.floor(
+          usableWidth /
+          majorSpacing
+        );
+
+
+      renderCtx.strokeStyle =
+        "rgba(255, 255, 255, 0.96)";
+
+
+      renderCtx.fillStyle =
+        "rgba(255, 255, 255, 0.94)";
+
+
+      renderCtx.font =
+        "600 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif";
+
+
+      renderCtx.textBaseline =
+        "top";
+
+
+      for (
+        let i = 0;
+        i <= divisions;
+        i++
+      ) {
+
+        const markX =
+          scaleLeft +
+          i * majorSpacing;
+
+
+        renderCtx.beginPath();
+
+
+        renderCtx.moveTo(
+          markX,
+          rulerTop
+        );
+
+
+        renderCtx.lineTo(
+          markX,
+          rulerTop + 17
+        );
+
+
+        renderCtx.stroke();
+
+
+        renderCtx.fillText(
+          String(i),
+          markX + 4,
+          rulerTop + 16
+        );
+
+      }
+
+
+      renderCtx.restore();
+
+    }
+
+  }
+
+
   renderCtx.restore();
 
 
