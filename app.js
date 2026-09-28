@@ -10359,7 +10359,18 @@ window.addEventListener(
 
 
 /* =========================================================
-   CÂMERA
+   CÂMERA — C3.2B.2
+
+   Ponte de compatibilidade entre app.js e camera.js.
+
+   Nesta etapa:
+   - camera.js passa a abrir fisicamente a câmera
+   - app.js continua controlando a interface
+   - app.js mantém as variáveis stream e facingMode
+     sincronizadas para preservar a gravação existente
+   - botão iniciar permanece inalterado
+   - gravação permanece inalterada
+   - troca de câmera permanece para etapa posterior
    ========================================================= */
 
 async function startCamera(
@@ -10367,9 +10378,35 @@ async function startCamera(
   isSwitchingCamera = false
 ) {
 
+  /*
+    Nesta etapa C3.2B.2 ainda NÃO migramos
+    a troca frontal/traseira.
+
+    Se esta função for chamada futuramente
+    como parte da troca de câmera, não
+    modificamos esse comportamento aqui.
+  */
   if (
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
+    isSwitchingCamera
+  ) {
+
+    console.warn(
+      "C3.2B.2: troca de câmera ainda não migrada para camera.js."
+    );
+
+    return false;
+
+  }
+
+
+  /*
+    Verifica se o módulo da câmera
+    foi carregado corretamente.
+  */
+  if (
+    !window.LousaCamCamera ||
+    typeof window.LousaCamCamera.start !==
+      "function"
   ) {
 
     toast(
@@ -10377,501 +10414,159 @@ async function startCamera(
     );
 
     return false;
+
   }
 
 
-  /*
-    Guarda a câmera atual.
-
-    Na troca frontal/traseira,
-    primeiro encerramos completamente
-    o dispositivo que está em uso.
-  */
-  const previousStream =
-    stream;
-
-
-if (
-  isSwitchingCamera &&
-  previousStream
-) {
-
-  previousStream
-    .getTracks()
-    .forEach(
-      track => {
-        try {
-          track.stop();
-        } catch (error) {
-          console.warn(
-            "Erro ao encerrar track:",
-            error
-          );
-        }
-      }
-    );
-
-
-  /*
-    Desconecta o stream antigo
-    do elemento de vídeo antes
-    de solicitar a outra câmera.
-  */
-  video.srcObject =
-    null;
-
-  stream =
-    null;
-
-
-  /*
-    Pequeno intervalo para o WebKit/iOS
-    liberar o dispositivo anterior.
-  */
-  await new Promise(
-    resolve =>
-      setTimeout(
-        resolve,
-        180
-      )
-  );
-
-}
-
-
-
-  /*
-    Função interna responsável
-    por solicitar a câmera.
-  */
-  async function openCamera(
-    withAudio
-  ) {
-
-    const newStream =
-      await navigator.mediaDevices
-        .getUserMedia({
-
-          video: {
-            facingMode:
-              requestedFacingMode
-          },
-
-          audio:
-            withAudio
-
-        });
-
-
-stream =
-  newStream;
-
-
-/* =========================================================
-   ETAPA 4K.3D
-   ENQUADRAMENTO MAIS ABERTO QUANDO DISPONÍVEL
-   ========================================================= */
-
-/*
-  Esta etapa é opcional.
-
-  Se a câmera disponibilizar zoom óptico/digital
-  abaixo de 1, tentamos utilizar o menor valor
-  permitido pelo próprio dispositivo.
-
-  Se não disponibilizar:
-
-  - nenhuma câmera é reiniciada
-  - nenhuma constraint obrigatória é aplicada
-  - nenhuma mensagem de erro é exibida
-  - a câmera continua funcionando normalmente
-*/
-
-try {
-
-  const videoTrack =
-    stream.getVideoTracks()[0];
-
-
-  if (
-    videoTrack &&
-    typeof videoTrack.getCapabilities ===
-      "function"
-  ) {
-
-    const capabilities =
-      videoTrack.getCapabilities();
-
-
-    console.log(
-      "Capacidades da câmera:",
-      capabilities
-    );
-
+  try {
 
     /*
-      Verifica se o navegador realmente
-      informou capacidade de zoom.
+      camera.js passa a ser responsável
+      por solicitar câmera + microfone
+      e pelo fallback sem áudio.
     */
-
-    if (
-      capabilities.zoom &&
-      typeof capabilities.zoom.min ===
-        "number"
-    ) {
-
-      const minimumZoom =
-        capabilities.zoom.min;
-
-
-      console.log(
-        "Zoom mínimo disponível:",
-        minimumZoom
+    const success =
+      await window.LousaCamCamera.start(
+        requestedFacingMode
       );
 
 
-      /*
-        Só tentamos abrir mais o enquadramento
-        quando o próprio dispositivo informa
-        um valor menor que 1.
-      */
+    if (!success) {
 
-      if (
-        minimumZoom < 1 &&
-        typeof videoTrack.applyConstraints ===
-          "function"
-      ) {
+      toast(
+        "Não foi possível acessar a câmera"
+      );
 
-        try {
+      return false;
 
-          await videoTrack.applyConstraints({
-            advanced: [
-              {
-                zoom:
-                  minimumZoom
-              }
-            ]
-          });
+    }
 
 
-          console.log(
-            "Enquadramento aberto aplicado:",
-            minimumZoom
-          );
+    /*
+      Sincroniza a referência do MediaStream
+      com app.js.
 
-        } catch (zoomError) {
+      Isso é necessário porque a gravação
+      ainda utiliza a variável global
+      "stream" do app.js.
+    */
+    if (
+      typeof window.LousaCamCamera.getStream ===
+        "function"
+    ) {
 
-          /*
-            Falha no zoom NÃO pode impedir
-            o funcionamento da câmera.
-          */
+      stream =
+        window.LousaCamCamera.getStream();
 
-          console.warn(
-            "Não foi possível aplicar o enquadramento aberto:",
-            zoomError
-          );
+    }
 
-        }
 
-      } else {
+    /*
+      Sincroniza o facingMode utilizado
+      pelo restante do app.js.
+    */
+    if (
+      typeof window.LousaCamCamera.getFacingMode ===
+        "function"
+    ) {
 
-        console.log(
-          "Esta câmera não oferece zoom abaixo de 1."
-        );
-
-      }
+      facingMode =
+        window.LousaCamCamera.getFacingMode();
 
     } else {
 
-      console.log(
-        "Controle de zoom não disponibilizado por esta câmera."
-      );
-
-    }
-
-  }
-
-} catch (capabilityError) {
-
-  /*
-    Qualquer incompatibilidade desta função
-    é ignorada.
-
-    A câmera principal continua funcionando
-    normalmente.
-  */
-
-  console.warn(
-    "Não foi possível consultar as capacidades da câmera:",
-    capabilityError
-  );
-
-}
-
-
-/*
-  Conecta o MediaStream ao elemento de vídeo.
-*/
-video.srcObject =
-  stream;
-
-video.muted =
-  true;
-
-video.playsInline =
-  true;
-
-/*
-  IMPORTANTE:
-
-  Não usamos readyState antigo como referência.
-
-  Depois de substituir srcObject, esperamos explicitamente
-  pelos metadados do NOVO MediaStream.
-*/
-await new Promise(
-  resolve => {
-
-    let finished =
-      false;
-
-
-    const finish =
-      () => {
-
-        if (finished) {
-          return;
-        }
-
-        finished =
-          true;
-
-        video.removeEventListener(
-          "loadedmetadata",
-          handleMetadata
-        );
-
-        resolve();
-
-      };
-
-
-    const handleMetadata =
-      () => {
-
-        finish();
-
-      };
-
-
-    video.addEventListener(
-      "loadedmetadata",
-      handleMetadata,
-      { once: true }
-    );
-
-
-    /*
-      Proteção para WebKit:
-      se loadedmetadata já tiver ocorrido
-      muito rapidamente.
-    */
-    if (
-      video.videoWidth > 0 &&
-      video.videoHeight > 0
-    ) {
-
-      requestAnimationFrame(
-        finish
-      );
+      facingMode =
+        requestedFacingMode;
 
     }
 
 
     /*
-      Segurança para nunca bloquear o aplicativo.
+      Segurança:
+      somente consideramos a câmera ativa
+      se realmente recebemos um MediaStream.
     */
-    setTimeout(
-      finish,
-      1200
-    );
+    if (!stream) {
 
-  }
-);
+      toast(
+        "Não foi possível acessar a câmera"
+      );
 
+      return false;
 
-/*
-  Inicia a reprodução do NOVO stream.
-*/
-await video.play();
-
-
-
-/*
-  Espelhamento somente na frontal.
-*/
-video.classList.toggle(
-  "mirror",
-  requestedFacingMode ===
-    "user"
-);
-
-/*
-  Aguarda um pouco para observar
-  o estado final do vídeo no iPhone.
-*/
-
-
-
-return true;
-
-  }
-
-
-  /*
-    PRIMEIRA TENTATIVA
-    câmera + microfone
-  */
-  try {
-
-    await openCamera(
-      true
-    );
+    }
 
 
     /*
-      Se startCamera() foi chamado
-      normalmente e havia um stream
-      anterior, encerramos esse stream
-      somente depois que o novo abriu.
+      Mantemos as mensagens existentes
+      da interface.
 
-      Na troca de câmera ele já foi
-      encerrado anteriormente.
+      O camera.js pode ter aberto:
+      1. câmera + microfone
+      2. somente câmera
     */
-    if (
-      !isSwitchingCamera &&
-      previousStream &&
-      previousStream !== stream
-    ) {
-
-      previousStream
-        .getTracks()
-        .forEach(
+    const hasAudio =
+      stream
+        .getAudioTracks()
+        .some(
           track =>
-            track.stop()
+            track.readyState ===
+            "live"
         );
+
+
+    if (hasAudio) {
+
+      toast(
+        "Câmera ativa"
+      );
+
+    } else {
+
+      toast(
+        "Câmera ativa — microfone indisponível"
+      );
 
     }
 
-
-    toast(
-      "Câmera ativa"
-    );
 
     return true;
 
   } catch (error) {
 
     console.error(
-      "Primeira tentativa da câmera:",
+      "Erro ao iniciar câmera pelo camera.js:",
       error
     );
 
-  }
 
+    /*
+      Se ocorrer uma exceção inesperada,
+      sincronizamos novamente o estado
+      conhecido pelo módulo.
+    */
+    if (
+      window.LousaCamCamera &&
+      typeof window.LousaCamCamera.getStream ===
+        "function"
+    ) {
 
-  /*
-    Se algum stream incompleto tiver
-    sido criado durante a tentativa,
-    encerramos antes do fallback.
-  */
-  if (stream) {
-
-    stream
-      .getTracks()
-      .forEach(
-        track => {
-
-          try {
-            track.stop();
-          } catch (error) {
-            console.warn(error);
-          }
-
-        }
-      );
-
-  }
-
-
-  video.srcObject =
-    null;
-
-  stream =
-    null;
-
-
-  /*
-    SEGUNDA TENTATIVA
-    câmera sem áudio
-  */
-  try {
-
-    await openCamera(
-      false
-    );
-
-
-    toast(
-      "Câmera ativa — microfone indisponível"
-    );
-
-    return true;
-
-  } catch (secondError) {
-
-    console.error(
-      "Segunda tentativa da câmera:",
-      secondError
-    );
-
-
-    if (stream) {
-
-      stream
-        .getTracks()
-        .forEach(
-          track => {
-
-            try {
-              track.stop();
-            } catch (error) {
-              console.warn(error);
-            }
-
-          }
-        );
+      stream =
+        window.LousaCamCamera.getStream();
 
     }
-
-
-    stream =
-      null;
-
-    video.srcObject =
-      null;
 
 
     toast(
       "Não foi possível acessar a câmera"
     );
 
+
     return false;
 
   }
 
 }
-
 
 /* =========================================================
    BOTÃO INICIAR
