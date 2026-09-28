@@ -10242,85 +10242,73 @@ boardOptions.forEach(
 
 
 /* =========================================================
-   ETAPA 4K.3C
-   PREVIEW DA CÂMERA COM MARGEM DE SEGURANÇA
+   CÂMERA — C3.2C
+   ENQUADRAMENTO DO PREVIEW
+
+   O controle visual do elemento <video>
+   passa a utilizar camera.js quando disponível.
+
+   IMPORTANTE:
+   - NÃO abre câmera
+   - NÃO solicita permissão
+   - NÃO altera stream
+   - NÃO altera facingMode
+   - NÃO troca câmera
+   - NÃO altera srcObject
+   - NÃO interfere na gravação
    ========================================================= */
-
-/*
-  OBJETIVO:
-
-  Amenizar as bordas pretas que podem aparecer
-  enquanto o iPhone / WebKit reorganiza a viewport
-  durante a mudança de orientação.
-
-  IMPORTANTE:
-
-  - NÃO reinicia a câmera
-  - NÃO troca srcObject
-  - NÃO chama getUserMedia novamente
-  - NÃO interrompe MediaStream
-  - NÃO usa freeze frame
-  - NÃO usa timer
-  - NÃO rotaciona o vídeo
-  - NÃO interfere na gravação
-  - NÃO interfere no canvas
-
-  O vídeo fica ligeiramente maior que a viewport.
-
-  Assim existe uma pequena margem de imagem
-  fora da tela que pode ajudar a esconder
-  diferenças momentâneas de tamanho durante
-  a transição vertical / horizontal.
-*/
 
 function fitCameraPreview() {
 
+  /*
+    camera.js já possui a função responsável
+    pelo enquadramento estável de 125%.
+  */
+  if (
+    window.LousaCamCamera &&
+    typeof window.LousaCamCamera.fitPreview ===
+      "function"
+  ) {
+
+    window.LousaCamCamera.fitPreview();
+
+    return;
+
+  }
+
+
+  /*
+    FALLBACK DE SEGURANÇA
+
+    Mantemos exatamente o enquadramento
+    estável anterior caso camera.js não
+    esteja disponível por qualquer motivo.
+  */
   if (!video) {
     return;
   }
 
 
-  /*
-    O vídeo permanece centralizado.
-
-    Utilizamos 112% em vez de 100%.
-
-    Isso cria aproximadamente 6% de margem
-    para cada lado.
-  */
-
   video.style.position =
     "absolute";
 
-video.style.left =
-  "-12.5%";
+  video.style.left =
+    "-12.5%";
 
-video.style.top =
-  "-12.5%";
+  video.style.top =
+    "-12.5%";
 
-video.style.width =
-  "125%";
+  video.style.width =
+    "125%";
 
-video.style.height =
-  "125%";
-
-
-  /*
-    COVER continua sendo responsável
-    pelo enquadramento da câmera.
-  */
+  video.style.height =
+    "125%";
 
   video.style.objectFit =
     "cover";
 
   video.style.objectPosition =
     "center center";
-
-
-  /*
-    Evita que o próprio elemento de vídeo
-    interfira nos gestos da lousa.
-  */
 
   video.style.pointerEvents =
     "none";
