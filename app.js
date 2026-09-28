@@ -10875,27 +10875,108 @@ return true;
 
 /* =========================================================
    BOTÃO INICIAR
+   CAMERA MODULE — C3.2
+
+   Primeira transferência real para camera.js.
+
+   IMPORTANTE:
+   - camera.js abre câmera/microfone
+   - app.js mantém a interface
+   - app.js mantém a gravação
+   - stream é sincronizado temporariamente
+   - facingMode é sincronizado temporariamente
    ========================================================= */
 
 startBtn.addEventListener(
   "click",
   async () => {
 
-    const success =
-      await startCamera();
+    /*
+      Proteção:
 
+      Se por algum motivo camera.js não estiver
+      disponível, não tentamos abrir uma segunda
+      implementação da câmera silenciosamente.
+    */
 
-    if (success) {
+    if (
+      !window.LousaCamCamera ||
+      typeof window.LousaCamCamera.start !==
+        "function"
+    ) {
 
-      startOverlay.classList.add(
-        "hidden"
+      console.error(
+        "LousaCamCamera não está disponível."
       );
+
+      toast(
+        "Módulo da câmera indisponível"
+      );
+
+      return;
 
     }
 
+
+    /*
+      A partir da C3.2, a solicitação física
+      da câmera/microfone é feita pelo camera.js.
+    */
+
+    const success =
+      await window.LousaCamCamera.start();
+
+
+    if (!success) {
+
+      toast(
+        "Não foi possível acessar a câmera"
+      );
+
+      return;
+
+    }
+
+
+    /*
+      PONTE TEMPORÁRIA
+
+      A gravação existente no app.js ainda utiliza
+      diretamente as variáveis globais locais:
+
+      stream
+      facingMode
+
+      Por isso sincronizamos essas referências
+      depois que camera.js abre a câmera.
+
+      Esta ponte será removida em uma etapa futura.
+    */
+
+    stream =
+      window.LousaCamCamera.getStream();
+
+
+    facingMode =
+      window.LousaCamCamera.getFacingMode();
+
+
+    /*
+      A interface continua sendo responsabilidade
+      do app.js.
+    */
+
+    startOverlay.classList.add(
+      "hidden"
+    );
+
+
+    toast(
+      "Câmera ativa"
+    );
+
   }
 );
-
 
 /* =========================================================
    GRAVAÇÃO
