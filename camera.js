@@ -1250,6 +1250,42 @@ async function start(
 
   }
 
+     /* =======================================================
+     C3.2E
+     ESPELHAMENTO DO PREVIEW
+
+     Centraliza no camera.js a regra visual:
+     - frontal = espelhada
+     - traseira = normal
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO solicita permissão
+     - NÃO altera MediaStream
+     - NÃO troca srcObject
+     - NÃO reinicia câmera
+     ======================================================= */
+
+  function applyMirror(
+    requestedFacingMode
+  ) {
+
+    if (!videoElement) {
+      return false;
+    }
+
+
+    videoElement.classList.toggle(
+      "mirror",
+      requestedFacingMode ===
+        "user"
+    );
+
+
+    return true;
+
+  }
+
 
   /* =======================================================
      API PÚBLICA
@@ -1275,7 +1311,8 @@ async function start(
           getFacingMode,
           isActive,
           fitPreview,
-          applyOpenFraming
+          applyOpenFraming,
+          applyMirror
 
         }),
 
