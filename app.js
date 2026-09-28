@@ -32,6 +32,32 @@ const $ = id =>
 const video =
   $("video");
 
+
+/* =========================================================
+   CAMERA MODULE — C3.1
+   Inicialização passiva do módulo da câmera.
+
+   IMPORTANTE:
+   - não abre a câmera
+   - não solicita permissão
+   - não substitui startCamera()
+   - não altera stream
+   - não altera facingMode
+   - não interfere na gravação
+   ========================================================= */
+
+if (
+  window.LousaCamCamera &&
+  typeof window.LousaCamCamera.init ===
+    "function"
+) {
+
+  window.LousaCamCamera.init(
+    video
+  );
+
+}
+
 const canvas =
   $("canvas");
 
