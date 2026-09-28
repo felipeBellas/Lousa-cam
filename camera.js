@@ -434,211 +434,452 @@
 
 
   /* =======================================================
-     ABRIR CÂMERA
+   ABRIR CÂMERA — C3.2B
 
-     Função PRIVADA.
+   Migração fiel do fluxo estável do app.js.
 
-     Esta é uma das únicas regiões deste módulo
-     autorizadas a chamar getUserMedia().
-     ======================================================= */
+   IMPORTANTE:
+   - não executa automaticamente
+   - não altera a gravação
+   - não interfere no canvas
+   - não reage à orientação
+   ======================================================= */
 
-  async function openCamera(
-    requestedFacingMode,
-    withAudio
-  ) {
+async function openCamera(
+  requestedFacingMode,
+  withAudio
+) {
 
-    if (!videoElement) {
+  if (!videoElement) {
 
-      throw new Error(
-        "LousaCamCamera não foi inicializada."
-      );
-
-    }
-
-
-    const newStream =
-      await navigator.mediaDevices
-        .getUserMedia({
-
-          video: {
-
-            facingMode:
-              requestedFacingMode
-
-          },
-
-          audio:
-            withAudio
-
-        });
-
-
-    stream =
-      newStream;
-
-
-    /*
-      4K.3D
-
-      Opcional.
-      Nunca impede a câmera de funcionar.
-    */
-
-    await applyMinimumZoom(
-      stream
+    throw new Error(
+      "LousaCamCamera não foi inicializada."
     );
-
-
-    /*
-      Conecta o MediaStream
-      ao elemento de vídeo.
-    */
-
-    videoElement.srcObject =
-      stream;
-
-    videoElement.muted =
-      true;
-
-    videoElement.playsInline =
-      true;
-
-
-    await waitForVideoMetadata();
-
-
-    await videoElement.play();
-
-
-    /*
-      Espelhamento somente
-      na câmera frontal.
-    */
-
-    videoElement.classList.toggle(
-      "mirror",
-      requestedFacingMode ===
-        "user"
-    );
-
-
-    /*
-      Reafirma o enquadramento
-      estável depois da abertura.
-    */
-
-    fitPreview();
-
-
-    return true;
 
   }
 
 
-  /* =======================================================
-     INICIAR CÂMERA
+  /*
+    Solicita exatamente a câmera desejada.
 
-     IMPORTANTE:
+    Mantemos a mesma estrutura utilizada
+    pelo startCamera() estável.
+  */
 
-     Esta função NÃO é executada automaticamente.
+  const newStream =
+    await navigator.mediaDevices
+      .getUserMedia({
 
-     Somente app.js deverá chamá-la depois
-     de uma ação explícita do usuário.
-     ======================================================= */
+        video: {
 
-  async function start(
-    requestedFacingMode = facingMode
-  ) {
+          facingMode:
+            requestedFacingMode
 
-    if (!videoElement) {
+        },
 
-      console.error(
-        "LousaCamCamera: init(video) deve ser chamado antes de start()."
+        audio:
+          withAudio
+
+      });
+
+
+  /*
+    Assim como no app.js estável,
+    o novo stream passa imediatamente
+    a ser o stream atual.
+  */
+
+  stream =
+    newStream;
+
+
+  /* =====================================================
+     ETAPA 4K.3D
+     ENQUADRAMENTO MAIS ABERTO QUANDO DISPONÍVEL
+     ===================================================== */
+
+  /*
+    Esta função é opcional.
+
+    Qualquer falha relacionada ao zoom
+    não pode impedir o funcionamento
+    principal da câmera.
+  */
+
+  await applyMinimumZoom(
+    stream
+  );
+
+
+  /*
+    Conecta o MediaStream ao vídeo.
+
+    A ordem abaixo deve permanecer.
+  */
+
+  videoElement.srcObject =
+    stream;
+
+  videoElement.muted =
+    true;
+
+  videoElement.playsInline =
+    true;
+
+
+  /*
+    Esperamos explicitamente pelos
+    metadados do NOVO MediaStream.
+
+    Este comportamento é importante
+    para WebKit/Safari.
+  */
+
+  await new Promise(
+    resolve => {
+
+      let finished =
+        false;
+
+
+      const finish =
+        () => {
+
+          if (finished) {
+            return;
+          }
+
+          finished =
+            true;
+
+          videoElement.removeEventListener(
+            "loadedmetadata",
+            handleMetadata
+          );
+
+          resolve();
+
+        };
+
+
+      const handleMetadata =
+        () => {
+
+          finish();
+
+        };
+
+
+      videoElement.addEventListener(
+        "loadedmetadata",
+        handleMetadata,
+        { once: true }
       );
-
-      return false;
-
-    }
-
-
-    if (!mediaDevicesAvailable()) {
-
-      console.error(
-        "LousaCamCamera: câmera não disponível."
-      );
-
-      return false;
-
-    }
-
-
-    const previousStream =
-      stream;
-
-
-    /*
-      PRIMEIRA TENTATIVA
-      câmera + microfone
-    */
-
-    try {
-
-      await openCamera(
-        requestedFacingMode,
-        true
-      );
-
-
-      facingMode =
-        requestedFacingMode;
 
 
       /*
-        Se já havia um stream anterior,
-        somente agora o encerramos.
+        Proteção para WebKit:
 
-        Assim evitamos desligar uma câmera
-        funcional antes de sabermos que
-        a nova câmera abriu corretamente.
+        loadedmetadata pode ter ocorrido
+        muito rapidamente.
       */
 
       if (
-        previousStream &&
-        previousStream !== stream
+        videoElement.videoWidth > 0 &&
+        videoElement.videoHeight > 0
       ) {
 
-        stopTracks(
-          previousStream
+        requestAnimationFrame(
+          finish
         );
 
       }
 
 
-      return true;
+      /*
+        Segurança para nunca deixar
+        a inicialização bloqueada.
+      */
 
-    } catch (firstError) {
-
-      console.error(
-        "LousaCamCamera: primeira tentativa da câmera:",
-        firstError
+      setTimeout(
+        finish,
+        1200
       );
+
+    }
+  );
+
+
+  /*
+    Inicia a reprodução do NOVO stream.
+  */
+
+  await videoElement.play();
+
+
+  /*
+    Espelhamento somente na frontal.
+  */
+
+  videoElement.classList.toggle(
+    "mirror",
+    requestedFacingMode ===
+      "user"
+  );
+
+
+  return true;
+
+}
+
+
+/* =======================================================
+   INICIAR CÂMERA — C3.2B
+
+   Reprodução do comportamento estável
+   existente no app.js.
+   ======================================================= */
+
+async function start(
+  requestedFacingMode = facingMode,
+  isSwitchingCamera = false
+) {
+
+  if (!videoElement) {
+
+    console.error(
+      "LousaCamCamera: init(video) deve ser chamado antes de start()."
+    );
+
+    return false;
+
+  }
+
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    console.error(
+      "LousaCamCamera: câmera não disponível."
+    );
+
+    return false;
+
+  }
+
+
+  /*
+    Guarda o stream atual.
+
+    Na troca frontal/traseira,
+    o dispositivo anterior precisa
+    ser liberado primeiro.
+  */
+
+  const previousStream =
+    stream;
+
+
+  if (
+    isSwitchingCamera &&
+    previousStream
+  ) {
+
+    previousStream
+      .getTracks()
+      .forEach(
+        track => {
+
+          try {
+
+            track.stop();
+
+          } catch (error) {
+
+            console.warn(
+              "Erro ao encerrar track:",
+              error
+            );
+
+          }
+
+        }
+      );
+
+
+    /*
+      Desconecta o stream antigo antes
+      de solicitar outra câmera.
+    */
+
+    videoElement.srcObject =
+      null;
+
+    stream =
+      null;
+
+
+    /*
+      Intervalo já utilizado pela
+      implementação estável para WebKit/iOS.
+    */
+
+    await new Promise(
+      resolve =>
+        setTimeout(
+          resolve,
+          180
+        )
+    );
+
+  }
+
+
+  /*
+    PRIMEIRA TENTATIVA
+    câmera + microfone
+  */
+
+  try {
+
+    await openCamera(
+      requestedFacingMode,
+      true
+    );
+
+
+    /*
+      Se não estamos trocando frontal/traseira
+      e existia outro stream, encerramos o
+      anterior somente depois que o novo abriu.
+    */
+
+    if (
+      !isSwitchingCamera &&
+      previousStream &&
+      previousStream !== stream
+    ) {
+
+      previousStream
+        .getTracks()
+        .forEach(
+          track =>
+            track.stop()
+        );
 
     }
 
 
-    /*
-      Limpa qualquer stream incompleto
-      antes da segunda tentativa.
-    */
+    facingMode =
+      requestedFacingMode;
 
-    if (
-      stream &&
-      stream !== previousStream
-    ) {
 
-      stopTracks(
-        stream
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "LousaCamCamera: primeira tentativa da câmera:",
+      error
+    );
+
+  }
+
+
+  /*
+    Se alguma tentativa deixou um stream,
+    encerramos antes do fallback.
+
+    IMPORTANTE:
+    não restauramos automaticamente
+    previousStream aqui.
+
+    Isso reproduz o comportamento
+    do startCamera() estável.
+  */
+
+  if (stream) {
+
+    stream
+      .getTracks()
+      .forEach(
+        track => {
+
+          try {
+
+            track.stop();
+
+          } catch (error) {
+
+            console.warn(
+              error
+            );
+
+          }
+
+        }
       );
+
+  }
+
+
+  videoElement.srcObject =
+    null;
+
+  stream =
+    null;
+
+
+  /*
+    SEGUNDA TENTATIVA
+    câmera sem áudio
+  */
+
+  try {
+
+    await openCamera(
+      requestedFacingMode,
+      false
+    );
+
+
+    facingMode =
+      requestedFacingMode;
+
+
+    return true;
+
+  } catch (secondError) {
+
+    console.error(
+      "LousaCamCamera: segunda tentativa da câmera:",
+      secondError
+    );
+
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(
+          track => {
+
+            try {
+
+              track.stop();
+
+            } catch (error) {
+
+              console.warn(
+                error
+              );
+
+            }
+
+          }
+        );
 
     }
 
@@ -646,115 +887,15 @@
     stream =
       null;
 
-
-    if (videoElement) {
-
-      videoElement.srcObject =
-        null;
-
-    }
+    videoElement.srcObject =
+      null;
 
 
-    /*
-      SEGUNDA TENTATIVA
-      câmera sem áudio.
-
-      Isso preserva o comportamento
-      de fallback existente no Lousa Cam.
-    */
-
-    try {
-
-      await openCamera(
-        requestedFacingMode,
-        false
-      );
-
-
-      facingMode =
-        requestedFacingMode;
-
-
-      if (
-        previousStream &&
-        previousStream !== stream
-      ) {
-
-        stopTracks(
-          previousStream
-        );
-
-      }
-
-
-      return true;
-
-    } catch (secondError) {
-
-      console.error(
-        "LousaCamCamera: segunda tentativa da câmera:",
-        secondError
-      );
-
-
-      if (
-        stream &&
-        stream !== previousStream
-      ) {
-
-        stopTracks(
-          stream
-        );
-
-      }
-
-
-      stream =
-        previousStream || null;
-
-
-      /*
-        Se ainda existe o stream anterior,
-        preservamos o preview antigo.
-
-        Caso contrário, desconectamos
-        completamente o elemento de vídeo.
-      */
-
-      if (
-        videoElement &&
-        stream
-      ) {
-
-        videoElement.srcObject =
-          stream;
-
-        try {
-
-          await videoElement.play();
-
-        } catch (restoreError) {
-
-          console.warn(
-            "LousaCamCamera: não foi possível restaurar o preview anterior.",
-            restoreError
-          );
-
-        }
-
-      } else if (videoElement) {
-
-        videoElement.srcObject =
-          null;
-
-      }
-
-
-      return false;
-
-    }
+    return false;
 
   }
+
+}
 
 
   /* =======================================================
