@@ -10495,18 +10495,55 @@ try {
 }
 
 
-    /*
-      Conecta o MediaStream ao elemento de vídeo.
-    */
-    video.srcObject =
-      stream;
+    /* =========================================================
+   CÂMERA — C3.2F
+   CONEXÃO DO STREAM AO PREVIEW
 
-    video.muted =
-      true;
+   O MediaStream continua sendo criado pelo
+   startCamera() estável do app.js.
 
-    video.playsInline =
-      true;
+   camera.js passa a cuidar somente da conexão
+   desse stream já existente ao elemento <video>.
 
+   IMPORTANTE:
+   - NÃO abre câmera
+   - NÃO chama getUserMedia
+   - NÃO altera stream
+   - NÃO altera facingMode
+   - NÃO reinicia câmera
+   - NÃO interfere na gravação
+   ========================================================= */
+
+if (
+  window.LousaCamCamera &&
+  typeof window.LousaCamCamera.attachStream ===
+    "function"
+) {
+
+  window.LousaCamCamera.attachStream(
+    stream
+  );
+
+} else {
+
+  /*
+    FALLBACK DE SEGURANÇA.
+
+    Mantém exatamente o comportamento
+    estável anterior caso camera.js
+    não esteja disponível.
+  */
+
+  video.srcObject =
+    stream;
+
+  video.muted =
+    true;
+
+  video.playsInline =
+    true;
+
+}
 
     /*
       IMPORTANTE:
