@@ -10400,13 +10400,49 @@ async function startCamera(
       );
 
 
-    /*
-      Desconecta o stream antigo
-      do elemento de vídeo antes
-      de solicitar a outra câmera.
-    */
-    video.srcObject =
-      null;
+        /* =========================================================
+       CÂMERA — C3.2G
+       DESCONEXÃO VISUAL DO PREVIEW
+
+       As tracks continuam sendo encerradas pelo
+       fluxo estável do app.js.
+
+       camera.js passa a cuidar somente da
+       desconexão entre o MediaStream antigo
+       e o elemento <video>.
+
+       IMPORTANTE:
+       - NÃO abre câmera
+       - NÃO chama getUserMedia
+       - NÃO encerra tracks
+       - NÃO altera facingMode
+       - NÃO reinicia câmera
+       - NÃO interfere na gravação
+       ========================================================= */
+
+    if (
+      window.LousaCamCamera &&
+      typeof window.LousaCamCamera.detachStream ===
+        "function"
+    ) {
+
+      window.LousaCamCamera.detachStream();
+
+    } else {
+
+      /*
+        FALLBACK DE SEGURANÇA.
+
+        Mantém exatamente o comportamento
+        estável anterior caso camera.js
+        não esteja disponível.
+      */
+
+      video.srcObject =
+        null;
+
+    }
+
 
     stream =
       null;
@@ -10416,6 +10452,7 @@ async function startCamera(
       Pequeno intervalo para o WebKit/iOS
       liberar o dispositivo anterior.
     */
+     
     await new Promise(
       resolve =>
         setTimeout(
