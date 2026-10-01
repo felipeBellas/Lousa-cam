@@ -1347,6 +1347,43 @@ async function start(
 
   }
 
+     /* =======================================================
+     C3.2G
+     DESCONEXÃO VISUAL DO PREVIEW
+
+     Remove somente o MediaStream atualmente
+     conectado ao elemento <video>.
+
+     IMPORTANTE:
+     - NÃO encerra tracks
+     - NÃO chama track.stop()
+     - NÃO altera o stream do app.js
+     - NÃO altera o stream privado do camera.js
+     - NÃO chama getUserMedia
+     - NÃO solicita permissões
+     - NÃO reinicia câmera
+     - NÃO altera facingMode
+     - NÃO controla gravação
+
+     Esta função cuida somente da ligação
+     visual entre MediaStream e <video>.
+     ======================================================= */
+
+  function detachStream() {
+
+    if (!videoElement) {
+      return false;
+    }
+
+
+    videoElement.srcObject =
+      null;
+
+
+    return true;
+
+  }
+
 
   /* =======================================================
      API PÚBLICA
@@ -1374,7 +1411,8 @@ async function start(
           fitPreview,
           applyOpenFraming,
           applyMirror,
-          attachStream
+          attachStream,
+          detachStream
 
         }),
 
