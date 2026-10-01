@@ -1286,6 +1286,67 @@ async function start(
 
   }
 
+     /* =======================================================
+     C3.2F
+     PREPARAÇÃO DO PREVIEW COM STREAM EXTERNO
+
+     Centraliza no camera.js a preparação visual
+     do elemento <video> depois que o app.js
+     obtiver fisicamente o MediaStream.
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO solicita permissão
+     - NÃO chama getUserMedia
+     - NÃO encerra tracks
+     - NÃO reinicia câmera
+     - NÃO altera facingMode
+     - NÃO controla gravação
+
+     O MediaStream continua sendo obtido pelo
+     startCamera() estável do app.js.
+     ======================================================= */
+
+  function attachStream(
+    targetStream
+  ) {
+
+    if (
+      !videoElement ||
+      !targetStream
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+      Apenas conecta ao elemento <video>
+      o MediaStream que já foi obtido
+      externamente pelo app.js.
+    */
+
+    videoElement.srcObject =
+      targetStream;
+
+
+    /*
+      Mantém as configurações já utilizadas
+      pelo fluxo estável do Lousa Cam.
+    */
+
+    videoElement.muted =
+      true;
+
+    videoElement.playsInline =
+      true;
+
+
+    return true;
+
+  }
+
 
   /* =======================================================
      API PÚBLICA
@@ -1300,7 +1361,7 @@ async function start(
     {
 
       value:
-        Object.freeze({
+                Object.freeze({
 
           init,
           start,
@@ -1312,7 +1373,8 @@ async function start(
           isActive,
           fitPreview,
           applyOpenFraming,
-          applyMirror
+          applyMirror,
+          attachStream
 
         }),
 
