@@ -10384,24 +10384,73 @@ async function startCamera(
     previousStream
   ) {
 
-    previousStream
-      .getTracks()
-      .forEach(
-        track => {
-          try {
-            track.stop();
-          } catch (error) {
-            console.warn(
-              "Erro ao encerrar track:",
-              error
-            );
-          }
-        }
+        /* =========================================================
+       CÂMERA — C3.2J
+       ENCERRAMENTO CONTROLADO DAS TRACKS
+
+       camera.js passa a executar somente o encerramento
+       das tracks do MediaStream fornecido pelo app.js.
+
+       IMPORTANTE:
+       - NÃO abre câmera
+       - NÃO chama getUserMedia
+       - NÃO altera stream
+       - NÃO altera facingMode
+       - NÃO troca srcObject
+       - NÃO inicia preview
+       - NÃO interfere na gravação
+
+       O app.js continua sendo responsável pelo
+       MediaStream e pelo fluxo de abertura da câmera.
+       ========================================================= */
+
+    if (
+      window.LousaCamCamera &&
+      typeof window.LousaCamCamera.stopStreamTracks ===
+        "function"
+    ) {
+
+      window.LousaCamCamera.stopStreamTracks(
+        previousStream
       );
 
+    } else {
 
-        /* =========================================================
+      /*
+        FALLBACK DE SEGURANÇA.
+
+        Mantém exatamente o comportamento
+        estável anterior caso camera.js
+        não esteja disponível.
+      */
+
+      previousStream
+        .getTracks()
+        .forEach(
+          track => {
+
+            try {
+
+              track.stop();
+
+            } catch (error) {
+
+              console.warn(
+                "Erro ao encerrar track:",
+                error
+              );
+
+            }
+
+          }
+        );
+
+    }
+
+
+    /* =========================================================
        CÂMERA — C3.2G
+       
        DESCONEXÃO VISUAL DO PREVIEW
 
        As tracks continuam sendo encerradas pelo
