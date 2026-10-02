@@ -1,58 +1,15 @@
-"use strict";
-
-
-/* =========================================================
-   LOUSA CAM 2.0
-   SERVICE WORKER
-
-   Atualização:
-   02/10/2026
-
-   Estratégia:
-
-   - Arquivos principais:
-     NETWORK FIRST
-
-   - Recursos secundários:
-     CACHE FIRST
-
-   Isso evita que arquivos JavaScript importantes
-   permaneçam presos em versões antigas no PWA.
-   ========================================================= */
-
-
-const CACHE_NAME =
-  "lousa-cam-v20261002-01";
-
-
-/* =========================================================
-   ARQUIVOS PRINCIPAIS DO APLICATIVO
-   ========================================================= */
+const CACHE_NAME = "lousa-cam-v20261002-01";
 
 const APP_FILES = [
-
   "./",
-
   "./index.html",
-
   "./app.js",
-
   "./camera.js",
-
   "./gallery.js",
-
   "./video-storage.js",
-
   "./pencil.js",
-
-  "./pencil.css",
-
-  "./gallery.css",
-
   "./manifest.json",
-
   "./logo.png"
-
 ];
 
 
@@ -60,349 +17,195 @@ const APP_FILES = [
    INSTALL
    ========================================================= */
 
-self.addEventListener(
-  "install",
-  event => {
+self.addEventListener("install", event => {
 
-    event.waitUntil(
+  event.waitUntil(
 
-      caches
-        .open(
-          CACHE_NAME
-        )
-        .then(
-          cache => {
+    caches.open(CACHE_NAME)
+      .then(cache => {
 
-            return cache.addAll(
-              APP_FILES
-            );
+        return cache.addAll(APP_FILES);
 
-          }
-        )
+      })
 
-    );
+  );
 
+  self.skipWaiting();
 
-    /*
-      Ativa imediatamente a nova
-      versão do Service Worker.
-    */
-    self.skipWaiting();
-
-  }
-);
+});
 
 
 /* =========================================================
    ACTIVATE
    ========================================================= */
 
-self.addEventListener(
-  "activate",
-  event => {
+self.addEventListener("activate", event => {
 
-    event.waitUntil(
+  event.waitUntil(
 
-      caches
-        .keys()
-        .then(
-          keys => {
+    caches.keys()
+      .then(keys => {
 
-            return Promise.all(
+        return Promise.all(
 
-              keys
+          keys
+            .filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
 
-                .filter(
-                  key =>
-                    key !== CACHE_NAME
-                )
+        );
 
-                .map(
-                  key =>
-                    caches.delete(
-                      key
-                    )
-                )
+      })
 
-            );
+  );
 
-          }
-        )
+  self.clients.claim();
 
-    );
-
-
-    /*
-      Assume imediatamente o controle
-      das páginas abertas.
-    */
-    self.clients.claim();
-
-  }
-);
+});
 
 
 /* =========================================================
    FETCH
    ========================================================= */
 
-self.addEventListener(
-  "fetch",
-  event => {
+self.addEventListener("fetch", event => {
 
-    const request =
-      event.request;
+  const request = event.request;
 
-
-    /*
-      O Service Worker só interfere
-      em requisições GET.
-    */
-    if (
-      request.method !== "GET"
-    ) {
-
-      return;
-
-    }
+  if (request.method !== "GET") {
+    return;
+  }
 
 
-    const url =
-      new URL(
-        request.url
-      );
+  const url = new URL(request.url);
 
 
-    /* =====================================================
-       ARQUIVOS PRINCIPAIS
-
-       NETWORK FIRST
-
-       Sempre tenta buscar primeiro
-       a versão atual da rede.
-
-       O cache serve apenas como
-       alternativa quando estiver offline.
-       ===================================================== */
-
-    const isAppFile =
-
-      url.pathname.endsWith(
-        "/index.html"
-      ) ||
-
-      url.pathname.endsWith(
-        "/app.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/camera.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/gallery.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/video-storage.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/pencil.js"
-      ) ||
-
-      url.pathname.endsWith(
-        "/pencil.css"
-      ) ||
-
-      url.pathname.endsWith(
-        "/gallery.css"
-      ) ||
-
-      url.pathname.endsWith(
-        "/manifest.json"
-      ) ||
-
-      url.pathname.endsWith(
-        "/sw.js"
-      );
+  const isAppFile =
+    url.pathname.endsWith("/index.html") ||
+    url.pathname.endsWith("/app.js") ||
+    url.pathname.endsWith("/camera.js") ||
+    url.pathname.endsWith("/gallery.js") ||
+    url.pathname.endsWith("/video-storage.js") ||
+    url.pathname.endsWith("/pencil.js") ||
+    url.pathname.endsWith("/manifest.json") ||
+    url.pathname.endsWith("/sw.js");
 
 
-    if (
-      isAppFile
-    ) {
+  /* =======================================================
+     ARQUIVOS PRINCIPAIS
 
-      event.respondWith(
+     Sempre tenta buscar a versão atual primeiro.
+     Só usa cache se estiver sem internet.
+     ======================================================= */
 
-        fetch(
-          request
-        )
+  if (isAppFile) {
 
-          .then(
-            response => {
+    event.respondWith(
 
-              if (
-                response &&
-                response.ok
-              ) {
+      fetch(request)
 
-                const responseClone =
-                  response.clone();
+        .then(response => {
 
+          if (
+            response &&
+            response.ok
+          ) {
 
-                caches
-                  .open(
-                    CACHE_NAME
-                  )
+            const responseClone =
+              response.clone();
 
-                  .then(
-                    cache => {
+            caches.open(CACHE_NAME)
+              .then(cache => {
 
-                      return cache.put(
-                        request,
-                        responseClone
-                      );
+                cache.put(
+                  request,
+                  responseClone
+                );
 
-                    }
-                  )
+              })
+              .catch(() => {});
 
-                  .catch(
-                    () => {}
-                  );
+          }
 
+          return response;
+
+        })
+
+        .catch(() => {
+
+          return caches.match(request)
+            .then(cached => {
+
+              if (cached) {
+                return cached;
               }
 
+              return caches.match("./index.html");
+
+            });
+
+        })
+
+    );
+
+    return;
+
+  }
+
+
+  /* =======================================================
+     OUTROS ARQUIVOS
+
+     Cache primeiro.
+     ======================================================= */
+
+  event.respondWith(
+
+    caches.match(request)
+
+      .then(cached => {
+
+        if (cached) {
+          return cached;
+        }
+
+
+        return fetch(request)
+
+          .then(response => {
+
+            if (
+              !response ||
+              !response.ok ||
+              response.type === "opaque"
+            ) {
 
               return response;
 
             }
-          )
 
 
-          .catch(
-            () => {
-
-              return caches
-                .match(
-                  request
-                )
-
-                .then(
-                  cached => {
-
-                    if (
-                      cached
-                    ) {
-
-                      return cached;
-
-                    }
+            const responseClone =
+              response.clone();
 
 
-                    /*
-                      Último fallback:
-                      página principal.
-                    */
-                    return caches.match(
-                      "./index.html"
-                    );
+            caches.open(CACHE_NAME)
+              .then(cache => {
 
-                  }
+                cache.put(
+                  request,
+                  responseClone
                 );
 
-            }
-          )
-
-      );
+              })
+              .catch(() => {});
 
 
-      return;
+            return response;
 
-    }
+          });
 
+      })
 
-    /* =====================================================
-       OUTROS ARQUIVOS
+  );
 
-       CACHE FIRST
-
-       Imagens e outros recursos que não
-       controlam a lógica principal podem
-       continuar usando cache primeiro.
-       ===================================================== */
-
-    event.respondWith(
-
-      caches
-        .match(
-          request
-        )
-
-        .then(
-          cached => {
-
-            if (
-              cached
-            ) {
-
-              return cached;
-
-            }
-
-
-            return fetch(
-              request
-            )
-
-              .then(
-                response => {
-
-                  if (
-                    !response ||
-                    !response.ok ||
-                    response.type ===
-                      "opaque"
-                  ) {
-
-                    return response;
-
-                  }
-
-
-                  const responseClone =
-                    response.clone();
-
-
-                  caches
-                    .open(
-                      CACHE_NAME
-                    )
-
-                    .then(
-                      cache => {
-
-                        return cache.put(
-                          request,
-                          responseClone
-                        );
-
-                      }
-                    )
-
-                    .catch(
-                      () => {}
-                    );
-
-
-                  return response;
-
-                }
-              );
-
-          }
-        )
-
-    );
-
-  }
-);
+});
