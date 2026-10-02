@@ -8,6 +8,280 @@ const selectedGalleryVideos =
   new Set();
 
 /* =========================================================
+   CONFIRMAÇÃO INTERNA DA GALERIA
+
+   Substitui window.confirm() para evitar que o popup
+   nativo do navegador interfira no preview da câmera,
+   principalmente no Safari/PWA do iPhone.
+   ========================================================= */
+
+function galleryConfirm(
+  message
+) {
+
+  return new Promise(
+    resolve => {
+
+      /*
+        Fundo da confirmação.
+      */
+      const overlay =
+        document.createElement(
+          "div"
+        );
+
+      overlay.style.position =
+        "fixed";
+
+      overlay.style.inset =
+        "0";
+
+      overlay.style.zIndex =
+        "999999";
+
+      overlay.style.display =
+        "flex";
+
+      overlay.style.alignItems =
+        "center";
+
+      overlay.style.justifyContent =
+        "center";
+
+      overlay.style.padding =
+        "20px";
+
+      overlay.style.background =
+        "rgba(0, 0, 0, 0.55)";
+
+
+      /*
+        Caixa.
+      */
+      const box =
+        document.createElement(
+          "div"
+        );
+
+      box.style.width =
+        "min(360px, 100%)";
+
+      box.style.padding =
+        "22px";
+
+      box.style.borderRadius =
+        "18px";
+
+      box.style.background =
+        "#ffffff";
+
+      box.style.color =
+        "#111111";
+
+      box.style.boxSizing =
+        "border-box";
+
+      box.style.boxShadow =
+        "0 12px 40px rgba(0, 0, 0, 0.35)";
+
+
+      /*
+        Mensagem.
+      */
+      const text =
+        document.createElement(
+          "div"
+        );
+
+      text.textContent =
+        message;
+
+      text.style.fontSize =
+        "16px";
+
+      text.style.lineHeight =
+        "1.4";
+
+      text.style.marginBottom =
+        "22px";
+
+
+      /*
+        Área dos botões.
+      */
+      const actions =
+        document.createElement(
+          "div"
+        );
+
+      actions.style.display =
+        "flex";
+
+      actions.style.justifyContent =
+        "flex-end";
+
+      actions.style.gap =
+        "10px";
+
+
+      /*
+        CANCELAR
+      */
+      const cancelButton =
+        document.createElement(
+          "button"
+        );
+
+      cancelButton.type =
+        "button";
+
+      cancelButton.textContent =
+        "Cancelar";
+
+      cancelButton.style.padding =
+        "10px 16px";
+
+      cancelButton.style.border =
+        "0";
+
+      cancelButton.style.borderRadius =
+        "10px";
+
+      cancelButton.style.cursor =
+        "pointer";
+
+
+      /*
+        EXCLUIR
+      */
+      const confirmButton =
+        document.createElement(
+          "button"
+        );
+
+      confirmButton.type =
+        "button";
+
+      confirmButton.textContent =
+        "Excluir";
+
+      confirmButton.style.padding =
+        "10px 16px";
+
+      confirmButton.style.border =
+        "0";
+
+      confirmButton.style.borderRadius =
+        "10px";
+
+      confirmButton.style.cursor =
+        "pointer";
+
+      confirmButton.style.background =
+        "#d93025";
+
+      confirmButton.style.color =
+        "#ffffff";
+
+
+      /*
+        Finaliza a confirmação.
+      */
+      function finish(
+        result
+      ) {
+
+        overlay.remove();
+
+        resolve(
+          result
+        );
+
+      }
+
+
+      cancelButton.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+          finish(
+            false
+          );
+
+        }
+      );
+
+
+      confirmButton.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+          finish(
+            true
+          );
+
+        }
+      );
+
+
+      /*
+        Toque fora = cancelar.
+      */
+      overlay.addEventListener(
+        "click",
+        event => {
+
+          if (
+            event.target ===
+            overlay
+          ) {
+
+            finish(
+              false
+            );
+
+          }
+
+        }
+      );
+
+
+      actions.appendChild(
+        cancelButton
+      );
+
+      actions.appendChild(
+        confirmButton
+      );
+
+
+      box.appendChild(
+        text
+      );
+
+      box.appendChild(
+        actions
+      );
+
+
+      overlay.appendChild(
+        box
+      );
+
+
+      document.body.appendChild(
+        overlay
+      );
+
+    }
+  );
+
+}
+/* =========================================================
    CARREGAR GALERIA
    ========================================================= */
 
@@ -230,11 +504,11 @@ async function loadGallery() {
 
 
         const confirmed =
-          window.confirm(
-            totalSelected === 1
-              ? "Excluir o vídeo selecionado da Galeria?"
-              : `Excluir os ${totalSelected} vídeos selecionados da Galeria?`
-          );
+  await galleryConfirm(
+    totalSelected === 1
+      ? "Excluir o vídeo selecionado da Galeria?"
+      : `Excluir os ${totalSelected} vídeos selecionados da Galeria?`
+  );
 
 
         if (!confirmed) {
@@ -700,9 +974,9 @@ function openGalleryVideo(
       event.stopPropagation();
 
       const confirmed =
-        window.confirm(
-          "Excluir este vídeo da Galeria?"
-        );
+  await galleryConfirm(
+    "Excluir este vídeo da Galeria?"
+  );
 
       if (!confirmed) {
         return;
