@@ -1500,46 +1500,57 @@ async function start(
 
 
   /* =======================================================
-     API PÚBLICA
+   API PÚBLICA — C3.2K PARTE 4A
 
-     Esta é a única interface que o restante
-     do Lousa Cam deverá utilizar futuramente.
-     ======================================================= */
+   Expõe somente as funções utilizadas pelo
+   fluxo atualmente estável do Lousa Cam.
 
-  Object.defineProperty(
-    window,
-    "LousaCamCamera",
-    {
+   As funções antigas de abertura, parada e
+   troca frontal/traseira permanecem internas
+   neste momento.
 
-      value:
-        Object.freeze({
+   IMPORTANTE:
+   - NÃO remove funções internas
+   - NÃO altera getUserMedia
+   - NÃO altera o MediaStream ativo
+   - NÃO altera facingMode do app.js
+   - NÃO altera preview
+   - NÃO altera gravação
+   - NÃO altera áudio
+   - NÃO altera régua
+   - NÃO altera as lousas preta/verde/branca
 
-          init,
-          start,
-          stop,
-          switchCamera,
-          getStream,
-          getVideoTrack,
-          getFacingMode,
-          isActive,
-          fitPreview,
-          applyOpenFraming,
-          applyMirror,
-          attachStream,
-          detachStream,
-          waitForPreviewReady,
-          playPreview,
-          stopStreamTracks
+   Esta etapa reduz somente a superfície
+   pública de window.LousaCamCamera.
+   ======================================================= */
 
-        }),
+Object.defineProperty(
+  window,
+  "LousaCamCamera",
+  {
 
-      writable:
-        false,
+    value:
+      Object.freeze({
 
-      configurable:
-        false
+        init,
+        fitPreview,
+        applyOpenFraming,
+        applyMirror,
+        attachStream,
+        detachStream,
+        waitForPreviewReady,
+        playPreview,
+        stopStreamTracks
 
-    }
-  );
+      }),
+
+    writable:
+      false,
+
+    configurable:
+      false
+
+  }
+);
 
 })();
