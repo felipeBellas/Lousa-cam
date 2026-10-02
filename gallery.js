@@ -15,270 +15,454 @@ const selectedGalleryVideos =
    principalmente no Safari/PWA do iPhone.
    ========================================================= */
 
-function galleryConfirm(
-  message
-) {
+/* =========================================================
+   CONFIRMAÇÃO INTERNA DA GALERIA
+   Liquid Glass — Lousa Cam 2.0
 
-  return new Promise(
-    resolve => {
+   Substitui window.confirm().
+   Não interfere na câmera ou no MediaStream.
+   ========================================================= */
 
-      /*
-        Fundo da confirmação.
-      */
-      const overlay =
-        document.createElement(
-          "div"
-        );
+function galleryConfirm(message) {
 
-      overlay.style.position =
-        "fixed";
+  return new Promise(resolve => {
 
-      overlay.style.inset =
-        "0";
+    /* =====================================================
+       OVERLAY
+       ===================================================== */
 
-      overlay.style.zIndex =
-        "999999";
+    const overlay =
+      document.createElement("div");
 
-      overlay.style.display =
-        "flex";
+    overlay.style.position =
+      "fixed";
 
-      overlay.style.alignItems =
-        "center";
+    overlay.style.inset =
+      "0";
 
-      overlay.style.justifyContent =
-        "center";
+    overlay.style.zIndex =
+      "999999";
 
-      overlay.style.padding =
-        "20px";
+    overlay.style.display =
+      "flex";
 
-      overlay.style.background =
-        "rgba(0, 0, 0, 0.55)";
+    overlay.style.alignItems =
+      "center";
 
+    overlay.style.justifyContent =
+      "center";
 
-      /*
-        Caixa.
-      */
-      const box =
-        document.createElement(
-          "div"
-        );
+    overlay.style.padding =
+      "24px";
 
-      box.style.width =
-        "min(360px, 100%)";
+    overlay.style.background =
+      "rgba(0, 0, 0, 0.42)";
 
-      box.style.padding =
-        "22px";
+    overlay.style.backdropFilter =
+      "blur(10px)";
 
-      box.style.borderRadius =
-        "18px";
+    overlay.style.webkitBackdropFilter =
+      "blur(10px)";
 
-      box.style.background =
-        "#ffffff";
+    overlay.style.opacity =
+      "0";
 
-      box.style.color =
-        "#111111";
-
-      box.style.boxSizing =
-        "border-box";
-
-      box.style.boxShadow =
-        "0 12px 40px rgba(0, 0, 0, 0.35)";
+    overlay.style.transition =
+      "opacity 0.18s ease";
 
 
-      /*
-        Mensagem.
-      */
-      const text =
-        document.createElement(
-          "div"
-        );
+    /* =====================================================
+       PAINEL
+       ===================================================== */
 
-      text.textContent =
-        message;
+    const panel =
+      document.createElement("div");
 
-      text.style.fontSize =
-        "16px";
+    panel.style.width =
+      "min(360px, calc(100vw - 40px))";
 
-      text.style.lineHeight =
-        "1.4";
+    panel.style.padding =
+      "22px";
 
-      text.style.marginBottom =
-        "22px";
+    panel.style.borderRadius =
+      "24px";
 
+    panel.style.background =
+      "rgba(28, 28, 30, 0.88)";
 
-      /*
-        Área dos botões.
-      */
-      const actions =
-        document.createElement(
-          "div"
-        );
+    panel.style.border =
+      "1px solid rgba(255, 255, 255, 0.18)";
 
-      actions.style.display =
-        "flex";
+    panel.style.boxShadow =
+      "0 18px 50px rgba(0, 0, 0, 0.48)";
 
-      actions.style.justifyContent =
-        "flex-end";
+    panel.style.backdropFilter =
+      "blur(28px) saturate(180%)";
 
-      actions.style.gap =
-        "10px";
+    panel.style.webkitBackdropFilter =
+      "blur(28px) saturate(180%)";
 
+    panel.style.transform =
+      "scale(0.94)";
 
-      /*
-        CANCELAR
-      */
-      const cancelButton =
-        document.createElement(
-          "button"
-        );
+    panel.style.opacity =
+      "0";
 
-      cancelButton.type =
-        "button";
+    panel.style.transition =
+      "transform 0.18s ease, opacity 0.18s ease";
 
-      cancelButton.textContent =
-        "Cancelar";
-
-      cancelButton.style.padding =
-        "10px 16px";
-
-      cancelButton.style.border =
-        "0";
-
-      cancelButton.style.borderRadius =
-        "10px";
-
-      cancelButton.style.cursor =
-        "pointer";
+    panel.style.fontFamily =
+      "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif";
 
 
-      /*
-        EXCLUIR
-      */
-      const confirmButton =
-        document.createElement(
-          "button"
-        );
+    /* =====================================================
+       TÍTULO
+       ===================================================== */
 
-      confirmButton.type =
-        "button";
+    const title =
+      document.createElement("div");
 
-      confirmButton.textContent =
-        "Excluir";
+    title.textContent =
+      "Excluir vídeo?";
 
-      confirmButton.style.padding =
-        "10px 16px";
+    title.style.margin =
+      "0 0 8px";
 
-      confirmButton.style.border =
-        "0";
+    title.style.color =
+      "#ffffff";
 
-      confirmButton.style.borderRadius =
-        "10px";
+    title.style.fontSize =
+      "20px";
 
-      confirmButton.style.cursor =
-        "pointer";
+    title.style.fontWeight =
+      "700";
 
-      confirmButton.style.background =
-        "#d93025";
+    title.style.letterSpacing =
+      "-0.3px";
 
-      confirmButton.style.color =
-        "#ffffff";
+    title.style.textAlign =
+      "center";
 
 
-      /*
-        Finaliza a confirmação.
-      */
-      function finish(
-        result
-      ) {
+    /* =====================================================
+       MENSAGEM
+       ===================================================== */
 
-        overlay.remove();
+    const text =
+      document.createElement("div");
 
-        resolve(
-          result
-        );
+    text.textContent =
+      message;
 
+    text.style.margin =
+      "0 0 22px";
+
+    text.style.color =
+      "rgba(255, 255, 255, 0.72)";
+
+    text.style.fontSize =
+      "14px";
+
+    text.style.fontWeight =
+      "400";
+
+    text.style.lineHeight =
+      "1.45";
+
+    text.style.textAlign =
+      "center";
+
+
+    /* =====================================================
+       ÁREA DOS BOTÕES
+       ===================================================== */
+
+    const actions =
+      document.createElement("div");
+
+    actions.style.display =
+      "flex";
+
+    actions.style.gap =
+      "10px";
+
+    actions.style.width =
+      "100%";
+
+
+    /* =====================================================
+       CANCELAR
+       ===================================================== */
+
+    const cancelButton =
+      document.createElement("button");
+
+    cancelButton.type =
+      "button";
+
+    cancelButton.textContent =
+      "Cancelar";
+
+    cancelButton.style.flex =
+      "1";
+
+    cancelButton.style.width =
+      "auto";
+
+    cancelButton.style.height =
+      "46px";
+
+    cancelButton.style.borderRadius =
+      "14px";
+
+    cancelButton.style.border =
+      "1px solid rgba(255, 255, 255, 0.16)";
+
+    cancelButton.style.background =
+      "rgba(255, 255, 255, 0.08)";
+
+    cancelButton.style.color =
+      "#ffffff";
+
+    cancelButton.style.fontSize =
+      "15px";
+
+    cancelButton.style.fontWeight =
+      "600";
+
+    cancelButton.style.boxShadow =
+      "none";
+
+    cancelButton.style.backdropFilter =
+      "none";
+
+    cancelButton.style.webkitBackdropFilter =
+      "none";
+
+    cancelButton.style.cursor =
+      "pointer";
+
+    cancelButton.style.touchAction =
+      "manipulation";
+
+
+    /* =====================================================
+       EXCLUIR
+       ===================================================== */
+
+    const deleteButton =
+      document.createElement("button");
+
+    deleteButton.type =
+      "button";
+
+    deleteButton.textContent =
+      "Excluir";
+
+    deleteButton.style.flex =
+      "1";
+
+    deleteButton.style.width =
+      "auto";
+
+    deleteButton.style.height =
+      "46px";
+
+    deleteButton.style.borderRadius =
+      "14px";
+
+    deleteButton.style.border =
+      "1px solid rgba(255, 69, 58, 0.55)";
+
+    deleteButton.style.background =
+      "rgba(255, 59, 48, 0.90)";
+
+    deleteButton.style.color =
+      "#ffffff";
+
+    deleteButton.style.fontSize =
+      "15px";
+
+    deleteButton.style.fontWeight =
+      "700";
+
+    deleteButton.style.boxShadow =
+      "0 6px 18px rgba(255, 59, 48, 0.20)";
+
+    deleteButton.style.backdropFilter =
+      "none";
+
+    deleteButton.style.webkitBackdropFilter =
+      "none";
+
+    deleteButton.style.cursor =
+      "pointer";
+
+    deleteButton.style.touchAction =
+      "manipulation";
+
+
+    /* =====================================================
+       FECHAMENTO
+       ===================================================== */
+
+    let finished =
+      false;
+
+
+    function finish(result) {
+
+      if (finished) {
+        return;
       }
 
-
-      cancelButton.addEventListener(
-        "click",
-        event => {
-
-          event.stopPropagation();
-
-          finish(
-            false
-          );
-
-        }
-      );
+      finished =
+        true;
 
 
-      confirmButton.addEventListener(
-        "click",
-        event => {
+      overlay.style.opacity =
+        "0";
 
-          event.stopPropagation();
+      panel.style.opacity =
+        "0";
 
-          finish(
-            true
-          );
-
-        }
-      );
+      panel.style.transform =
+        "scale(0.94)";
 
 
-      /*
-        Toque fora = cancelar.
-      */
-      overlay.addEventListener(
-        "click",
-        event => {
+      window.setTimeout(() => {
 
-          if (
-            event.target ===
+        if (
+          overlay.parentNode
+        ) {
+
+          overlay.parentNode.removeChild(
             overlay
-          ) {
-
-            finish(
-              false
-            );
-
-          }
+          );
 
         }
-      );
 
+        resolve(result);
 
-      actions.appendChild(
-        cancelButton
-      );
-
-      actions.appendChild(
-        confirmButton
-      );
-
-
-      box.appendChild(
-        text
-      );
-
-      box.appendChild(
-        actions
-      );
-
-
-      overlay.appendChild(
-        box
-      );
-
-
-      document.body.appendChild(
-        overlay
-      );
+      }, 180);
 
     }
-  );
+
+
+    /* =====================================================
+       EVENTOS
+       ===================================================== */
+
+    cancelButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        finish(false);
+
+      }
+    );
+
+
+    deleteButton.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        finish(true);
+
+      }
+    );
+
+
+    overlay.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target === overlay
+        ) {
+
+          finish(false);
+
+        }
+
+      }
+    );
+
+
+    panel.addEventListener(
+      "click",
+      event => {
+
+        event.stopPropagation();
+
+      }
+    );
+
+
+    /* =====================================================
+       MONTAGEM
+       ===================================================== */
+
+    actions.appendChild(
+      cancelButton
+    );
+
+    actions.appendChild(
+      deleteButton
+    );
+
+
+    panel.appendChild(
+      title
+    );
+
+    panel.appendChild(
+      text
+    );
+
+    panel.appendChild(
+      actions
+    );
+
+
+    overlay.appendChild(
+      panel
+    );
+
+
+    document.body.appendChild(
+      overlay
+    );
+
+
+    /* =====================================================
+       ANIMAÇÃO DE ENTRADA
+       ===================================================== */
+
+    requestAnimationFrame(() => {
+
+      requestAnimationFrame(() => {
+
+        overlay.style.opacity =
+          "1";
+
+        panel.style.opacity =
+          "1";
+
+        panel.style.transform =
+          "scale(1)";
+
+      });
+
+    });
+
+  });
 
 }
 /* =========================================================
