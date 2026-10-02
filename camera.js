@@ -1420,6 +1420,42 @@ async function start(
 
   }
 
+     /* =======================================================
+     C3.2I
+     INICIAR REPRODUÇÃO DO PREVIEW
+
+     Expõe de forma controlada somente
+     videoElement.play().
+
+     O MediaStream já deve ter sido obtido
+     e conectado anteriormente pelo app.js.
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO chama getUserMedia
+     - NÃO solicita permissão
+     - NÃO cria MediaStream
+     - NÃO altera srcObject
+     - NÃO encerra tracks
+     - NÃO altera facingMode
+     - NÃO altera espelhamento
+     - NÃO interfere na gravação
+     ======================================================= */
+
+  async function playPreview() {
+
+    if (!videoElement) {
+      return false;
+    }
+
+
+    await videoElement.play();
+
+
+    return true;
+
+  }
+
 
   /* =======================================================
      API PÚBLICA
@@ -1449,7 +1485,8 @@ async function start(
           applyMirror,
           attachStream,
           detachStream,
-          waitForPreviewReady
+          waitForPreviewReady,
+          playPreview
 
         }),
 
