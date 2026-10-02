@@ -1384,6 +1384,42 @@ async function start(
 
   }
 
+     /* =======================================================
+     C3.2H
+     AGUARDAR PREPARAÇÃO DO PREVIEW
+
+     Expõe de forma controlada a espera pelos
+     metadados do elemento <video>.
+
+     A lógica interna continua sendo a proteção
+     já existente para WebKit / iPhone.
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO chama getUserMedia
+     - NÃO solicita permissão
+     - NÃO altera MediaStream
+     - NÃO troca srcObject
+     - NÃO encerra tracks
+     - NÃO chama video.play()
+     - NÃO altera facingMode
+     - NÃO interfere na gravação
+     ======================================================= */
+
+  async function waitForPreviewReady() {
+
+    if (!videoElement) {
+      return false;
+    }
+
+
+    await waitForVideoMetadata();
+
+
+    return true;
+
+  }
+
 
   /* =======================================================
      API PÚBLICA
@@ -1412,7 +1448,8 @@ async function start(
           applyOpenFraming,
           applyMirror,
           attachStream,
-          detachStream
+          detachStream,
+          waitForPreviewReady
 
         }),
 
