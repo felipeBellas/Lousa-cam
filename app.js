@@ -10844,29 +10844,67 @@ if (
     );
 
 
-    /*
-      Se startCamera() foi chamado
-      normalmente e havia um stream
-      anterior, encerramos esse stream
-      somente depois que o novo abriu.
+    /* =========================================================
+   CÂMERA — C3.2K
+   ENCERRAMENTO DO STREAM ANTERIOR APÓS ABERTURA
 
-      Na troca de câmera ele já foi
-      encerrado anteriormente.
-    */
-    if (
-      !isSwitchingCamera &&
-      previousStream &&
-      previousStream !== stream
-    ) {
+   Quando startCamera() é chamado normalmente e já
+   existia um MediaStream anterior, o stream antigo
+   somente é encerrado depois que o novo stream
+   foi aberto com sucesso.
 
+   camera.js passa a executar apenas o encerramento
+   das tracks desse MediaStream antigo.
+
+   IMPORTANTE:
+   - NÃO abre câmera
+   - NÃO chama getUserMedia
+   - NÃO altera stream
+   - NÃO altera facingMode
+   - NÃO troca srcObject
+   - NÃO inicia preview
+   - NÃO interfere na gravação
+
+   O app.js continua controlando completamente
+   o fluxo de abertura da câmera.
+   ========================================================= */
+
+if (
+  !isSwitchingCamera &&
+  previousStream &&
+  previousStream !== stream
+) {
+
+  if (
+    window.LousaCamCamera &&
+    typeof window.LousaCamCamera.stopStreamTracks ===
+      "function"
+  ) {
+
+    window.LousaCamCamera.stopStreamTracks(
       previousStream
-        .getTracks()
-        .forEach(
-          track =>
-            track.stop()
-        );
+    );
 
-    }
+  } else {
+
+    /*
+      FALLBACK DE SEGURANÇA.
+
+      Mantém exatamente o comportamento
+      estável anterior caso camera.js
+      não esteja disponível.
+    */
+
+    previousStream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
+      );
+
+  }
+
+}
 
 
     toast(
