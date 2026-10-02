@@ -10582,90 +10582,125 @@ if (
 
 }
 
-    /*
-      IMPORTANTE:
+      /* =========================================================
+       CÂMERA — C3.2H
+       AGUARDAR PREPARAÇÃO DO PREVIEW
 
-      Não usamos readyState antigo como referência.
+       camera.js passa a cuidar da espera pelos
+       metadados do elemento <video>.
 
-      Depois de substituir srcObject, esperamos explicitamente
-      pelos metadados do NOVO MediaStream.
-    */
-    await new Promise(
-      resolve => {
+       IMPORTANTE:
+       - NÃO abre câmera
+       - NÃO chama getUserMedia
+       - NÃO altera stream
+       - NÃO troca srcObject
+       - NÃO encerra tracks
+       - NÃO inicia video.play()
+       - NÃO altera facingMode
+       - NÃO interfere na gravação
+       ========================================================= */
 
-        let finished =
-          false;
+    if (
+      window.LousaCamCamera &&
+      typeof window.LousaCamCamera.waitForPreviewReady ===
+        "function"
+    ) {
+
+      await window.LousaCamCamera.waitForPreviewReady();
+
+    } else {
+
+      /*
+        FALLBACK DE SEGURANÇA.
+
+        Mantém exatamente a espera utilizada
+        pelo fluxo estável anterior caso
+        camera.js não esteja disponível.
+      */
+
+      await new Promise(
+        resolve => {
+
+          let finished =
+            false;
 
 
-        const finish =
-          () => {
+          const finish =
+            () => {
 
-            if (finished) {
-              return;
-            }
+              if (finished) {
+                return;
+              }
 
-            finished =
-              true;
 
-            video.removeEventListener(
-              "loadedmetadata",
-              handleMetadata
+              finished =
+                true;
+
+
+              video.removeEventListener(
+                "loadedmetadata",
+                handleMetadata
+              );
+
+
+              resolve();
+
+            };
+
+
+          const handleMetadata =
+            () => {
+
+              finish();
+
+            };
+
+
+          video.addEventListener(
+            "loadedmetadata",
+            handleMetadata,
+            { once: true }
+          );
+
+
+          /*
+            Proteção para WebKit:
+            loadedmetadata pode ter ocorrido
+            muito rapidamente.
+          */
+
+          if (
+            video.videoWidth > 0 &&
+            video.videoHeight > 0
+          ) {
+
+            requestAnimationFrame(
+              finish
             );
 
-            resolve();
-
-          };
+          }
 
 
-        const handleMetadata =
-          () => {
+          /*
+            Segurança para nunca bloquear
+            indefinidamente a inicialização.
+          */
 
-            finish();
-
-          };
-
-
-        video.addEventListener(
-          "loadedmetadata",
-          handleMetadata,
-          { once: true }
-        );
-
-
-        /*
-          Proteção para WebKit:
-          se loadedmetadata já tiver ocorrido
-          muito rapidamente.
-        */
-        if (
-          video.videoWidth > 0 &&
-          video.videoHeight > 0
-        ) {
-
-          requestAnimationFrame(
-            finish
+          setTimeout(
+            finish,
+            1200
           );
 
         }
+      );
 
-
-        /*
-          Segurança para nunca bloquear o aplicativo.
-        */
-        setTimeout(
-          finish,
-          1200
-        );
-
-      }
-    );
+    }
 
 
     /*
       Inicia a reprodução do NOVO stream.
     */
     await video.play();
-
 
     /*
   =========================================================
