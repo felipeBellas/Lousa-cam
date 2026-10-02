@@ -10923,12 +10923,52 @@ if (
   }
 
 
-  /*
-    Se algum stream incompleto tiver
-    sido criado durante a tentativa,
-    encerramos antes do fallback.
-  */
-  if (stream) {
+/* =========================================================
+   CÂMERA — C3.2K PARTE 2
+   ENCERRAMENTO DE STREAM INCOMPLETO
+
+   Se a primeira tentativa de abertura
+   (câmera + microfone) falhar depois de
+   criar um MediaStream parcial, encerramos
+   suas tracks antes da tentativa sem áudio.
+
+   camera.js executa somente o encerramento
+   das tracks do MediaStream fornecido.
+
+   IMPORTANTE:
+   - NÃO abre câmera
+   - NÃO chama getUserMedia
+   - NÃO altera stream
+   - NÃO altera facingMode
+   - NÃO troca srcObject
+   - NÃO inicia preview
+   - NÃO interfere na gravação
+
+   O app.js continua responsável pelo
+   fallback e pela segunda tentativa.
+   ========================================================= */
+
+if (stream) {
+
+  if (
+    window.LousaCamCamera &&
+    typeof window.LousaCamCamera.stopStreamTracks ===
+      "function"
+  ) {
+
+    window.LousaCamCamera.stopStreamTracks(
+      stream
+    );
+
+  } else {
+
+    /*
+      FALLBACK DE SEGURANÇA.
+
+      Mantém exatamente o comportamento
+      estável anterior caso camera.js
+      não esteja disponível.
+    */
 
     stream
       .getTracks()
@@ -10936,15 +10976,23 @@ if (
         track => {
 
           try {
+
             track.stop();
+
           } catch (error) {
-            console.warn(error);
+
+            console.warn(
+              error
+            );
+
           }
 
         }
       );
 
   }
+
+}
 
 
   video.srcObject =
