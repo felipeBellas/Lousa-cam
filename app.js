@@ -10697,10 +10697,44 @@ if (
     }
 
 
-    /*
-      Inicia a reprodução do NOVO stream.
-    */
-    await video.play();
+       /* =========================================================
+       CÂMERA — C3.2I
+       INICIAR REPRODUÇÃO DO PREVIEW
+
+       camera.js passa a cuidar somente da chamada
+       video.play() do elemento de preview.
+
+       IMPORTANTE:
+       - NÃO abre câmera
+       - NÃO chama getUserMedia
+       - NÃO altera stream
+       - NÃO troca srcObject
+       - NÃO encerra tracks
+       - NÃO altera facingMode
+       - NÃO interfere na gravação
+       ========================================================= */
+
+    if (
+      window.LousaCamCamera &&
+      typeof window.LousaCamCamera.playPreview ===
+        "function"
+    ) {
+
+      await window.LousaCamCamera.playPreview();
+
+    } else {
+
+      /*
+        FALLBACK DE SEGURANÇA.
+
+        Mantém exatamente o comportamento
+        estável anterior caso camera.js
+        não esteja disponível.
+      */
+
+      await video.play();
+
+    }
 
     /*
   =========================================================
