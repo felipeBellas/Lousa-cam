@@ -1442,7 +1442,7 @@ async function start(
      - NÃO interfere na gravação
      ======================================================= */
 
-  async function playPreview() {
+    async function playPreview() {
 
     if (!videoElement) {
       return false;
@@ -1450,6 +1450,48 @@ async function start(
 
 
     await videoElement.play();
+
+
+    return true;
+
+  }
+
+
+  /* =======================================================
+     C3.2J
+     ENCERRAMENTO CONTROLADO DE TRACKS
+
+     Expõe de forma controlada a função interna
+     stopTracks() para um MediaStream fornecido
+     externamente pelo app.js.
+
+     IMPORTANTE:
+     - NÃO abre câmera
+     - NÃO chama getUserMedia
+     - NÃO solicita permissão
+     - NÃO cria MediaStream
+     - NÃO altera srcObject
+     - NÃO altera o stream privado do camera.js
+     - NÃO altera facingMode
+     - NÃO inicia preview
+     - NÃO interfere diretamente na gravação
+
+     Apenas encerra as tracks pertencentes
+     ao MediaStream recebido.
+     ======================================================= */
+
+  function stopStreamTracks(
+    targetStream
+  ) {
+
+    if (!targetStream) {
+      return false;
+    }
+
+
+    stopTracks(
+      targetStream
+    );
 
 
     return true;
@@ -1470,7 +1512,7 @@ async function start(
     {
 
       value:
-                Object.freeze({
+        Object.freeze({
 
           init,
           start,
@@ -1486,7 +1528,8 @@ async function start(
           attachStream,
           detachStream,
           waitForPreviewReady,
-          playPreview
+          playPreview,
+          stopStreamTracks
 
         }),
 
