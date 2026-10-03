@@ -11281,14 +11281,34 @@ async function startRecording() {
       );
 
 
-    const canvasStream =
-      renderCanvas.captureStream(
-        30
-      );
+    /* =========================================================
+   GRAVAÇÃO G2 — CAPTURA MANUAL DOS FRAMES
+   ========================================================= */
+
+/*
+  frameRate = 0:
+
+  O navegador não fica responsável por decidir
+  automaticamente quando o canvas deve entregar
+  um novo quadro.
+
+  O próprio renderRecordingFrame() solicitará
+  cada frame depois que a composição estiver pronta.
+*/
+const canvasStream =
+  renderCanvas.captureStream(
+    0
+  );
 
 
-    const combinedStream =
-      new MediaStream();
+recordingCanvasVideoTrack =
+  canvasStream
+    .getVideoTracks()[0] ||
+  null;
+
+
+const combinedStream =
+  new MediaStream();
 
 
 /*
