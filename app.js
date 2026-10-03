@@ -10952,29 +10952,11 @@ if (
 
     return true;
 
-  } catch (error) {
+ } catch (error) {
 
   console.error(
-    "[LOUSA CAM G7]",
-    "Falha câmera + microfone:",
+    "Primeira tentativa da câmera:",
     error
-  );
-
-  console.error(
-    "[LOUSA CAM G7]",
-    "nome:",
-    error?.name,
-    "| mensagem:",
-    error?.message
-  );
-
-  alert(
-    "G7 — câmera + microfone falharam\n\n" +
-    "Erro: " +
-    (error?.name || "desconhecido") +
-    "\n\n" +
-    "Mensagem: " +
-    (error?.message || "sem mensagem")
   );
 
 }
