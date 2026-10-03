@@ -11535,129 +11535,48 @@ recordingAudioDestination
 
 }
 
-/* =========================================================
-   GRAVAÇÃO G6 — FORMATO POR NAVEGADOR
+    let options = {};
 
-   Safari / PWA iOS:
-   mantém MP4, que já foi validado com vídeo + áudio.
-
-   Chrome / Chromium:
-   prioriza WebM + Opus para preservar o áudio.
-
-   IMPORTANTE:
-   não altera G2, G4, câmera ou fluxo do MediaRecorder.
-   ========================================================= */
-
-let options = {};
-
-let recordingMimeType =
-  "";
+    let recordingMimeType =
+      "";
 
 
-/* =========================================================
-   DETECÇÃO DO CHROME / CHROMIUM
-   ========================================================= */
+/*
+  Preferência para MP4.
 
-const recordingUserAgent =
-  navigator.userAgent || "";
+  Safari/iPhone trabalha melhor
+  com MP4 para reprodução e
+  compartilhamento do vídeo.
+*/
+if (
+  MediaRecorder.isTypeSupported(
+    "video/mp4"
+  )
+) {
 
-const isChromiumRecording =
-  /Chrome|Chromium|CriOS/i.test(
-    recordingUserAgent
-  );
+  recordingMimeType =
+    "video/mp4";
 
+} else if (
+  MediaRecorder.isTypeSupported(
+    "video/webm;codecs=vp9,opus"
+  )
+) {
 
-/* =========================================================
-   CHROME / CHROMIUM
-   Priorizar container WebM com áudio Opus.
-   ========================================================= */
+  recordingMimeType =
+    "video/webm;codecs=vp9,opus";
 
-if (isChromiumRecording) {
+} else if (
+  MediaRecorder.isTypeSupported(
+    "video/webm"
+  )
+) {
 
-  if (
-    MediaRecorder.isTypeSupported(
-      "video/webm;codecs=vp9,opus"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/webm;codecs=vp9,opus";
-
-  } else if (
-    MediaRecorder.isTypeSupported(
-      "video/webm;codecs=vp8,opus"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/webm;codecs=vp8,opus";
-
-  } else if (
-    MediaRecorder.isTypeSupported(
-      "video/webm"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/webm";
-
-  } else if (
-    MediaRecorder.isTypeSupported(
-      "video/mp4"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/mp4";
-
-  }
+  recordingMimeType =
+    "video/webm";
 
 }
 
-
-/* =========================================================
-   SAFARI / PWA / DEMAIS
-
-   Preserva a preferência MP4 da G5.
-   ========================================================= */
-
-else {
-
-  if (
-    MediaRecorder.isTypeSupported(
-      "video/mp4"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/mp4";
-
-  } else if (
-    MediaRecorder.isTypeSupported(
-      "video/webm;codecs=vp9,opus"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/webm;codecs=vp9,opus";
-
-  } else if (
-    MediaRecorder.isTypeSupported(
-      "video/webm"
-    )
-  ) {
-
-    recordingMimeType =
-      "video/webm";
-
-  }
-
-}
-
-
-/* =========================================================
-   APLICAR MIME TYPE
-   ========================================================= */
 
 if (recordingMimeType) {
 
@@ -11665,18 +11584,6 @@ if (recordingMimeType) {
     recordingMimeType;
 
 }
-
-
-console.log(
-  "[LOUSA CAM G6]",
-  "navegador:",
-  isChromiumRecording
-    ? "Chromium"
-    : "Safari/outro",
-  "| formato:",
-  recordingMimeType ||
-    "padrão do navegador"
-);
 
 
     mediaRecorder =
