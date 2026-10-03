@@ -11344,25 +11344,197 @@ canvasStream
   do MediaStream da câmera/microfone.
 */
 /* =========================================================
-   TESTE A/V — ÁUDIO TEMPORARIAMENTE DESATIVADO
-
-   OBJETIVO:
-   verificar se a AudioTrack está causando
-   o congelamento da VideoTrack no Safari/PWA.
-
-   NÃO É A SOLUÇÃO DEFINITIVA.
+   GRAVAÇÃO G4 — ÁUDIO VIA WEB AUDIO
    ========================================================= */
 
 /*
-stream
-  .getAudioTracks()
-  .forEach(
-    track =>
-      combinedStream.addTrack(
-        track
-      )
-  );
+  IMPORTANTE:
+
+  Não adicionamos mais diretamente ao MediaRecorder
+  a AudioTrack pertencente ao stream principal.
+
+  O áudio do microfone entra no Web Audio API
+  e uma NOVA AudioTrack é criada para a gravação.
+
+  Objetivo:
+  evitar o conflito observado no Safari/PWA entre
+  a faixa original do microfone e o vídeo capturado
+  pelo renderCanvas.
 */
+
+const originalAudioTracks =
+  stream
+    ? stream.getAudioTracks()
+    : [];
+
+
+if (
+  originalAudioTracks.length > 0
+) {
+
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+
+  if (AudioContextClass) {
+
+    /*
+      Fecha eventual contexto antigo
+      que tenha sobrado de uma gravação anterior.
+    */
+
+    if (
+      recordingAudioContext &&
+      recordingAudioContext.state !==
+        "closed"
+    ) {
+
+      try {
+
+        await recordingAudioContext.close();
+
+      } catch (error) {
+
+        console.warn(
+          "G4: não foi possível fechar o AudioContext anterior:",
+          error
+        );
+
+      }
+
+    }
+
+
+    recordingAudioContext =
+      new AudioContextClass();
+
+
+    /*
+      Criamos um MediaStream contendo
+      SOMENTE a faixa original de áudio.
+
+      Não clonamos e não paramos
+      a faixa original do microfone.
+    */
+
+    const audioInputStream =
+      new MediaStream(
+        originalAudioTracks
+      );
+
+
+    /*
+      Entrada do Web Audio.
+    */
+
+    recordingAudioSource =
+      recordingAudioContext
+        .createMediaStreamSource(
+          audioInputStream
+        );
+
+
+    /*
+      Saída do Web Audio.
+
+      Esta saída cria uma nova
+      MediaStreamTrack de áudio.
+    */
+
+    recordingAudioDestination =
+      recordingAudioContext
+        .createMediaStreamDestination();
+
+
+    /*
+      Microfone -> Web Audio -> destino.
+    */
+
+    recordingAudioSource.connect(
+      recordingAudioDestination
+    );
+
+
+    /*
+      Safari/iOS pode criar o AudioContext
+      inicialmente suspenso.
+
+      Como startRecording() é chamado
+      a partir da ação do usuário,
+      tentamos ativá-lo aqui.
+    */
+
+    if (
+      recordingAudioContext.state ===
+      "suspended"
+    ) {
+
+      try {
+
+        await recordingAudioContext.resume();
+
+      } catch (error) {
+
+        console.warn(
+          "G4: AudioContext não pôde ser retomado:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /*
+      Agora adicionamos ao combinedStream
+      a NOVA faixa produzida pelo Web Audio,
+      e NÃO a faixa original do microfone.
+    */
+
+    recordingAudioDestination
+      .stream
+      .getAudioTracks()
+      .forEach(
+        track => {
+
+          combinedStream.addTrack(
+            track
+          );
+
+        }
+      );
+
+
+    console.log(
+      "[LOUSA CAM G4]",
+      "Áudio via Web Audio ativo",
+      "| contexto:",
+      recordingAudioContext.state,
+      "| faixas:",
+      recordingAudioDestination
+        .stream
+        .getAudioTracks()
+        .length
+    );
+
+  } else {
+
+    console.warn(
+      "[LOUSA CAM G4]",
+      "Web Audio indisponível"
+    );
+
+  }
+
+} else {
+
+  console.warn(
+    "[LOUSA CAM G4]",
+    "Microfone sem AudioTrack disponível"
+  );
+
+}
 
 
     let options = {};
