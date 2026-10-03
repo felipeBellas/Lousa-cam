@@ -11462,11 +11462,22 @@ await window.VideoStorage.saveVideo(
 
   };
 
-    mediaRecorder.start();
+        mediaRecorder.start();
 
 
     recording =
       true;
+
+
+    /* =====================================================
+       GRAVAÇÃO G1 — INÍCIO DO DIAGNÓSTICO
+       ===================================================== */
+
+    recordingDiagnosticStart =
+      performance.now();
+
+    recordingDiagnosticLastSecond =
+      -1;
 
 
     recordBtn.classList.add(
@@ -11481,7 +11492,6 @@ await window.VideoStorage.saveVideo(
 
 
     renderRecordingFrame();
-
   } catch (error) {
 
     console.error(
@@ -11511,6 +11521,42 @@ function renderRecordingFrame() {
   ) {
 
     return;
+
+  }
+
+
+  /* =====================================================
+     GRAVAÇÃO G1 — DIAGNÓSTICO DO LOOP
+     ===================================================== */
+
+  const recordingDiagnosticElapsed =
+    Math.floor(
+      (
+        performance.now() -
+        recordingDiagnosticStart
+      ) / 1000
+    );
+
+
+  if (
+    recordingDiagnosticElapsed !==
+    recordingDiagnosticLastSecond
+  ) {
+
+    recordingDiagnosticLastSecond =
+      recordingDiagnosticElapsed;
+
+
+    console.log(
+      "[LOUSA CAM G1]",
+      "render ativo:",
+      recordingDiagnosticElapsed,
+      "segundos",
+      "| MediaRecorder:",
+      mediaRecorder
+        ? mediaRecorder.state
+        : "indisponível"
+    );
 
   }
 
