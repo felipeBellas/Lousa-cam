@@ -1652,8 +1652,24 @@ let renderCtx =
 let animationId =
   null;
 
+
+/* =========================================================
+   GRAVAÇÃO G2 — TRACK MANUAL DO CANVAS
+
+   Guarda a faixa de vídeo produzida pelo
+   renderCanvas.
+
+   O frame será solicitado explicitamente
+   após cada composição concluída.
+   ========================================================= */
+
+let recordingCanvasVideoTrack =
+  null;
+
+
 /* =========================================================
    GRAVAÇÃO G1 — DIAGNÓSTICO TEMPORÁRIO
+
 
    Serve somente para verificar se o loop
    renderRecordingFrame continua funcionando
