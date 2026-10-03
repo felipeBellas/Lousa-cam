@@ -12300,22 +12300,30 @@ function stopRecording() {
   );
 
 
-  if (
+if (
+  animationId
+) {
+
+  cancelAnimationFrame(
     animationId
-  ) {
+  );
 
-    cancelAnimationFrame(
-      animationId
-    );
+  animationId =
+    null;
 
-    animationId =
-      null;
-
-  }
+}
 
 
-  if (
-    mediaRecorder &&
+/* =========================================================
+   GRAVAÇÃO G2 — LIMPEZA DA REFERÊNCIA
+   ========================================================= */
+
+recordingCanvasVideoTrack =
+  null;
+
+
+if (
+  mediaRecorder &&
     mediaRecorder.state !==
       "inactive"
   ) {
