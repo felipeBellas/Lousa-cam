@@ -12251,10 +12251,37 @@ function renderRecordingFrame() {
   renderCtx.restore();
 
 
-  animationId =
-    requestAnimationFrame(
-      renderRecordingFrame
-    );
+/* =========================================================
+   GRAVAÇÃO G2 — ENTREGAR O QUADRO AO MEDIARECORDER
+   ========================================================= */
+
+/*
+  Neste ponto:
+
+  - câmera já foi desenhada;
+  - lousa já foi desenhada;
+  - textos/imagens já foram desenhados;
+  - formas já foram desenhadas;
+  - régua já foi desenhada.
+
+  Agora informamos ao CanvasCaptureMediaStreamTrack
+  que existe um novo quadro pronto.
+*/
+if (
+  recordingCanvasVideoTrack &&
+  typeof recordingCanvasVideoTrack.requestFrame ===
+    "function"
+) {
+
+  recordingCanvasVideoTrack.requestFrame();
+
+}
+
+
+animationId =
+  requestAnimationFrame(
+    renderRecordingFrame
+  );
 
 }
 
