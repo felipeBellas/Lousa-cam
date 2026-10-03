@@ -11492,18 +11492,20 @@ if (
       e NÃO a faixa original do microfone.
     */
 
-    recordingAudioDestination
-      .stream
-      .getAudioTracks()
-      .forEach(
-        track => {
+   /*
+recordingAudioDestination
+  .stream
+  .getAudioTracks()
+  .forEach(
+    track => {
 
-          combinedStream.addTrack(
-            track
-          );
-
-        }
+      combinedStream.addTrack(
+        track
       );
+
+    }
+  );
+*/
 
 
     console.log(
