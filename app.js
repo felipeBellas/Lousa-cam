@@ -12618,12 +12618,7 @@ function stopRecording() {
 }
 
 
-  toast(
-    "Processando gravação"
-  );
-
-}
-
+ 
 
 /* =========================================================
    SALVAR GRAVAÇÃO
