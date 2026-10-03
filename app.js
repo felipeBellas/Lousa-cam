@@ -11492,7 +11492,6 @@ if (
       e NÃO a faixa original do microfone.
     */
 
-   /*
 recordingAudioDestination
   .stream
   .getAudioTracks()
@@ -11505,7 +11504,6 @@ recordingAudioDestination
 
     }
   );
-*/
 
 
     console.log(
