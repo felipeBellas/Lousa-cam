@@ -11336,6 +11336,17 @@ canvasStream
   O áudio continua vindo diretamente
   do MediaStream da câmera/microfone.
 */
+/* =========================================================
+   TESTE A/V — ÁUDIO TEMPORARIAMENTE DESATIVADO
+
+   OBJETIVO:
+   verificar se a AudioTrack está causando
+   o congelamento da VideoTrack no Safari/PWA.
+
+   NÃO É A SOLUÇÃO DEFINITIVA.
+   ========================================================= */
+
+/*
 stream
   .getAudioTracks()
   .forEach(
@@ -11344,6 +11355,7 @@ stream
         track
       )
   );
+*/
 
 
     let options = {};
