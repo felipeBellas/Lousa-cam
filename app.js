@@ -1652,6 +1652,23 @@ let renderCtx =
 let animationId =
   null;
 
+/* =========================================================
+   GRAVAÇÃO G1 — DIAGNÓSTICO TEMPORÁRIO
+
+   Serve somente para verificar se o loop
+   renderRecordingFrame continua funcionando
+   durante gravações mais longas.
+
+   NÃO interfere na câmera.
+   NÃO interfere no áudio.
+   NÃO interfere no MediaRecorder.
+   ========================================================= */
+
+let recordingDiagnosticStart =
+  0;
+
+let recordingDiagnosticLastSecond =
+  -1;
 
 /* =========================================================
    WAKE LOCK
