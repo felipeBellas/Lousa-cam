@@ -12491,30 +12491,40 @@ function stopRecording() {
   );
 
 
-if (
-  animationId
-) {
-
-  cancelAnimationFrame(
+  if (
     animationId
-  );
+  ) {
 
-  animationId =
+    cancelAnimationFrame(
+      animationId
+    );
+
+    animationId =
+      null;
+
+  }
+
+
+  /* =========================================================
+     GRAVAÇÃO G2 — LIMPEZA DA REFERÊNCIA
+     ========================================================= */
+
+  recordingCanvasVideoTrack =
     null;
 
-}
 
+  /*
+    IMPORTANTE:
 
-/* =========================================================
-   GRAVAÇÃO G2 — LIMPEZA DA REFERÊNCIA
-   ========================================================= */
+    Primeiro paramos o MediaRecorder.
 
-recordingCanvasVideoTrack =
-  null;
+    Não fechamos o AudioContext antes disso,
+    porque o MediaRecorder ainda precisa
+    finalizar a faixa de áudio.
+  */
 
-
-if (
-  mediaRecorder &&
+  if (
+    mediaRecorder &&
     mediaRecorder.state !==
       "inactive"
   ) {
@@ -12523,6 +12533,89 @@ if (
 
   }
 
+
+  /*
+    G4 — desconecta a entrada de áudio.
+
+    NÃO paramos a AudioTrack original
+    do stream da câmera.
+  */
+
+  if (
+    recordingAudioSource
+  ) {
+
+    try {
+
+      recordingAudioSource.disconnect();
+
+    } catch (error) {
+
+      console.warn(
+        "G4: erro ao desconectar áudio:",
+        error
+      );
+
+    }
+
+    recordingAudioSource =
+      null;
+
+  }
+
+
+  /*
+    O fechamento do AudioContext é feito
+    com pequeno atraso para permitir que
+    o MediaRecorder finalize os últimos
+    dados da gravação.
+  */
+
+  const audioContextToClose =
+    recordingAudioContext;
+
+
+  recordingAudioContext =
+    null;
+
+  recordingAudioDestination =
+    null;
+
+
+  if (
+    audioContextToClose &&
+    audioContextToClose.state !==
+      "closed"
+  ) {
+
+    setTimeout(
+      () => {
+
+        audioContextToClose
+          .close()
+          .catch(
+            error => {
+
+              console.warn(
+                "G4: erro ao fechar AudioContext:",
+                error
+              );
+
+            }
+          );
+
+      },
+      500
+    );
+
+  }
+
+
+  toast(
+    "Processando gravação"
+  );
+
+}
 
 
   toast(
