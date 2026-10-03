@@ -1666,6 +1666,13 @@ let animationId =
 let recordingCanvasVideoTrack =
   null;
 
+/* =========================================================
+   GRAVAÇÃO G4 — ÁUDIO VIA WEB AUDIO
+   ========================================================= */
+
+let recordingAudioContext = null;
+let recordingAudioSource = null;
+let recordingAudioDestination = null;
 
 /* =========================================================
    GRAVAÇÃO G1 — DIAGNÓSTICO TEMPORÁRIO
