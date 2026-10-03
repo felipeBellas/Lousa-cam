@@ -1,6 +1,5 @@
 "use strict";
 
-
 /* =========================================================
    LOUSA CAM 2.0
    Base original + texto + colar + objetos
