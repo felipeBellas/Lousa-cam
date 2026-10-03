@@ -11689,8 +11689,17 @@ await window.VideoStorage.saveVideo(
 
   };
 
-        mediaRecorder.start();
+    /* =========================================================
+   GRAVAÇÃO G5 — CHUNKS PERIÓDICOS
 
+   Entrega os dados ao aplicativo a cada 1 segundo,
+   evitando manter toda a gravação em um único
+   bloco interno do MediaRecorder.
+   ========================================================= */
+
+mediaRecorder.start(
+  1000
+);
 
     recording =
       true;
