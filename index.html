@@ -2459,18 +2459,22 @@ box-shadow:
   🔒 Fixar
 
 </button>
-    <!-- =================================================
-     BARRA DE FORMATAÇÃO DO TEXTO
+   <!-- =================================================
+     EDITOR DE TEXTO RESPONSIVO
      ================================================= -->
 
-<div id="textFormatToolbar">
+<div
+  id="textFormatToolbar"
+  aria-hidden="true">
+
+  <!-- ESTILO -->
 
   <button
     type="button"
     data-format="bold"
     aria-label="Negrito"
     title="Negrito">
-    B
+    <strong>B</strong>
   </button>
 
   <button
@@ -2489,7 +2493,11 @@ box-shadow:
     <u>U</u>
   </button>
 
+
   <span class="format-separator"></span>
+
+
+  <!-- TAMANHO -->
 
   <button
     type="button"
@@ -2507,73 +2515,173 @@ box-shadow:
     A+
   </button>
 
-  <span class="format-separator"></span>
 
-  <button
-    type="button"
-    class="format-color white"
-    data-color="#fff"
-    aria-label="Branco"
-    title="Branco">
-  </button>
-
-  <button
-    type="button"
-    class="format-color red"
-    data-color="#ff3b30"
-    aria-label="Vermelho"
-    title="Vermelho">
-  </button>
-
-  <button
-    type="button"
-    class="format-color yellow"
-    data-color="#ffcc00"
-    aria-label="Amarelo"
-    title="Amarelo">
-  </button>
-
-  <button
-    type="button"
-    class="format-color green"
-    data-color="#34c759"
-    aria-label="Verde"
-    title="Verde">
-  </button>
-
-  <button
-    type="button"
-    class="format-color blue"
-    data-color="#0a84ff"
-    aria-label="Azul"
-    title="Azul">
-  </button>
   <span class="format-separator"></span>
 
 
-<select
-  id="textFontSelect"
-  aria-label="Fonte"
-  title="Fonte">
+  <!-- COR -->
 
-  <option value="Arial">
-    Normal
-  </option>
+  <button
+    type="button"
+    id="textColorButton"
+    class="text-color-button"
+    aria-label="Cor do texto"
+    title="Cor do texto">
 
-  <option value="Patrick Hand">
-    Professor
-  </option>
+    <span
+      id="textColorIndicator"
+      class="text-color-indicator">
+    </span>
 
-  <option value="Schoolbell">
-    Quadro
-  </option>
+  </button>
 
-  <option value="Handlee">
-    Manuscrita
-  </option>
 
-</select>
-  
+  <!-- PALETA -->
+
+  <div
+    id="textColorPalette"
+    class="text-color-palette"
+    aria-hidden="true">
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#ffffff"
+      style="--text-color:#ffffff"
+      aria-label="Branco"
+      title="Branco">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#d1d1d6"
+      style="--text-color:#d1d1d6"
+      aria-label="Cinza"
+      title="Cinza">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#000000"
+      style="--text-color:#000000"
+      aria-label="Preto"
+      title="Preto">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#ff453a"
+      style="--text-color:#ff453a"
+      aria-label="Vermelho"
+      title="Vermelho">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#ff9f0a"
+      style="--text-color:#ff9f0a"
+      aria-label="Laranja"
+      title="Laranja">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#ffd60a"
+      style="--text-color:#ffd60a"
+      aria-label="Amarelo"
+      title="Amarelo">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#30d158"
+      style="--text-color:#30d158"
+      aria-label="Verde"
+      title="Verde">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#64d2ff"
+      style="--text-color:#64d2ff"
+      aria-label="Ciano"
+      title="Ciano">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#0a84ff"
+      style="--text-color:#0a84ff"
+      aria-label="Azul"
+      title="Azul">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#5e5ce6"
+      style="--text-color:#5e5ce6"
+      aria-label="Índigo"
+      title="Índigo">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#bf5af2"
+      style="--text-color:#bf5af2"
+      aria-label="Roxo"
+      title="Roxo">
+    </button>
+
+    <button
+      type="button"
+      class="format-color"
+      data-color="#ff375f"
+      style="--text-color:#ff375f"
+      aria-label="Rosa"
+      title="Rosa">
+    </button>
+
+  </div>
+
+
+  <span class="format-separator"></span>
+
+
+  <!-- FONTE -->
+
+  <select
+    id="textFontSelect"
+    aria-label="Fonte"
+    title="Fonte">
+
+    <option value="Arial">
+      Normal
+    </option>
+
+    <option value="Patrick Hand">
+      Professor
+    </option>
+
+    <option value="Schoolbell">
+      Quadro
+    </option>
+
+    <option value="Handlee">
+      Manuscrita
+    </option>
+
+  </select>
+
 </div>
 
 
