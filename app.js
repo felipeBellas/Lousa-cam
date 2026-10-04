@@ -4738,6 +4738,7 @@ underline:
 
 /* =========================================================
    IMAGEM
+   GIF A.9 — GIF HTML NÃO É REDESENHADO NO CANVAS
    ========================================================= */
 
 function drawImageObject(
@@ -4752,55 +4753,38 @@ function drawImageObject(
   }
 
 
-  let source =
-    object.image;
-
-
   /*
-    GIF A.8
+    GIF A.9
 
-    Quando existem frames decodificados,
-    usamos o frame atual em vez da
-    imagem estática original.
+    O GIF animado é exibido pela camada HTML.
+
+    NÃO desenhamos a mesma imagem novamente
+    no canvas porque isso criaria uma cópia
+    estática por baixo do GIF.
   */
   if (
     object.isGif === true &&
-    Array.isArray(
-      object.gifFrames
-    ) &&
-    object.gifFrames.length
+    object.gifSource ===
+      "safe-html"
   ) {
 
-    const index =
-      Math.max(
-        0,
-        Math.min(
-          object.gifFrames.length - 1,
-          object.gifFrameIndex || 0
-        )
-      );
+    updateGifHtmlObject(
+      object
+    );
 
 
-    const frame =
-      object.gifFrames[
-        index
-      ];
-
-
-    if (
-      frame &&
-      frame.image
-    ) {
-
-      source =
-        frame.image;
-
-    }
+    return;
 
   }
 
 
-  if (!source) {
+  /*
+    IMAGENS NORMAIS
+
+    Mantém exatamente o funcionamento
+    anterior do Lousa Cam.
+  */
+  if (!object.image) {
 
     return;
 
@@ -4814,7 +4798,7 @@ function drawImageObject(
 
     c.drawImage(
 
-      source,
+      object.image,
 
       object.x,
 
@@ -4829,7 +4813,7 @@ function drawImageObject(
   } catch (error) {
 
     console.log(
-      "LOUSA CAM — erro desenhando imagem/GIF:",
+      "LOUSA CAM — erro desenhando imagem:",
       error
     );
 
