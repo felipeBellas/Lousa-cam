@@ -106,6 +106,32 @@ const textFormatToolbar =
 
 const textFontSelect =
   $("textFontSelect");
+/* =========================================================
+   EDITOR DE TEXTO CONTEXTUAL
+   ========================================================= */
+
+const textEditorButton =
+  $("textEditorButton");
+
+
+const textColorButton =
+  $("textColorButton");
+
+
+const textColorIndicator =
+  $("textColorIndicator");
+
+
+const textColorPalette =
+  $("textColorPalette");
+
+
+let textToolbarOpen =
+  false;
+
+
+let textColorPaletteOpen =
+  false;
 
 const objectCancel =
   $("objectCancel");
@@ -159,7 +185,165 @@ const eraserBtn =
 const toolName =
   $("toolName");
 
+/* =========================================================
+   ESTADO VISUAL DO EDITOR DE TEXTO
+   ========================================================= */
 
+function showTextEditorButton() {
+
+  if (
+    !textEditorButton ||
+    !settingsBtn
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    O botão Ferramentas continua existindo.
+    Apenas fica oculto durante a edição.
+  */
+
+  settingsBtn.hidden =
+    true;
+
+
+  textEditorButton.hidden =
+    false;
+
+}
+
+
+function hideTextEditorButton() {
+
+  if (
+    !textEditorButton ||
+    !settingsBtn
+  ) {
+
+    return;
+
+  }
+
+
+  textEditorButton.hidden =
+    true;
+
+
+  settingsBtn.hidden =
+    false;
+
+
+  closeTextToolbar();
+
+}
+
+
+/* =========================================================
+   ABRIR EDITOR DE TEXTO
+   ========================================================= */
+
+function openTextToolbar() {
+
+  if (
+    !editingObjectId ||
+    !textFormatToolbar
+  ) {
+
+    return;
+
+  }
+
+
+  textToolbarOpen =
+    true;
+
+
+  textFormatToolbar.classList.add(
+    "show"
+  );
+
+
+  textFormatToolbar.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+}
+
+
+/* =========================================================
+   FECHAR EDITOR DE TEXTO
+   ========================================================= */
+
+function closeTextToolbar() {
+
+  textToolbarOpen =
+    false;
+
+
+  textColorPaletteOpen =
+    false;
+
+
+  if (textFormatToolbar) {
+
+    textFormatToolbar.classList.remove(
+      "show"
+    );
+
+
+    textFormatToolbar.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  if (textColorPalette) {
+
+    textColorPalette.classList.remove(
+      "open"
+    );
+
+
+    textColorPalette.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ALTERNAR EDITOR
+   ========================================================= */
+
+function toggleTextToolbar() {
+
+  if (!editingObjectId) {
+
+    return;
+
+  }
+
+
+  if (textToolbarOpen) {
+
+    closeTextToolbar();
+
+  } else {
+
+    openTextToolbar();
+
+  }
+
+}
 /* =========================================================
    ESTADO DA CÂMERA
    ========================================================= */
