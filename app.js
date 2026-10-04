@@ -5863,37 +5863,22 @@ if (
 
 
     pasteFromClipboard(
-      point.x,
-      point.y
-    ).then(
-      success => {
+  point.x,
+  point.y
+).then(
+  success => {
 
-        if (success) {
+    if (success) {
 
-          toast(
-            "Conteúdo colado"
-          );
+      toast(
+        "Conteúdo colado"
+      );
 
-        } else {
+    }
 
-          const diagnostic =
-            window
-              .__lousaClipboardDiagnostic;
-
-
-          toast(
-            diagnostic
-              ? "Clipboard — " +
-                diagnostic
-              : "Clipboard — falha sem diagnóstico",
-            8000
-          );
-
-        }
-
-      }
-    );
-
+  }
+);
+     
   } else {
 
     lastTapTime =
@@ -6072,42 +6057,26 @@ pasteButton.addEventListener(
     }
 
 
-    const success =
-      await pasteFromClipboard(
-        position.x,
-        position.y
-      );
+const success =
+  await pasteFromClipboard(
+    position.x,
+    position.y
+  );
 
 
-    if (success) {
+if (success) {
 
-      toast(
-        "Conteúdo colado"
-      );
+  toast(
+    "Conteúdo colado"
+  );
 
-    } else {
-
-      const diagnostic =
-        window
-          .__lousaClipboardDiagnostic;
-
-
-      toast(
-        diagnostic
-          ? "Clipboard — " +
-            diagnostic
-          : "Clipboard — falha sem diagnóstico",
-        8000
-      );
-
-    }
+}
 
   }
 );
 
 /* =========================================================
    COLAR DO CLIPBOARD
-   GIF — BLOCO A.3
 
    iOS / SAFARI / PWA
 
@@ -6115,7 +6084,7 @@ pasteButton.addEventListener(
    1. tenta Async Clipboard API
    2. se o iOS bloquear, prepara receptor nativo
    3. receptor contenteditable recebe "Colar" do iOS
-   4. GIF / imagem / texto entram no sistema atual
+   4. imagem / texto entram no sistema atual
    5. não interfere na câmera ou gravação
    ========================================================= */
 
@@ -6204,13 +6173,6 @@ async function processNativePasteData(
     );
 
 
-  const types =
-    Array.from(
-      clipboardData.types ||
-      []
-    );
-
-
   /* =====================================================
      1 — IMAGEM
      ===================================================== */
@@ -6247,10 +6209,6 @@ async function processNativePasteData(
           position.x,
           position.y
         );
-
-
-        window.__lousaClipboardDiagnostic =
-          "IMAGEM NATIVA COLADA";
 
 
         return true;
@@ -6306,43 +6264,14 @@ async function processNativePasteData(
     );
 
 
-    window.__lousaClipboardDiagnostic =
-      "TEXTO NATIVO COLADO";
-
-
     return true;
 
   }
 
 
-  /* =====================================================
-     DIAGNÓSTICO
-     ===================================================== */
-
-  const nativeTypes =
-    types.length
-      ? types.join(", ")
-      : items
-          .map(
-            item =>
-              item.type ||
-              item.kind ||
-              "desconhecido"
-          )
-          .join(", ");
-
-
-  window.__lousaClipboardDiagnostic =
-    nativeTypes
-      ? "PASTE NATIVO: " +
-        nativeTypes
-      : "PASTE NATIVO SEM TIPOS";
-
-
   return false;
 
 }
-
 
 
 /* =========================================================
@@ -6540,28 +6469,13 @@ function openNativePasteReceiver(
         );
 
 
-      if (success) {
+if (success) {
 
-        toast(
-          "Conteúdo colado"
-        );
+  toast(
+    "Conteúdo colado"
+  );
 
-      } else {
-
-        const diagnostic =
-          window
-            .__lousaClipboardDiagnostic;
-
-
-        toast(
-          diagnostic
-            ? "Clipboard — " +
-              diagnostic
-            : "Clipboard — falha na colagem nativa",
-          8000
-        );
-
-      }
+}
 
 
       window.__lousaNativePastePosition =
@@ -6650,8 +6564,6 @@ function openNativePasteReceiver(
   }
 
 
-  window.__lousaClipboardDiagnostic =
-    "TOQUE EM COLAR";
 
 
   /*
@@ -6687,8 +6599,6 @@ async function pasteFromClipboard(
   y
 ) {
 
-  window.__lousaClipboardDiagnostic =
-    null;
 
 
   window.__lousaNativePastePosition = {
