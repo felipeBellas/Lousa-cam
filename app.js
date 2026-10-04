@@ -6169,391 +6169,17 @@ function removeNativePasteReceiver() {
 
 }
 
-/* =========================================================
-   GIF — BLOCO A.9
-   CRIAR GIF HTML SEGURO
-   ========================================================= */
-
-async function createGifFromUrl(
-  gifUrl,
-  x,
-  y
-) {
-
-  /*
-    PRIMEIRA BARREIRA DE SEGURANÇA
-
-    Não colocamos HTML do clipboard
-    dentro da página.
-
-    Recebemos somente uma string de URL
-    e validamos essa URL.
-  */
-  const safeUrl =
-    validateGifUrl(
-      gifUrl
-    );
-
-
-  if (!safeUrl) {
-
-    throw new Error(
-      "URL_GIF_NAO_PERMITIDA"
-    );
-
-  }
-
-
-  /*
-    Criamos uma imagem temporária apenas
-    para obter as dimensões naturais.
-
-    O navegador/WebKit continuará sendo
-    responsável pela animação do GIF.
-  */
-  const probe =
-    document.createElement(
-      "img"
-    );
-
-
-  probe.alt =
-    "";
-
-  probe.draggable =
-    false;
-
-
-  const dimensions =
-    await new Promise(
-      (
-        resolve,
-        reject
-      ) => {
-
-        let finished =
-          false;
-
-
-        const timer =
-          setTimeout(
-            () => {
-
-              if (finished) {
-
-                return;
-
-              }
-
-
-              finished =
-                true;
-
-
-              reject(
-                new Error(
-                  "GIF_TIMEOUT"
-                )
-              );
-
-            },
-            12000
-          );
-
-
-        probe.onload =
-          () => {
-
-            if (finished) {
-
-              return;
-
-            }
-
-
-            finished =
-              true;
-
-
-            clearTimeout(
-              timer
-            );
-
-
-            resolve({
-
-              width:
-                probe.naturalWidth ||
-                240,
-
-              height:
-                probe.naturalHeight ||
-                180
-
-            });
-
-          };
-
-
-        probe.onerror =
-          () => {
-
-            if (finished) {
-
-              return;
-
-            }
-
-
-            finished =
-              true;
-
-
-            clearTimeout(
-              timer
-            );
-
-
-            reject(
-              new Error(
-                "GIF_NAO_CARREGOU"
-              )
-            );
-
-          };
-
-
-        /*
-          Somente depois de instalar
-          onload/onerror definimos src.
-        */
-        probe.src =
-          safeUrl;
-
-      }
-    );
-
-
-  let width =
-    dimensions.width;
-
-
-  let height =
-    dimensions.height;
-
-
-  const maxWidth =
-    Math.min(
-      360,
-      window.innerWidth *
-        0.65
-    );
-
-
-  const maxHeight =
-    Math.min(
-      300,
-      window.innerHeight *
-        0.45
-    );
-
-
-  if (
-    width >
-    maxWidth
-  ) {
-
-    const scale =
-      maxWidth /
-      width;
-
-
-    width *=
-      scale;
-
-
-    height *=
-      scale;
-
-  }
-
-
-  if (
-    height >
-    maxHeight
-  ) {
-
-    const scale =
-      maxHeight /
-      height;
-
-
-    width *=
-      scale;
-
-
-    height *=
-      scale;
-
-  }
-
-
-  const object = {
-
-    id:
-      makeId(
-        "gif"
-      ),
-
-    /*
-      Continua sendo image.
-
-      Assim preservamos o sistema atual:
-      - seleção
-      - movimento
-      - redimensionamento
-      - rotação
-      - fixar
-      - excluir
-    */
-    type:
-      "image",
-
-    isGif:
-      true,
-
-    gifSource:
-      "safe-html",
-
-    gifUrl:
-      safeUrl,
-
-    x:
-      x,
-
-    y:
-      y,
-
-    width:
-      width,
-
-    height:
-      height,
-
-    /*
-      Não usamos esta imagem para
-      desenhar o GIF no canvas.
-
-      Ela existe somente para manter
-      compatibilidade estrutural.
-    */
-    image:
-      probe,
-
-    locked:
-      false,
-
-    rotation:
-      0,
-
-    objectUrl:
-      null,
-
-    gifElement:
-      null,
-
-    createdAt:
-      Date.now()
-
-  };
-
-
-  objects.push(
-    object
-  );
-
-
-  redoStack =
-    [];
-
-
-  selectedObjectId =
-    object.id;
-
-
-  secondImageTapId =
-    object.id;
-
-
-  /*
-    Agora criamos NOSSO próprio <img>.
-
-    Nenhum elemento HTML vindo do
-    clipboard é inserido na página.
-  */
-  const element =
-    createSafeGifElement(
-      object
-    );
-
-
-  if (!element) {
-
-    const index =
-      objects.indexOf(
-        object
-      );
-
-
-    if (
-      index >= 0
-    ) {
-
-      objects.splice(
-        index,
-        1
-      );
-
-    }
-
-
-    throw new Error(
-      "GIF_ELEMENTO_NAO_CRIADO"
-    );
-
-  }
-
-
-  redraw();
-
-
-  window.__lousaClipboardDiagnostic =
-    "GIF HTML SEGURO";
-
-
-  toast(
-    "GIF animado"
-  );
-
-
-  return object;
-
-}
 
 /* =========================================================
-   GIF — BLOCO A.4
-   DIAGNÓSTICO DO CLIPBOARD NATIVO iOS
+   PROCESSAR COLAGEM NATIVA
 
-   Objetivo:
-   descobrir exatamente o que o iOS entrega
-   quando copiamos um GIF.
+   iOS / SAFARI / PWA
 
-   NÃO altera:
-   - câmera
-   - gravação
-   - régua
-   - formas
-   - sistema de objetos
+   Aceita:
+   - imagem
+   - texto
+
+   Não possui tratamento especial para GIF.
    ========================================================= */
 
 async function processNativePasteData(
@@ -6573,420 +6199,31 @@ async function processNativePasteData(
 
   const items =
     Array.from(
-      clipboardData.items || []
+      clipboardData.items ||
+      []
     );
 
 
   const types =
     Array.from(
-      clipboardData.types || []
+      clipboardData.types ||
+      []
     );
 
 
   /* =====================================================
-     TEXTO PURO
-
-     Pode conter a URL original do GIF.
-     ===================================================== */
-
-  let plainText =
-    "";
-
-
-  try {
-
-    plainText =
-      clipboardData.getData(
-        "text/plain"
-      ) || "";
-
-  } catch (error) {
-
-    console.log(
-      "LOUSA CAM — ERRO TEXT/PLAIN:",
-      error
-    );
-
-  }
-
-
-  /* =====================================================
-     HTML
-
-     O teste no editor T demonstrou que o
-     WebKit pode fornecer aqui a imagem
-     animada/origem original.
-     ===================================================== */
-
-  let htmlText =
-    "";
-
-
-  try {
-
-    htmlText =
-      clipboardData.getData(
-        "text/html"
-      ) || "";
-
-  } catch (error) {
-
-    console.log(
-      "LOUSA CAM — ERRO TEXT/HTML:",
-      error
-    );
-
-  }
-
-
-  /* =====================================================
-     PROCURAR GIF EM TEXT/PLAIN
-     ===================================================== */
-
-  let gifUrlFromText =
-    null;
-
-
-  if (plainText) {
-
-    const textGifMatch =
-      plainText.match(
-        /https?:\/\/[^\s"'<>]+\.gif(?:\?[^\s"'<>]*)?/i
-      );
-
-
-    if (textGifMatch) {
-
-      gifUrlFromText =
-        textGifMatch[0];
-
-    }
-
-  }
-
-
-  /* =====================================================
-     PROCURAR GIF NO HTML
-     ===================================================== */
-
-  let gifUrlFromHtml =
-    null;
-
-
-  if (htmlText) {
-
-    try {
-
-      const parser =
-        new DOMParser();
-
-
-      const documentHtml =
-        parser.parseFromString(
-          htmlText,
-          "text/html"
-        );
-
-
-      const images =
-        Array.from(
-          documentHtml.querySelectorAll(
-            "img"
-          )
-        );
-
-
-      /*
-        Primeiro procuramos src terminando
-        explicitamente em .gif.
-      */
-
-      const gifImage =
-        images.find(
-          image => {
-
-            const src =
-              image.getAttribute(
-                "src"
-              ) || "";
-
-
-            return (
-              /\.gif(?:\?|$)/i.test(
-                src
-              )
-            );
-
-          }
-        );
-
-
-      if (gifImage) {
-
-        gifUrlFromHtml =
-          gifImage.getAttribute(
-            "src"
-          );
-
-      }
-
-
-      /*
-        Algumas páginas armazenam o GIF
-        em atributos data-*.
-      */
-
-      if (!gifUrlFromHtml) {
-
-        for (
-          const image
-          of images
-        ) {
-
-          const candidates = [
-
-            image.getAttribute(
-              "data-src"
-            ),
-
-            image.getAttribute(
-              "data-original"
-            ),
-
-            image.getAttribute(
-              "data-gif"
-            ),
-
-            image.getAttribute(
-              "data-url"
-            )
-
-          ];
-
-
-          const candidate =
-            candidates.find(
-              value =>
-                value &&
-                /\.gif(?:\?|$)/i.test(
-                  value
-                )
-            );
-
-
-          if (candidate) {
-
-            gifUrlFromHtml =
-              candidate;
-
-            break;
-
-          }
-
-        }
-
-      }
-
-
-      /*
-        NOVO A.7
-
-        Se o HTML possui uma imagem e ainda
-        não encontramos ".gif", verificamos
-        o src da imagem.
-
-        Isso é importante porque muitos
-        servidores entregam GIF por URLs que
-        não terminam literalmente em .gif.
-      */
-
-      if (
-        !gifUrlFromHtml &&
-        images.length
-      ) {
-
-        for (
-          const image
-          of images
-        ) {
-
-          const src =
-            image.getAttribute(
-              "src"
-            );
-
-
-          if (
-            src &&
-            /^https?:\/\//i.test(
-              src
-            )
-          ) {
-
-            gifUrlFromHtml =
-              src;
-
-            break;
-
-          }
-
-        }
-
-      }
-
-    } catch (error) {
-
-      console.log(
-        "LOUSA CAM — ERRO ANALISANDO HTML:",
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     URL ANIMADA DETECTADA
-     ===================================================== */
-
-  const detectedGifUrl =
-    gifUrlFromHtml ||
-    gifUrlFromText ||
-    null;
-
-
-  console.log(
-    "LOUSA CAM — GIF URL DETECTADA:",
-    detectedGifUrl
-  );
-
-
-  /* =====================================================
-     1 — PRIORIDADE MÁXIMA:
-     URL DO GIF
-
-     O A.4 colava primeiro a representação
-     estática fornecida pelo iOS.
-
-     No A.7 fazemos o contrário:
-     se encontramos a origem animada,
-     usamos essa origem primeiro.
-     ===================================================== */
-
-  if (detectedGifUrl) {
-
-    try {
-
-      await createGifFromUrl(
-        detectedGifUrl,
-        position.x,
-        position.y
-      );
-
-
-      window.__lousaDetectedGifUrl =
-        detectedGifUrl;
-
-
-      window.__lousaClipboardDiagnostic =
-        "GIF ANIMADO COLADO";
-
-
-      return true;
-
-    } catch (error) {
-
-      console.log(
-        "LOUSA CAM — URL GIF NÃO CARREGOU:",
-        error
-      );
-
-
-      /*
-        NÃO retornamos aqui.
-
-        Se a URL não carregar,
-        continuamos e tentamos a
-        representação nativa do clipboard.
-      */
-
-    }
-
-  }
-
-
-  /* =====================================================
-     2 — GIF NATIVO
-
-     Caso algum navegador realmente entregue
-     image/gif como arquivo.
-     ===================================================== */
-
-  const gifItem =
-    items.find(
-      item =>
-        item &&
-        item.kind === "file" &&
-        String(
-          item.type || ""
-        ).toLowerCase() ===
-          "image/gif"
-    );
-
-
-  if (gifItem) {
-
-    const blob =
-      gifItem.getAsFile();
-
-
-    if (blob) {
-
-      try {
-
-        await createImageFromBlob(
-          blob,
-          position.x,
-          position.y
-        );
-
-
-        window.__lousaClipboardDiagnostic =
-          "GIF NATIVO COLADO";
-
-
-        return true;
-
-      } catch (error) {
-
-        console.log(
-          "LOUSA CAM — ERRO GIF NATIVO:",
-          error
-        );
-
-      }
-
-    }
-
-  }
-
-
-  /* =====================================================
-     3 — IMAGEM NORMAL / FALLBACK ESTÁTICO
-
-     Se o iOS não forneceu uma origem GIF
-     utilizável, preservamos o comportamento
-     anterior para imagens.
+     1 — IMAGEM
      ===================================================== */
 
   const imageItem =
     items.find(
       item =>
         item &&
-        item.kind === "file" &&
+        item.kind ===
+          "file" &&
         String(
-          item.type || ""
+          item.type ||
+          ""
         )
           .toLowerCase()
           .startsWith(
@@ -7013,9 +6250,7 @@ async function processNativePasteData(
 
 
         window.__lousaClipboardDiagnostic =
-          detectedGifUrl
-            ? "GIF USOU IMAGEM DE RESERVA"
-            : "IMAGEM NATIVA COLADA";
+          "IMAGEM NATIVA COLADA";
 
 
         return true;
@@ -7035,8 +6270,29 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     4 — TEXTO NORMAL
+     2 — TEXTO
      ===================================================== */
+
+  let plainText =
+    "";
+
+
+  try {
+
+    plainText =
+      clipboardData.getData(
+        "text/plain"
+      ) || "";
+
+  } catch (error) {
+
+    console.log(
+      "LOUSA CAM — ERRO TEXT/PLAIN:",
+      error
+    );
+
+  }
+
 
   if (
     plainText &&
@@ -7060,7 +6316,7 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     5 — DIAGNÓSTICO FINAL
+     DIAGNÓSTICO
      ===================================================== */
 
   const nativeTypes =
