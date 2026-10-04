@@ -6901,335 +6901,342 @@ function removeNativePasteReceiver() {
 }
 
 /* =========================================================
-   GIF — BLOCO A.7
-   CRIAR GIF ANIMADO DIRETAMENTE DA URL
-
-   Objetivo:
-   - aproveitar a URL animada entregue pelo iOS/WebKit
-   - não converter para PNG/JPEG
-   - manter o GIF como objeto de imagem
-   - preservar mover/redimensionar/girar/fixar
-   - não alterar câmera ou gravação
+   GIF — BLOCO A.8
+   CARREGAR URL + DECODIFICAR FRAMES
    ========================================================= */
 
-function createGifFromUrl(
+async function createGifFromUrl(
   gifUrl,
   x,
   y
 ) {
 
-  return new Promise(
-    (resolve, reject) => {
+  if (
+    !gifUrl ||
+    typeof gifUrl !== "string"
+  ) {
 
-      if (
-        !gifUrl ||
-        typeof gifUrl !== "string"
-      ) {
+    throw new Error(
+      "URL GIF inválida"
+    );
 
-        reject(
-          new Error(
-            "URL GIF inválida"
-          )
-        );
+  }
 
-        return;
 
-      }
+  let parsedUrl;
 
 
-      let parsedUrl;
+  try {
 
-      try {
+    parsedUrl =
+      new URL(
+        gifUrl,
+        window.location.href
+      );
 
-        parsedUrl =
-          new URL(
-            gifUrl,
-            window.location.href
-          );
+  } catch (error) {
 
-      } catch (error) {
+    throw new Error(
+      "URL GIF inválida"
+    );
 
-        reject(
-          new Error(
-            "URL GIF inválida"
-          )
-        );
+  }
 
-        return;
 
-      }
+  if (
+    parsedUrl.protocol !== "https:" &&
+    parsedUrl.protocol !== "http:"
+  ) {
 
+    throw new Error(
+      "Protocolo GIF não permitido"
+    );
 
-      /*
-        Somente HTTP/HTTPS.
+  }
 
-        Não aceitamos javascript:, data: etc.
-      */
-      if (
-        parsedUrl.protocol !== "https:" &&
-        parsedUrl.protocol !== "http:"
-      ) {
 
-        reject(
-          new Error(
-            "Protocolo GIF não permitido"
-          )
-        );
+  const finalUrl =
+    parsedUrl.href;
 
-        return;
 
-      }
+  /*
+    Para decodificar os frames precisamos
+    dos bytes reais do GIF.
+  */
+  let response;
 
 
-      const finalUrl =
-        parsedUrl.href;
+  try {
 
+    response =
+      await fetch(
+        finalUrl,
+        {
+          mode:
+            "cors",
 
-      const image =
-        new Image();
+          credentials:
+            "omit",
 
+          cache:
+            "no-store"
+        }
+      );
 
-      /*
-        IMPORTANTE:
+  } catch (error) {
 
-        NÃO usamos crossOrigin aqui.
+    console.log(
+      "LOUSA CAM — fetch GIF bloqueado:",
+      error
+    );
 
-        O teste com o editor T mostrou que
-        o WebKit consegue reproduzir a imagem
-        usando diretamente sua URL.
 
-        crossOrigin poderia impedir o
-        carregamento em sites que não fornecem
-        cabeçalho CORS.
-      */
+    throw new Error(
+      "GIF_FETCH_BLOQUEADO"
+    );
 
+  }
 
-      image.onload =
-        () => {
 
-          const maxWidth =
-            Math.min(
-              360,
-              window.innerWidth *
-                0.65
-            );
+  if (!response.ok) {
 
+    throw new Error(
+      "GIF_HTTP_" +
+      response.status
+    );
 
-          const maxHeight =
-            Math.min(
-              300,
-              window.innerHeight *
-                0.45
-            );
+  }
 
 
-          let width =
-            image.naturalWidth;
+  const blob =
+    await response.blob();
 
 
-          let height =
-            image.naturalHeight;
-
-
-          if (
-            !Number.isFinite(width) ||
-            width <= 0
-          ) {
-
-            width =
-              220;
-
-          }
-
-
-          if (
-            !Number.isFinite(height) ||
-            height <= 0
-          ) {
-
-            height =
-              160;
-
-          }
-
-
-          /*
-            Mantém proporção.
-          */
-
-          if (
-            width >
-            maxWidth
-          ) {
-
-            const scale =
-              maxWidth /
-              width;
-
-
-            width *=
-              scale;
-
-
-            height *=
-              scale;
-
-          }
-
-
-          if (
-            height >
-            maxHeight
-          ) {
-
-            const scale =
-              maxHeight /
-              height;
-
-
-            width *=
-              scale;
-
-
-            height *=
-              scale;
-
-          }
-
-
-          const object = {
-
-            id:
-              makeId(
-                "gif"
-              ),
-
-            /*
-              Continua sendo IMAGE para
-              aproveitar todo o sistema atual
-              de objetos.
-            */
+  /*
+    Alguns servidores enviam MIME genérico.
+
+    Portanto também aceitamos quando a
+    URL originalmente apontava para GIF.
+  */
+  const gifBlob =
+    blob.type === "image/gif"
+      ? blob
+      : new Blob(
+          [
+            await blob.arrayBuffer()
+          ],
+          {
             type:
-              "image",
-
-            isGif:
-              true,
-
-            /*
-              Identifica que este GIF veio
-              diretamente de uma URL.
-            */
-            gifSource:
-              "url",
-
-            gifUrl:
-              finalUrl,
-
-            blobType:
-              "image/gif",
-
-            x:
-              x,
-
-            y:
-              y,
-
-            width:
-              width,
-
-            height:
-              height,
-
-            image:
-              image,
-
-            locked:
-              false,
-
-            rotation:
-              0,
-
-            /*
-              Não existe Blob URL neste caso.
-            */
-            objectUrl:
-              null,
-
-            createdAt:
-              Date.now()
-
-          };
+              "image/gif"
+          }
+        );
 
 
-          objects.push(
-            object
-          );
+  let decoded;
 
 
-          redoStack =
-            [];
+  try {
+
+    decoded =
+      await decodeGifFrames(
+        gifBlob
+      );
+
+  } catch (error) {
+
+    console.log(
+      "LOUSA CAM — decoder GIF:",
+      error
+    );
 
 
-          selectedObjectId =
-            object.id;
+    if (
+      error &&
+      error.message ===
+        "IMAGE_DECODER_INDISPONIVEL"
+    ) {
 
+      window.__lousaClipboardDiagnostic =
+        "GIF: IMAGEDECODER INDISPONÍVEL";
 
-          secondImageTapId =
-            object.id;
+    } else {
 
-
-          redraw();
-
-
-          /*
-            Usa o controlador GIF
-            que já existe no app.js.
-          */
-          startGifAnimationLoop();
-
-
-          window.__lousaClipboardDiagnostic =
-            "GIF ANIMADO COLADO";
-
-
-          resolve(
-            object
-          );
-
-        };
-
-
-      image.onerror =
-        error => {
-
-          console.log(
-            "LOUSA CAM — ERRO CARREGANDO GIF URL:",
-            finalUrl,
-            error
-          );
-
-
-          reject(
-            new Error(
-              "Não foi possível carregar o GIF"
-            )
-          );
-
-        };
-
-
-      /*
-        Este é o ponto principal do A.7.
-
-        Usamos exatamente a URL que o
-        WebKit forneceu no clipboard.
-      */
-
-      image.src =
-        finalUrl;
+      window.__lousaClipboardDiagnostic =
+        "GIF: FALHA AO DECODIFICAR";
 
     }
+
+
+    throw error;
+
+  }
+
+
+  let width =
+    decoded.width;
+
+
+  let height =
+    decoded.height;
+
+
+  const maxWidth =
+    Math.min(
+      360,
+      window.innerWidth *
+        0.65
+    );
+
+
+  const maxHeight =
+    Math.min(
+      300,
+      window.innerHeight *
+        0.45
+    );
+
+
+  if (
+    width > maxWidth
+  ) {
+
+    const scale =
+      maxWidth /
+      width;
+
+
+    width *=
+      scale;
+
+
+    height *=
+      scale;
+
+  }
+
+
+  if (
+    height > maxHeight
+  ) {
+
+    const scale =
+      maxHeight /
+      height;
+
+
+    width *=
+      scale;
+
+
+    height *=
+      scale;
+
+  }
+
+
+  const object = {
+
+    id:
+      makeId(
+        "gif"
+      ),
+
+    /*
+      Continua sendo image.
+      Isso preserva todo o sistema
+      atual de objetos.
+    */
+    type:
+      "image",
+
+    isGif:
+      true,
+
+    gifSource:
+      "decoded-url",
+
+    gifUrl:
+      finalUrl,
+
+    blobType:
+      "image/gif",
+
+    x:
+      x,
+
+    y:
+      y,
+
+    width:
+      width,
+
+    height:
+      height,
+
+    /*
+      Mantemos image como fallback.
+      O desenho real usa gifFrames.
+    */
+    image:
+      decoded.frames[0].image,
+
+    gifFrames:
+      decoded.frames,
+
+    gifFrameIndex:
+      0,
+
+    gifNextFrameTime:
+      null,
+
+    locked:
+      false,
+
+    rotation:
+      0,
+
+    objectUrl:
+      null,
+
+    createdAt:
+      Date.now()
+
+  };
+
+
+  objects.push(
+    object
   );
+
+
+  redoStack =
+    [];
+
+
+  selectedObjectId =
+    object.id;
+
+
+  secondImageTapId =
+    object.id;
+
+
+  redraw();
+
+
+  startGifAnimationLoop();
+
+
+  window.__lousaClipboardDiagnostic =
+    "GIF ANIMADO A.8";
+
+
+  toast(
+    "GIF animado"
+  );
+
+
+  return object;
 
 }
 
