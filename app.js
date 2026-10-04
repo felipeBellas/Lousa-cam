@@ -6437,7 +6437,6 @@ function showCanvasPasteMenu(
     exista no menu.
   */
 
-  ensureImportGifButton();
    
 
   canvasMenu.classList.add(
