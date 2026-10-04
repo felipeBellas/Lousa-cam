@@ -6755,8 +6755,8 @@ function removeNativePasteReceiver() {
 }
 
 /* =========================================================
-   GIF — BLOCO A.8
-   CARREGAR URL + DECODIFICAR FRAMES
+   GIF — BLOCO A.9
+   CRIAR GIF HTML SEGURO
    ========================================================= */
 
 async function createGifFromUrl(
@@ -6765,173 +6765,166 @@ async function createGifFromUrl(
   y
 ) {
 
-  if (
-    !gifUrl ||
-    typeof gifUrl !== "string"
-  ) {
+  /*
+    PRIMEIRA BARREIRA DE SEGURANÇA
+
+    Não colocamos HTML do clipboard
+    dentro da página.
+
+    Recebemos somente uma string de URL
+    e validamos essa URL.
+  */
+  const safeUrl =
+    validateGifUrl(
+      gifUrl
+    );
+
+
+  if (!safeUrl) {
 
     throw new Error(
-      "URL GIF inválida"
+      "URL_GIF_NAO_PERMITIDA"
     );
 
   }
-
-
-  let parsedUrl;
-
-
-  try {
-
-    parsedUrl =
-      new URL(
-        gifUrl,
-        window.location.href
-      );
-
-  } catch (error) {
-
-    throw new Error(
-      "URL GIF inválida"
-    );
-
-  }
-
-
-  if (
-    parsedUrl.protocol !== "https:" &&
-    parsedUrl.protocol !== "http:"
-  ) {
-
-    throw new Error(
-      "Protocolo GIF não permitido"
-    );
-
-  }
-
-
-  const finalUrl =
-    parsedUrl.href;
 
 
   /*
-    Para decodificar os frames precisamos
-    dos bytes reais do GIF.
+    Criamos uma imagem temporária apenas
+    para obter as dimensões naturais.
+
+    O navegador/WebKit continuará sendo
+    responsável pela animação do GIF.
   */
-  let response;
-
-
-  try {
-
-    response =
-      await fetch(
-        finalUrl,
-        {
-          mode:
-            "cors",
-
-          credentials:
-            "omit",
-
-          cache:
-            "no-store"
-        }
-      );
-
-  } catch (error) {
-
-    console.log(
-      "LOUSA CAM — fetch GIF bloqueado:",
-      error
+  const probe =
+    document.createElement(
+      "img"
     );
 
 
-    throw new Error(
-      "GIF_FETCH_BLOQUEADO"
+  probe.alt =
+    "";
+
+  probe.draggable =
+    false;
+
+
+  const dimensions =
+    await new Promise(
+      (
+        resolve,
+        reject
+      ) => {
+
+        let finished =
+          false;
+
+
+        const timer =
+          setTimeout(
+            () => {
+
+              if (finished) {
+
+                return;
+
+              }
+
+
+              finished =
+                true;
+
+
+              reject(
+                new Error(
+                  "GIF_TIMEOUT"
+                )
+              );
+
+            },
+            12000
+          );
+
+
+        probe.onload =
+          () => {
+
+            if (finished) {
+
+              return;
+
+            }
+
+
+            finished =
+              true;
+
+
+            clearTimeout(
+              timer
+            );
+
+
+            resolve({
+
+              width:
+                probe.naturalWidth ||
+                240,
+
+              height:
+                probe.naturalHeight ||
+                180
+
+            });
+
+          };
+
+
+        probe.onerror =
+          () => {
+
+            if (finished) {
+
+              return;
+
+            }
+
+
+            finished =
+              true;
+
+
+            clearTimeout(
+              timer
+            );
+
+
+            reject(
+              new Error(
+                "GIF_NAO_CARREGOU"
+              )
+            );
+
+          };
+
+
+        /*
+          Somente depois de instalar
+          onload/onerror definimos src.
+        */
+        probe.src =
+          safeUrl;
+
+      }
     );
-
-  }
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      "GIF_HTTP_" +
-      response.status
-    );
-
-  }
-
-
-  const blob =
-    await response.blob();
-
-
-  /*
-    Alguns servidores enviam MIME genérico.
-
-    Portanto também aceitamos quando a
-    URL originalmente apontava para GIF.
-  */
-  const gifBlob =
-    blob.type === "image/gif"
-      ? blob
-      : new Blob(
-          [
-            await blob.arrayBuffer()
-          ],
-          {
-            type:
-              "image/gif"
-          }
-        );
-
-
-  let decoded;
-
-
-  try {
-
-    decoded =
-      await decodeGifFrames(
-        gifBlob
-      );
-
-  } catch (error) {
-
-    console.log(
-      "LOUSA CAM — decoder GIF:",
-      error
-    );
-
-
-    if (
-      error &&
-      error.message ===
-        "IMAGE_DECODER_INDISPONIVEL"
-    ) {
-
-      window.__lousaClipboardDiagnostic =
-        "GIF: IMAGEDECODER INDISPONÍVEL";
-
-    } else {
-
-      window.__lousaClipboardDiagnostic =
-        "GIF: FALHA AO DECODIFICAR";
-
-    }
-
-
-    throw error;
-
-  }
 
 
   let width =
-    decoded.width;
+    dimensions.width;
 
 
   let height =
-    decoded.height;
+    dimensions.height;
 
 
   const maxWidth =
@@ -6951,7 +6944,8 @@ async function createGifFromUrl(
 
 
   if (
-    width > maxWidth
+    width >
+    maxWidth
   ) {
 
     const scale =
@@ -6970,7 +6964,8 @@ async function createGifFromUrl(
 
 
   if (
-    height > maxHeight
+    height >
+    maxHeight
   ) {
 
     const scale =
@@ -6997,8 +6992,14 @@ async function createGifFromUrl(
 
     /*
       Continua sendo image.
-      Isso preserva todo o sistema
-      atual de objetos.
+
+      Assim preservamos o sistema atual:
+      - seleção
+      - movimento
+      - redimensionamento
+      - rotação
+      - fixar
+      - excluir
     */
     type:
       "image",
@@ -7007,13 +7008,10 @@ async function createGifFromUrl(
       true,
 
     gifSource:
-      "decoded-url",
+      "safe-html",
 
     gifUrl:
-      finalUrl,
-
-    blobType:
-      "image/gif",
+      safeUrl,
 
     x:
       x,
@@ -7028,20 +7026,14 @@ async function createGifFromUrl(
       height,
 
     /*
-      Mantemos image como fallback.
-      O desenho real usa gifFrames.
+      Não usamos esta imagem para
+      desenhar o GIF no canvas.
+
+      Ela existe somente para manter
+      compatibilidade estrutural.
     */
     image:
-      decoded.frames[0].image,
-
-    gifFrames:
-      decoded.frames,
-
-    gifFrameIndex:
-      0,
-
-    gifNextFrameTime:
-      null,
+      probe,
 
     locked:
       false,
@@ -7050,6 +7042,9 @@ async function createGifFromUrl(
       0,
 
     objectUrl:
+      null,
+
+    gifElement:
       null,
 
     createdAt:
@@ -7075,14 +7070,50 @@ async function createGifFromUrl(
     object.id;
 
 
+  /*
+    Agora criamos NOSSO próprio <img>.
+
+    Nenhum elemento HTML vindo do
+    clipboard é inserido na página.
+  */
+  const element =
+    createSafeGifElement(
+      object
+    );
+
+
+  if (!element) {
+
+    const index =
+      objects.indexOf(
+        object
+      );
+
+
+    if (
+      index >= 0
+    ) {
+
+      objects.splice(
+        index,
+        1
+      );
+
+    }
+
+
+    throw new Error(
+      "GIF_ELEMENTO_NAO_CRIADO"
+    );
+
+  }
+
+
   redraw();
 
 
-  startGifAnimationLoop();
-
-
   window.__lousaClipboardDiagnostic =
-    "GIF ANIMADO A.8";
+    "GIF HTML SEGURO";
 
 
   toast(
