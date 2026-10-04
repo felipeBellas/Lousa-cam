@@ -6269,8 +6269,39 @@ async function pasteFromClipboard(
     try {
 
       const items =
-        await navigator.clipboard.read();
+  await navigator.clipboard.read();
 
+
+/* =====================================================
+   GIF — DIAGNÓSTICO TEMPORÁRIO
+
+   Mostra exatamente quais formatos
+   o navegador entregou ao Lousa Cam.
+   ===================================================== */
+
+const clipboardTypes =
+  items
+    .flatMap(
+      item =>
+        Array.from(
+          item.types || []
+        )
+    )
+    .join(", ");
+
+
+console.log(
+  "LOUSA CAM — CLIPBOARD:",
+  clipboardTypes
+);
+
+
+toast(
+  clipboardTypes
+    ? `Clipboard: ${clipboardTypes}`
+    : "Clipboard sem formato detectável",
+  5000
+);
 
       for (
         const item
