@@ -5484,7 +5484,7 @@ function updateEditorPosition() {
   inlineEditor.style.transform =
   `rotate(${object.rotation || 0}rad)`;
    
-  updateTextFormatToolbarPosition();
+  
 
 }
 
