@@ -1625,241 +1625,347 @@ let secondImageTapId =
 
 
 /* =========================================================
-   GIF ANIMADO — BLOCO A.8
-   CONTROLE DE FRAMES DECODIFICADOS
+   GIF ANIMADO — BLOCO A.9
+   CAMADA HTML SEGURA
 
-   - GIF continua sendo type: "image"
-   - mantém mover / redimensionar / girar / fixar
-   - não interfere na câmera
-   - não interfere na gravação G5
+   Estratégia:
+   - GIF continua sendo objeto da lousa
+   - animação é feita pelo próprio WebKit
+   - NÃO executamos HTML recebido do clipboard
+   - NÃO usamos innerHTML para criar GIF
+   - criamos <img> manualmente
+   - somente URL HTTPS é aceita
+
+   Não interfere:
+   - câmera
+   - gravação G5
+   - régua
+   - formas
+   - texto
    ========================================================= */
 
-let gifAnimationFrameId = null;
+let gifHtmlLayer =
+  null;
 
 
 /* =========================================================
-   VERIFICAR SE EXISTE GIF ANIMADO
+   CRIAR CAMADA DOS GIFS
    ========================================================= */
 
-function hasAnimatedGifObjects() {
+function ensureGifHtmlLayer() {
 
-  return objects.some(
-    object =>
-      object &&
-      object.type === "image" &&
-      object.isGif === true &&
-      (
-        object.gifFrames?.length > 0 ||
-        object.image
-      )
+  if (
+    gifHtmlLayer &&
+    gifHtmlLayer.isConnected
+  ) {
+
+    return gifHtmlLayer;
+
+  }
+
+
+  gifHtmlLayer =
+    document.createElement(
+      "div"
+    );
+
+
+  gifHtmlLayer.id =
+    "lousaGifLayer";
+
+
+  /*
+    A camada cobre a tela inteira,
+    mas não captura os toques.
+
+    Os gestos continuam sendo tratados
+    pelo canvas atual do Lousa Cam.
+  */
+  gifHtmlLayer.style.position =
+    "fixed";
+
+  gifHtmlLayer.style.left =
+    "0";
+
+  gifHtmlLayer.style.top =
+    "0";
+
+  gifHtmlLayer.style.width =
+    "100%";
+
+  gifHtmlLayer.style.height =
+    "100%";
+
+  gifHtmlLayer.style.pointerEvents =
+    "none";
+
+  gifHtmlLayer.style.overflow =
+    "hidden";
+
+  gifHtmlLayer.style.zIndex =
+    "2";
+
+
+  document.body.appendChild(
+    gifHtmlLayer
   );
+
+
+  return gifHtmlLayer;
 
 }
 
 
 /* =========================================================
-   LIBERAR FRAMES DECODIFICADOS
+   VALIDAR URL DO GIF
+
+   IMPORTANTE:
+   não aceitamos javascript:
+   não aceitamos data:
+   não aceitamos HTML
+   não copiamos atributos do clipboard
    ========================================================= */
 
-function releaseGifFrames(
+function validateGifUrl(
+  value
+) {
+
+  if (
+    !value ||
+    typeof value !==
+      "string"
+  ) {
+
+    return null;
+
+  }
+
+
+  let url;
+
+
+  try {
+
+    url =
+      new URL(
+        value,
+        window.location.href
+      );
+
+  } catch (error) {
+
+    return null;
+
+  }
+
+
+  /*
+    Para conteúdo externo aceitamos
+    exclusivamente HTTPS.
+  */
+  if (
+    url.protocol !==
+      "https:"
+  ) {
+
+    return null;
+
+  }
+
+
+  return url.href;
+
+}
+
+
+/* =========================================================
+   CRIAR ELEMENTO HTML DO GIF
+
+   SEGURANÇA:
+   O elemento é criado pelo Lousa Cam.
+
+   Nunca fazemos:
+   element.innerHTML = clipboardHtml
+   ========================================================= */
+
+function createSafeGifElement(
   object
 ) {
 
   if (
     !object ||
-    !Array.isArray(
-      object.gifFrames
-    )
+    !object.isGif ||
+    !object.gifUrl
   ) {
 
-    return;
+    return null;
 
   }
 
 
-  for (
-    const frame
-    of object.gifFrames
-  ) {
+  const safeUrl =
+    validateGifUrl(
+      object.gifUrl
+    );
 
-    if (
-      frame &&
-      frame.image &&
-      typeof frame.image.close ===
-        "function"
-    ) {
 
-      try {
+  if (!safeUrl) {
 
-        frame.image.close();
-
-      } catch (error) {
-
-        console.log(
-          "LOUSA CAM — erro liberando frame GIF:",
-          error
-        );
-
-      }
-
-    }
+    return null;
 
   }
 
 
-  object.gifFrames = [];
+  const layer =
+    ensureGifHtmlLayer();
+
+
+  const image =
+    document.createElement(
+      "img"
+    );
+
+
+  image.dataset.lousaGifId =
+    object.id;
+
+
+  /*
+    Apenas propriedades definidas
+    pelo próprio aplicativo.
+  */
+  image.src =
+    safeUrl;
+
+  image.alt =
+    "";
+
+  image.draggable =
+    false;
+
+  image.style.position =
+    "absolute";
+
+  image.style.pointerEvents =
+    "none";
+
+  image.style.userSelect =
+    "none";
+
+  image.style.webkitUserSelect =
+    "none";
+
+  image.style.transformOrigin =
+    "center center";
+
+  image.style.objectFit =
+    "contain";
+
+
+  layer.appendChild(
+    image
+  );
+
+
+  object.gifElement =
+    image;
+
+
+  updateGifHtmlObject(
+    object
+  );
+
+
+  return image;
 
 }
 
 
 /* =========================================================
-   ATUALIZAR FRAME ATUAL
+   ATUALIZAR POSIÇÃO / TAMANHO / ROTAÇÃO
    ========================================================= */
 
-function updateGifObjectFrame(
-  object,
-  now
+function updateGifHtmlObject(
+  object
 ) {
 
   if (
     !object ||
-    !object.isGif ||
-    !Array.isArray(
-      object.gifFrames
-    ) ||
-    object.gifFrames.length < 2
+    !object.isGif
   ) {
-
-    return false;
-
-  }
-
-
-  if (
-    !Number.isFinite(
-      object.gifFrameIndex
-    )
-  ) {
-
-    object.gifFrameIndex = 0;
-
-  }
-
-
-  if (
-    !Number.isFinite(
-      object.gifNextFrameTime
-    )
-  ) {
-
-    const firstFrame =
-      object.gifFrames[0];
-
-
-    object.gifNextFrameTime =
-      now +
-      Math.max(
-        20,
-        firstFrame?.duration ||
-        100
-      );
-
-
-    return false;
-
-  }
-
-
-  let changed =
-    false;
-
-
-  /*
-    while em vez de if:
-
-    se o navegador atrasar alguns frames,
-    recuperamos a posição correta da animação.
-  */
-  while (
-    now >=
-    object.gifNextFrameTime
-  ) {
-
-    object.gifFrameIndex =
-      (
-        object.gifFrameIndex + 1
-      ) %
-      object.gifFrames.length;
-
-
-    const frame =
-      object.gifFrames[
-        object.gifFrameIndex
-      ];
-
-
-    const duration =
-      Math.max(
-        20,
-        frame?.duration ||
-        100
-      );
-
-
-    object.gifNextFrameTime +=
-      duration;
-
-
-    changed =
-      true;
-
-
-    /*
-      Proteção contra loop excessivo
-      caso o PWA tenha ficado suspenso.
-    */
-    if (
-      object.gifNextFrameTime <
-      now - 5000
-    ) {
-
-      object.gifNextFrameTime =
-        now + duration;
-
-      break;
-
-    }
-
-  }
-
-
-  return changed;
-
-}
-
-
-/* =========================================================
-   LOOP DE ANIMAÇÃO
-   ========================================================= */
-
-function gifAnimationLoop(
-  now
-) {
-
-  if (
-    !hasAnimatedGifObjects()
-  ) {
-
-    gifAnimationFrameId =
-      null;
 
     return;
 
   }
 
 
-  let needsRedraw =
-    false;
+  let image =
+    object.gifElement;
+
+
+  if (
+    !image ||
+    !image.isConnected
+  ) {
+
+    image =
+      createSafeGifElement(
+        object
+      );
+
+  }
+
+
+  if (!image) {
+
+    return;
+
+  }
+
+
+  image.style.left =
+    `${object.x}px`;
+
+  image.style.top =
+    `${object.y}px`;
+
+  image.style.width =
+    `${Math.max(
+      1,
+      object.width
+    )}px`;
+
+  image.style.height =
+    `${Math.max(
+      1,
+      object.height
+    )}px`;
+
+
+  const rotation =
+    Number(
+      object.rotation
+    ) || 0;
+
+
+  image.style.transform =
+    `rotate(${rotation}rad)`;
+
+
+  image.style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   SINCRONIZAR TODOS OS GIFS
+   ========================================================= */
+
+function syncGifHtmlObjects() {
+
+  const activeIds =
+    new Set();
 
 
   for (
@@ -1868,367 +1974,115 @@ function gifAnimationLoop(
   ) {
 
     if (
-      object &&
-      object.type === "image" &&
-      object.isGif === true &&
-      Array.isArray(
-        object.gifFrames
-      ) &&
-      object.gifFrames.length > 1
+      !object ||
+      object.type !==
+        "image" ||
+      object.isGif !==
+        true ||
+      !object.gifUrl
     ) {
 
-      if (
-        updateGifObjectFrame(
-          object,
-          now
-        )
-      ) {
-
-        needsRedraw =
-          true;
-
-      }
+      continue;
 
     }
 
-  }
 
-
-  if (needsRedraw) {
-
-    redraw();
-
-  }
-
-
-  gifAnimationFrameId =
-    requestAnimationFrame(
-      gifAnimationLoop
-    );
-
-}
-
-
-/* =========================================================
-   INICIAR LOOP
-   ========================================================= */
-
-function startGifAnimationLoop() {
-
-  if (
-    gifAnimationFrameId !== null
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    !hasAnimatedGifObjects()
-  ) {
-
-    return;
-
-  }
-
-
-  gifAnimationFrameId =
-    requestAnimationFrame(
-      gifAnimationLoop
-    );
-
-}
-
-
-/* =========================================================
-   PARAR LOOP QUANDO NÃO EXISTIR GIF
-   ========================================================= */
-
-function stopGifAnimationLoopIfUnused() {
-
-  if (
-    hasAnimatedGifObjects()
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    gifAnimationFrameId !== null
-  ) {
-
-    cancelAnimationFrame(
-      gifAnimationFrameId
+    activeIds.add(
+      object.id
     );
 
 
-    gifAnimationFrameId =
-      null;
-
-  }
-
-}
-
-/* =========================================================
-   GIF A.8
-   DECODIFICAÇÃO NATIVA DE FRAMES
-   ========================================================= */
-
-async function decodeGifFrames(
-  blob
-) {
-
-  if (
-    !blob ||
-    blob.type !== "image/gif"
-  ) {
-
-    throw new Error(
-      "Arquivo não é GIF"
+    updateGifHtmlObject(
+      object
     );
 
   }
 
 
   /*
-    Primeiro teste do A.8.
-
-    Não adicionamos biblioteca externa.
-    Verificamos se o navegador possui
-    ImageDecoder.
+    Remove da camada qualquer GIF que
+    já não exista no array objects.
   */
-  if (
-    typeof window.ImageDecoder !==
-      "function"
-  ) {
+  if (gifHtmlLayer) {
 
-    throw new Error(
-      "IMAGE_DECODER_INDISPONIVEL"
-    );
-
-  }
-
-
-  const data =
-    await blob.arrayBuffer();
-
-
-  let decoder =
-    null;
-
-
-  try {
-
-    decoder =
-      new ImageDecoder({
-
-        data:
-          data,
-
-        type:
-          "image/gif"
-
-      });
-
-
-    await decoder.tracks.ready;
-
-
-    const track =
-      decoder.tracks.selectedTrack;
-
-
-    if (!track) {
-
-      throw new Error(
-        "GIF_SEM_TRACK"
+    const elements =
+      gifHtmlLayer.querySelectorAll(
+        "img[data-lousa-gif-id]"
       );
-
-    }
-
-
-    /*
-      frameCount pode variar conforme
-      a implementação do navegador.
-    */
-    const frameCount =
-      Number(
-        track.frameCount
-      );
-
-
-    if (
-      !Number.isFinite(
-        frameCount
-      ) ||
-      frameCount < 1
-    ) {
-
-      throw new Error(
-        "GIF_SEM_FRAMES"
-      );
-
-    }
-
-
-    /*
-      Limite de segurança inicial.
-
-      Evita carregar GIFs enormes
-      na memória do iPhone.
-    */
-    const safeFrameCount =
-      Math.min(
-        frameCount,
-        300
-      );
-
-
-    const frames =
-      [];
 
 
     for (
-      let index = 0;
-      index < safeFrameCount;
-      index++
+      const element
+      of elements
     ) {
 
-      const result =
-        await decoder.decode({
-
-          frameIndex:
-            index
-
-        });
-
-
-      const videoFrame =
-        result.image;
-
-
-      /*
-        Copiamos o frame para ImageBitmap.
-
-        Assim o decoder pode ser fechado
-        depois da operação.
-      */
-      const bitmap =
-        await createImageBitmap(
-          videoFrame
-        );
-
-
-      /*
-        WebCodecs normalmente informa
-        duration em microssegundos.
-
-        Convertemos para milissegundos.
-      */
-      let duration =
-        Number(
-          videoFrame.duration
-        );
+      const id =
+        element.dataset
+          .lousaGifId;
 
 
       if (
-        Number.isFinite(
-          duration
-        ) &&
-        duration > 0
+        !activeIds.has(
+          id
+        )
       ) {
 
-        duration =
-          duration / 1000;
-
-      } else {
-
-        duration =
-          100;
-
-      }
-
-
-      duration =
-        Math.max(
-          20,
-          duration
-        );
-
-
-      frames.push({
-
-        image:
-          bitmap,
-
-        duration:
-          duration
-
-      });
-
-
-      if (
-        typeof videoFrame.close ===
-          "function"
-      ) {
-
-        videoFrame.close();
-
-      }
-
-    }
-
-
-    if (!frames.length) {
-
-      throw new Error(
-        "GIF_SEM_FRAMES"
-      );
-
-    }
-
-
-    return {
-
-      frames:
-        frames,
-
-      width:
-        frames[0].image.width,
-
-      height:
-        frames[0].image.height
-
-    };
-
-
-  } finally {
-
-    if (
-      decoder &&
-      typeof decoder.close ===
-        "function"
-    ) {
-
-      try {
-
-        decoder.close();
-
-      } catch (error) {
-
-        console.log(
-          "LOUSA CAM — erro fechando decoder GIF:",
-          error
-        );
+        element.remove();
 
       }
 
     }
 
   }
+
+}
+
+
+/* =========================================================
+   REMOVER ELEMENTO HTML DE UM GIF
+   ========================================================= */
+
+function removeGifHtmlObject(
+  object
+) {
+
+  if (!object) {
+
+    return;
+
+  }
+
+
+  if (
+    object.gifElement &&
+    object.gifElement.parentNode
+  ) {
+
+    object.gifElement
+      .parentNode
+      .removeChild(
+        object.gifElement
+      );
+
+  }
+
+
+  object.gifElement =
+    null;
+
+}
+
+
+/* =========================================================
+   COMPATIBILIDADE COM O CÓDIGO EXISTENTE
+
+   O código atual chama esta função
+   quando uma imagem/GIF é excluída.
+   ========================================================= */
+
+function stopGifAnimationLoopIfUnused() {
+
+  syncGifHtmlObjects();
 
 }
 
