@@ -5345,6 +5345,30 @@ function beginTextEditing(
 showTextEditorButton();
 
 closeTextToolbar();
+/*
+  BLOCO 8
+
+  Sincroniza o indicador de cor
+  quando uma edição é iniciada.
+
+  A cor pertence ao texto e permanece
+  independente da cor da caneta.
+*/
+if (textColorIndicator) {
+
+  const editingObject =
+    getObjectById(
+      editingObjectId
+    );
+
+
+  textColorIndicator.style.background =
+    editingObject &&
+    editingObject.color
+      ? editingObject.color
+      : "#ffffff";
+
+}
 
 updateEditorPosition();
 
@@ -11015,15 +11039,19 @@ if (
       );
 
 
-      setTimeout(
-        () => {
+     /*
+  Mantém a proteção durante o ciclo
+  de foco/blur do Safari/iPhone.
+*/
+setTimeout(
+  () => {
 
-          textToolbarInteraction =
-            false;
+    textToolbarInteraction =
+      false;
 
-        },
-        0
-      );
+  },
+  250
+);
 
     }
   );
