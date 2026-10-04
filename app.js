@@ -6736,9 +6736,6 @@ async function pasteFromClipboard(
       );
 
 
-      /* =================================================
-         GIF
-         ================================================= */
 
       for (
         const item
@@ -6751,53 +6748,6 @@ async function pasteFromClipboard(
           );
 
 
-        const gifType =
-          types.find(
-            type =>
-              String(
-                type
-              ).toLowerCase() ===
-              "image/gif"
-          );
-
-
-        if (gifType) {
-
-          try {
-
-            const blob =
-              await item.getType(
-                gifType
-              );
-
-
-            await createImageFromBlob(
-              blob,
-              x,
-              y
-            );
-
-
-            window.__lousaClipboardDiagnostic =
-              "GIF COLADO";
-
-
-            window.__lousaNativePastePosition =
-              null;
-
-
-            return true;
-
-          } catch (error) {
-
-            console.log(
-              "LOUSA CAM — ERRO GIF:",
-              error
-            );
-
-          }
-
-        }
 
 
         /* ===============================================
