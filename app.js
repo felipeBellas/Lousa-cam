@@ -6040,18 +6040,34 @@ if (
 
         if (success) {
 
-          toast(
-            "Conteúdo colado"
-          );
+  toast(
+    "Conteúdo colado"
+  );
 
-        } else {
+} else {
 
-          toast(
-            "Não foi possível colar"
-          );
+  if (
+    window.__lousaClipboardError
+  ) {
 
-        }
+    toast(
+      "Clipboard: " +
+      window.__lousaClipboardError,
+      7000
+    );
 
+    window.__lousaClipboardError =
+      null;
+
+  } else {
+
+    toast(
+      "Não foi possível colar"
+    );
+
+  }
+
+}
       }
     );
 
