@@ -5599,7 +5599,7 @@ inlineEditor.addEventListener(
 
 
 /* =========================================================
-   CRIAR IMAGEM / GIF ANIMADO — BLOCO A
+   CRIAR IMAGEM
    ========================================================= */
 
 function createImageFromBlob(
@@ -5611,29 +5611,6 @@ function createImageFromBlob(
   return new Promise(
     (resolve, reject) => {
 
-      /*
-        Detecta GIF pelo MIME real
-        recebido do clipboard.
-      */
-      const isGif =
-        !!(
-          blob &&
-          typeof blob.type ===
-            "string" &&
-          blob.type
-            .toLowerCase() ===
-            "image/gif"
-        );
-
-
-      /*
-        Mantemos o Blob URL vivo
-        enquanto o GIF existir.
-
-        Para imagens normais,
-        continuamos liberando a URL
-        após o carregamento.
-      */
       const url =
         URL.createObjectURL(
           blob
@@ -5648,29 +5625,19 @@ function createImageFromBlob(
         () => {
 
           /*
-            IMAGEM ESTÁTICA:
-            pode liberar a URL imediatamente.
-
-            GIF:
-            mantém a URL enquanto estiver
-            presente na lousa.
+            A imagem já foi carregada pelo navegador.
+            O Blob URL temporário pode ser liberado.
           */
-          if (
-            !isGif
-          ) {
-
-            URL.revokeObjectURL(
-              url
-            );
-
-          }
+          URL.revokeObjectURL(
+            url
+          );
 
 
           const maxWidth =
             Math.min(
               360,
               window.innerWidth *
-              0.65
+                0.65
             );
 
 
@@ -5678,7 +5645,7 @@ function createImageFromBlob(
             Math.min(
               300,
               window.innerHeight *
-              0.45
+                0.45
             );
 
 
@@ -5690,12 +5657,10 @@ function createImageFromBlob(
             image.naturalHeight;
 
 
-          /*
-            Segurança contra arquivo
-            sem dimensões válidas.
-          */
           if (
-            !Number.isFinite(width) ||
+            !Number.isFinite(
+              width
+            ) ||
             width <= 0
           ) {
 
@@ -5706,7 +5671,9 @@ function createImageFromBlob(
 
 
           if (
-            !Number.isFinite(height) ||
+            !Number.isFinite(
+              height
+            ) ||
             height <= 0
           ) {
 
@@ -5717,7 +5684,7 @@ function createImageFromBlob(
 
 
           /*
-            Mantém proporção original.
+            Mantém a proporção original.
           */
           if (
             width >
@@ -5763,24 +5730,15 @@ function createImageFromBlob(
 
             id:
               makeId(
-                isGif
-                  ? "gif"
-                  : "image"
+                "image"
               ),
 
             type:
               "image",
 
-            /*
-              Identificação específica
-              sem alterar o sistema atual
-              de objetos de imagem.
-            */
-            isGif:
-              isGif,
-
             blobType:
-              blob.type || "",
+              blob.type ||
+              "",
 
             x:
               x,
@@ -5802,15 +5760,6 @@ function createImageFromBlob(
 
             rotation:
               0,
-
-            /*
-              Somente GIF precisa manter
-              referência ao Blob URL.
-            */
-            objectUrl:
-              isGif
-                ? url
-                : null,
 
             createdAt:
               Date.now()
@@ -5838,24 +5787,6 @@ function createImageFromBlob(
           redraw();
 
 
-          /*
-            O loop somente será iniciado
-            se realmente houver GIF.
-          */
-          if (
-            isGif
-          ) {
-
-            startGifAnimationLoop();
-
-
-            toast(
-              "GIF colado"
-            );
-
-          }
-
-
           resolve(
             object
           );
@@ -5878,11 +5809,6 @@ function createImageFromBlob(
         };
 
 
-      /*
-        IMPORTANTE:
-        atribuir src somente depois
-        de configurar onload/onerror.
-      */
       image.src =
         url;
 
