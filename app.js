@@ -1648,7 +1648,7 @@ function hasAnimatedGifObjects() {
       object &&
       object.type === "image" &&
       object.isGif === true &&
-      object.img
+      object.image
   );
 
 }
@@ -13080,6 +13080,10 @@ function hideObjectCancel() {
 }
 
 
+/* =========================================================
+   EXCLUIR OBJETO / GIF — BLOCO A
+   ========================================================= */
+
 objectCancel.addEventListener(
   "click",
   event => {
@@ -13117,6 +13121,14 @@ objectCancel.addEventListener(
         )[0];
 
 
+      /*
+        Mantemos o objeto no redoStack
+        como já ocorria originalmente.
+
+        Por isso NÃO revogamos a URL aqui:
+        ela ainda pode ser necessária caso
+        o sistema restaure o objeto.
+      */
       redoStack.push(
         removed
       );
@@ -13133,6 +13145,13 @@ objectCancel.addEventListener(
 
 
     hideObjectCancel();
+
+
+    /*
+      Se o último GIF foi retirado,
+      interrompe o loop específico.
+    */
+    stopGifAnimationLoopIfUnused();
 
 
     redraw();
