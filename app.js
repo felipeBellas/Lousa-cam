@@ -6343,7 +6343,19 @@ function removeNativePasteReceiver() {
 
 
 /* =========================================================
-   PROCESSAR DADOS DE COLAGEM NATIVA
+   GIF — BLOCO A.4
+   DIAGNÓSTICO DO CLIPBOARD NATIVO iOS
+
+   Objetivo:
+   descobrir exatamente o que o iOS entrega
+   quando copiamos um GIF.
+
+   NÃO altera:
+   - câmera
+   - gravação
+   - régua
+   - formas
+   - sistema de objetos
    ========================================================= */
 
 async function processNativePasteData(
@@ -6367,8 +6379,24 @@ async function processNativePasteData(
     );
 
 
+  const types =
+    Array.from(
+      clipboardData.types || []
+    );
+
+
+  /* =====================================================
+     DIAGNÓSTICO DOS TIPOS
+     ===================================================== */
+
   console.log(
-    "LOUSA CAM — PASTE NATIVO:",
+    "LOUSA CAM — PASTE NATIVO — TYPES:",
+    types
+  );
+
+
+  console.log(
+    "LOUSA CAM — PASTE NATIVO — ITEMS:",
     items.map(
       item => ({
         kind:
@@ -6382,7 +6410,248 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     1 — GIF
+     TEXTO PURO
+     Pode conter a URL original do GIF.
+     ===================================================== */
+
+  let plainText =
+    "";
+
+  try {
+
+    plainText =
+      clipboardData.getData(
+        "text/plain"
+      ) || "";
+
+  } catch (error) {
+
+    console.log(
+      "LOUSA CAM — ERRO TEXT/PLAIN:",
+      error
+    );
+
+  }
+
+
+  /* =====================================================
+     HTML
+     Pode conter:
+     <img src="...gif">
+     ===================================================== */
+
+  let htmlText =
+    "";
+
+  try {
+
+    htmlText =
+      clipboardData.getData(
+        "text/html"
+      ) || "";
+
+  } catch (error) {
+
+    console.log(
+      "LOUSA CAM — ERRO TEXT/HTML:",
+      error
+    );
+
+  }
+
+
+  console.log(
+    "LOUSA CAM — TEXT/PLAIN:",
+    plainText
+  );
+
+
+  console.log(
+    "LOUSA CAM — TEXT/HTML:",
+    htmlText
+  );
+
+
+  /* =====================================================
+     PROCURAR URL DE GIF NO TEXT/PLAIN
+     ===================================================== */
+
+  let gifUrlFromText =
+    null;
+
+
+  if (plainText) {
+
+    const textGifMatch =
+      plainText.match(
+        /https?:\/\/[^\s"'<>]+\.gif(?:\?[^\s"'<>]*)?/i
+      );
+
+
+    if (textGifMatch) {
+
+      gifUrlFromText =
+        textGifMatch[0];
+
+    }
+
+  }
+
+
+  /* =====================================================
+     PROCURAR URL DE GIF NO HTML
+     ===================================================== */
+
+  let gifUrlFromHtml =
+    null;
+
+
+  if (htmlText) {
+
+    try {
+
+      const parser =
+        new DOMParser();
+
+
+      const documentHtml =
+        parser.parseFromString(
+          htmlText,
+          "text/html"
+        );
+
+
+      const images =
+        Array.from(
+          documentHtml.querySelectorAll(
+            "img"
+          )
+        );
+
+
+      const gifImage =
+        images.find(
+          image => {
+
+            const src =
+              image.getAttribute(
+                "src"
+              ) || "";
+
+
+            return (
+              /\.gif(?:\?|$)/i.test(
+                src
+              )
+            );
+
+          }
+        );
+
+
+      if (gifImage) {
+
+        gifUrlFromHtml =
+          gifImage.getAttribute(
+            "src"
+          );
+
+      }
+
+
+      /*
+        Algumas páginas não usam .gif no src,
+        mas colocam a origem em atributos data-*.
+      */
+
+      if (!gifUrlFromHtml) {
+
+        for (
+          const image
+          of images
+        ) {
+
+          const candidates = [
+
+            image.getAttribute(
+              "data-src"
+            ),
+
+            image.getAttribute(
+              "data-original"
+            ),
+
+            image.getAttribute(
+              "data-gif"
+            ),
+
+            image.getAttribute(
+              "data-url"
+            )
+
+          ];
+
+
+          const candidate =
+            candidates.find(
+              value =>
+                value &&
+                /\.gif(?:\?|$)/i.test(
+                  value
+                )
+            );
+
+
+          if (candidate) {
+
+            gifUrlFromHtml =
+              candidate;
+
+            break;
+
+          }
+
+        }
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        "LOUSA CAM — ERRO ANALISANDO HTML:",
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     RESULTADO DA PROCURA DA URL
+
+     IMPORTANTE:
+     AINDA NÃO fazemos fetch().
+     Primeiro vamos descobrir o que o iOS entrega.
+     ===================================================== */
+
+  const detectedGifUrl =
+    gifUrlFromHtml ||
+    gifUrlFromText ||
+    null;
+
+
+  console.log(
+    "LOUSA CAM — GIF URL DETECTADA:",
+    detectedGifUrl
+  );
+
+
+  /* =====================================================
+     1 — GIF REAL
+
+     Se o próprio iOS entregar image/gif,
+     utilizamos normalmente.
      ===================================================== */
 
   const gifItem =
@@ -6442,7 +6711,12 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     2 — OUTRA IMAGEM
+     2 — O iOS ENTREGOU IMAGEM ESTÁTICA
+
+     Neste A.4 ainda colamos a imagem normalmente.
+
+     Porém registramos se também encontramos
+     uma URL de GIF.
      ===================================================== */
 
   const imageItem =
@@ -6462,6 +6736,12 @@ async function processNativePasteData(
 
   if (imageItem) {
 
+    const imageType =
+      String(
+        imageItem.type || ""
+      );
+
+
     const blob =
       imageItem.getAsFile();
 
@@ -6477,12 +6757,30 @@ async function processNativePasteData(
         );
 
 
-        window.__lousaClipboardDiagnostic =
-          "IMAGEM NATIVA COLADA: " +
-          (
-            imageItem.type ||
-            "image"
-          );
+        if (detectedGifUrl) {
+
+          window.__lousaClipboardDiagnostic =
+            "IMAGEM " +
+            imageType +
+            " + URL GIF";
+
+        } else {
+
+          window.__lousaClipboardDiagnostic =
+            "IMAGEM " +
+            imageType +
+            " — SEM URL GIF";
+
+        }
+
+
+        /*
+          Guardamos somente para diagnóstico.
+          Não fazemos download da URL ainda.
+        */
+
+        window.__lousaDetectedGifUrl =
+          detectedGifUrl;
 
 
         return true;
@@ -6509,24 +6807,40 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     3 — TEXTO
+     3 — NÃO HÁ IMAGEM, MAS HÁ URL DE GIF
+
+     Não carregamos a URL ainda.
+     Apenas registramos o diagnóstico.
      ===================================================== */
 
-  const text =
-    clipboardData.getData(
-      "text/plain"
-    );
+  if (detectedGifUrl) {
 
+    window.__lousaDetectedGifUrl =
+      detectedGifUrl;
+
+
+    window.__lousaClipboardDiagnostic =
+      "URL GIF ENCONTRADA";
+
+
+    return false;
+
+  }
+
+
+  /* =====================================================
+     4 — TEXTO NORMAL
+     ===================================================== */
 
   if (
-    text &&
-    text.trim().length
+    plainText &&
+    plainText.trim().length
   ) {
 
     createTextObject(
       position.x,
       position.y,
-      text
+      plainText
     );
 
 
@@ -6540,18 +6854,20 @@ async function processNativePasteData(
 
 
   /* =====================================================
-     DIAGNÓSTICO
+     5 — DIAGNÓSTICO FINAL
      ===================================================== */
 
   const nativeTypes =
-    items
-      .map(
-        item =>
-          item.type ||
-          item.kind ||
-          "desconhecido"
-      )
-      .join(", ");
+    types.length
+      ? types.join(", ")
+      : items
+          .map(
+            item =>
+              item.type ||
+              item.kind ||
+              "desconhecido"
+          )
+          .join(", ");
 
 
   window.__lousaClipboardDiagnostic =
@@ -6564,7 +6880,6 @@ async function processNativePasteData(
   return false;
 
 }
-
 
 /* =========================================================
    CRIAR RECEPTOR NATIVO DE COLAGEM
