@@ -4891,9 +4891,62 @@ function drawImageObject(
   object
 ) {
 
+  if (!object) {
+
+    return;
+
+  }
+
+
+  let source =
+    object.image;
+
+
+  /*
+    GIF A.8
+
+    Quando existem frames decodificados,
+    usamos o frame atual em vez da
+    imagem estática original.
+  */
   if (
-    !object.image
+    object.isGif === true &&
+    Array.isArray(
+      object.gifFrames
+    ) &&
+    object.gifFrames.length
   ) {
+
+    const index =
+      Math.max(
+        0,
+        Math.min(
+          object.gifFrames.length - 1,
+          object.gifFrameIndex || 0
+        )
+      );
+
+
+    const frame =
+      object.gifFrames[
+        index
+      ];
+
+
+    if (
+      frame &&
+      frame.image
+    ) {
+
+      source =
+        frame.image;
+
+    }
+
+  }
+
+
+  if (!source) {
 
     return;
 
@@ -4903,25 +4956,35 @@ function drawImageObject(
   c.save();
 
 
-  c.drawImage(
+  try {
 
-    object.image,
+    c.drawImage(
 
-    object.x,
+      source,
 
-    object.y,
+      object.x,
 
-    object.width,
+      object.y,
 
-    object.height
+      object.width,
 
-  );
+      object.height
+
+    );
+
+  } catch (error) {
+
+    console.log(
+      "LOUSA CAM — erro desenhando imagem/GIF:",
+      error
+    );
+
+  }
 
 
   c.restore();
 
 }
-
 
 /* =========================================================
    SELEÇÃO
