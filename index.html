@@ -380,34 +380,66 @@ box-shadow:
     }
 
 
-    /* =====================================================
-       T — ÚNICO BOTÃO NOVO
-       Não modifica os botões originais.
-       ===================================================== */
+/* =====================================================
+   T — POSICIONAMENTO RESPONSIVO
+   Mantém livre o conjunto:
+   Lousa + Pencil + Aa
+   ===================================================== */
 
-    #textToolButton {
+#textToolButton {
 
-      position: absolute;
+  position: absolute;
 
-      left: 65%;
+  /*
+    Posição padrão / vertical.
+    Move o T para a esquerda para liberar
+    o conjunto de botões da direita.
+  */
+  left: 60%;
 
-      top: 0;
+  top: 0;
 
-      transform:
-        translateX(-50%);
+  transform:
+    translateX(-50%);
 
-      z-index: 30;
+  z-index: 30;
 
-      font-size: 20px;
+  font-size: 20px;
 
-      font-weight: 700;
+  font-weight: 700;
 
-      font-family: Arial, sans-serif;
+  font-family:
+    Arial,
+    sans-serif;
 
-      pointer-events: auto;
+  pointer-events: auto;
+}
 
-        
-    }
+
+/*
+  Horizontal:
+  existe mais espaço disponível,
+  então o T pode ficar próximo do centro,
+  sem interferir nos três botões da direita.
+*/
+@media (orientation: landscape) {
+
+  #textToolButton {
+
+    left: 57%;
+
+  }
+
+}
+
+
+#textToolButton:active {
+
+  transform:
+    translateX(-50%)
+    scale(0.92);
+
+}
 
 
     #textToolButton:active {
