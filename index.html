@@ -1337,134 +1337,147 @@ box-shadow:
 
     }
     
-    /* =====================================================
-   BARRA DE FORMATAÇÃO DO TEXTO
+   /* =====================================================
+   EDITOR DE TEXTO CONTEXTUAL
+   ===================================================== */
+
+
+/* =====================================================
+   BOTÃO Aa
+
+   Fica no mesmo slot visual de Ferramentas.
+   ===================================================== */
+
+#textEditorButton {
+
+  width: 38px;
+  height: 38px;
+
+  flex:
+    0 0 38px;
+
+  border-radius: 50%;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    Arial,
+    sans-serif;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
+
+  pointer-events: auto;
+
+}
+
+
+#textEditorButton[hidden] {
+
+  display: none !important;
+
+}
+
+
+.text-editor-icon {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 100%;
+
+  height: 100%;
+
+}
+
+
+/* =====================================================
+   BARRA DE FORMATAÇÃO
+
+   Agora é independente da caixa de texto.
    ===================================================== */
 
 #textFormatToolbar {
-  
+
   position: fixed;
 
   display: none;
 
   z-index: 90;
 
+  left: 50%;
+
+  top:
+    calc(
+      env(safe-area-inset-top)
+      + 58px
+    );
+
+  transform:
+    translateX(-50%);
+
   align-items: center;
+
+  justify-content: center;
 
   gap: 4px;
 
-  padding: 5px;
+  width: auto;
 
-  border-radius: 12px;
+  max-width:
+    calc(
+      100vw - 20px
+    );
 
-  background:
-    rgba(22, 22, 26, 0.94);
+  padding: 6px;
 
   border:
     1px solid
-    rgba(255, 255, 255, 0.16);
+    rgba(255,255,255,0.18);
+
+  border-radius: 15px;
+
+  background:
+    rgba(22,22,26,0.90);
 
   box-shadow:
-    0 8px 24px
-    rgba(0, 0, 0, 0.45);
+    0 10px 30px
+    rgba(0,0,0,0.40);
 
   backdrop-filter:
-    blur(18px);
+    blur(22px)
+    saturate(160%);
 
   -webkit-backdrop-filter:
-    blur(18px);
-    
-  max-width:
-    calc(100vw - 12px);
+    blur(22px)
+    saturate(160%);
 
-  overflow-x: auto;
+  overflow: visible;
 
-  overflow-y: hidden;
-
-  scrollbar-width: none;
-  
   pointer-events: auto;
 
   touch-action: manipulation;
 
 }
 
-    #textFormatToolbar::-webkit-scrollbar {
 
-  display: none;
-
-}
-
-
-/* =====================================================
-   SELETOR DE FONTES
-   ===================================================== */
-
-#textFontSelect {
-
-  height: 34px;
-
-  min-width: 88px;
-
-  max-width: 105px;
-
-  padding:
-    0 8px;
-
-  border:
-    1px solid
-    rgba(255,255,255,0.16);
-
-  border-radius: 8px;
-
-  background:
-    rgba(255,255,255,0.08);
-
-  color: #fff;
-
-  font-size: 13px;
-
-  outline: none;
-
-  cursor: pointer;
-
-  touch-action: manipulation;
-
-}
-
-
-#textFontSelect option {
-
-  background:
-    #1c1c1e;
-
-  color:
-    #fff;
-
-}
-
-
-@media (max-width: 520px) {
-
-  #textFontSelect {
-
-    height: 31px;
-
-    min-width: 82px;
-
-    max-width: 92px;
-
-    font-size: 12px;
-
-  }
-
-}
-    
 #textFormatToolbar.show {
 
   display: flex;
 
 }
+
+
+/* =====================================================
+   BOTÕES
+   ===================================================== */
 
 #textFormatToolbar button {
 
@@ -1472,14 +1485,17 @@ box-shadow:
 
   height: 34px;
 
+  flex:
+    0 0 34px;
+
   padding: 0;
 
   border: none;
 
-  border-radius: 8px;
+  border-radius: 9px;
 
   background:
-    rgba(255, 255, 255, 0.08);
+    rgba(255,255,255,0.08);
 
   color: #fff;
 
@@ -1507,79 +1523,240 @@ box-shadow:
 
 }
 
+
 #textFormatToolbar button:active {
 
   background:
-    rgba(255, 255, 255, 0.22);
+    rgba(255,255,255,0.22);
 
   transform:
     scale(0.94);
 
 }
 
-#textFormatToolbar .format-separator {
+
+/* =====================================================
+   SEPARADORES
+   ===================================================== */
+
+#textFormatToolbar
+.format-separator {
 
   width: 1px;
 
   height: 24px;
 
+  flex:
+    0 0 1px;
+
   margin:
     0 2px;
 
   background:
-    rgba(255, 255, 255, 0.18);
+    rgba(255,255,255,0.18);
 
 }
 
-#textFormatToolbar .format-color {
 
-  width: 24px;
+/* =====================================================
+   COR ATUAL
+   ===================================================== */
 
-  height: 24px;
+#textColorButton {
+
+  position: relative;
+
+}
+
+
+.text-color-indicator {
+
+  width: 20px;
+
+  height: 20px;
 
   border-radius: 50%;
 
+  background: #ffffff;
+
   border:
     2px solid
-    rgba(255, 255, 255, 0.65);
+    rgba(255,255,255,0.85);
 
-  margin: 0 2px;
-
-}
-
-#textFormatToolbar .format-color.white {
-
-  background: #fff;
+  box-shadow:
+    0 0 0 1px
+    rgba(0,0,0,0.35);
 
 }
 
-#textFormatToolbar .format-color.red {
 
-  background: #ff3b30;
+/* =====================================================
+   PALETA DE CORES
+   ===================================================== */
+
+.text-color-palette {
+
+  position: absolute;
+
+  display: none;
+
+  left: 50%;
+
+  top:
+    calc(
+      100% + 8px
+    );
+
+  transform:
+    translateX(-50%);
+
+  width:
+    min(
+      250px,
+      calc(100vw - 24px)
+    );
+
+  grid-template-columns:
+    repeat(
+      6,
+      32px
+    );
+
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 10px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.18);
+
+  border-radius: 15px;
+
+  background:
+    rgba(22,22,26,0.94);
+
+  box-shadow:
+    0 12px 32px
+    rgba(0,0,0,0.45);
+
+  backdrop-filter:
+    blur(22px);
+
+  -webkit-backdrop-filter:
+    blur(22px);
+
+  pointer-events: auto;
 
 }
 
-#textFormatToolbar .format-color.yellow {
 
-  background: #ffcc00;
+.text-color-palette.open {
 
-}
-
-#textFormatToolbar .format-color.green {
-
-  background: #34c759;
+  display: grid;
 
 }
 
-#textFormatToolbar .format-color.blue {
 
-  background: #0a84ff;
+#textFormatToolbar
+.text-color-palette
+.format-color {
+
+  width: 30px;
+
+  height: 30px;
+
+  min-width: 30px;
+
+  padding: 0;
+
+  border-radius: 50%;
+
+  background:
+    var(--text-color);
+
+  border:
+    2px solid
+    rgba(255,255,255,0.48);
+
+  box-shadow:
+    0 2px 6px
+    rgba(0,0,0,0.35);
 
 }
 
-@media (max-width: 520px) {
+
+#textFormatToolbar
+.text-color-palette
+.format-color:active {
+
+  transform:
+    scale(0.88);
+
+}
+
+
+/* =====================================================
+   FONTE
+   ===================================================== */
+
+#textFontSelect {
+
+  height: 34px;
+
+  min-width: 88px;
+
+  max-width: 108px;
+
+  padding:
+    0 8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.16);
+
+  border-radius: 9px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color: #fff;
+
+  font-size: 13px;
+
+  outline: none;
+
+  cursor: pointer;
+
+  touch-action: manipulation;
+
+}
+
+
+#textFontSelect option {
+
+  background: #1c1c1e;
+
+  color: #fff;
+
+}
+
+
+/* =====================================================
+   IPHONE
+   ===================================================== */
+
+@media (
+  max-width: 520px
+) {
 
   #textFormatToolbar {
+
+    max-width:
+      calc(
+        100vw - 12px
+      );
 
     gap: 2px;
 
@@ -1587,11 +1764,55 @@ box-shadow:
 
   }
 
+
   #textFormatToolbar button {
 
     width: 31px;
 
     height: 31px;
+
+    flex:
+      0 0 31px;
+
+    font-size: 14px;
+
+  }
+
+
+  #textFontSelect {
+
+    height: 31px;
+
+    min-width: 78px;
+
+    max-width: 86px;
+
+    font-size: 12px;
+
+    padding:
+      0 5px;
+
+  }
+
+
+  .text-color-indicator {
+
+    width: 18px;
+
+    height: 18px;
+
+  }
+
+
+  .text-color-palette {
+
+    grid-template-columns:
+      repeat(
+        6,
+        30px
+      );
+
+    gap: 6px;
 
   }
 
