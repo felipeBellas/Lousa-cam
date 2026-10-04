@@ -6280,21 +6280,14 @@ pasteButton.addEventListener(
 
 /* =========================================================
    COLAR DO CLIPBOARD
+   GIF — BLOCO A.2
 
-   DIAGNÓSTICO CONTROLADO — GIF BLOCO A
-
-   Nesta etapa queremos descobrir exatamente
-   o que Safari/PWA está fornecendo quando
-   copiamos um GIF.
-
-   IMPORTANTE:
-   - mantém texto
-   - mantém imagem
-   - reconhece image/gif
-   - não altera câmera
-   - não altera gravação
-   - não altera objetos
-   - não altera layout
+   Estratégia:
+   1. tenta Async Clipboard API normalmente
+   2. imagem/GIF continua funcionando onde permitido
+   3. texto continua funcionando
+   4. SEM TIPOS / NotAllowedError prepara fallback nativo
+   5. não interfere na câmera nem gravação
    ========================================================= */
 
 async function pasteFromClipboard(
@@ -6302,16 +6295,29 @@ async function pasteFromClipboard(
   y
 ) {
 
-  /*
-    Limpa o diagnóstico da tentativa anterior.
-  */
   window.__lousaClipboardDiagnostic =
     null;
 
 
+  /*
+    Guarda onde o conteúdo deverá ser
+    inserido caso o iOS utilize o evento
+    nativo "paste".
+  */
+  window.__lousaNativePastePosition = {
+
+    x:
+      x,
+
+    y:
+      y
+
+  };
+
+
   /* =====================================================
      ETAPA 1
-     IMAGEM / GIF
+     ASYNC CLIPBOARD API
      ===================================================== */
 
   if (
@@ -6325,10 +6331,6 @@ async function pasteFromClipboard(
       const items =
         await navigator.clipboard.read();
 
-
-      /* =================================================
-         DESCOBRIR FORMATOS DISPONÍVEIS
-         ================================================= */
 
       const clipboardTypes =
         items
@@ -6347,16 +6349,23 @@ async function pasteFromClipboard(
       );
 
 
-      window.__lousaClipboardDiagnostic =
-        clipboardTypes
-          ? "TIPOS: " +
-            clipboardTypes
-          : "SEM TIPOS";
+      if (clipboardTypes) {
+
+        window.__lousaClipboardDiagnostic =
+          "TIPOS: " +
+          clipboardTypes;
+
+      } else {
+
+        window.__lousaClipboardDiagnostic =
+          "SEM TIPOS";
+
+      }
 
 
-      /* =================================================
-         ANALISAR CADA ITEM
-         ================================================= */
+      /* ===============================================
+         ANALISAR ITENS
+         =============================================== */
 
       for (
         const item
@@ -6369,12 +6378,9 @@ async function pasteFromClipboard(
           );
 
 
-        /* ===============================================
+        /* =============================================
            GIF
-
-           Procuramos image/gif ANTES de qualquer
-           outro formato de imagem.
-           =============================================== */
+           ============================================= */
 
         const gifType =
           types.find(
@@ -6395,13 +6401,6 @@ async function pasteFromClipboard(
               );
 
 
-            console.log(
-              "LOUSA CAM — GIF:",
-              gifBlob.type,
-              gifBlob.size
-            );
-
-
             await createImageFromBlob(
               gifBlob,
               x,
@@ -6409,8 +6408,7 @@ async function pasteFromClipboard(
             );
 
 
-            window
-              .__lousaClipboardDiagnostic =
+            window.__lousaClipboardDiagnostic =
               "GIF COLADO";
 
 
@@ -6438,8 +6436,7 @@ async function pasteFromClipboard(
                 : "sem mensagem";
 
 
-            window
-              .__lousaClipboardDiagnostic =
+            window.__lousaClipboardDiagnostic =
               "ERRO GIF: " +
               errorName +
               " - " +
@@ -6453,11 +6450,9 @@ async function pasteFromClipboard(
         }
 
 
-        /* ===============================================
-           IMAGEM NORMAL
-
-           Mantém a colagem já existente.
-           =============================================== */
+        /* =============================================
+           IMAGEM
+           ============================================= */
 
         const imageType =
           types.find(
@@ -6480,13 +6475,6 @@ async function pasteFromClipboard(
               );
 
 
-            console.log(
-              "LOUSA CAM — IMAGEM:",
-              blob.type,
-              blob.size
-            );
-
-
             await createImageFromBlob(
               blob,
               x,
@@ -6494,8 +6482,7 @@ async function pasteFromClipboard(
             );
 
 
-            window
-              .__lousaClipboardDiagnostic =
+            window.__lousaClipboardDiagnostic =
               "IMAGEM COLADA: " +
               imageType;
 
@@ -6524,8 +6511,7 @@ async function pasteFromClipboard(
                 : "sem mensagem";
 
 
-            window
-              .__lousaClipboardDiagnostic =
+            window.__lousaClipboardDiagnostic =
               "ERRO IMAGEM: " +
               errorName +
               " - " +
@@ -6555,25 +6541,41 @@ async function pasteFromClipboard(
           : "Erro";
 
 
-      const errorMessage =
-        error &&
-        error.message
-          ? error.message
-          : "sem mensagem";
+      /*
+        No iOS/PWA isso é esperado quando
+        o WebKit exige a colagem nativa.
+      */
+      if (
+        errorName ===
+        "NotAllowedError"
+      ) {
+
+        window.__lousaClipboardDiagnostic =
+          "USE COLAR DO iOS";
+
+      } else {
+
+        const errorMessage =
+          error &&
+          error.message
+            ? error.message
+            : "sem mensagem";
 
 
-      window.__lousaClipboardDiagnostic =
-        "READ: " +
-        errorName +
-        " - " +
-        errorMessage;
+        window.__lousaClipboardDiagnostic =
+          "READ: " +
+          errorName +
+          " - " +
+          errorMessage;
+
+      }
 
     }
 
   } else {
 
     window.__lousaClipboardDiagnostic =
-      "clipboard.read() NÃO DISPONÍVEL";
+      "USE COLAR DO iOS";
 
   }
 
@@ -6582,8 +6584,7 @@ async function pasteFromClipboard(
      ETAPA 2
      TEXTO
 
-     Mantemos o recurso atual de colagem
-     de texto.
+     Mantemos a colagem existente.
      ===================================================== */
 
   if (
@@ -6626,52 +6627,303 @@ async function pasteFromClipboard(
         error
       );
 
-
-      /*
-        Se clipboard.read() já produziu um
-        diagnóstico importante, preservamos
-        aquela informação.
-      */
-      if (
-        !window
-          .__lousaClipboardDiagnostic
-      ) {
-
-        const errorName =
-          error &&
-          error.name
-            ? error.name
-            : "Erro";
-
-
-        const errorMessage =
-          error &&
-          error.message
-            ? error.message
-            : "sem mensagem";
-
-
-        window
-          .__lousaClipboardDiagnostic =
-          "READTEXT: " +
-          errorName +
-          " - " +
-          errorMessage;
-
-      }
-
     }
 
   }
 
 
-  /* =====================================================
-     NADA FOI COLADO
-     ===================================================== */
+  /*
+    Nenhum conteúdo foi obtido pela
+    Async Clipboard API.
 
+    O evento nativo "paste" poderá
+    assumir daqui.
+  */
   return false;
 
 }
+
+
+/* =========================================================
+   GIF — BLOCO A.2
+   COLAGEM NATIVA DO iOS / SAFARI / PWA
+
+   Captura o conteúdo quando o usuário utiliza
+   a opção "Colar" oferecida pelo próprio iOS.
+   ========================================================= */
+
+document.addEventListener(
+  "paste",
+  async event => {
+
+    const clipboardData =
+      event.clipboardData;
+
+
+    if (!clipboardData) {
+
+      return;
+
+    }
+
+
+    const position =
+      window.__lousaNativePastePosition;
+
+
+    if (!position) {
+
+      return;
+
+    }
+
+
+    const items =
+      Array.from(
+        clipboardData.items || []
+      );
+
+
+    console.log(
+      "LOUSA CAM — PASTE NATIVO:",
+      items.map(
+        item =>
+          item.type
+      )
+    );
+
+
+    /* =====================================================
+       GIF
+       ===================================================== */
+
+    const gifItem =
+      items.find(
+        item =>
+          item &&
+          item.kind === "file" &&
+          String(
+            item.type || ""
+          ).toLowerCase() ===
+            "image/gif"
+      );
+
+
+    if (gifItem) {
+
+      const blob =
+        gifItem.getAsFile();
+
+
+      if (blob) {
+
+        event.preventDefault();
+
+
+        try {
+
+          await createImageFromBlob(
+            blob,
+            position.x,
+            position.y
+          );
+
+
+          window.__lousaClipboardDiagnostic =
+            "GIF NATIVO COLADO";
+
+
+          window.__lousaNativePastePosition =
+            null;
+
+
+          toast(
+            "GIF colado"
+          );
+
+
+          return;
+
+        } catch (error) {
+
+          console.log(
+            "LOUSA CAM — ERRO GIF NATIVO:",
+            error
+          );
+
+
+          window.__lousaClipboardDiagnostic =
+            "ERRO GIF NATIVO";
+
+
+          toast(
+            "Não foi possível colar o GIF"
+          );
+
+
+          return;
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       OUTRA IMAGEM
+       ===================================================== */
+
+    const imageItem =
+      items.find(
+        item =>
+          item &&
+          item.kind === "file" &&
+          String(
+            item.type || ""
+          )
+            .toLowerCase()
+            .startsWith(
+              "image/"
+            )
+      );
+
+
+    if (imageItem) {
+
+      const blob =
+        imageItem.getAsFile();
+
+
+      if (blob) {
+
+        event.preventDefault();
+
+
+        try {
+
+          await createImageFromBlob(
+            blob,
+            position.x,
+            position.y
+          );
+
+
+          window.__lousaClipboardDiagnostic =
+            "IMAGEM NATIVA COLADA";
+
+
+          window.__lousaNativePastePosition =
+            null;
+
+
+          toast(
+            "Imagem colada"
+          );
+
+
+          return;
+
+        } catch (error) {
+
+          console.log(
+            "LOUSA CAM — ERRO IMAGEM NATIVA:",
+            error
+          );
+
+
+          window.__lousaClipboardDiagnostic =
+            "ERRO IMAGEM NATIVA";
+
+
+          toast(
+            "Não foi possível colar a imagem"
+          );
+
+
+          return;
+
+        }
+
+      }
+
+    }
+
+
+    /* =====================================================
+       TEXTO NATIVO
+       ===================================================== */
+
+    const text =
+      clipboardData.getData(
+        "text/plain"
+      );
+
+
+    if (
+      text &&
+      text.length
+    ) {
+
+      event.preventDefault();
+
+
+      createTextObject(
+        position.x,
+        position.y,
+        text
+      );
+
+
+      window.__lousaClipboardDiagnostic =
+        "TEXTO NATIVO COLADO";
+
+
+      window.__lousaNativePastePosition =
+        null;
+
+
+      toast(
+        "Conteúdo colado"
+      );
+
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       DIAGNÓSTICO
+       ===================================================== */
+
+    const nativeTypes =
+      items
+        .map(
+          item =>
+            item.type ||
+            item.kind ||
+            "desconhecido"
+        )
+        .join(", ");
+
+
+    window.__lousaClipboardDiagnostic =
+      nativeTypes
+        ? "PASTE NATIVO: " +
+          nativeTypes
+        : "PASTE NATIVO SEM TIPOS";
+
+
+    toast(
+      "Clipboard — " +
+      window.__lousaClipboardDiagnostic,
+      8000
+    );
+
+  }
+);
+
 /* =========================================================
    REDIMENSIONAR TEXTO PROPORCIONALMENTE
    ========================================================= */
