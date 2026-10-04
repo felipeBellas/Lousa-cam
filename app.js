@@ -10973,7 +10973,7 @@ if (
 }
 
 /* =========================================================
-   CORES DA BARRA
+   CORES DA BARRA — EDITOR CONTEXTUAL
    ========================================================= */
 
 textFormatToolbar
@@ -10983,11 +10983,54 @@ textFormatToolbar
   .forEach(
     button => {
 
+      /*
+        Antes do Safari alterar o foco,
+        preservamos a seleção atual.
+      */
       button.addEventListener(
         "pointerdown",
         event => {
 
           event.preventDefault();
+
+          event.stopPropagation();
+
+          textToolbarInteraction =
+            true;
+
+
+          if (
+            editingObjectId
+          ) {
+
+            const selection =
+              window.getSelection();
+
+
+            if (
+              selection &&
+              selection.rangeCount > 0 &&
+              !selection.isCollapsed
+            ) {
+
+              const range =
+                selection.getRangeAt(0);
+
+
+              if (
+                inlineEditor.contains(
+                  range.commonAncestorContainer
+                )
+              ) {
+
+                savedTextSelection =
+                  range.cloneRange();
+
+              }
+
+            }
+
+          }
 
         }
       );
@@ -11006,8 +11049,102 @@ textFormatToolbar
             button.dataset.color;
 
 
-          applyTextColor(
-            selectedColor
+          if (!selectedColor) {
+
+            textToolbarInteraction =
+              false;
+
+            return;
+
+          }
+
+
+          /*
+            Aplica a cor somente ao
+            trecho selecionado.
+          */
+          const changed =
+            applyTextColor(
+              selectedColor
+            );
+
+
+          /*
+            Atualiza o indicador visual
+            do botão de cores.
+          */
+          if (
+            changed &&
+            textColorIndicator
+          ) {
+
+            textColorIndicator.style.background =
+              selectedColor;
+
+          }
+
+
+          /*
+            Fecha somente a paleta de cores.
+
+            A barra Aa continua aberta para
+            permitir outras formatações.
+          */
+          textColorPaletteOpen =
+            false;
+
+
+          if (textColorPalette) {
+
+            textColorPalette.classList.remove(
+              "open"
+            );
+
+
+            textColorPalette.setAttribute(
+              "aria-hidden",
+              "true"
+            );
+
+          }
+
+
+          /*
+            Devolve o foco para a caixa
+            sem deslocar a tela.
+          */
+          if (
+            editingObjectId
+          ) {
+
+            try {
+
+              inlineEditor.focus({
+                preventScroll: true
+              });
+
+            } catch (error) {
+
+              inlineEditor.focus();
+
+            }
+
+          }
+
+
+          /*
+            Mantém a proteção tempo suficiente
+            para o blur do Safari/iPhone terminar.
+          */
+          setTimeout(
+            () => {
+               
+
+              textToolbarInteraction =
+                false;
+
+            },
+            250
           );
 
         }
