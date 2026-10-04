@@ -5288,10 +5288,6 @@ showTextEditorButton();
 
 closeTextToolbar();
 
-textFormatToolbar.classList.add(
-  "show"
-);
-
 updateEditorPosition();
 
 requestAnimationFrame(
@@ -5525,26 +5521,35 @@ function finishTextEditing() {
     apenas garante que os elementos
     visuais desapareçam.
   */
-  if (!editingObjectId) {
+ if (!editingObjectId) {
 
-    inlineEditor.classList.remove(
-      "show"
-    );
+  inlineEditor.classList.remove(
+    "show"
+  );
 
-    textFormatToolbar.classList.remove(
-      "show"
-    );
+  textFormatToolbar.classList.remove(
+    "show"
+  );
 
-    savedTextSelection =
-      null;
+  savedTextSelection =
+    null;
 
-    selectedObjectId =
-      null;
+  selectedObjectId =
+    null;
 
-    redraw();
 
-    return;
-  }
+  /*
+    Garante que o botão Aa desapareça
+    e Ferramentas volte mesmo quando
+    não houver edição ativa.
+  */
+  hideTextEditorButton();
+
+
+  redraw();
+
+  return;
+}
 
 
   const object =
