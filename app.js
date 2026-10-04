@@ -5617,6 +5617,12 @@ function finishTextEditing() {
     "show"
   );
 
+   /* =====================================================
+   RESTAURA A BARRA SUPERIOR
+   ===================================================== */
+
+hideTextEditorButton();
+
 
   /*
     Encerra o modo de edição.
