@@ -5286,6 +5286,16 @@ function beginTextEditing(
   editingObjectId =
     object.id;
 
+   /*
+  BLOCO 9 — RESTAURA VISIBILIDADE DO EDITOR
+
+  finishTextEditing() remove a classe "show".
+  Toda nova edição precisa reativá-la.
+*/
+inlineEditor.classList.add(
+  "show"
+);
+
   if (object.richText) {
 
   inlineEditor.innerHTML =
