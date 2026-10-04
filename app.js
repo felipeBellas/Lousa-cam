@@ -5699,7 +5699,7 @@ inlineEditor.addEventListener(
 
 
 /* =========================================================
-   CRIAR IMAGEM
+   CRIAR IMAGEM / GIF ANIMADO — BLOCO A
    ========================================================= */
 
 function createImageFromBlob(
@@ -5711,6 +5711,29 @@ function createImageFromBlob(
   return new Promise(
     (resolve, reject) => {
 
+      /*
+        Detecta GIF pelo MIME real
+        recebido do clipboard.
+      */
+      const isGif =
+        !!(
+          blob &&
+          typeof blob.type ===
+            "string" &&
+          blob.type
+            .toLowerCase() ===
+            "image/gif"
+        );
+
+
+      /*
+        Mantemos o Blob URL vivo
+        enquanto o GIF existir.
+
+        Para imagens normais,
+        continuamos liberando a URL
+        após o carregamento.
+      */
       const url =
         URL.createObjectURL(
           blob
@@ -5724,9 +5747,23 @@ function createImageFromBlob(
       image.onload =
         () => {
 
-          URL.revokeObjectURL(
-            url
-          );
+          /*
+            IMAGEM ESTÁTICA:
+            pode liberar a URL imediatamente.
+
+            GIF:
+            mantém a URL enquanto estiver
+            presente na lousa.
+          */
+          if (
+            !isGif
+          ) {
+
+            URL.revokeObjectURL(
+              url
+            );
+
+          }
 
 
           const maxWidth =
@@ -5753,6 +5790,35 @@ function createImageFromBlob(
             image.naturalHeight;
 
 
+          /*
+            Segurança contra arquivo
+            sem dimensões válidas.
+          */
+          if (
+            !Number.isFinite(width) ||
+            width <= 0
+          ) {
+
+            width =
+              220;
+
+          }
+
+
+          if (
+            !Number.isFinite(height) ||
+            height <= 0
+          ) {
+
+            height =
+              160;
+
+          }
+
+
+          /*
+            Mantém proporção original.
+          */
           if (
             width >
             maxWidth
@@ -5762,8 +5828,10 @@ function createImageFromBlob(
               maxWidth /
               width;
 
+
             width *=
               scale;
+
 
             height *=
               scale;
@@ -5780,8 +5848,10 @@ function createImageFromBlob(
               maxHeight /
               height;
 
+
             width *=
               scale;
+
 
             height *=
               scale;
@@ -5792,10 +5862,25 @@ function createImageFromBlob(
           const object = {
 
             id:
-              makeId("image"),
+              makeId(
+                isGif
+                  ? "gif"
+                  : "image"
+              ),
 
             type:
               "image",
+
+            /*
+              Identificação específica
+              sem alterar o sistema atual
+              de objetos de imagem.
+            */
+            isGif:
+              isGif,
+
+            blobType:
+              blob.type || "",
 
             x:
               x,
@@ -5812,9 +5897,21 @@ function createImageFromBlob(
             image:
               image,
 
-             locked:
-               false,
-             
+            locked:
+              false,
+
+            rotation:
+              0,
+
+            /*
+              Somente GIF precisa manter
+              referência ao Blob URL.
+            */
+            objectUrl:
+              isGif
+                ? url
+                : null,
+
             createdAt:
               Date.now()
 
@@ -5841,6 +5938,24 @@ function createImageFromBlob(
           redraw();
 
 
+          /*
+            O loop somente será iniciado
+            se realmente houver GIF.
+          */
+          if (
+            isGif
+          ) {
+
+            startGifAnimationLoop();
+
+
+            toast(
+              "GIF colado"
+            );
+
+          }
+
+
           resolve(
             object
           );
@@ -5855,6 +5970,7 @@ function createImageFromBlob(
             url
           );
 
+
           reject(
             error
           );
@@ -5862,6 +5978,11 @@ function createImageFromBlob(
         };
 
 
+      /*
+        IMPORTANTE:
+        atribuir src somente depois
+        de configurar onload/onerror.
+      */
       image.src =
         url;
 
@@ -5869,9 +5990,6 @@ function createImageFromBlob(
   );
 
 }
-
-
-
 /* ===================================================
    DUPLO TOQUE — COLAR
    =================================================== */
