@@ -5491,118 +5491,23 @@ function updateEditorPosition() {
 
 /* =========================================================
    POSIÇÃO DA BARRA DE FORMATAÇÃO
+   EDITOR CONTEXTUAL
    ========================================================= */
 
 function updateTextFormatToolbarPosition() {
 
-  if (
-    !editingObjectId ||
-    !textFormatToolbar
-  ) {
-
-    return;
-
-  }
-
-
-  const editorRect =
-    inlineEditor.getBoundingClientRect();
-
-
-  const toolbarRect =
-    textFormatToolbar.getBoundingClientRect();
-
-
-  const gap =
-    8;
-
-
   /*
-    Usa o visualViewport no iPhone.
-    Quando o teclado aparece, ele representa
-    a área realmente visível da tela.
+    A barra de formatação não acompanha mais
+    a posição da caixa de texto.
+
+    Sua posição agora é controlada pelo CSS
+    de #textFormatToolbar.
+
+    A função é mantida para compatibilidade
+    com chamadas existentes no app.js.
   */
-  const viewport =
-    window.visualViewport ||
-    null;
 
-  const viewportWidth =
-    viewport
-      ? viewport.width
-      : window.innerWidth;
-
-  const viewportHeight =
-    viewport
-      ? viewport.height
-      : window.innerHeight;
-
-
-  let left =
-    editorRect.left;
-
-
-  let top =
-    editorRect.top -
-    toolbarRect.height -
-    gap;
-
-
-  /*
-    Impede que a barra saia
-    pelas laterais da tela.
-  */
-  left =
-    Math.max(
-      6,
-      Math.min(
-        left,
-        viewportWidth -
-        toolbarRect.width -
-        6
-      )
-    );
-
-
-  /*
-    Se não houver espaço acima
-    da caixa, coloca abaixo.
-  */
-  if (top < 6) {
-
-    top =
-      editorRect.bottom +
-      gap;
-
-  }
-
-
-  /*
-    Impede que a barra saia
-    pela parte inferior da área
-    realmente visível.
-  */
-  if (
-    top +
-    toolbarRect.height >
-    viewportHeight - 6
-  ) {
-
-    top =
-      Math.max(
-        6,
-        editorRect.top -
-        toolbarRect.height -
-        gap
-      );
-
-  }
-
-
-  textFormatToolbar.style.left =
-    `${left}px`;
-
-  textFormatToolbar.style.top =
-    `${top}px`;
+  return;
 
 }
 
