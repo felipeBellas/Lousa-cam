@@ -6379,12 +6379,32 @@ toast(
 
     } catch (error) {
 
-      console.log(
-        "Erro ao ler imagem/GIF:",
-        error
-      );
+  console.log(
+    "Erro ao ler imagem/GIF:",
+    error
+  );
 
-    }
+  const errorName =
+    error &&
+    error.name
+      ? error.name
+      : "Erro";
+
+  const errorMessage =
+    error &&
+    error.message
+      ? error.message
+      : "sem mensagem";
+
+  toast(
+    `Clipboard: ${errorName} - ${errorMessage}`,
+    7000
+  );
+
+  return false;
+
+}
+     
 
   }
 
