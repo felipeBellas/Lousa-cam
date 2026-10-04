@@ -13700,9 +13700,8 @@ function hideObjectCancel() {
 
 }
 
-
 /* =========================================================
-   EXCLUIR OBJETO / GIF — BLOCO A
+   EXCLUIR OBJETO
    ========================================================= */
 
 objectCancel.addEventListener(
@@ -13768,11 +13767,7 @@ objectCancel.addEventListener(
     hideObjectCancel();
 
 
-    /*
-      Se o último GIF foi retirado,
-      interrompe o loop específico.
-    */
-    stopGifAnimationLoopIfUnused();
+
 
 
     redraw();
