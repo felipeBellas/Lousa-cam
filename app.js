@@ -787,15 +787,18 @@ let textToolbarInteraction =
 
 /* =========================================================
    EDITOR DE TEXTO CONTEXTUAL — BOTÃO Aa
+   BLOCO 8
    ========================================================= */
 
 if (textEditorButton) {
 
   /*
-    Evita que tocar no Aa faça o editor perder
-    a seleção ou encerre a edição no iPhone.
-  */
+    POINTERDOWN acontece antes de o Safari
+    tentar alterar o foco.
 
+    Aqui preservamos imediatamente a seleção
+    atual do texto.
+  */
   textEditorButton.addEventListener(
     "pointerdown",
     event => {
@@ -804,13 +807,62 @@ if (textEditorButton) {
 
       event.stopPropagation();
 
+
+      if (!editingObjectId) {
+
+        return;
+
+      }
+
+
+      /*
+        Informa ao sistema que estamos
+        interagindo com um controle do
+        editor de texto.
+      */
       textToolbarInteraction =
         true;
+
+
+      /*
+        Guarda a seleção atual ANTES
+        de abrir ou fechar a toolbar.
+      */
+      const selection =
+        window.getSelection();
+
+
+      if (
+        selection &&
+        selection.rangeCount > 0
+      ) {
+
+        const range =
+          selection.getRangeAt(0);
+
+
+        if (
+          !range.collapsed &&
+          inlineEditor.contains(
+            range.commonAncestorContainer
+          )
+        ) {
+
+          savedTextSelection =
+            range.cloneRange();
+
+        }
+
+      }
 
     }
   );
 
 
+  /*
+    CLICK abre ou fecha a barra
+    sem encerrar a edição.
+  */
   textEditorButton.addEventListener(
     "click",
     event => {
@@ -833,6 +885,12 @@ if (textEditorButton) {
       toggleTextToolbar();
 
 
+      /*
+        Mantém a proteção durante o ciclo
+        de foco/blur do Safari.
+
+        Não usamos mais timeout 0.
+      */
       setTimeout(
         () => {
 
@@ -840,7 +898,7 @@ if (textEditorButton) {
             false;
 
         },
-        0
+        250
       );
 
     }
