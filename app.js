@@ -6687,9 +6687,6 @@ async function pasteFromClipboard(
             );
 
 
-            window.__lousaClipboardDiagnostic =
-              "IMAGEM COLADA: " +
-              imageType;
 
 
             window.__lousaNativePastePosition =
@@ -6800,9 +6797,6 @@ async function pasteFromClipboard(
         );
 
 
-        window.__lousaClipboardDiagnostic =
-          "TEXTO COLADO";
-
 
         window.__lousaNativePastePosition =
           null;
@@ -6896,28 +6890,13 @@ document.addEventListener(
       );
 
 
-    if (success) {
+if (success) {
 
-      toast(
-        "Conteúdo colado"
-      );
+  toast(
+    "Conteúdo colado"
+  );
 
-    } else {
-
-      const diagnostic =
-        window
-          .__lousaClipboardDiagnostic;
-
-
-      toast(
-        diagnostic
-          ? "Clipboard — " +
-            diagnostic
-          : "Clipboard — falha na colagem nativa",
-        8000
-      );
-
-    }
+}
 
 
     window.__lousaNativePastePosition =
