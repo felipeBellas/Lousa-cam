@@ -345,68 +345,7 @@ function toggleTextToolbar() {
 
 }
 
-/* =========================================================
-   EDITOR DE TEXTO CONTEXTUAL — BOTÃO Aa
-   ========================================================= */
 
-if (textEditorButton) {
-
-  /*
-    Evita que tocar no Aa faça o editor perder
-    a seleção ou encerre a edição no iPhone.
-  */
-
-  textEditorButton.addEventListener(
-    "pointerdown",
-    event => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-      textToolbarInteraction =
-        true;
-
-    }
-  );
-
-
-  textEditorButton.addEventListener(
-    "click",
-    event => {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      if (!editingObjectId) {
-
-        textToolbarInteraction =
-          false;
-
-        return;
-
-      }
-
-
-      toggleTextToolbar();
-
-
-      setTimeout(
-        () => {
-
-          textToolbarInteraction =
-            false;
-
-        },
-        0
-      );
-
-    }
-  );
-
-}
 /* =========================================================
    ESTADO DA CÂMERA
    ========================================================= */
@@ -10896,6 +10835,72 @@ textFormatToolbar.addEventListener(
 
   }
 );
+
+/* =========================================================
+   PALETA DE CORES DO TEXTO
+   ========================================================= */
+
+if (
+  textColorButton &&
+  textColorPalette
+) {
+
+  textColorButton.addEventListener(
+    "pointerdown",
+    event => {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+      textToolbarInteraction =
+        true;
+
+    }
+  );
+
+
+  textColorButton.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+
+      textColorPaletteOpen =
+        !textColorPaletteOpen;
+
+
+      textColorPalette.classList.toggle(
+        "open",
+        textColorPaletteOpen
+      );
+
+
+      textColorPalette.setAttribute(
+        "aria-hidden",
+        textColorPaletteOpen
+          ? "false"
+          : "true"
+      );
+
+
+      setTimeout(
+        () => {
+
+          textToolbarInteraction =
+            false;
+
+        },
+        0
+      );
+
+    }
+  );
+
+}
 
 /* =========================================================
    CORES DA BARRA
