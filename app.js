@@ -6396,12 +6396,18 @@ toast(
       ? error.message
       : "sem mensagem";
 
-  toast(
-    `Clipboard: ${errorName} - ${errorMessage}`,
-    7000
-  );
+ toast(
+  `Clipboard: ${errorName} - ${errorMessage}`,
+  7000
+);
 
-  return false;
+/*
+  DIAGNÓSTICO TEMPORÁRIO:
+  retorna true apenas para impedir que
+  "Não foi possível colar" apague
+  imediatamente a mensagem acima.
+*/
+return true;
 
 }
      
