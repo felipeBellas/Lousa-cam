@@ -5996,7 +5996,7 @@ function createImageFromBlob(
 
 if (
   pointerMode ===
-  "canvas" &&
+    "canvas" &&
   !pointerMoved &&
   duration <= 300
 ) {
@@ -6008,12 +6008,12 @@ if (
     Math.sqrt(
       Math.pow(
         point.x -
-        lastTapX,
+          lastTapX,
         2
       ) +
       Math.pow(
         point.y -
-        lastTapY,
+          lastTapY,
         2
       )
     );
@@ -6026,11 +6026,15 @@ if (
     distance <=
       DOUBLE_TAP_DISTANCE;
 
+
   if (isDoubleTap) {
 
-    lastTapTime = 0;
+    lastTapTime =
+      0;
+
 
     closeCanvasPasteMenu();
+
 
     pasteFromClipboard(
       point.x,
@@ -6040,34 +6044,27 @@ if (
 
         if (success) {
 
-  toast(
-    "Conteúdo colado"
-  );
+          toast(
+            "Conteúdo colado"
+          );
 
-} else {
+        } else {
 
-  if (
-    window.__lousaClipboardError
-  ) {
+          const diagnostic =
+            window
+              .__lousaClipboardDiagnostic;
 
-    toast(
-      "Clipboard: " +
-      window.__lousaClipboardError,
-      7000
-    );
 
-    window.__lousaClipboardError =
-      null;
+          toast(
+            diagnostic
+              ? "Clipboard — " +
+                diagnostic
+              : "Clipboard — falha sem diagnóstico",
+            8000
+          );
 
-  } else {
+        }
 
-    toast(
-      "Não foi possível colar"
-    );
-
-  }
-
-}
       }
     );
 
@@ -6085,6 +6082,7 @@ if (
   }
 
 }
+
 
 /* =========================================================
    MENU COLAR
@@ -6127,7 +6125,8 @@ function showCanvasPasteMenu(
     () => {
 
       const menuRect =
-        canvasMenu.getBoundingClientRect();
+        canvasMenu
+          .getBoundingClientRect();
 
 
       let left =
@@ -6140,7 +6139,7 @@ function showCanvasPasteMenu(
 
       if (
         left +
-        menuRect.width >
+          menuRect.width >
         rect.width - 10
       ) {
 
@@ -6154,7 +6153,7 @@ function showCanvasPasteMenu(
 
       if (
         top +
-        menuRect.height >
+          menuRect.height >
         rect.height - 10
       ) {
 
@@ -6185,6 +6184,10 @@ function showCanvasPasteMenu(
 }
 
 
+/* =========================================================
+   FECHAR MENU COLAR
+   ========================================================= */
+
 function closeCanvasPasteMenu() {
 
   canvasMenu.classList.remove(
@@ -6198,7 +6201,7 @@ function closeCanvasPasteMenu() {
 
 
 /* =========================================================
-   COLAR
+   BOTÃO COLAR
    ========================================================= */
 
 pasteButton.addEventListener(
@@ -6220,13 +6223,16 @@ pasteButton.addEventListener(
     event.stopPropagation();
 
 
+    /*
+      IMPORTANTE:
+
+      Guardamos a posição antes de fechar
+      o menu porque closeCanvasPasteMenu()
+      limpa pastePosition.
+    */
     const position =
       pastePosition;
 
-
-    /*
-      Fecha antes de ler.
-    */
 
     closeCanvasPasteMenu();
 
@@ -6245,9 +6251,6 @@ pasteButton.addEventListener(
       );
 
 
-    closeCanvasPasteMenu();
-
-
     if (success) {
 
       toast(
@@ -6256,8 +6259,17 @@ pasteButton.addEventListener(
 
     } else {
 
+      const diagnostic =
+        window
+          .__lousaClipboardDiagnostic;
+
+
       toast(
-        "Não foi possível colar"
+        diagnostic
+          ? "Clipboard — " +
+            diagnostic
+          : "Clipboard — falha sem diagnóstico",
+        8000
       );
 
     }
@@ -6266,13 +6278,39 @@ pasteButton.addEventListener(
 );
 
 
+/* =========================================================
+   COLAR DO CLIPBOARD
+
+   DIAGNÓSTICO CONTROLADO — GIF BLOCO A
+
+   Nesta etapa queremos descobrir exatamente
+   o que Safari/PWA está fornecendo quando
+   copiamos um GIF.
+
+   IMPORTANTE:
+   - mantém texto
+   - mantém imagem
+   - reconhece image/gif
+   - não altera câmera
+   - não altera gravação
+   - não altera objetos
+   - não altera layout
+   ========================================================= */
+
 async function pasteFromClipboard(
   x,
   y
 ) {
 
+  /*
+    Limpa o diagnóstico da tentativa anterior.
+  */
+  window.__lousaClipboardDiagnostic =
+    null;
+
 
   /* =====================================================
+     ETAPA 1
      IMAGEM / GIF
      ===================================================== */
 
@@ -6285,109 +6323,218 @@ async function pasteFromClipboard(
     try {
 
       const items =
-  await navigator.clipboard.read();
+        await navigator.clipboard.read();
 
 
-/* =====================================================
-   GIF — DIAGNÓSTICO TEMPORÁRIO
+      /* =================================================
+         DESCOBRIR FORMATOS DISPONÍVEIS
+         ================================================= */
 
-   Mostra exatamente quais formatos
-   o navegador entregou ao Lousa Cam.
-   ===================================================== */
-
-const clipboardTypes =
-  items
-    .flatMap(
-      item =>
-        Array.from(
-          item.types || []
-        )
-    )
-    .join(", ");
+      const clipboardTypes =
+        items
+          .flatMap(
+            item =>
+              Array.from(
+                item.types || []
+              )
+          )
+          .join(", ");
 
 
-console.log(
-  "LOUSA CAM — CLIPBOARD:",
-  clipboardTypes
-);
+      console.log(
+        "LOUSA CAM — CLIPBOARD:",
+        clipboardTypes
+      );
 
 
-toast(
-  clipboardTypes
-    ? `Clipboard: ${clipboardTypes}`
-    : "Clipboard sem formato detectável",
-  5000
-);
+      window.__lousaClipboardDiagnostic =
+        clipboardTypes
+          ? "TIPOS: " +
+            clipboardTypes
+          : "SEM TIPOS";
+
+
+      /* =================================================
+         ANALISAR CADA ITEM
+         ================================================= */
 
       for (
         const item
         of items
       ) {
 
-        /*
-          Primeiro procuramos GIF explicitamente.
+        const types =
+          Array.from(
+            item.types || []
+          );
 
-          Isso evita que um clipboard contendo
-          mais de uma representação da mesma
-          imagem escolha PNG antes do GIF.
-        */
+
+        /* ===============================================
+           GIF
+
+           Procuramos image/gif ANTES de qualquer
+           outro formato de imagem.
+           =============================================== */
+
         const gifType =
-          item.types.find(
+          types.find(
             type =>
-              type.toLowerCase() ===
+              String(type)
+                .toLowerCase() ===
               "image/gif"
           );
 
 
         if (gifType) {
 
-          const gifBlob =
-            await item.getType(
-              gifType
+          try {
+
+            const gifBlob =
+              await item.getType(
+                gifType
+              );
+
+
+            console.log(
+              "LOUSA CAM — GIF:",
+              gifBlob.type,
+              gifBlob.size
             );
 
 
-          await createImageFromBlob(
-            gifBlob,
-            x,
-            y
-          );
+            await createImageFromBlob(
+              gifBlob,
+              x,
+              y
+            );
 
 
-          return true;
+            window
+              .__lousaClipboardDiagnostic =
+              "GIF COLADO";
+
+
+            return true;
+
+          } catch (error) {
+
+            console.log(
+              "LOUSA CAM — ERRO GIF:",
+              error
+            );
+
+
+            const errorName =
+              error &&
+              error.name
+                ? error.name
+                : "Erro";
+
+
+            const errorMessage =
+              error &&
+              error.message
+                ? error.message
+                : "sem mensagem";
+
+
+            window
+              .__lousaClipboardDiagnostic =
+              "ERRO GIF: " +
+              errorName +
+              " - " +
+              errorMessage;
+
+
+            return false;
+
+          }
 
         }
 
 
-        /*
-          Se não houver GIF, mantém exatamente
-          o comportamento normal das imagens.
-        */
+        /* ===============================================
+           IMAGEM NORMAL
+
+           Mantém a colagem já existente.
+           =============================================== */
+
         const imageType =
-          item.types.find(
+          types.find(
             type =>
-              type.startsWith(
-                "image/"
-              )
+              String(type)
+                .toLowerCase()
+                .startsWith(
+                  "image/"
+                )
           );
 
 
         if (imageType) {
 
-          const blob =
-            await item.getType(
-              imageType
+          try {
+
+            const blob =
+              await item.getType(
+                imageType
+              );
+
+
+            console.log(
+              "LOUSA CAM — IMAGEM:",
+              blob.type,
+              blob.size
             );
 
 
-          await createImageFromBlob(
-            blob,
-            x,
-            y
-          );
+            await createImageFromBlob(
+              blob,
+              x,
+              y
+            );
 
 
-          return true;
+            window
+              .__lousaClipboardDiagnostic =
+              "IMAGEM COLADA: " +
+              imageType;
+
+
+            return true;
+
+          } catch (error) {
+
+            console.log(
+              "LOUSA CAM — ERRO IMAGEM:",
+              error
+            );
+
+
+            const errorName =
+              error &&
+              error.name
+                ? error.name
+                : "Erro";
+
+
+            const errorMessage =
+              error &&
+              error.message
+                ? error.message
+                : "sem mensagem";
+
+
+            window
+              .__lousaClipboardDiagnostic =
+              "ERRO IMAGEM: " +
+              errorName +
+              " - " +
+              errorMessage;
+
+
+            return false;
+
+          }
 
         }
 
@@ -6395,44 +6542,48 @@ toast(
 
     } catch (error) {
 
-  console.log(
-    "Erro ao ler imagem/GIF:",
-    error
-  );
+      console.log(
+        "LOUSA CAM — ERRO clipboard.read():",
+        error
+      );
 
-  const errorName =
-    error &&
-    error.name
-      ? error.name
-      : "Erro";
 
-  const errorMessage =
-    error &&
-    error.message
-      ? error.message
-      : "sem mensagem";
+      const errorName =
+        error &&
+        error.name
+          ? error.name
+          : "Erro";
 
- toast(
-  `Clipboard: ${errorName} - ${errorMessage}`,
-  7000
-);
 
-/*
-  DIAGNÓSTICO TEMPORÁRIO:
-  retorna true apenas para impedir que
-  "Não foi possível colar" apague
-  imediatamente a mensagem acima.
-*/
-return true;
+      const errorMessage =
+        error &&
+        error.message
+          ? error.message
+          : "sem mensagem";
 
-}
-     
+
+      window.__lousaClipboardDiagnostic =
+        "READ: " +
+        errorName +
+        " - " +
+        errorMessage;
+
+    }
+
+  } else {
+
+    window.__lousaClipboardDiagnostic =
+      "clipboard.read() NÃO DISPONÍVEL";
 
   }
 
 
   /* =====================================================
+     ETAPA 2
      TEXTO
+
+     Mantemos o recurso atual de colagem
+     de texto.
      ===================================================== */
 
   if (
@@ -6444,7 +6595,8 @@ return true;
     try {
 
       const text =
-        await navigator.clipboard.readText();
+        await navigator.clipboard
+          .readText();
 
 
       if (
@@ -6459,6 +6611,10 @@ return true;
         );
 
 
+        window.__lousaClipboardDiagnostic =
+          "TEXTO COLADO";
+
+
         return true;
 
       }
@@ -6466,14 +6622,52 @@ return true;
     } catch (error) {
 
       console.log(
-        "Erro ao ler texto:",
+        "LOUSA CAM — ERRO readText():",
         error
       );
+
+
+      /*
+        Se clipboard.read() já produziu um
+        diagnóstico importante, preservamos
+        aquela informação.
+      */
+      if (
+        !window
+          .__lousaClipboardDiagnostic
+      ) {
+
+        const errorName =
+          error &&
+          error.name
+            ? error.name
+            : "Erro";
+
+
+        const errorMessage =
+          error &&
+          error.message
+            ? error.message
+            : "sem mensagem";
+
+
+        window
+          .__lousaClipboardDiagnostic =
+          "READTEXT: " +
+          errorName +
+          " - " +
+          errorMessage;
+
+      }
 
     }
 
   }
 
+
+  /* =====================================================
+     NADA FOI COLADO
+     ===================================================== */
 
   return false;
 
