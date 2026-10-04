@@ -1625,6 +1625,120 @@ let secondImageTapId =
 
 
 /* =========================================================
+   GIF ANIMADO — BLOCO A
+
+   Mantém a animação dos GIFs enquanto eles estiverem
+   presentes na lousa.
+
+   IMPORTANTE:
+   - não interfere na câmera
+   - não interfere na gravação
+   - não cria novo botão
+   - usa o sistema atual de objetos
+   ========================================================= */
+
+let gifAnimationFrameId =
+  null;
+
+
+function hasAnimatedGifObjects() {
+
+  return objects.some(
+    object =>
+      object &&
+      object.type === "image" &&
+      object.isGif === true &&
+      object.img
+  );
+
+}
+
+
+function gifAnimationLoop() {
+
+  if (
+    !hasAnimatedGifObjects()
+  ) {
+
+    gifAnimationFrameId =
+      null;
+
+    return;
+
+  }
+
+
+  /*
+    Redesenha a lousa para capturar
+    o quadro atual do GIF.
+  */
+  redraw();
+
+
+  gifAnimationFrameId =
+    requestAnimationFrame(
+      gifAnimationLoop
+    );
+
+}
+
+
+function startGifAnimationLoop() {
+
+  if (
+    gifAnimationFrameId !== null
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !hasAnimatedGifObjects()
+  ) {
+
+    return;
+
+  }
+
+
+  gifAnimationFrameId =
+    requestAnimationFrame(
+      gifAnimationLoop
+    );
+
+}
+
+
+function stopGifAnimationLoopIfUnused() {
+
+  if (
+    hasAnimatedGifObjects()
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    gifAnimationFrameId !== null
+  ) {
+
+    cancelAnimationFrame(
+      gifAnimationFrameId
+    );
+
+    gifAnimationFrameId =
+      null;
+
+  }
+
+}
+
+
+/* =========================================================
    GRAVAÇÃO
    ========================================================= */
 
@@ -6018,10 +6132,6 @@ pasteButton.addEventListener(
 );
 
 
-/* =========================================================
-   LEITURA DO CLIPBOARD
-   ========================================================= */
-
 async function pasteFromClipboard(
   x,
   y
@@ -6029,7 +6139,7 @@ async function pasteFromClipboard(
 
 
   /* =====================================================
-     IMAGEM
+     IMAGEM / GIF
      ===================================================== */
 
   if (
@@ -6049,6 +6159,45 @@ async function pasteFromClipboard(
         of items
       ) {
 
+        /*
+          Primeiro procuramos GIF explicitamente.
+
+          Isso evita que um clipboard contendo
+          mais de uma representação da mesma
+          imagem escolha PNG antes do GIF.
+        */
+        const gifType =
+          item.types.find(
+            type =>
+              type.toLowerCase() ===
+              "image/gif"
+          );
+
+
+        if (gifType) {
+
+          const gifBlob =
+            await item.getType(
+              gifType
+            );
+
+
+          await createImageFromBlob(
+            gifBlob,
+            x,
+            y
+          );
+
+
+          return true;
+
+        }
+
+
+        /*
+          Se não houver GIF, mantém exatamente
+          o comportamento normal das imagens.
+        */
         const imageType =
           item.types.find(
             type =>
@@ -6082,7 +6231,7 @@ async function pasteFromClipboard(
     } catch (error) {
 
       console.log(
-        "Erro ao ler imagem:",
+        "Erro ao ler imagem/GIF:",
         error
       );
 
