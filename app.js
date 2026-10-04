@@ -4279,7 +4279,6 @@ underline:
 
 /* =========================================================
    IMAGEM
-   GIF A.9 — GIF HTML NÃO É REDESENHADO NO CANVAS
    ========================================================= */
 
 function drawImageObject(
@@ -4287,45 +4286,10 @@ function drawImageObject(
   object
 ) {
 
-  if (!object) {
-
-    return;
-
-  }
-
-
-  /*
-    GIF A.9
-
-    O GIF animado é exibido pela camada HTML.
-
-    NÃO desenhamos a mesma imagem novamente
-    no canvas porque isso criaria uma cópia
-    estática por baixo do GIF.
-  */
   if (
-    object.isGif === true &&
-    object.gifSource ===
-      "safe-html"
+    !object ||
+    !object.image
   ) {
-
-    updateGifHtmlObject(
-      object
-    );
-
-
-    return;
-
-  }
-
-
-  /*
-    IMAGENS NORMAIS
-
-    Mantém exatamente o funcionamento
-    anterior do Lousa Cam.
-  */
-  if (!object.image) {
 
     return;
 
