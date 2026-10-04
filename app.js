@@ -5271,9 +5271,18 @@ function beginTextEditing(
       object.height
     )}px`;
 
-  inlineEditor.classList.add(
-  "show"
-);
+  /* =====================================================
+   EDITOR CONTEXTUAL
+
+   Durante a edição:
+   - Ferramentas fica oculto
+   - Aa aparece
+   - toolbar começa fechada
+   ===================================================== */
+
+showTextEditorButton();
+
+closeTextToolbar();
 
 textFormatToolbar.classList.add(
   "show"
