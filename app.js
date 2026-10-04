@@ -6640,13 +6640,6 @@ async function pasteFromClipboard(
           .join(", ");
 
 
-      console.log(
-        "LOUSA CAM — CLIPBOARD:",
-        clipboardTypes
-      );
-
-
-
       for (
         const item
         of items
