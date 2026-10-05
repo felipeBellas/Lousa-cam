@@ -9550,9 +9550,9 @@ document.addEventListener(
     savedTextSelection =
       range.cloneRange();
 
- 
-);
  }
+);
+ 
 
 /*
   Aplica uma cor somente ao
