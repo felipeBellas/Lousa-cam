@@ -9477,13 +9477,17 @@ clearBtn.addEventListener(
 
 
 /* =========================================================
-   CORES
+   ETAPA 10A
+   SELEÇÃO / CURSOR DO EDITOR DE TEXTO
+
+   Agora guardamos:
+   - trecho selecionado
+   - OU posição do cursor
+
+   Isso permite aplicar formatação também
+   ao texto que será digitado depois.
    ========================================================= */
 
-
-/*
-  Seleção de texto usada pelo editor.
-*/
 document.addEventListener(
   "selectionchange",
   () => {
@@ -9493,10 +9497,13 @@ document.addEventListener(
     ) {
 
       return;
+
     }
+
 
     const selection =
       window.getSelection();
+
 
     if (
       !selection ||
@@ -9504,21 +9511,44 @@ document.addEventListener(
     ) {
 
       return;
+
     }
 
+
     const range =
-  selection.getRangeAt(0);
+      selection.getRangeAt(0);
 
-if (
-  !range.collapsed &&
-  inlineEditor.contains(
-    range.commonAncestorContainer
-  )
-) {
-  savedTextSelection =
-    range.cloneRange();
 
-}
+    /*
+      Só aceitamos seleções/cursor
+      pertencentes ao inlineEditor.
+
+      Isso impede que uma seleção feita
+      fora da caixa de texto seja salva.
+    */
+    if (
+      !inlineEditor.contains(
+        range.commonAncestorContainer
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      IMPORTANTE:
+
+      Antes guardávamos somente quando
+      range.collapsed === false.
+
+      Agora guardamos também o Range
+      colapsado, que representa exatamente
+      a posição atual do cursor.
+    */
+    savedTextSelection =
+      range.cloneRange();
 
   }
 );
