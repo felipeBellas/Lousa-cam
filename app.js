@@ -9479,7 +9479,7 @@ clearBtn.addEventListener(
 /* =========================================================
    ETAPA 10A
    SELEÇÃO / CURSOR DO EDITOR DE TEXTO
-
+   
    Agora guardamos:
    - trecho selecionado
    - OU posição do cursor
@@ -9550,14 +9550,15 @@ document.addEventListener(
     savedTextSelection =
       range.cloneRange();
 
-  }
+ 
 );
-
+ }
 
 /*
   Aplica uma cor somente ao
   trecho selecionado.
 */
+
 function applyTextColor(
   selectedColor
 ) {
