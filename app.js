@@ -9614,7 +9614,7 @@ function applyTextColor(
     );
 
   if (object) {
-
+     
     object.text =
       inlineEditor.innerText
         .replace(/\u00a0/g, " ");
