@@ -1301,67 +1301,104 @@ box-shadow:
 
     }
 
+/* =====================================================
+   ETAPA 10F
+   EDITOR DE TEXTO — LIMITE RESPONSIVO
 
-    /* =====================================================
-       EDITOR DE TEXTO
-       ===================================================== */
+   Impede que a caixa de texto ultrapasse
+   horizontalmente a área visível do aparelho.
 
-    #inlineEditor {
+   IMPORTANTE:
+   - não altera câmera
+   - não altera canvas
+   - não altera barra superior
+   - não altera ferramentas Aa
+   ===================================================== */
 
-      position: fixed;
+#inlineEditor {
 
-      display: none;
+  position: fixed;
 
-      z-index: 80;
+  display: none;
 
-      margin: 0;
+  z-index: 80;
 
-      padding:
-        4px 7px;
+  margin: 0;
 
-      border:
-        2px dotted
-        rgba(255, 255, 255, 0.95);
+  padding:
+    4px 7px;
 
-      border-radius: 4px;
+  border:
+    2px dotted
+    rgba(255, 255, 255, 0.95);
 
-      background:
-        rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
 
-      color: #fff;
+  background:
+    rgba(0, 0, 0, 0.18);
 
-      outline: none;
+  color: #fff;
 
-      resize: both;
+  outline: none;
 
-      overflow: auto;
+  /*
+    Mantemos o redimensionamento
+    manual já existente.
+  */
+  resize: both;
 
-      white-space: pre-wrap;
+  /*
+    O conteúdo permanece dentro
+    da própria caixa.
+  */
+  overflow: auto;
 
-      word-break: break-word;
+  /*
+    Permite quebra normal de linha.
+  */
+  white-space: pre-wrap;
 
-      font-family:
-        Arial,
-        sans-serif;
+  overflow-wrap: anywhere;
 
-      line-height: 1.15;
+  word-wrap: break-word;
 
-      min-width: 60px;
+  word-break: break-word;
 
-      min-height: 30px;
+  /*
+    Proteção geral contra crescimento
+    além da largura física da tela.
 
-      user-select: text;
+    O limite exato considerando a posição X
+    também será calculado pelo app.js.
+  */
+  max-width:
+    calc(100vw - 16px);
 
-      -webkit-user-select: text;
+  max-width:
+    calc(100dvw - 16px);
 
-      -webkit-touch-callout: default;
+  min-width: 60px;
 
-      touch-action: auto;
-      
-      pointer-events: auto;
+  min-height: 30px;
 
-    }
+  /*
+    Muito importante em elementos editáveis:
+    impede que o conteúdo force uma largura
+    mínima maior que a viewport.
+  */
+  min-inline-size: 0;
 
+  user-select: text;
+
+  -webkit-user-select: text;
+
+  -webkit-touch-callout: default;
+
+  touch-action: auto;
+
+  pointer-events: auto;
+
+}
 
     #inlineEditor.show {
 
