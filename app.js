@@ -5677,45 +5677,79 @@ function finishTextEditing() {
       inlineEditor.innerHTML;
 
 
-    /*
-      Recalcula as dimensões considerando
-      os spans com tamanhos diferentes.
-    */
-    const dimensions =
-      getTextDimensions(
-        object
-      );
+  /* =====================================================
+   ETAPA 10F.2
+   FINALIZAÇÃO DO TEXTO RESPONSIVO
+
+   IMPORTANTE:
+
+   Durante a digitação, a ETAPA 10F já
+   calculou a largura correta da caixa.
+
+   Portanto, ao finalizar a edição,
+   NÃO recalculamos novamente a largura
+   pelo comprimento total do texto.
+
+   Isso preserva:
+   - largura responsiva
+   - quebra automática
+   - posição da caixa
+   - estabilidade da câmera
+   - estabilidade da barra superior
+   ===================================================== */
 
 
-    object.width =
-      Math.max(
-        60,
-        dimensions.width
-      );
+/*
+  A largura atual do objeto já foi
+  definida pela ETAPA 10F durante
+  a digitação.
 
-    object.height =
-      Math.max(
-        35,
-        dimensions.height
-      );
+  Apenas garantimos o tamanho mínimo.
+*/
+object.width =
+  Math.max(
+    60,
+    object.width || 60
+  );
 
 
-    /*
-      Se o texto estiver vazio,
-      mantém uma caixa mínima.
-    */
-    if (
-      object.text.length === 0
-    ) {
+/*
+  A altura visual atual do editor
+  contém todas as linhas que foram
+  criadas pela quebra responsiva.
+*/
+const finalEditorHeight =
+  Math.max(
+    35,
+    inlineEditor.scrollHeight
+  );
 
-      object.width =
-        Math.max(
-          80,
-          object.width
-        );
 
-    }
+object.height =
+  finalEditorHeight;
 
+
+/*
+  Se o texto estiver vazio,
+  mantém a caixa mínima original.
+*/
+if (
+  object.text.length === 0
+) {
+
+  object.width =
+    Math.max(
+      80,
+      object.width
+    );
+
+  object.height =
+    Math.max(
+      40,
+      object.height
+    );
+
+}
   }
 
 
