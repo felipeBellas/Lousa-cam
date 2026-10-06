@@ -10296,39 +10296,57 @@ function changeSelectedFontSize(
   }
 
 
-  /* =====================================================
-     ETAPA 10E
-     A+ / A- COM CURSOR PISCANDO
-     ===================================================== */
+ /* =========================================================
+   ETAPA 10E.2
+   A+ / A- COM CURSOR
+
+   Agora o tamanho é controlado
+   diretamente em pixels.
+   ========================================================= */
+
+if (
+  activeSelection.isCollapsed
+) {
+
+  const caretRange =
+    activeSelection.getRangeAt(0);
+
 
   if (
-    activeSelection.isCollapsed
+    !inlineEditor.contains(
+      caretRange.commonAncestorContainer
+    )
   ) {
 
-    const caretRange =
-      activeSelection.getRangeAt(0);
+    return false;
+
+  }
 
 
-    /*
-      Segurança:
-      o cursor precisa continuar
-      pertencendo ao inlineEditor.
-    */
-    if (
-      !inlineEditor.contains(
-        caretRange.commonAncestorContainer
-      )
-    ) {
+  /*
+    Descobre o tamanho de referência.
 
-      return false;
+    Se já usamos A+ ou A- anteriormente
+    nesta posição de digitação, continuamos
+    a partir do tamanho pendente.
 
-    }
+    Isso permite:
+
+    A+ → A+ → A- → A-
+
+    sem depender da escala 1–7
+    do execCommand.
+  */
+  let currentSize =
+    pendingTextFontSize;
 
 
-    /*
-      Descobre o tamanho visual atual
-      exatamente na posição do cursor.
-    */
+  if (
+    !Number.isFinite(
+      currentSize
+    )
+  ) {
+
     let referenceElement =
       caretRange.startContainer;
 
@@ -10357,7 +10375,7 @@ function changeSelectedFontSize(
     }
 
 
-    let currentSize =
+    currentSize =
       parseFloat(
         window.getComputedStyle(
           referenceElement
@@ -10380,149 +10398,132 @@ function changeSelectedFontSize(
 
     }
 
-
-    /*
-      Mantém exatamente o incremento
-      atual dos botões:
-
-      A+ = +2 px
-      A- = -2 px
-
-      Limites iguais ao sistema atual:
-      mínimo 10 px
-      máximo 96 px
-    */
-    const newSize =
-      Math.max(
-        10,
-        Math.min(
-          96,
-          currentSize +
-            delta
-        )
-      );
+  }
 
 
-    /*
-      O comando fontSize do contenteditable
-      trabalha com a escala HTML 1–7.
+  /*
+    Mesmo incremento usado pelo
+    sistema original:
 
-      Usamos temporariamente o valor 7
-      apenas para o Safari criar o estado
-      de formatação na posição do cursor.
-    */
-    try {
+    A+ = +2
+    A- = -2
 
-      document.execCommand(
-        "styleWithCSS",
-        false,
-        false
-      );
-
-    } catch (error) {
-
-      console.log(
-        "styleWithCSS:",
-        error
-      );
-
-    }
-
-
-    document.execCommand(
-      "fontSize",
-      false,
-      "7"
+    Limites:
+    10 px até 96 px.
+  */
+  const newSize =
+    Math.max(
+      10,
+      Math.min(
+        96,
+        currentSize +
+          delta
+      )
     );
 
 
-    /*
-      Se o Safari criou imediatamente
-      um elemento FONT no cursor,
-      convertemos esse marcador para
-      o tamanho exato em pixels.
-
-      Em alguns estados do WebKit o
-      elemento somente será materializado
-      quando o próximo caractere entrar;
-      por isso também mantemos o estado
-      nativo do comando.
-    */
-    const fontElements =
-      inlineEditor.querySelectorAll(
-        'font[size="7"]'
-      );
+  pendingTextFontSize =
+    newSize;
 
 
-    fontElements.forEach(
-      fontElement => {
+  /*
+    Cria um marcador invisível exatamente
+    na posição atual do cursor.
 
-        /*
-          Só alteramos marcadores vazios
-          criados na região de digitação.
-
-          Não tocamos em conteúdo antigo.
-        */
-        if (
-          fontElement.textContent === ""
-        ) {
-
-          fontElement.removeAttribute(
-            "size"
-          );
-
-          fontElement.style.fontSize =
-            `${newSize}px`;
-
-        }
-
-      }
+    O caractere zero-width mantém o span
+    vivo no Safari até o usuário começar
+    a digitar.
+  */
+  const marker =
+    document.createElement(
+      "span"
     );
 
 
-    /*
-      O Safari mantém o estado de
-      fontSize no cursor para o próximo
-      texto digitado.
-
-      Guardamos novamente o Range.
-    */
-    if (
-      activeSelection.rangeCount > 0
-    ) {
-
-      savedTextSelection =
-        activeSelection
-          .getRangeAt(0)
-          .cloneRange();
-
-    }
+  marker.style.fontSize =
+    `${newSize}px`;
 
 
-    /*
-      Mantém o foco e o teclado.
-    */
-    try {
-
-      inlineEditor.focus({
-        preventScroll: true
-      });
-
-    } catch (error) {
-
-      inlineEditor.focus();
-
-    }
+  marker.dataset.pendingFontSize =
+    "true";
 
 
-    updateEditorPosition();
+  const zeroWidth =
+    document.createTextNode(
+      "\u200B"
+    );
 
-    redraw();
+
+  marker.appendChild(
+    zeroWidth
+  );
 
 
-    return true;
+  /*
+    Insere o marcador exatamente
+    onde o cursor estava.
+  */
+  caretRange.insertNode(
+    marker
+  );
+
+
+  /*
+    Posiciona o cursor DEPOIS do
+    caractere invisível, mas ainda
+    dentro do span.
+
+    Assim o próximo texto digitado
+    herda o font-size em pixels.
+  */
+  const newRange =
+    document.createRange();
+
+
+  newRange.setStart(
+    zeroWidth,
+    1
+  );
+
+
+  newRange.collapse(
+    true
+  );
+
+
+  activeSelection.removeAllRanges();
+
+  activeSelection.addRange(
+    newRange
+  );
+
+
+  savedTextSelection =
+    newRange.cloneRange();
+
+
+  try {
+
+    inlineEditor.focus({
+      preventScroll: true
+    });
+
+  } catch (error) {
+
+    inlineEditor.focus();
 
   }
+
+
+  updateEditorPosition();
+
+  redraw();
+
+
+  return true;
+
+}
+
 
 
   /* =====================================================
