@@ -726,17 +726,6 @@
      EVENTOS
      ======================================================= */
 
-  button.addEventListener(
-    "click",
-    event => {
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      open();
-
-    }
-  );
 
 
   closeButton.addEventListener(
