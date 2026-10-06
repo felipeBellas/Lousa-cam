@@ -4055,91 +4055,237 @@ function drawTextObject(
       }
 
 
-      const partWidth =
-        c.measureText(
-          part
-        ).width;
+     /* =====================================================
+   ETAPA 10F.3
+   QUEBRA DE TRECHO LONGO NO CANVAS
+
+   Resolve palavras ou sequências sem espaços
+   maiores que a largura da caixa.
+
+   Exemplos:
+
+   abcdefghijklmnopqrstuvwxyz...
+   www.endereco-muito-longo...
+   12345678901234567890...
+
+   O Canvas agora respeita object.width
+   da mesma forma que o editor visual.
+   ===================================================== */
+
+const partWidth =
+  c.measureText(
+    part
+  ).width;
 
 
-      /*
-        Se o trecho não couber,
-        passa para a próxima linha.
-      */
-      if (
-        currentX >
-          object.x &&
-        currentX -
-          object.x +
-          partWidth >
-          maxWidth
-      ) {
+/* =====================================================
+   CASO 1
+   O TRECHO INTEIRO CABE NA CAIXA
+   ===================================================== */
 
-        currentX =
-          object.x;
+if (
+  partWidth <=
+    maxWidth
+) {
 
-        currentY +=
-          fontSize * 1.15;
+  /*
+    Se cabe sozinho, mas não cabe
+    no restante da linha atual,
+    passa para a próxima linha.
+  */
+  if (
+    currentX >
+      object.x &&
+    currentX -
+      object.x +
+      partWidth >
+      maxWidth
+  ) {
 
-      }
+    currentX =
+      object.x;
+
+    currentY +=
+      fontSize * 1.15;
+
+  }
 
 
-      c.fillStyle =
-        textColor;
+  c.fillStyle =
+    textColor;
 
 
-      c.fillText(
-        part,
-        currentX,
-        currentY
+  c.fillText(
+    part,
+    currentX,
+    currentY
+  );
+
+
+  /*
+    Sublinhado normal.
+  */
+  if (
+    underline &&
+    part.trim() !== ""
+  ) {
+
+    const underlineY =
+      currentY +
+      fontSize +
+      2;
+
+
+    c.strokeStyle =
+      textColor;
+
+
+    c.lineWidth =
+      Math.max(
+        1,
+        fontSize / 16
       );
 
 
-      /*
-        Sublinhado.
-      */
-      if (
-        underline &&
-        part.trim() !== ""
-      ) {
-
-        const underlineY =
-          currentY +
-          fontSize +
-          2;
+    c.beginPath();
 
 
-        c.strokeStyle =
-          textColor;
+    c.moveTo(
+      currentX,
+      underlineY
+    );
 
 
-        c.lineWidth =
-          Math.max(
-            1,
-            fontSize / 16
-          );
+    c.lineTo(
+      currentX +
+        partWidth,
+      underlineY
+    );
 
 
-        c.beginPath();
+    c.stroke();
 
-        c.moveTo(
-          currentX,
-          underlineY
-        );
-
-        c.lineTo(
-          currentX +
-            partWidth,
-          underlineY
-        );
-
-        c.stroke();
-
-      }
+  }
 
 
-      currentX +=
-        partWidth;
+  currentX +=
+    partWidth;
 
+
+  continue;
+
+}
+
+
+/* =====================================================
+   CASO 2
+   TRECHO MAIOR QUE A PRÓPRIA CAIXA
+
+   Exemplo:
+
+   xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+   Como não existem espaços para fazer
+   a quebra normal, dividimos o trecho
+   caractere por caractere.
+   ===================================================== */
+
+for (
+  const character
+  of part
+) {
+
+  const characterWidth =
+    c.measureText(
+      character
+    ).width;
+
+
+  /*
+    Se o próximo caractere ultrapassar
+    a largura disponível, inicia uma
+    nova linha.
+  */
+  if (
+    currentX >
+      object.x &&
+    currentX -
+      object.x +
+      characterWidth >
+      maxWidth
+  ) {
+
+    currentX =
+      object.x;
+
+    currentY +=
+      fontSize * 1.15;
+
+  }
+
+
+  c.fillStyle =
+    textColor;
+
+
+  c.fillText(
+    character,
+    currentX,
+    currentY
+  );
+
+
+  /*
+    Mantém o sublinhado também
+    nos trechos quebrados.
+  */
+  if (
+    underline &&
+    character.trim() !== ""
+  ) {
+
+    const underlineY =
+      currentY +
+      fontSize +
+      2;
+
+
+    c.strokeStyle =
+      textColor;
+
+
+    c.lineWidth =
+      Math.max(
+        1,
+        fontSize / 16
+      );
+
+
+    c.beginPath();
+
+
+    c.moveTo(
+      currentX,
+      underlineY
+    );
+
+
+    c.lineTo(
+      currentX +
+        characterWidth,
+      underlineY
+    );
+
+
+    c.stroke();
+
+  }
+
+
+  currentX +=
+    characterWidth;
+
+}
     }
 
   }
