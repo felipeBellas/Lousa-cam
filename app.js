@@ -778,6 +778,17 @@ let editingObjectId =
 */
 let savedTextSelection =
   null;
+
+/* =========================================================
+   ETAPA 10E.2
+   TAMANHO PENDENTE DO TEXTO
+
+   Usado somente quando A+ / A-
+   são acionados com o cursor piscando.
+   ========================================================= */
+
+let pendingTextFontSize =
+  null;
 /*
   Impede que controles da barra
   encerrem a edição do texto no iPhone.
