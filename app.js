@@ -10802,7 +10802,18 @@ function changeSelectedFontSize(
 }
 
 /* =========================================================
-   ALTERAR FONTE DO TEXTO
+   ETAPA 10D
+   ALTERAR FONTE — SELEÇÃO OU CURSOR
+
+   FUNCIONAMENTO:
+
+   - texto selecionado:
+     muda somente a fonte da seleção
+
+   - cursor piscando:
+     define a fonte para o texto
+     digitado a partir daquele ponto
+
    ========================================================= */
 
 function changeSelectedFontFamily(
@@ -10832,73 +10843,168 @@ function changeSelectedFontFamily(
   }
 
 
-  /*
-    Se existe uma seleção salva,
-    aplica somente ao trecho.
-  */
+  /* =====================================================
+     EXISTE SELEÇÃO OU CURSOR SALVO
+     ===================================================== */
+
   if (
     savedTextSelection
   ) {
 
     if (
-      restoreTextSelection()
+      !restoreTextSelection()
     ) {
 
-      try {
+      return false;
 
-        document.execCommand(
-          "styleWithCSS",
-          false,
-          true
-        );
+    }
 
-      } catch (error) {
 
-        console.log(
-          "styleWithCSS:",
-          error
-        );
+    const selection =
+      window.getSelection();
 
-      }
 
+    if (
+      !selection ||
+      selection.rangeCount === 0
+    ) {
+
+      return false;
+
+    }
+
+
+    const range =
+      selection.getRangeAt(0);
+
+
+    /*
+      Segurança:
+      confirma que o cursor/seleção
+      pertence ao inlineEditor.
+    */
+    if (
+      !inlineEditor.contains(
+        range.commonAncestorContainer
+      )
+    ) {
+
+      return false;
+
+    }
+
+
+    try {
 
       document.execCommand(
-        "fontName",
+        "styleWithCSS",
         false,
-        fontFamily
+        true
       );
 
+    } catch (error) {
 
-      const selection =
-        window.getSelection();
+      console.log(
+        "styleWithCSS:",
+        error
+      );
+
+    }
 
 
-      if (
-        selection &&
-        selection.rangeCount > 0
-      ) {
+    /*
+      IMPORTANTE:
 
-        savedTextSelection =
-          selection
-            .getRangeAt(0)
-            .cloneRange();
+      Com texto selecionado:
+      altera somente aquele trecho.
 
-      }
+      Com cursor colapsado:
+      altera o estado de digitação,
+      fazendo o próximo texto nascer
+      com a nova fonte.
+    */
+    document.execCommand(
+      "fontName",
+      false,
+      fontFamily
+    );
 
+
+    /*
+      O Safari pode reconstruir
+      internamente o Range depois
+      do comando.
+
+      Salvamos novamente.
+    */
+    if (
+      selection.rangeCount > 0
+    ) {
+
+      savedTextSelection =
+        selection
+          .getRangeAt(0)
+          .cloneRange();
+
+    }
+
+
+    /*
+      Se existe texto realmente
+      selecionado, já houve alteração
+      no HTML e salvamos imediatamente.
+
+      Se existe somente o cursor,
+      o próximo evento input salvará
+      o novo conteúdo formatado.
+    */
+    if (
+      !selection.isCollapsed
+    ) {
 
       saveFormattedText();
 
-      return true;
+    }
+
+
+    /*
+      Mantém o foco no editor.
+    */
+    try {
+
+      inlineEditor.focus({
+        preventScroll: true
+      });
+
+    } catch (error) {
+
+      inlineEditor.focus();
 
     }
+
+
+    updateEditorPosition();
+
+    redraw();
+
+
+    return true;
 
   }
 
 
-  /*
-    Sem trecho selecionado:
-    altera a fonte base da caixa inteira.
-  */
+  /* =====================================================
+     FALLBACK
+
+     Este trecho é mantido para situações
+     em que ainda não existe cursor ou
+     seleção salva.
+
+     Nesse caso preservamos o comportamento
+     anterior: a fonte passa a ser a fonte
+     base da caixa.
+     ===================================================== */
+
   object.fontFamily =
     fontFamily;
 
@@ -10908,10 +11014,11 @@ function changeSelectedFontFamily(
 
 
   /*
-    Aplica também ao conteúdo atual.
+    Aplica também ao conteúdo existente.
   */
   const range =
     document.createRange();
+
 
   range.selectNodeContents(
     inlineEditor
@@ -10920,6 +11027,7 @@ function changeSelectedFontFamily(
 
   const selection =
     window.getSelection();
+
 
   selection.removeAllRanges();
 
@@ -10962,15 +11070,18 @@ function changeSelectedFontFamily(
 
 
   /*
-    Coloca o cursor novamente
-    no fim do texto.
+    Depois da alteração geral,
+    posiciona novamente o cursor
+    no final do conteúdo.
   */
   const finalRange =
     document.createRange();
 
+
   finalRange.selectNodeContents(
     inlineEditor
   );
+
 
   finalRange.collapse(
     false
@@ -10984,13 +11095,42 @@ function changeSelectedFontFamily(
   );
 
 
+  /*
+    ETAPA 10D:
+
+    Diferente da versão anterior,
+    mantemos o cursor final salvo.
+
+    Isso deixa o editor preparado
+    para continuar digitando.
+  */
   savedTextSelection =
-    null;
+    finalRange.cloneRange();
 
 
   saveFormattedText();
 
+
+  try {
+
+    inlineEditor.focus({
+      preventScroll: true
+    });
+
+  } catch (error) {
+
+    inlineEditor.focus();
+
+  }
+
+
+  updateEditorPosition();
+
+  redraw();
+
+
   return true;
+
 }
 
 /* =========================================================
