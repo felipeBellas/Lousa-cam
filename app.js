@@ -9999,7 +9999,18 @@ function saveFormattedText() {
 
 
 /* =========================================================
-   APLICAR FORMATAÇÃO
+   ETAPA 10C
+   APLICAR FORMATAÇÃO — SELEÇÃO OU CURSOR
+
+   FUNCIONAMENTO:
+
+   - texto selecionado:
+     aplica B / I / U à seleção
+
+   - cursor piscando:
+     ativa B / I / U para o texto
+     digitado a partir daquele ponto
+
    ========================================================= */
 
 function applyTextFormat(
@@ -10017,6 +10028,36 @@ function applyTextFormat(
   }
 
 
+  /*
+    Nesta etapa aceitamos somente
+    os comandos de formatação textual
+    usados pelos botões B / I / U.
+
+    A+ e A- continuam utilizando
+    changeSelectedFontSize().
+  */
+  const allowedCommands = [
+    "bold",
+    "italic",
+    "underline"
+  ];
+
+
+  if (
+    !allowedCommands.includes(
+      command
+    )
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    Restaura exatamente a seleção
+    ou posição do cursor salva.
+  */
   if (
     !restoreTextSelection()
   ) {
@@ -10032,7 +10073,7 @@ function applyTextFormat(
 
   if (
     !selection ||
-    selection.isCollapsed
+    selection.rangeCount === 0
   ) {
 
     return false;
@@ -10041,11 +10082,28 @@ function applyTextFormat(
 
 
   /*
-    Usa o mecanismo nativo do
-    contenteditable, que é bem
-    suportado pelo Safari/iPhone.
+    Confirma que o Range restaurado
+    continua pertencendo ao editor.
   */
+  const range =
+    selection.getRangeAt(0);
 
+
+  if (
+    !inlineEditor.contains(
+      range.commonAncestorContainer
+    )
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    Mantém o mecanismo CSS que já
+    estava funcionando no editor.
+  */
   try {
 
     document.execCommand(
@@ -10064,6 +10122,26 @@ function applyTextFormat(
   }
 
 
+  /*
+    IMPORTANTE:
+
+    execCommand também funciona com
+    Range colapsado.
+
+    Nesse caso ele altera o estado
+    de digitação do contenteditable.
+
+    Exemplo:
+
+    Sistema|
+
+    ativa Bold
+
+    Sistema| Nervoso
+
+    somente " Nervoso" será digitado
+    em negrito.
+  */
   document.execCommand(
     command,
     false,
@@ -10071,19 +10149,68 @@ function applyTextFormat(
   );
 
 
-  savedTextSelection =
-    selection
-      .getRangeAt(0)
-      .cloneRange();
+  /*
+    O Safari pode atualizar internamente
+    o Range depois do comando.
+
+    Guardamos novamente o Range atual,
+    seja ele seleção ou cursor.
+  */
+  if (
+    selection.rangeCount > 0
+  ) {
+
+    savedTextSelection =
+      selection
+        .getRangeAt(0)
+        .cloneRange();
+
+  }
 
 
-  saveFormattedText();
+  /*
+    Se havia texto selecionado,
+    já existe alteração real no HTML
+    e salvamos imediatamente.
+
+    Se havia somente o cursor,
+    o estado de digitação foi alterado.
+    O próximo evento input salvará
+    os novos caracteres normalmente.
+  */
+  if (
+    !selection.isCollapsed
+  ) {
+
+    saveFormattedText();
+
+  }
+
+
+  /*
+    Mantém o foco no editor.
+  */
+  try {
+
+    inlineEditor.focus({
+      preventScroll: true
+    });
+
+  } catch (error) {
+
+    inlineEditor.focus();
+
+  }
+
+
+  updateEditorPosition();
+
+  redraw();
 
 
   return true;
 
 }
-
 
 /* =========================================================
    TAMANHO DA FONTE
@@ -10867,7 +10994,8 @@ function changeSelectedFontFamily(
 }
 
 /* =========================================================
-   BOTÕES DA BARRA
+   ETAPA 10C
+   BOTÕES DA BARRA — SELEÇÃO OU CURSOR
    ========================================================= */
 
 textFormatToolbar
@@ -10877,50 +11005,67 @@ textFormatToolbar
   .forEach(
     button => {
 
+      /* =====================================================
+         POINTERDOWN
+
+         Salva a posição ANTES de o Safari
+         tentar transferir o foco ao botão.
+
+         Agora aceitamos:
+         - seleção de texto
+         - cursor colapsado
+         ===================================================== */
+
       button.addEventListener(
-  "pointerdown",
-  event => {
+        "pointerdown",
+        event => {
 
-    /*
-      Guarda imediatamente a seleção
-      atual ANTES do Safari/iPhone
-      transferir o foco para o botão.
-    */
-    if (
-      editingObjectId
-    ) {
+          if (
+            editingObjectId
+          ) {
 
-      const selection =
-        window.getSelection();
-
-      if (
-        selection &&
-        selection.rangeCount > 0 &&
-        !selection.isCollapsed &&
-        inlineEditor.contains(
-          selection.anchorNode
-        )
-      ) {
-
-        savedTextSelection =
-          selection
-            .getRangeAt(0)
-            .cloneRange();
-
-      }
-
-    }
+            const selection =
+              window.getSelection();
 
 
-    /*
-      Impede que o toque no botão
-      destrua a seleção.
-    */
-    event.preventDefault();
+            if (
+              selection &&
+              selection.rangeCount > 0
+            ) {
 
-  }
-);
+              const range =
+                selection.getRangeAt(0);
 
+
+              if (
+                inlineEditor.contains(
+                  range.commonAncestorContainer
+                )
+              ) {
+
+                savedTextSelection =
+                  range.cloneRange();
+
+              }
+
+            }
+
+          }
+
+
+          /*
+            Impede que o toque no botão
+            destrua a seleção/cursor.
+          */
+          event.preventDefault();
+
+        }
+      );
+
+
+      /* =====================================================
+         CLICK
+         ===================================================== */
 
       button.addEventListener(
         "click",
@@ -10935,6 +11080,10 @@ textFormatToolbar
             button.dataset.format;
 
 
+          /*
+            A+ continua usando exatamente
+            o sistema anterior.
+          */
           if (
             format ===
             "increase"
@@ -10949,6 +11098,10 @@ textFormatToolbar
           }
 
 
+          /*
+            A- continua usando exatamente
+            o sistema anterior.
+          */
           if (
             format ===
             "decrease"
@@ -10963,6 +11116,10 @@ textFormatToolbar
           }
 
 
+          /*
+            B / I / U passam pela nova
+            lógica da ETAPA 10C.
+          */
           applyTextFormat(
             format
           );
@@ -10972,7 +11129,6 @@ textFormatToolbar
 
     }
   );
-
 /* =========================================================
    SELETOR DE FONTES
    ========================================================= */
