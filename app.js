@@ -9559,102 +9559,254 @@ document.addEventListener(
   trecho selecionado.
 */
 
+/* =========================================================
+   ETAPA 10B
+   COR DO TEXTO — SELEÇÃO OU CURSOR
+
+   FUNCIONAMENTO:
+
+   1. Se houver texto selecionado:
+      aplica a cor somente à seleção.
+
+   2. Se houver apenas o cursor piscando:
+      define a cor para o texto que será
+      digitado a partir daquela posição.
+
+   3. Mantém a posição do cursor/seleção
+      para continuar digitando normalmente.
+
+   IMPORTANTE:
+   - não altera a cor da caneta
+   - não altera o layout
+   - não altera câmera/gravação
+   ========================================================= */
+
 function applyTextColor(
   selectedColor
 ) {
 
   if (
-    !editingObjectId
+    !editingObjectId ||
+    !selectedColor
   ) {
 
     return false;
+
   }
+
 
   if (
     !savedTextSelection
   ) {
 
     return false;
+
   }
+
 
   const selection =
     window.getSelection();
 
+
+  if (!selection) {
+
+    return false;
+
+  }
+
+
+  /*
+    Devolve o foco ao editor.
+
+    preventScroll evita que o Safari
+    desloque desnecessariamente a tela.
+  */
+  try {
+
+    inlineEditor.focus({
+      preventScroll: true
+    });
+
+  } catch (error) {
+
+    inlineEditor.focus();
+
+  }
+
+
+  /*
+    Restaura exatamente a seleção
+    ou a posição do cursor salva
+    pela ETAPA 10A.
+  */
   selection.removeAllRanges();
 
   selection.addRange(
     savedTextSelection
   );
 
-  /*
-    Garante que existe
-    realmente um trecho selecionado.
-  */
+
   if (
-    selection.isCollapsed
+    selection.rangeCount === 0
   ) {
 
     return false;
+
   }
 
+
   /*
-    Usa o mecanismo nativo do
-    navegador para colorir a seleção.
-    Isso funciona especialmente bem
-    no Safari/iPhone.
+    Garante que a seleção restaurada
+    continua pertencendo ao editor.
   */
+  const currentRange =
+    selection.getRangeAt(0);
+
+
+  if (
+    !inlineEditor.contains(
+      currentRange.commonAncestorContainer
+    )
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+    Solicita ao navegador que use
+    estilos CSS na formatação.
+
+    Mantemos a mesma estratégia já
+    utilizada pelas outras ferramentas
+    do editor.
+  */
+  try {
+
+    document.execCommand(
+      "styleWithCSS",
+      false,
+      true
+    );
+
+  } catch (error) {
+
+    console.log(
+      "styleWithCSS:",
+      error
+    );
+
+  }
+
+
+  /* =====================================================
+     CASO 1
+     EXISTE TEXTO SELECIONADO
+     ===================================================== */
+
+  if (
+    !selection.isCollapsed
+  ) {
+
+    document.execCommand(
+      "foreColor",
+      false,
+      selectedColor
+    );
+
+
+    /*
+      Depois da alteração o Safari pode
+      reconstruir parte do HTML.
+
+      Guardamos novamente a seleção válida.
+    */
+    if (
+      selection.rangeCount > 0
+    ) {
+
+      savedTextSelection =
+        selection
+          .getRangeAt(0)
+          .cloneRange();
+
+    }
+
+
+    saveFormattedText();
+
+    redraw();
+
+    return true;
+
+  }
+
+
+  /* =====================================================
+     CASO 2
+     APENAS CURSOR PISCANDO
+
+     execCommand("foreColor") com uma
+     seleção colapsada altera o estado
+     de digitação do contenteditable.
+
+     Assim, o texto existente permanece
+     intacto e os próximos caracteres
+     recebem a nova cor.
+     ===================================================== */
+
   document.execCommand(
     "foreColor",
     false,
     selectedColor
   );
 
-  const object =
-    getObjectById(
-      editingObjectId
-    );
-
-  if (object) {
-     
-    object.text =
-      inlineEditor.innerText
-        .replace(/\u00a0/g, " ");
-
-    object.richText =
-      inlineEditor.innerHTML;
-
-    const dimensions =
-      getTextDimensions(
-        object
-      );
-
-    object.width =
-      dimensions.width;
-
-    object.height =
-      dimensions.height;
-
-    inlineEditor.style.width =
-      `${dimensions.width}px`;
-
-    inlineEditor.style.height =
-      `${dimensions.height}px`;
-  }
 
   /*
-    Mantém a seleção depois
-    de aplicar a cor.
+    Depois do comando, recuperamos o Range
+    atual porque o navegador pode criar
+    internamente um novo estado de edição.
   */
-  savedTextSelection =
-    selection
-      .getRangeAt(0)
-      .cloneRange();
+  if (
+    selection.rangeCount > 0
+  ) {
+
+    savedTextSelection =
+      selection
+        .getRangeAt(0)
+        .cloneRange();
+
+  }
+
+
+  /*
+    Não existe texto novo para salvar ainda.
+
+    Mesmo assim, mantemos o editor focado
+    para que o próximo caractere seja
+    digitado exatamente neste ponto.
+  */
+  try {
+
+    inlineEditor.focus({
+      preventScroll: true
+    });
+
+  } catch (error) {
+
+    inlineEditor.focus();
+
+  }
+
+
+  updateEditorPosition();
 
   redraw();
 
   return true;
-}
 
+}
 
 /*
   Cores da lousa.
