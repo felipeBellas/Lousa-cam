@@ -10271,22 +10271,259 @@ function changeSelectedFontSize(
   }
 
 
-  const activeSelection =
+   const activeSelection =
     window.getSelection();
 
 
   if (
     !activeSelection ||
-    activeSelection.rangeCount === 0 ||
+    activeSelection.rangeCount === 0
+  ) {
+
+    return false;
+
+  }
+
+
+  /* =====================================================
+     ETAPA 10E
+     A+ / A- COM CURSOR PISCANDO
+     ===================================================== */
+
+  if (
     activeSelection.isCollapsed
   ) {
-    return false;
+
+    const caretRange =
+      activeSelection.getRangeAt(0);
+
+
+    /*
+      Segurança:
+      o cursor precisa continuar
+      pertencendo ao inlineEditor.
+    */
+    if (
+      !inlineEditor.contains(
+        caretRange.commonAncestorContainer
+      )
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+      Descobre o tamanho visual atual
+      exatamente na posição do cursor.
+    */
+    let referenceElement =
+      caretRange.startContainer;
+
+
+    if (
+      referenceElement.nodeType ===
+      Node.TEXT_NODE
+    ) {
+
+      referenceElement =
+        referenceElement.parentElement;
+
+    }
+
+
+    if (
+      !referenceElement ||
+      !inlineEditor.contains(
+        referenceElement
+      )
+    ) {
+
+      referenceElement =
+        inlineEditor;
+
+    }
+
+
+    let currentSize =
+      parseFloat(
+        window.getComputedStyle(
+          referenceElement
+        ).fontSize
+      );
+
+
+    if (
+      !Number.isFinite(
+        currentSize
+      )
+    ) {
+
+      currentSize =
+        parseFloat(
+          window.getComputedStyle(
+            inlineEditor
+          ).fontSize
+        ) || 24;
+
+    }
+
+
+    /*
+      Mantém exatamente o incremento
+      atual dos botões:
+
+      A+ = +2 px
+      A- = -2 px
+
+      Limites iguais ao sistema atual:
+      mínimo 10 px
+      máximo 96 px
+    */
+    const newSize =
+      Math.max(
+        10,
+        Math.min(
+          96,
+          currentSize +
+            delta
+        )
+      );
+
+
+    /*
+      O comando fontSize do contenteditable
+      trabalha com a escala HTML 1–7.
+
+      Usamos temporariamente o valor 7
+      apenas para o Safari criar o estado
+      de formatação na posição do cursor.
+    */
+    try {
+
+      document.execCommand(
+        "styleWithCSS",
+        false,
+        false
+      );
+
+    } catch (error) {
+
+      console.log(
+        "styleWithCSS:",
+        error
+      );
+
+    }
+
+
+    document.execCommand(
+      "fontSize",
+      false,
+      "7"
+    );
+
+
+    /*
+      Se o Safari criou imediatamente
+      um elemento FONT no cursor,
+      convertemos esse marcador para
+      o tamanho exato em pixels.
+
+      Em alguns estados do WebKit o
+      elemento somente será materializado
+      quando o próximo caractere entrar;
+      por isso também mantemos o estado
+      nativo do comando.
+    */
+    const fontElements =
+      inlineEditor.querySelectorAll(
+        'font[size="7"]'
+      );
+
+
+    fontElements.forEach(
+      fontElement => {
+
+        /*
+          Só alteramos marcadores vazios
+          criados na região de digitação.
+
+          Não tocamos em conteúdo antigo.
+        */
+        if (
+          fontElement.textContent === ""
+        ) {
+
+          fontElement.removeAttribute(
+            "size"
+          );
+
+          fontElement.style.fontSize =
+            `${newSize}px`;
+
+        }
+
+      }
+    );
+
+
+    /*
+      O Safari mantém o estado de
+      fontSize no cursor para o próximo
+      texto digitado.
+
+      Guardamos novamente o Range.
+    */
+    if (
+      activeSelection.rangeCount > 0
+    ) {
+
+      savedTextSelection =
+        activeSelection
+          .getRangeAt(0)
+          .cloneRange();
+
+    }
+
+
+    /*
+      Mantém o foco e o teclado.
+    */
+    try {
+
+      inlineEditor.focus({
+        preventScroll: true
+      });
+
+    } catch (error) {
+
+      inlineEditor.focus();
+
+    }
+
+
+    updateEditorPosition();
+
+    redraw();
+
+
+    return true;
+
   }
+
+
+  /* =====================================================
+     TEXTO SELECIONADO
+
+     Daqui para baixo continua exatamente
+     o algoritmo anterior do Lousa Cam.
+     ===================================================== */
 
 
   const range =
     activeSelection.getRangeAt(0);
-
 
   /*
     =====================================================
