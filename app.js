@@ -5636,6 +5636,8 @@ function finishTextEditing() {
 
   savedTextSelection =
     null;
+  pendingTextFontSize =
+  null;
 
   selectedObjectId =
     null;
@@ -5757,6 +5759,8 @@ hideTextEditorButton();
   */
   savedTextSelection =
     null;
+   pendingTextFontSize =
+  null;
 
 
   /*
