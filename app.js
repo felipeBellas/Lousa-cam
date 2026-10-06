@@ -5771,9 +5771,17 @@ hideTextEditorButton();
 
 }
 
-
 /* =========================================================
-   INPUT DO EDITOR
+   ETAPA 10F
+   INPUT DO EDITOR — LARGURA RESPONSIVA
+
+   Impede que uma linha muito longa aumente
+   a largura virtual da página no iPhone.
+
+   Quando a caixa chega à borda direita:
+   - para de crescer horizontalmente
+   - o texto passa para a próxima linha
+   - câmera e barra superior permanecem estáveis
    ========================================================= */
 
 inlineEditor.addEventListener(
@@ -5783,17 +5791,22 @@ inlineEditor.addEventListener(
     if (!editingObjectId) {
 
       return;
+
     }
+
 
     const object =
       getObjectById(
         editingObjectId
       );
 
+
     if (!object) {
 
       return;
+
     }
+
 
     /*
       Texto simples para manter
@@ -5803,33 +5816,151 @@ inlineEditor.addEventListener(
       inlineEditor.innerText
         .replace(/\u00a0/g, " ");
 
+
     /*
-      Guarda as cores aplicadas
-      aos trechos selecionados.
+      Guarda as formatações:
+      cores, fontes, negrito,
+      itálico, sublinhado etc.
     */
     object.richText =
       inlineEditor.innerHTML;
 
+
     /*
-      Mantém o ajuste automático
-      da caixa de texto.
+      Calcula normalmente as dimensões
+      desejadas pelo conteúdo.
     */
     const dimensions =
       getTextDimensions(
         object
       );
 
-    object.width =
-      dimensions.width;
 
+    /* =====================================================
+       LARGURA DISPONÍVEL NA TELA
+       ===================================================== */
+
+    const viewport =
+      window.visualViewport ||
+      null;
+
+
+    const viewportWidth =
+      viewport
+        ? viewport.width
+        : window.innerWidth;
+
+
+    /*
+      Pequena margem de segurança
+      para impedir que a borda da caixa
+      encoste exatamente no limite
+      físico da viewport.
+    */
+    const screenMargin =
+      8;
+
+
+    /*
+      Como a caixa pode começar em qualquer
+      ponto X da tela, calculamos somente
+      o espaço realmente disponível
+      à direita dela.
+    */
+    const availableWidth =
+      Math.max(
+        60,
+        viewportWidth -
+        object.x -
+        screenMargin
+      );
+
+
+    /*
+      A caixa cresce normalmente enquanto
+      houver espaço.
+
+      Quando atingir a borda da tela,
+      sua largura fica limitada.
+    */
+    const responsiveWidth =
+      Math.min(
+        dimensions.width,
+        availableWidth
+      );
+
+
+    object.width =
+      responsiveWidth;
+
+
+    /*
+      Mantemos a altura calculada
+      inicialmente.
+
+      Depois de aplicar a nova largura,
+      o navegador poderá quebrar o texto
+      em várias linhas.
+    */
     object.height =
       dimensions.height;
 
-    inlineEditor.style.width =
-      `${dimensions.width}px`;
 
-    inlineEditor.style.height =
-      `${dimensions.height}px`;
+    inlineEditor.style.width =
+      `${responsiveWidth}px`;
+
+
+    /*
+      Reforço do limite diretamente
+      no elemento editável.
+    */
+    inlineEditor.style.maxWidth =
+      `${availableWidth}px`;
+
+
+    /*
+      Depois que a largura foi limitada,
+      a quebra de linha pode aumentar
+      a altura real do editor.
+
+      Usamos scrollHeight para capturar
+      essa nova altura.
+    */
+    requestAnimationFrame(
+      () => {
+
+        if (
+          !editingObjectId ||
+          editingObjectId !== object.id
+        ) {
+
+          return;
+
+        }
+
+
+        const actualHeight =
+          Math.max(
+            30,
+            inlineEditor.scrollHeight
+          );
+
+
+        object.height =
+          actualHeight;
+
+
+        inlineEditor.style.height =
+          `${actualHeight}px`;
+
+
+        updateEditorPosition();
+
+        redraw();
+
+      }
+    );
+
 
     updateEditorPosition();
 
