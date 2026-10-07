@@ -2157,399 +2157,6 @@ box-shadow:
 
     }
 
-  /* =====================================================
-   TELEPROMPTER — ETAPA 11A
-   ===================================================== */
-
-.teleprompter-layer {
-
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 75;
-
-  display: none;
-
-  pointer-events: none;
-
-}
-
-
-.teleprompter-layer.show {
-
-  display: block;
-
-}
-
-
-.teleprompter-window {
-
-  position: absolute;
-
-  left:
-    max(
-      12px,
-      env(safe-area-inset-left)
-    );
-
-  right:
-    max(
-      12px,
-      env(safe-area-inset-right)
-    );
-
-  top:
-    max(
-      68px,
-      calc(
-        env(safe-area-inset-top)
-        + 58px
-      )
-    );
-
-  bottom:
-    max(
-      92px,
-      calc(
-        env(safe-area-inset-bottom)
-        + 82px
-      )
-    );
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 10px;
-
-  padding: 12px;
-
-  border:
-    1px solid
-    rgba(255,255,255,0.18);
-
-  border-radius: 20px;
-
-  background:
-    rgba(12,12,14,0.76);
-
-  backdrop-filter:
-    blur(22px)
-    saturate(150%);
-
-  -webkit-backdrop-filter:
-    blur(22px)
-    saturate(150%);
-
-  box-shadow:
-    0 14px 36px
-    rgba(0,0,0,0.42);
-
-  overflow: hidden;
-
-  pointer-events: auto;
-
-}
-
-
-.teleprompter-header {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 12px;
-
-  flex:
-    0 0 auto;
-
-  color: #fff;
-
-}
-
-
-.teleprompter-header strong {
-
-  font-size: 16px;
-
-  font-weight: 700;
-
-}
-
-
-#teleprompterClose {
-
-  width: 36px;
-
-  height: 36px;
-
-  flex:
-    0 0 36px;
-
-  font-size: 24px;
-
-  line-height: 1;
-
-}
-
-
-/* =====================================================
-   EDITOR DO ROTEIRO
-   ===================================================== */
-
-#teleprompterEditor {
-
-  box-sizing: border-box;
-
-  width: 100%;
-
-  min-height: 92px;
-
-  max-height: 30%;
-
-  flex:
-    0 0 auto;
-
-  resize: vertical;
-
-  padding: 12px;
-
-  border:
-    1px solid
-    rgba(255,255,255,0.16);
-
-  border-radius: 12px;
-
-  outline: none;
-
-  background:
-    rgba(0,0,0,0.32);
-
-  color: #fff;
-
-  font:
-    16px/1.4
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  user-select: text;
-
-  -webkit-user-select: text;
-
-  -webkit-touch-callout: default;
-
-  touch-action: auto;
-
-}
-
-
-/* =====================================================
-   LEITOR
-   ===================================================== */
-
-.teleprompter-reader {
-
-  position: relative;
-
-  box-sizing: border-box;
-
-  width: 100%;
-
-  min-width: 0;
-
-  min-height: 0;
-
-  flex:
-    1 1 auto;
-
-  overflow-y: auto;
-
-  overflow-x: hidden;
-
-  padding:
-    30vh
-    14px;
-
-  border-radius: 14px;
-
-  background:
-    rgba(0,0,0,0.28);
-
-  overscroll-behavior: contain;
-
-  -webkit-overflow-scrolling: touch;
-
-  touch-action: pan-y;
-
-}
-
-
-.teleprompter-reader-text {
-
-  box-sizing: border-box;
-
-  width: 100%;
-
-  max-width: 900px;
-
-  margin:
-    0 auto;
-
-  color: #fff;
-
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-
-  font-size: 32px;
-
-  font-weight: 600;
-
-  line-height: 1.38;
-
-  text-align: center;
-
-  white-space: pre-wrap;
-
-  overflow-wrap: anywhere;
-
-  word-break: break-word;
-
-  user-select: none;
-
-  -webkit-user-select: none;
-
-}
-
-
-/* =====================================================
-   CONTROLES
-   ===================================================== */
-
-.teleprompter-controls {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  flex:
-    0 0 auto;
-
-  width: 100%;
-
-  min-width: 0;
-
-  overflow-x: auto;
-
-  overflow-y: hidden;
-
-  padding-bottom: 2px;
-
-  -webkit-overflow-scrolling: touch;
-
-}
-
-
-.teleprompter-controls > button {
-
-  flex:
-    0 0 40px;
-
-}
-
-
-.teleprompter-control {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 6px;
-
-  flex:
-    0 0 auto;
-
-  color:
-    rgba(255,255,255,0.82);
-
-  font-size: 11px;
-
-}
-
-
-.teleprompter-control input[type="range"] {
-
-  width: 92px;
-
-}
-
-
-/* =====================================================
-   PAISAGEM
-   ===================================================== */
-
-@media (orientation: landscape) {
-
-  .teleprompter-window {
-
-    left:
-      max(
-        72px,
-        calc(
-          env(safe-area-inset-left)
-          + 60px
-        )
-      );
-
-    right:
-      max(
-        72px,
-        calc(
-          env(safe-area-inset-right)
-          + 60px
-        )
-      );
-
-    bottom:
-      max(
-        70px,
-        calc(
-          env(safe-area-inset-bottom)
-          + 60px
-        )
-      );
-
-  }
-
-
-  #teleprompterEditor {
-
-    min-height: 70px;
-
-    max-height: 28%;
-
-  }
-
-
-  .teleprompter-reader {
-
-    padding:
-      24vh
-      18px;
-
-  }
-
-}
-
     </style>
 
   <link
@@ -3419,199 +3026,42 @@ box-shadow:
 
     </section>
 
+
     <!-- =================================================
-     TELEPROMPTER — ETAPA 11A
-     Camada independente da câmera e da gravação
-     ================================================= -->
+         NAVEGAÇÃO CÂMERA / GALERIA
+         ================================================= -->
 
-<section
-  id="teleprompterLayer"
-  class="teleprompter-layer"
-  aria-hidden="true">
-
-
-  <div
-    class="teleprompter-window"
-    role="dialog"
-    aria-label="Teleprompter">
-
-
-    <!-- =============================================
-         CABEÇALHO
-         ============================================= -->
-
-    <div
-      class="teleprompter-header">
-
-      <strong>
-        Teleprompter
-      </strong>
-
+    <nav
+      id="modeDock"
+      aria-label="Navegação principal">
 
       <button
-        id="teleprompterClose"
+        id="cameraModeButton"
         type="button"
-        aria-label="Fechar teleprompter"
-        title="Fechar">
+        class="active"
+        aria-pressed="true">
 
-        ×
+        Câmera
 
       </button>
 
-    </div>
-
-
-    <!-- =============================================
-         EDIÇÃO DO ROTEIRO
-         ============================================= -->
-
-    <textarea
-      id="teleprompterEditor"
-      maxlength="100000"
-      spellcheck="true"
-      autocomplete="off"
-      autocapitalize="sentences"
-      placeholder="Digite ou cole seu roteiro aqui..."
-      aria-label="Roteiro do teleprompter">
-    </textarea>
-
-
-    <!-- =============================================
-         ÁREA DE LEITURA
-         ============================================= -->
-
-    <div
-      id="teleprompterReader"
-      class="teleprompter-reader"
-      aria-live="off">
-
-
-      <div
-        id="teleprompterReaderText"
-        class="teleprompter-reader-text">
-      </div>
-
-
-    </div>
-
-
-    <!-- =============================================
-         CONTROLES
-         ============================================= -->
-
-    <div
-      class="teleprompter-controls">
-
-
       <button
-        id="teleprompterReset"
+        id="galleryModeButton"
         type="button"
-        aria-label="Voltar ao início"
-        title="Voltar ao início">
+        aria-pressed="false">
 
-        ↺
+        Galeria
 
       </button>
 
-
-      <button
-        id="teleprompterPlay"
-        type="button"
-        aria-label="Iniciar teleprompter"
-        title="Iniciar">
-
-        ▶
-
-      </button>
+    </nav>
 
 
-      <label
-        class="teleprompter-control">
-
-        <span>
-          Velocidade
-        </span>
-
-        <input
-          id="teleprompterSpeed"
-          type="range"
-          min="5"
-          max="200"
-          step="5"
-          value="40"
-          aria-label="Velocidade do teleprompter">
-
-      </label>
-
-
-      <label
-        class="teleprompter-control">
-
-        <span>
-          Texto
-        </span>
-
-        <input
-          id="teleprompterFontSize"
-          type="range"
-          min="18"
-          max="72"
-          step="2"
-          value="32"
-          aria-label="Tamanho do texto">
-
-      </label>
-
-
-    </div>
+      <div id="status"></div>
 
 
   </div>
 
-
-</section>
-
-
-  <!-- =================================================
-     NAVEGAÇÃO PRINCIPAL
-     CÂMERA / GALERIA / TELEPROMPTER
-     ================================================= -->
-
-<nav
-  id="modeDock"
-  aria-label="Navegação principal">
-
-  <button
-    id="cameraModeButton"
-    type="button"
-    class="active"
-    aria-pressed="true">
-
-    Câmera
-
-  </button>
-
-
-  <button
-    id="galleryModeButton"
-    type="button"
-    aria-pressed="false">
-
-    Galeria
-
-  </button>
-
-
-  <button
-    id="teleprompterButton"
-    type="button"
-    aria-pressed="false">
-
-    Teleprompter
-
-  </button>
-
-</nav>
 
   <!-- =================================================
        TELA INICIAL
@@ -3685,66 +3135,37 @@ box-shadow:
   
 <script src="./gallery.js?v=20261002-01"></script>
   
-<script src="./teleprompter.js?v=20261006-01"></script>
-  
 <script>
 
 (() => {
-
-  "use strict";
-
 
   const modeDock =
     document.getElementById(
       "modeDock"
     );
 
-
   const cameraButton =
     document.getElementById(
       "cameraModeButton"
     );
-
 
   const galleryButton =
     document.getElementById(
       "galleryModeButton"
     );
 
-
-  const teleprompterButton =
-    document.getElementById(
-      "teleprompterButton"
-    );
-
-
   const galleryLayer =
     document.getElementById(
       "galleryLayer"
     );
 
-
-  /*
-    Verificação defensiva.
-
-    Se algum elemento estrutural estiver
-    ausente, não executamos parcialmente
-    a navegação.
-  */
   if (
     !modeDock ||
     !cameraButton ||
     !galleryButton ||
-    !teleprompterButton ||
     !galleryLayer
   ) {
-
-    console.warn(
-      "Lousa Cam: navegação principal incompleta."
-    );
-
     return;
-
   }
 
 
@@ -3752,21 +3173,15 @@ box-shadow:
     null;
 
 
-  /* =====================================================
-     DOCK
-     ===================================================== */
-
   function activateDock() {
 
     modeDock.classList.add(
       "active"
     );
 
-
     clearTimeout(
       dockTimer
     );
-
 
     dockTimer =
       setTimeout(
@@ -3783,223 +3198,81 @@ box-shadow:
   }
 
 
-  /* =====================================================
-     ESTADO VISUAL DOS BOTÕES
-     ===================================================== */
-
-  function setActiveButton(
-    activeButton
-  ) {
-
-    const buttons = [
-      cameraButton,
-      galleryButton,
-      teleprompterButton
-    ];
-
-
-    for (
-      const button
-      of buttons
-    ) {
-
-      const active =
-        button ===
-        activeButton;
-
-
-      button.classList.toggle(
-        "active",
-        active
-      );
-
-
-      button.setAttribute(
-        "aria-pressed",
-        active
-          ? "true"
-          : "false"
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     CÂMERA
-     ===================================================== */
-
   function showCamera() {
 
-    /*
-      Fecha a Galeria.
-    */
     galleryLayer.classList.remove(
       "show"
     );
-
 
     galleryLayer.setAttribute(
       "aria-hidden",
       "true"
     );
 
-
-    /*
-      Fecha somente a interface do
-      Teleprompter.
-
-      NÃO toca na câmera,
-      MediaStream ou gravação.
-    */
-    if (
-      window.LousaCamTeleprompter &&
-      typeof
-        window.LousaCamTeleprompter.close ===
-        "function"
-    ) {
-
-      window.LousaCamTeleprompter.close();
-
-    }
-
-
-    setActiveButton(
-      cameraButton
+    cameraButton.classList.add(
+      "active"
     );
 
+    galleryButton.classList.remove(
+      "active"
+    );
+
+    cameraButton.setAttribute(
+      "aria-pressed",
+      "true"
+    );
+
+    galleryButton.setAttribute(
+      "aria-pressed",
+      "false"
+    );
 
     activateDock();
 
   }
 
 
-  /* =====================================================
-     GALERIA
-     ===================================================== */
-
   function showGallery() {
-
-    /*
-      Teleprompter e Galeria não ficam
-      abertos simultaneamente.
-    */
+   
     if (
-      window.LousaCamTeleprompter &&
-      typeof
-        window.LousaCamTeleprompter.close ===
-        "function"
+    typeof window.loadGallery ===
+   "function"
     ) {
 
-      window.LousaCamTeleprompter.close();
+    window.loadGallery();
 
     }
-
-
-    /*
-      Mantém exatamente a chamada já
-      utilizada pela Galeria atual.
-    */
-    if (
-      typeof window.loadGallery ===
-        "function"
-    ) {
-
-      window.loadGallery();
-
-    }
-
-
     galleryLayer.classList.add(
       "show"
     );
-
 
     galleryLayer.setAttribute(
       "aria-hidden",
       "false"
     );
 
-
-    setActiveButton(
-      galleryButton
+    cameraButton.classList.remove(
+      "active"
     );
 
-
-    activateDock();
-
-  }
-
-
-  /* =====================================================
-     TELEPROMPTER
-     ===================================================== */
-
-  function showTeleprompter() {
-
-    /*
-      Fecha apenas a camada da Galeria.
-
-      A câmera continua ativa ao fundo.
-    */
-    galleryLayer.classList.remove(
-      "show"
+    galleryButton.classList.add(
+      "active"
     );
 
+    cameraButton.setAttribute(
+      "aria-pressed",
+      "false"
+    );
 
-    galleryLayer.setAttribute(
-      "aria-hidden",
+    galleryButton.setAttribute(
+      "aria-pressed",
       "true"
     );
 
-
-    /*
-      O módulo do Teleprompter controla
-      somente sua própria interface.
-    */
-    if (
-      !window.LousaCamTeleprompter ||
-      typeof
-        window.LousaCamTeleprompter.open !==
-        "function"
-    ) {
-
-      console.warn(
-        "Teleprompter indisponível."
-      );
-
-      /*
-        Se o módulo não carregou,
-        mantemos Câmera como estado seguro.
-      */
-      setActiveButton(
-        cameraButton
-      );
-
-      activateDock();
-
-      return;
-
-    }
-
-
-    window.LousaCamTeleprompter.open();
-
-
-    setActiveButton(
-      teleprompterButton
-    );
-
-
     activateDock();
 
   }
 
-
-  /* =====================================================
-     EVENTOS
-     ===================================================== */
 
   cameraButton.addEventListener(
     "click",
@@ -4013,40 +3286,22 @@ box-shadow:
   );
 
 
-  teleprompterButton.addEventListener(
-    "click",
-    showTeleprompter
-  );
-
-
   modeDock.addEventListener(
     "pointerdown",
     activateDock
   );
 
 
-  /* =====================================================
-     EVENTO DO TELEPROMPTER
-
-     Se o próprio botão X do Teleprompter
-     fechá-lo, o dock retorna visualmente
-     para Câmera.
-
-     Nesta primeira etapa ainda não precisamos
-     disso para funcionar; será integrado
-     posteriormente sem tocar na câmera.
-     ===================================================== */
-
-
   /*
-    O aplicativo continua iniciando
+    O aplicativo sempre inicia
     visualmente na Câmera.
   */
-  showCamera();
+    showCamera();
 
 })();
 
 </script>
+
   
 </body>
 </html>
