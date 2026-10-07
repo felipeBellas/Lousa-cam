@@ -2430,52 +2430,50 @@ box-shadow:
   position: absolute;
 
   left: 10px;
-
   right: 10px;
-
   bottom: 10px;
 
   z-index: 20;
 
   box-sizing: border-box;
 
-  display: flex;
+  display: grid;
+
+  grid-template-columns:
+    42px
+    42px
+    minmax(0, 1fr)
+    minmax(0, 1fr);
 
   align-items: center;
 
-  justify-content: flex-start;
-
   gap: 8px;
 
-  height: 54px;
+  height: 56px;
 
-  min-height: 54px;
+  padding: 7px;
 
-  padding: 6px;
-
-  overflow-x: auto;
-
-  overflow-y: hidden;
+  overflow: hidden;
 
   border:
     1px solid
     rgba(255,255,255,0.12);
 
-  border-radius: 12px;
+  border-radius: 13px;
 
   background:
     rgba(18,18,20,0.94);
 
-  backdrop-filter: blur(18px);
+  backdrop-filter:
+    blur(18px);
 
-  -webkit-backdrop-filter: blur(18px);
+  -webkit-backdrop-filter:
+    blur(18px);
 
-  -webkit-overflow-scrolling: touch;
-
-  scrollbar-width: none;
+  touch-action: manipulation;
 
 }
-
+    
 .teleprompter-controls::-webkit-scrollbar {
 
   display: none;
@@ -2489,64 +2487,77 @@ box-shadow:
 
 .teleprompter-controls > button {
 
-  flex:
-    0 0 42px;
-
   width: 42px;
-
   height: 42px;
 
   min-width: 42px;
-
   min-height: 42px;
+
+  padding: 0;
 
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
-  padding: 0;
-
-  border-radius: 12px;
+  border-radius: 11px;
 
   font-size: 20px;
 
   line-height: 1;
+
+  touch-action: manipulation;
 
 }
 
 
 .teleprompter-control {
 
-  display: flex;
+  box-sizing: border-box;
+
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(50px, 1fr);
 
   align-items: center;
 
-  gap: 6px;
+  gap: 5px;
 
-  flex:
-    0 0 auto;
+  width: 100%;
+
+  min-width: 0;
 
   height: 42px;
 
   color:
     rgba(255,255,255,0.88);
 
-  font-size: 11px;
+  font-size: 10px;
 
   white-space: nowrap;
 
-}
+  overflow: hidden;
 
+}
 
 .teleprompter-control
 input[type="range"] {
 
-  width: 86px;
+  display: block;
 
-  flex:
-    0 0 86px;
+  width: 100%;
+
+  min-width: 50px;
+
+  max-width: none;
+
+  margin: 0;
+
+  padding: 0;
+
+  touch-action: manipulation;
 
 }
 
@@ -2557,56 +2568,120 @@ input[type="range"] {
 
     left:
       max(
-        72px,
+        62px,
         calc(
           env(safe-area-inset-left)
-          + 60px
+          + 50px
         )
       );
 
     right:
       max(
-        72px,
+        62px,
         calc(
           env(safe-area-inset-right)
-          + 60px
+          + 50px
+        )
+      );
+
+    top:
+      max(
+        54px,
+        calc(
+          env(safe-area-inset-top)
+          + 44px
         )
       );
 
     bottom:
       max(
-        70px,
+        66px,
         calc(
           env(safe-area-inset-bottom)
-          + 60px
+          + 56px
         )
       );
+
+    gap: 6px;
+
+    padding: 8px;
 
   }
 
 
- #teleprompterEditor {
+  #teleprompterEditor {
 
-  height: 58px;
+    height: 52px;
 
-  min-height: 58px;
+    min-height: 52px;
 
-  max-height: 58px;
+    max-height: 52px;
 
-  flex:
-    0 0 58px;
+    flex:
+      0 0 52px;
 
-}
+    padding: 8px;
+
+  }
 
 
   .teleprompter-reader {
 
-  padding:
-    18vh
-    18px
-    76px;
+    min-height: 0;
 
-}
+    padding:
+      16vh
+      14px
+      72px;
+
+  }
+
+
+  .teleprompter-controls {
+
+    left: 8px;
+
+    right: 8px;
+
+    bottom: 8px;
+
+    height: 52px;
+
+    grid-template-columns:
+      40px
+      40px
+      minmax(110px, 1fr)
+      minmax(110px, 1fr);
+
+    gap: 6px;
+
+    padding: 5px;
+
+  }
+
+
+  .teleprompter-controls > button {
+
+    width: 40px;
+
+    height: 40px;
+
+    min-width: 40px;
+
+    min-height: 40px;
+
+  }
+
+
+  .teleprompter-control {
+
+    height: 40px;
+
+    grid-template-columns:
+      auto
+      minmax(70px, 1fr);
+
+  }
 
 }
 
