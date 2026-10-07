@@ -3522,36 +3522,45 @@ input[type="range"] {
 
 </section>
 
+<!-- =================================================
+     NAVEGAÇÃO PRINCIPAL
+     ================================================= -->
 
-    <!-- =================================================
-         NAVEGAÇÃO CÂMERA / GALERIA
-         ================================================= -->
+<nav
+  id="modeDock"
+  aria-label="Navegação principal">
 
-    <nav
-      id="modeDock"
-      aria-label="Navegação principal">
+  <button
+    id="cameraModeButton"
+    type="button"
+    class="active"
+    aria-pressed="true">
 
-      <button
-        id="cameraModeButton"
-        type="button"
-        class="active"
-        aria-pressed="true">
+    Câmera
 
-        Câmera
+  </button>
 
-      </button>
 
-      <button
-        id="galleryModeButton"
-        type="button"
-        aria-pressed="false">
+  <button
+    id="galleryModeButton"
+    type="button"
+    aria-pressed="false">
 
-        Galeria
+    Galeria
 
-      </button>
+  </button>
 
-    </nav>
 
+  <button
+    id="teleprompterButton"
+    type="button"
+    aria-pressed="false">
+
+    Teleprompter
+
+  </button>
+
+</nav>
 
       <div id="status"></div>
 
@@ -3626,48 +3635,73 @@ input[type="range"] {
 <script src="./camera.js?v=20260928-01"></script>
 
 <script src="./app.js?v=20261004-01"></script>
-  
+
 <script src="./pencil.js?v=20260924-02"></script>
-  
+
 <script src="./gallery.js?v=20261002-01"></script>
+
+<script src="./teleprompter.js?v=20261006-02"></script>
   
 <script>
 
 (() => {
+
+  "use strict";
+
 
   const modeDock =
     document.getElementById(
       "modeDock"
     );
 
+
   const cameraButton =
     document.getElementById(
       "cameraModeButton"
     );
+
 
   const galleryButton =
     document.getElementById(
       "galleryModeButton"
     );
 
+
+  const teleprompterButton =
+    document.getElementById(
+      "teleprompterButton"
+    );
+
+
   const galleryLayer =
     document.getElementById(
       "galleryLayer"
     );
 
+
   if (
     !modeDock ||
     !cameraButton ||
     !galleryButton ||
+    !teleprompterButton ||
     !galleryLayer
   ) {
+
+    console.warn(
+      "Lousa Cam: navegação incompleta."
+    );
+
     return;
+
   }
 
 
-  let dockTimer =
-    null;
+  let dockTimer = null;
 
+
+  /* =====================================================
+     DOCK
+     ===================================================== */
 
   function activateDock() {
 
@@ -3675,9 +3709,11 @@ input[type="range"] {
       "active"
     );
 
+
     clearTimeout(
       dockTimer
     );
+
 
     dockTimer =
       setTimeout(
@@ -3694,81 +3730,197 @@ input[type="range"] {
   }
 
 
+  /* =====================================================
+     BOTÃO ATIVO
+     ===================================================== */
+
+  function setActiveButton(
+    activeButton
+  ) {
+
+    const buttons = [
+
+      cameraButton,
+
+      galleryButton,
+
+      teleprompterButton
+
+    ];
+
+
+    for (
+      const button
+      of buttons
+    ) {
+
+      const active =
+        button === activeButton;
+
+
+      button.classList.toggle(
+        "active",
+        active
+      );
+
+
+      button.setAttribute(
+        "aria-pressed",
+        active
+          ? "true"
+          : "false"
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     CÂMERA
+     ===================================================== */
+
   function showCamera() {
 
     galleryLayer.classList.remove(
       "show"
     );
 
+
     galleryLayer.setAttribute(
       "aria-hidden",
       "true"
     );
 
-    cameraButton.classList.add(
-      "active"
+
+    if (
+      window.LousaCamTeleprompter &&
+      typeof
+        window.LousaCamTeleprompter.close ===
+        "function"
+    ) {
+
+      window.LousaCamTeleprompter.close();
+
+    }
+
+
+    setActiveButton(
+      cameraButton
     );
 
-    galleryButton.classList.remove(
-      "active"
-    );
-
-    cameraButton.setAttribute(
-      "aria-pressed",
-      "true"
-    );
-
-    galleryButton.setAttribute(
-      "aria-pressed",
-      "false"
-    );
 
     activateDock();
 
   }
 
 
+  /* =====================================================
+     GALERIA
+     ===================================================== */
+
   function showGallery() {
-   
+
     if (
-    typeof window.loadGallery ===
-   "function"
+      window.LousaCamTeleprompter &&
+      typeof
+        window.LousaCamTeleprompter.close ===
+        "function"
     ) {
 
-    window.loadGallery();
+      window.LousaCamTeleprompter.close();
 
     }
+
+
+    if (
+      typeof window.loadGallery ===
+      "function"
+    ) {
+
+      window.loadGallery();
+
+    }
+
+
     galleryLayer.classList.add(
       "show"
     );
 
+
     galleryLayer.setAttribute(
       "aria-hidden",
       "false"
     );
 
-    cameraButton.classList.remove(
-      "active"
+
+    setActiveButton(
+      galleryButton
     );
 
-    galleryButton.classList.add(
-      "active"
-    );
-
-    cameraButton.setAttribute(
-      "aria-pressed",
-      "false"
-    );
-
-    galleryButton.setAttribute(
-      "aria-pressed",
-      "true"
-    );
 
     activateDock();
 
   }
 
+
+  /* =====================================================
+     TELEPROMPTER
+     ===================================================== */
+
+  function showTeleprompter() {
+
+    galleryLayer.classList.remove(
+      "show"
+    );
+
+
+    galleryLayer.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+
+    if (
+      !window.LousaCamTeleprompter ||
+      typeof
+        window.LousaCamTeleprompter.open !==
+        "function"
+    ) {
+
+      console.warn(
+        "Teleprompter indisponível."
+      );
+
+
+      setActiveButton(
+        cameraButton
+      );
+
+
+      activateDock();
+
+      return;
+
+    }
+
+
+    window.LousaCamTeleprompter.open();
+
+
+    setActiveButton(
+      teleprompterButton
+    );
+
+
+    activateDock();
+
+  }
+
+
+  /* =====================================================
+     EVENTOS
+     ===================================================== */
 
   cameraButton.addEventListener(
     "click",
@@ -3782,6 +3934,12 @@ input[type="range"] {
   );
 
 
+  teleprompterButton.addEventListener(
+    "click",
+    showTeleprompter
+  );
+
+
   modeDock.addEventListener(
     "pointerdown",
     activateDock
@@ -3789,10 +3947,40 @@ input[type="range"] {
 
 
   /*
-    O aplicativo sempre inicia
-    visualmente na Câmera.
+    Quando o X interno fecha o Teleprompter,
+    o dock volta para Câmera.
   */
-    showCamera();
+
+  window.addEventListener(
+    "lousacam:teleprompterchange",
+    event => {
+
+      if (
+        !event.detail ||
+        event.detail.open !== false
+      ) {
+
+        return;
+
+      }
+
+
+      setActiveButton(
+        cameraButton
+      );
+
+
+      activateDock();
+
+    }
+  );
+
+
+  /* =====================================================
+     ESTADO INICIAL
+     ===================================================== */
+
+  showCamera();
 
 })();
 
