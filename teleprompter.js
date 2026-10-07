@@ -6,38 +6,24 @@
 
    Módulo independente.
 
-   PRINCÍPIOS:
-   - não acessa câmera
-   - não acessa MediaStream
-   - não acessa MediaRecorder
-   - não desenha no canvas
-   - não altera objetos da lousa
-   - não usa innerHTML com conteúdo do usuário
-   - não executa conteúdo fornecido pelo usuário
-   - limita o tamanho do roteiro
+   NÃO acessa:
+   - câmera
+   - MediaStream
+   - MediaRecorder
+   - canvas
+   - objetos da lousa
+
+   O texto do usuário é inserido somente com textContent.
    ========================================================= */
 
 (() => {
 
-  /* =======================================================
-     CONFIGURAÇÃO
-     ======================================================= */
-
-  const MAX_SCRIPT_LENGTH =
-    100000;
-
-  const STORAGE_KEY =
-    "lousacam.teleprompter.v1";
+  const MAX_SCRIPT_LENGTH = 100000;
 
 
   /* =======================================================
      ELEMENTOS
      ======================================================= */
-
-  const button =
-    document.getElementById(
-      "teleprompterButton"
-    );
 
   const layer =
     document.getElementById(
@@ -86,14 +72,10 @@
 
 
   /* =======================================================
-     VERIFICAÇÃO DE INTEGRIDADE
-
-     Se o HTML estiver incompleto,
-     o módulo simplesmente não inicia.
+     VERIFICAÇÃO
      ======================================================= */
 
   if (
-    !button ||
     !layer ||
     !closeButton ||
     !editor ||
@@ -115,33 +97,24 @@
 
 
   /* =======================================================
-     ESTADO PRIVADO
-
-     Nada disso é exposto diretamente
-     para outros scripts.
+     ESTADO
      ======================================================= */
 
-  let isOpen =
-    false;
+  let isOpen = false;
 
-  let isPlaying =
-    false;
+  let isPlaying = false;
 
-  let animationFrameId =
-    null;
+  let animationFrameId = null;
 
-  let previousTimestamp =
-    null;
+  let previousTimestamp = null;
 
-  let speed =
-    40;
+  let speed = 40;
 
-  let fontSize =
-    32;
+  let fontSize = 32;
 
 
   /* =======================================================
-     FUNÇÕES AUXILIARES
+     UTILITÁRIOS
      ======================================================= */
 
   function clamp(
@@ -171,6 +144,7 @@
     const number =
       Number(value);
 
+
     if (
       !Number.isFinite(number)
     ) {
@@ -178,6 +152,7 @@
       return fallback;
 
     }
+
 
     return clamp(
       number,
@@ -189,16 +164,10 @@
 
 
   /* =======================================================
-     TEXTO SEGURO
-
-     IMPORTANTE:
-     usamos textContent.
-
-     O roteiro nunca é interpretado
-     como HTML.
+     TEXTO
      ======================================================= */
 
-  function getSafeScript() {
+  function getScript() {
 
     return String(
       editor.value || ""
@@ -210,18 +179,19 @@
   }
 
 
-  function updateReaderText() {
-
-    const text =
-      getSafeScript();
+  function updateReader() {
 
     /*
-      Segurança contra HTML/XSS:
+      Segurança:
 
-      NÃO substituir por innerHTML.
+      NÃO usar innerHTML aqui.
+
+      O conteúdo digitado pelo usuário
+      nunca é interpretado como HTML.
     */
+
     readerText.textContent =
-      text;
+      getScript();
 
   }
 
@@ -230,7 +200,7 @@
      CONFIGURAÇÕES
      ======================================================= */
 
-  function applySettings() {
+  function updateSettings() {
 
     speed =
       safeNumber(
@@ -240,6 +210,7 @@
         200
       );
 
+
     fontSize =
       safeNumber(
         fontSizeInput.value,
@@ -248,11 +219,14 @@
         72
       );
 
+
     speedInput.value =
       String(speed);
 
+
     fontSizeInput.value =
       String(fontSize);
+
 
     readerText.style.fontSize =
       `${fontSize}px`;
@@ -261,188 +235,25 @@
 
 
   /* =======================================================
-     PERSISTÊNCIA
-
-     Apenas:
-     - roteiro
-     - velocidade
-     - tamanho da fonte
-
-     Nenhum dado de câmera,
-     conta ou autenticação.
-     ======================================================= */
-
-  function saveState() {
-
-    const state = {
-
-      version:
-        1,
-
-      script:
-        getSafeScript(),
-
-      speed:
-        speed,
-
-      fontSize:
-        fontSize
-
-    };
-
-
-    try {
-
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(
-          state
-        )
-      );
-
-    } catch (error) {
-
-      /*
-        Falha no armazenamento não pode
-        impedir o funcionamento.
-      */
-
-      console.warn(
-        "Teleprompter: não foi possível salvar.",
-        error
-      );
-
-    }
-
-  }
-
-
-  function loadState() {
-
-    let raw =
-      null;
-
-
-    try {
-
-      raw =
-        localStorage.getItem(
-          STORAGE_KEY
-        );
-
-    } catch (error) {
-
-      return;
-
-    }
-
-
-    if (!raw) {
-
-      return;
-
-    }
-
-
-    try {
-
-      const parsed =
-        JSON.parse(raw);
-
-
-      if (
-        !parsed ||
-        typeof parsed !==
-          "object"
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        typeof parsed.script ===
-          "string"
-      ) {
-
-        editor.value =
-          parsed.script.slice(
-            0,
-            MAX_SCRIPT_LENGTH
-          );
-
-      }
-
-
-      speed =
-        safeNumber(
-          parsed.speed,
-          40,
-          5,
-          200
-        );
-
-
-      fontSize =
-        safeNumber(
-          parsed.fontSize,
-          32,
-          18,
-          72
-        );
-
-
-      speedInput.value =
-        String(speed);
-
-      fontSizeInput.value =
-        String(fontSize);
-
-
-      applySettings();
-      updateReaderText();
-
-    } catch (error) {
-
-      /*
-        Dados inválidos ou manipulados
-        são simplesmente ignorados.
-      */
-
-      console.warn(
-        "Teleprompter: configuração inválida."
-      );
-
-    }
-
-  }
-
-
-  /* =======================================================
-     ROLAGEM
+     ANIMAÇÃO
      ======================================================= */
 
   function stopAnimation() {
 
-    isPlaying =
-      false;
+    isPlaying = false;
 
-    previousTimestamp =
-      null;
+    previousTimestamp = null;
 
 
     if (
-      animationFrameId !==
-        null
+      animationFrameId !== null
     ) {
 
       cancelAnimationFrame(
         animationFrameId
       );
 
-      animationFrameId =
-        null;
+      animationFrameId = null;
 
     }
 
@@ -450,14 +261,10 @@
     playButton.textContent =
       "▶";
 
+
     playButton.setAttribute(
       "aria-label",
       "Iniciar teleprompter"
-    );
-
-    playButton.setAttribute(
-      "title",
-      "Iniciar"
     );
 
   }
@@ -480,8 +287,7 @@
 
 
     if (
-      previousTimestamp ===
-        null
+      previousTimestamp === null
     ) {
 
       previousTimestamp =
@@ -505,10 +311,7 @@
       timestamp;
 
 
-    /*
-      speed = pixels por segundo.
-    */
-    const movement =
+    reader.scrollTop +=
       speed *
       (
         elapsed /
@@ -516,13 +319,11 @@
       );
 
 
-    reader.scrollTop +=
-      movement;
-
-
     const reachedEnd =
+
       reader.scrollTop +
       reader.clientHeight >=
+
       reader.scrollHeight -
       2;
 
@@ -544,6 +345,10 @@
   }
 
 
+  /* =======================================================
+     PLAY / PAUSE
+     ======================================================= */
+
   function play() {
 
     if (
@@ -556,12 +361,12 @@
     }
 
 
-    updateReaderText();
-    applySettings();
+    updateReader();
+    updateSettings();
 
 
     if (
-      !getSafeScript().trim()
+      !getScript().trim()
     ) {
 
       editor.focus();
@@ -571,24 +376,18 @@
     }
 
 
-    isPlaying =
-      true;
+    isPlaying = true;
 
-    previousTimestamp =
-      null;
+    previousTimestamp = null;
 
 
     playButton.textContent =
       "❚❚";
 
+
     playButton.setAttribute(
       "aria-label",
       "Pausar teleprompter"
-    );
-
-    playButton.setAttribute(
-      "title",
-      "Pausar"
     );
 
 
@@ -626,14 +425,13 @@
 
     stopAnimation();
 
-    reader.scrollTop =
-      0;
+    reader.scrollTop = 0;
 
   }
 
 
   /* =======================================================
-     ABRIR / FECHAR
+     ABRIR
      ======================================================= */
 
   function open() {
@@ -645,52 +443,42 @@
     }
 
 
-    isOpen =
-      true;
+    isOpen = true;
 
 
-    /*
-      Fecha apenas o menu que originou
-      a abertura.
+    updateReader();
 
-      Não interfere com câmera,
-      gravação ou canvas.
-    */
-    const menuPanel =
-      document.getElementById(
-        "menuPanel"
-      );
-
-
-    if (menuPanel) {
-
-      menuPanel.classList.remove(
-        "open"
-      );
-
-      menuPanel.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-    }
-
-
-    updateReaderText();
-    applySettings();
+    updateSettings();
 
 
     layer.classList.add(
       "show"
     );
 
+
     layer.setAttribute(
       "aria-hidden",
       "false"
     );
 
+
+    window.dispatchEvent(
+      new CustomEvent(
+        "lousacam:teleprompterchange",
+        {
+          detail: {
+            open: true
+          }
+        }
+      )
+    );
+
   }
 
+
+  /* =======================================================
+     FECHAR
+     ======================================================= */
 
   function close() {
 
@@ -703,36 +491,45 @@
 
     stopAnimation();
 
-    saveState();
 
-
-    isOpen =
-      false;
+    isOpen = false;
 
 
     layer.classList.remove(
       "show"
     );
 
+
     layer.setAttribute(
       "aria-hidden",
       "true"
+    );
+
+
+    window.dispatchEvent(
+      new CustomEvent(
+        "lousacam:teleprompterchange",
+        {
+          detail: {
+            open: false
+          }
+        }
+      )
     );
 
   }
 
 
   /* =======================================================
-     EVENTOS
+     EVENTOS INTERNOS
      ======================================================= */
-
-
 
   closeButton.addEventListener(
     "click",
     event => {
 
       event.preventDefault();
+
       event.stopPropagation();
 
       close();
@@ -746,6 +543,7 @@
     event => {
 
       event.preventDefault();
+
       event.stopPropagation();
 
       togglePlay();
@@ -759,6 +557,7 @@
     event => {
 
       event.preventDefault();
+
       event.stopPropagation();
 
       reset();
@@ -769,21 +568,13 @@
 
   speedInput.addEventListener(
     "input",
-    () => {
-
-      applySettings();
-
-    }
+    updateSettings
   );
 
 
   fontSizeInput.addEventListener(
     "input",
-    () => {
-
-      applySettings();
-
-    }
+    updateSettings
   );
 
 
@@ -791,12 +582,6 @@
     "input",
     () => {
 
-      /*
-        Limite defensivo.
-
-        Não esperamos apenas o atributo
-        maxlength do HTML.
-      */
       if (
         editor.value.length >
         MAX_SCRIPT_LENGTH
@@ -811,35 +596,19 @@
       }
 
 
-      updateReaderText();
-
-  });
-
-
-  editor.addEventListener(
-    "change",
-    () => {
-
-      saveState();
+      updateReader();
 
     }
   );
 
 
-  /*
-    Se o app for colocado em segundo plano,
-    interrompemos a rolagem.
-
-    Evita animação acumulada quando o Safari
-    volta ao primeiro plano.
-  */
   document.addEventListener(
     "visibilitychange",
     () => {
 
       if (
         document.visibilityState !==
-          "visible"
+        "visible"
       ) {
 
         pause();
@@ -850,16 +619,12 @@
   );
 
 
-  /*
-    Escape funciona em navegadores/desktop.
-  */
   document.addEventListener(
     "keydown",
     event => {
 
       if (
-        event.key ===
-          "Escape" &&
+        event.key === "Escape" &&
         isOpen
       ) {
 
@@ -872,11 +637,7 @@
 
 
   /* =======================================================
-     API PÚBLICA MÍNIMA
-
-     Futuramente o controle Pro poderá
-     decidir se open() pode ser chamado,
-     sem reescrever este módulo.
+     API PÚBLICA
      ======================================================= */
 
   const publicApi =
@@ -901,32 +662,46 @@
     });
 
 
-  Object.defineProperty(
-    window,
-    "LousaCamTeleprompter",
-    {
+  /*
+    Proteção contra carregamento duplicado.
 
-      value:
-        publicApi,
+    Se a API já existir, não tentamos
+    redefinir a propriedade.
+  */
 
-      writable:
-        false,
+  if (
+    !Object.prototype.hasOwnProperty.call(
+      window,
+      "LousaCamTeleprompter"
+    )
+  ) {
 
-      configurable:
-        false
+    Object.defineProperty(
+      window,
+      "LousaCamTeleprompter",
+      {
 
-    }
-  );
+        value:
+          publicApi,
+
+        writable:
+          false,
+
+        configurable:
+          false
+
+      }
+    );
+
+  }
 
 
   /* =======================================================
      INICIALIZAÇÃO
      ======================================================= */
 
-  loadState();
+  updateReader();
 
-  updateReaderText();
-
-  applySettings();
+  updateSettings();
 
 })();
