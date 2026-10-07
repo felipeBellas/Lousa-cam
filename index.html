@@ -2157,6 +2157,385 @@ box-shadow:
 
     }
 
+    /* =====================================================
+   TELEPROMPTER — ETAPA 11A
+   ===================================================== */
+
+.teleprompter-layer {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 75;
+
+  display: none;
+
+  pointer-events: none;
+
+}
+
+
+.teleprompter-layer.show {
+
+  display: block;
+
+}
+
+
+.teleprompter-window {
+
+  position: absolute;
+
+  left:
+    max(
+      12px,
+      env(safe-area-inset-left)
+    );
+
+  right:
+    max(
+      12px,
+      env(safe-area-inset-right)
+    );
+
+  top:
+    max(
+      68px,
+      calc(
+        env(safe-area-inset-top)
+        + 58px
+      )
+    );
+
+  bottom:
+    max(
+      92px,
+      calc(
+        env(safe-area-inset-bottom)
+        + 82px
+      )
+    );
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.18);
+
+  border-radius: 20px;
+
+  background:
+    rgba(12,12,14,0.76);
+
+  backdrop-filter:
+    blur(22px)
+    saturate(150%);
+
+  -webkit-backdrop-filter:
+    blur(22px)
+    saturate(150%);
+
+  box-shadow:
+    0 14px 36px
+    rgba(0,0,0,0.42);
+
+  overflow: hidden;
+
+  pointer-events: auto;
+
+}
+
+
+.teleprompter-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content:
+    space-between;
+
+  gap: 12px;
+
+  flex:
+    0 0 auto;
+
+  color: #fff;
+
+}
+
+
+.teleprompter-header strong {
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+}
+
+
+#teleprompterClose {
+
+  width: 36px;
+
+  height: 36px;
+
+  flex:
+    0 0 36px;
+
+  font-size: 24px;
+
+  line-height: 1;
+
+}
+
+
+#teleprompterEditor {
+
+  box-sizing: border-box;
+
+  width: 100%;
+
+  min-height: 92px;
+
+  max-height: 30%;
+
+  flex:
+    0 0 auto;
+
+  resize: vertical;
+
+  padding: 12px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.16);
+
+  border-radius: 12px;
+
+  outline: none;
+
+  background:
+    rgba(0,0,0,0.32);
+
+  color: #fff;
+
+  font:
+    16px/1.4
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  user-select: text;
+
+  -webkit-user-select: text;
+
+  -webkit-touch-callout:
+    default;
+
+  touch-action: auto;
+
+}
+
+
+.teleprompter-reader {
+
+  position: relative;
+
+  box-sizing: border-box;
+
+  width: 100%;
+
+  min-width: 0;
+
+  min-height: 0;
+
+  flex:
+    1 1 auto;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  padding:
+    30vh
+    14px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(0,0,0,0.28);
+
+  overscroll-behavior:
+    contain;
+
+  -webkit-overflow-scrolling:
+    touch;
+
+  touch-action: pan-y;
+
+}
+
+
+.teleprompter-reader-text {
+
+  box-sizing: border-box;
+
+  width: 100%;
+
+  max-width: 900px;
+
+  margin:
+    0 auto;
+
+  color: #fff;
+
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 32px;
+
+  font-weight: 600;
+
+  line-height: 1.38;
+
+  text-align: center;
+
+  white-space: pre-wrap;
+
+  overflow-wrap: anywhere;
+
+  word-break: break-word;
+
+}
+
+
+.teleprompter-controls {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex:
+    0 0 auto;
+
+  width: 100%;
+
+  min-width: 0;
+
+  overflow-x: auto;
+
+  overflow-y: hidden;
+
+  padding-bottom: 2px;
+
+  -webkit-overflow-scrolling:
+    touch;
+
+}
+
+
+.teleprompter-controls > button {
+
+  flex:
+    0 0 40px;
+
+}
+
+
+.teleprompter-control {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  flex:
+    0 0 auto;
+
+  color:
+    rgba(255,255,255,0.82);
+
+  font-size: 11px;
+
+}
+
+
+.teleprompter-control
+input[type="range"] {
+
+  width: 92px;
+
+}
+
+
+@media (orientation: landscape) {
+
+  .teleprompter-window {
+
+    left:
+      max(
+        72px,
+        calc(
+          env(safe-area-inset-left)
+          + 60px
+        )
+      );
+
+    right:
+      max(
+        72px,
+        calc(
+          env(safe-area-inset-right)
+          + 60px
+        )
+      );
+
+    bottom:
+      max(
+        70px,
+        calc(
+          env(safe-area-inset-bottom)
+          + 60px
+        )
+      );
+
+  }
+
+
+  #teleprompterEditor {
+
+    min-height: 70px;
+
+    max-height: 28%;
+
+  }
+
+
+  .teleprompter-reader {
+
+    padding:
+      24vh
+      18px;
+
+  }
+
+}
+
     </style>
 
   <link
