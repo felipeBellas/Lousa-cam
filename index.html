@@ -3405,6 +3405,123 @@ input[type="range"] {
 
     </section>
 
+    <!-- =================================================
+     TELEPROMPTER — ETAPA 11A
+     ================================================= -->
+
+<section
+  id="teleprompterLayer"
+  class="teleprompter-layer"
+  aria-hidden="true">
+
+  <div
+    class="teleprompter-window"
+    role="dialog"
+    aria-label="Teleprompter">
+
+
+    <div class="teleprompter-header">
+
+      <strong>
+        Teleprompter
+      </strong>
+
+      <button
+        id="teleprompterClose"
+        type="button"
+        aria-label="Fechar teleprompter"
+        title="Fechar">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <textarea
+      id="teleprompterEditor"
+      maxlength="100000"
+      spellcheck="true"
+      autocomplete="off"
+      autocapitalize="sentences"
+      placeholder="Digite ou cole seu roteiro aqui..."
+      aria-label="Roteiro do teleprompter"></textarea>
+
+
+    <div
+      id="teleprompterReader"
+      class="teleprompter-reader"
+      aria-live="off">
+
+      <div
+        id="teleprompterReaderText"
+        class="teleprompter-reader-text"></div>
+
+    </div>
+
+
+    <div class="teleprompter-controls">
+
+      <button
+        id="teleprompterReset"
+        type="button"
+        aria-label="Voltar ao início"
+        title="Voltar ao início">
+
+        ↺
+
+      </button>
+
+
+      <button
+        id="teleprompterPlay"
+        type="button"
+        aria-label="Iniciar teleprompter"
+        title="Iniciar">
+
+        ▶
+
+      </button>
+
+
+      <label class="teleprompter-control">
+
+        <span>Velocidade</span>
+
+        <input
+          id="teleprompterSpeed"
+          type="range"
+          min="5"
+          max="200"
+          step="5"
+          value="40"
+          aria-label="Velocidade do teleprompter">
+
+      </label>
+
+
+      <label class="teleprompter-control">
+
+        <span>Texto</span>
+
+        <input
+          id="teleprompterFontSize"
+          type="range"
+          min="18"
+          max="72"
+          step="2"
+          value="32"
+          aria-label="Tamanho do texto">
+
+      </label>
+
+    </div>
+
+  </div>
+
+</section>
+
 
     <!-- =================================================
          NAVEGAÇÃO CÂMERA / GALERIA
