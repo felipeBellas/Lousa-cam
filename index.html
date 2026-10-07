@@ -2210,20 +2210,26 @@ box-shadow:
 
   bottom:
     max(
-      92px,
+      96px,
       calc(
         env(safe-area-inset-bottom)
-        + 82px
+        + 86px
       )
     );
+
+  box-sizing: border-box;
 
   display: flex;
 
   flex-direction: column;
 
-  gap: 10px;
+  gap: 8px;
 
-  padding: 12px;
+  padding: 10px;
+
+  min-width: 0;
+
+  min-height: 0;
 
   border:
     1px solid
@@ -2303,16 +2309,18 @@ box-shadow:
 
   width: 100%;
 
-  min-height: 92px;
+  height: 78px;
 
-  max-height: 30%;
+  min-height: 78px;
+
+  max-height: 78px;
 
   flex:
-    0 0 auto;
+    0 0 78px;
 
-  resize: vertical;
+  resize: none;
 
-  padding: 12px;
+  padding: 10px;
 
   border:
     1px solid
@@ -2345,7 +2353,6 @@ box-shadow:
 
 }
 
-
 .teleprompter-reader {
 
   position: relative;
@@ -2356,17 +2363,17 @@ box-shadow:
 
   min-width: 0;
 
-  min-height: 0;
+  min-height: 60px;
 
   flex:
-    1 1 auto;
+    1 1 0;
 
   overflow-y: auto;
 
   overflow-x: hidden;
 
   padding:
-    30vh
+    24vh
     14px;
 
   border-radius: 14px;
@@ -2383,7 +2390,6 @@ box-shadow:
   touch-action: pan-y;
 
 }
-
 
 .teleprompter-reader-text {
 
@@ -2423,35 +2429,83 @@ box-shadow:
 
 .teleprompter-controls {
 
+  position: relative;
+
+  z-index: 3;
+
+  box-sizing: border-box;
+
   display: flex;
 
   align-items: center;
 
+  justify-content: flex-start;
+
   gap: 8px;
 
   flex:
-    0 0 auto;
+    0 0 54px;
 
   width: 100%;
 
   min-width: 0;
 
+  height: 54px;
+
+  min-height: 54px;
+
+  padding:
+    5px
+    4px;
+
   overflow-x: auto;
 
   overflow-y: hidden;
 
-  padding-bottom: 2px;
+  background:
+    rgba(0,0,0,0.18);
+
+  border-radius: 12px;
 
   -webkit-overflow-scrolling:
     touch;
 
+  scrollbar-width: none;
+
 }
 
+.teleprompter-controls::-webkit-scrollbar {
+
+  display: none;
+
+}
 
 .teleprompter-controls > button {
 
   flex:
-    0 0 40px;
+    0 0 42px;
+
+  width: 42px;
+
+  height: 42px;
+
+  min-width: 42px;
+
+  min-height: 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0;
+
+  border-radius: 12px;
+
+  font-size: 20px;
+
+  line-height: 1;
 
 }
 
@@ -2467,10 +2521,14 @@ box-shadow:
   flex:
     0 0 auto;
 
+  height: 42px;
+
   color:
-    rgba(255,255,255,0.82);
+    rgba(255,255,255,0.88);
 
   font-size: 11px;
+
+  white-space: nowrap;
 
 }
 
@@ -2478,7 +2536,10 @@ box-shadow:
 .teleprompter-control
 input[type="range"] {
 
-  width: 92px;
+  width: 86px;
+
+  flex:
+    0 0 86px;
 
 }
 
@@ -2517,22 +2578,27 @@ input[type="range"] {
   }
 
 
-  #teleprompterEditor {
+ #teleprompterEditor {
 
-    min-height: 70px;
+  height: 58px;
 
-    max-height: 28%;
+  min-height: 58px;
 
-  }
+  max-height: 58px;
+
+  flex:
+    0 0 58px;
+
+}
 
 
   .teleprompter-reader {
 
-    padding:
-      24vh
-      18px;
+  padding:
+    18vh
+    18px;
 
-  }
+}
 
 }
 
