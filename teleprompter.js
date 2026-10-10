@@ -238,46 +238,27 @@
       `${fontSize}px`;
 
     /* =======================================================
-   TELEPROMPTER 11B.1
-   TRANSPARÊNCIA REAL DO FUNDO
-   ======================================================= */
+       TELEPROMPTER 11B
+       TRANSPARÊNCIA DA ÁREA DE LEITURA
+       ======================================================= */
 
-if (opacityInput) {
+    if (opacityInput) {
 
-  const opacity = safeNumber(
-    opacityInput.value,
-    30,
-    0,
-    90
-  );
+      const opacity = safeNumber(
+        opacityInput.value,
+        30,
+        0,
+        90
+      );
 
-  opacityInput.value = String(opacity);
+      opacityInput.value = String(opacity);
 
-  const alpha = opacity / 100;
+      reader.style.backgroundColor =
+        `rgba(0, 0, 0, ${opacity / 100})`;
 
-  // Transparência da janela externa
-  const windowPanel =
-    layer.querySelector(".teleprompter-window");
-
-  if (windowPanel) {
-
-    windowPanel.style.backgroundColor =
-      `rgba(12, 12, 14, ${alpha})`;
-
-    // Evita que o desfoque continue escondendo a câmera
-    windowPanel.style.backdropFilter = "none";
-    windowPanel.style.webkitBackdropFilter = "none";
+    }
 
   }
-
-  // Fundo do leitor totalmente transparente.
-  // A opacidade é controlada pela janela externa.
-  reader.style.backgroundColor =
-    "transparent";
-
-}
-  }
-
 
   /* =======================================================
      ANIMAÇÃO
