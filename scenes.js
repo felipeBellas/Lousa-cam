@@ -111,6 +111,7 @@
 
   }
 
+  
   function openTextEditor(elementId) {
 
     const scene = currentScene();
@@ -125,26 +126,105 @@
 
     selectedElementId = elementId;
 
-    // Atualiza o painel existente sem criar
-    // outro sistema de salvamento.
     updateSelectionStyles();
     renderProperties();
 
-    const field = $("scenesElementText");
+    const node = Array.from(
+      document.querySelectorAll(
+        "#scenesStageElements .scenes-element"
+      )
+    ).find(item => item.dataset.id === elementId);
 
-    if (!field) return;
+    if (!node) return;
 
-    // O foco acontece diretamente no gesto
-    // para permitir o teclado do Safari.
-    field.focus({ preventScroll: true });
+    const previous = document.getElementById(
+      "scenesInlineTextEditor"
+    );
 
-    // Posiciona o cursor no final do texto.
+    if (previous) {
+      previous.remove();
+    }
+
+    const rect = node.getBoundingClientRect();
+
+    const editor = document.createElement("textarea");
+
+    editor.id = "scenesInlineTextEditor";
+    editor.value = element.text || "";
+    editor.setAttribute(
+      "aria-label",
+      "Editar texto da cena"
+    );
+
+    Object.assign(editor.style, {
+      position: "fixed",
+      left: `${Math.max(8, rect.left)}px`,
+      top: `${Math.max(8, rect.top)}px`,
+      width: `${Math.max(120, rect.width)}px`,
+      height: `${Math.max(60, rect.height)}px`,
+      zIndex: "99999",
+      padding: "8px",
+      boxSizing: "border-box",
+      background: "#172033",
+      color: element.color || "#ffffff",
+      border: "2px solid #3287ff",
+      borderRadius: "6px",
+      fontSize: "16px",
+      lineHeight: "1.2",
+      resize: "none",
+      outline: "none",
+      touchAction: "auto",
+      userSelect: "text",
+      WebkitUserSelect: "text"
+    });
+
+    [
+      "pointerdown",
+      "pointermove",
+      "pointerup",
+      "click"
+    ].forEach(type => {
+
+      editor.addEventListener(type, event => {
+        event.stopPropagation();
+      });
+
+    });
+
+    editor.addEventListener("input", () => {
+
+      const current = currentScene()?.elements.find(
+        item => item.id === elementId
+      );
+
+      if (!current) return;
+
+      current.text = editor.value;
+
+      const field = $("scenesElementText");
+
+      if (field) {
+        field.value = editor.value;
+      }
+
+      markDirty();
+      renderStage();
+
+    });
+
+    editor.addEventListener("blur", () => {
+      editor.remove();
+    });
+
+    document.body.appendChild(editor);
+
+    editor.focus();
+
     try {
-      const end = field.value.length;
-      field.setSelectionRange(end, end);
+      const end = editor.value.length;
+      editor.setSelectionRange(end, end);
     } catch (error) {
-      // Alguns navegadores podem não aceitar
-      // a seleção programática.
+      // Mantém a edição normalmente.
     }
 
   }
