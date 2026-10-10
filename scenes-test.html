@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lousa Cam — Teste de Cenas</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#10151d;color:#f3f6fa;padding:20px}
+main{max-width:960px;margin:auto}h1{font-size:1.5rem}p{color:#b8c4d4;line-height:1.5}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:15px 0}
+button,select{background:#24364d;color:#fff;border:1px solid #54708c;border-radius:9px;padding:11px;font:inherit}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;border:1px solid #6b788b;border-radius:12px;background-color:#fff;background-image:linear-gradient(45deg,#e4e7ed 25%,transparent 25%),linear-gradient(-45deg,#e4e7ed 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e4e7ed 75%),linear-gradient(-45deg,transparent 75%,#e4e7ed 75%);background-size:28px 28px;background-position:0 0,0 14px,14px -14px,-14px 0}
+#status{white-space:pre-wrap;background:#1d2838;border-radius:9px;padding:12px;min-height:56px}
+small{color:#b8c4d4}a{color:#99c5ff}
+</style>
+</head>
+<body>
+<main>
+<h1>Teste independente — Player e Renderizador</h1>
+<p>Selecione uma apresentação já criada no editor. O fundo quadriculado indica transparência do Canvas. Esta página não modifica os dados nem os arquivos do aplicativo.</p>
+<div class="controls">
+<label for="presentation">Apresentação:</label>
+<select id="presentation"><option value="">Carregando...</option></select>
+<button id="load" type="button">Carregar</button>
+</div>
+<canvas id="canvas" width="1280" height="720" aria-label="Prévia renderizada da cena"></canvas>
+<div class="controls">
+<button id="prev" type="button">◀ Anterior</button>
+<strong id="counter">Nenhuma cena carregada</strong>
+<button id="next" type="button">Próxima ▶</button>
+<button id="reload" type="button">Redesenhar</button>
+</div>
+<pre id="status" role="status">Iniciando diagnóstico...</pre>
+<small>Voltar ao <a href="./scenes.html">editor de Cenas</a>.</small>
+</main>
+<script src="./scenes-storage.js"></script>
+<script src="./scenes-renderer.js"></script>
+<script src="./scenes-player.js"></script>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const status=(message)=>{$('status').textContent=message;};
+const player=window.ScenesPlayer;
+const storage=window.ScenesStorage;
+const renderer=window.ScenesRenderer;
+function update(){const s=player.getState();$('counter').textContent=s.active?`${s.sceneNumber} / ${s.sceneCount} — ${s.sceneTitle}`:'Nenhuma cena carregada';$('prev').disabled=!s.hasPrevious;$('next').disabled=!s.hasNext;$('reload').disabled=!s.active;}
+async function load(){const id=$('presentation').value;if(!id){status('Selecione uma apresentação.');return;}try{status('Carregando apresentação e imagens...');await player.loadPresentation(id);update();const scene=player.getCurrentScene();const images=(scene?.elements||[]).filter(e=>e.type==='image').length;const loaded=(scene?.elements||[]).filter(e=>e.type==='image'&&renderer.getLoadedImage?.(e.blob)).length;status(`Apresentação carregada.\nCena: ${player.getState().sceneTitle}\nImagens na cena: ${images}; imagens prontas: ${loaded}.\nConfira visualmente texto, imagem, forma, posição e transparência.`);}catch(e){status('ERRO: '+e.message);console.error(e);}}
+async function init(){if(!player||!storage||!renderer){status('ERRO: Um ou mais scripts não foram carregados.');return;}player.setCanvas($('canvas'));player.on('scenechange',()=>{update();const s=player.getState();status(`Cena ${s.sceneNumber}/${s.sceneCount}: ${s.sceneTitle}. Confira a renderização.`);});player.on('error',e=>status('ERRO: '+e.message));$('prev').onclick=()=>player.previousScene();$('next').onclick=()=>player.nextScene();$('reload').onclick=()=>{player.render();status('Canvas redesenhado.');};$('load').onclick=load;try{const list=await storage.getPresentations();$('presentation').replaceChildren();for(const item of list){const opt=document.createElement('option');opt.value=item.id;opt.textContent=`${item.title} (${item.scenes.length} cena(s))`;$('presentation').append(opt);}status(list.length?`${list.length} apresentação(ões) encontrada(s). Selecione uma e clique em Carregar.`:'Nenhuma apresentação encontrada neste navegador. Crie uma no editor de Cenas.');if(!list.length){$('load').disabled=true;}}catch(e){status('ERRO ao listar apresentações: '+e.message);console.error(e);}update();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+</body>
+</html>
