@@ -156,27 +156,53 @@
       "Editar texto da cena"
     );
 
+   
     Object.assign(editor.style, {
-      position: "fixed",
-      left: `${Math.max(8, rect.left)}px`,
-      top: `${Math.max(8, rect.top)}px`,
-      width: `${Math.max(120, rect.width)}px`,
-      height: `${Math.max(60, rect.height)}px`,
-      zIndex: "99999",
-      padding: "8px",
+
+      // A caixa acompanha a cena, não a tela.
+      position: "absolute",
+
+      // Mesma posição do elemento original.
+      left: node.style.left,
+      top: node.style.top,
+
+      // Mesmas dimensões do elemento.
+      width: node.style.width,
+      height: node.style.height,
+
+      zIndex: "100",
+
       boxSizing: "border-box",
+      margin: "0",
+      padding: "4px",
+
+      border: "2px solid #3287ff",
+      borderRadius: "4px",
+
       background: "#172033",
       color: element.color || "#ffffff",
-      border: "2px solid #3287ff",
-      borderRadius: "6px",
-      fontSize: "16px",
-      lineHeight: "1.2",
+
+      fontSize: `${Math.max(
+        16,
+        (element.fontSize || 48) *
+        $("scenesStage").getBoundingClientRect().width /
+        BASE_WIDTH
+      )}px`,
+
+      lineHeight: "1.15",
+
       resize: "none",
       outline: "none",
+
       touchAction: "auto",
       userSelect: "text",
-      WebkitUserSelect: "text"
+      WebkitUserSelect: "text",
+
+      transform: node.style.transform,
+      transformOrigin: "center center"
+
     });
+
 
     [
       "pointerdown",
@@ -216,7 +242,7 @@
       editor.remove();
     });
 
-    document.body.appendChild(editor);
+    $("scenesStage").appendChild(editor);
 
     editor.focus();
 
