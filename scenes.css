@@ -1317,3 +1317,35 @@ textarea {
     0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
+
+/* =====================================================
+   LOUSA CAM 2.0 — CENAS
+   AJUSTE DE ROLAGEM NO IPHONE
+
+   Permite rolagem vertical quando o toque
+   começa no fundo da cena.
+
+   Preserva o arraste, a rotação e o
+   redimensionamento dos elementos.
+   ===================================================== */
+
+@media (pointer: coarse) {
+
+  .scenes-stage {
+    touch-action: pan-y;
+  }
+
+  .scenes-stage-background,
+  .scenes-stage-elements {
+    touch-action: pan-y;
+  }
+
+  .scenes-element,
+  .scenes-element-resize,
+  .scenes-element-rotate {
+    touch-action: none;
+  }
+
+}
+
+
