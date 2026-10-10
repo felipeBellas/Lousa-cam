@@ -3,39 +3,51 @@
 
 /* =========================================================
    LOUSA CAM 2.0 — CENAS
-   SCENES.JS — ETAPA 4
+   SCENES.JS — ETAPA 8
 
-   Editor independente de apresentações.
-   Integração com ScenesStorage.
+   Editor independente.
 
-   Não interfere na câmera, Pencil ou gravação.
+   CORREÇÕES:
+   - Arrastar elementos com mouse e toque
+   - Redimensionar elementos
+   - Girar elementos
+   - Seleção sem interromper o movimento
+   - Persistência de imagens Blob
+   - Salvamento automático controlado
+   - Visualização de apresentações
+   - Compatibilidade com scenes-storage.js
+
+   Não modifica o aplicativo principal.
    ========================================================= */
 
 (() => {
 
   const $ = id => document.getElementById(id);
-
   const Storage = window.ScenesStorage;
 
   const BASE_WIDTH = 1280;
   const BASE_HEIGHT = 720;
+
+  const MAX_IMAGE_SIZE = 12 * 1024 * 1024;
 
   let presentation = null;
   let currentSceneIndex = 0;
   let selectedElementId = null;
 
   let dirty = false;
-  let saveTimer = null;
-  let saving = false;
   let revision = 0;
+  let saving = false;
+  let saveTimer = null;
+  let savePromise = null;
 
-  let dragging = null;
+  let drag = null;
   let previewIndex = 0;
   let confirmCallback = null;
 
   let zoom = 100;
+  let toastTimer = null;
 
-  const objectURLs = [];
+  const imageURLs = new Map();
 
   /* =====================================================
      UTILITÁRIOS
@@ -53,33 +65,34 @@
     return Math.min(max, Math.max(min, value));
   }
 
-  function setText(id, value) {
-    const element = $(id);
+  function number(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  }
 
-    if (element) {
-      element.textContent = value;
-    }
+  function setText(id, value) {
+    const node = $(id);
+    if (node) node.textContent = value;
+  }
+
+  function setStatus(value) {
+    setText("scenesSaveStatus", value);
   }
 
   function toast(message) {
 
-    const element = $("scenesToast");
+    const node = $("scenesToast");
+    if (!node) return;
 
-    if (!element) return;
+    node.textContent = message;
+    node.classList.add("show");
 
-    element.textContent = message;
-    element.classList.add("show");
+    clearTimeout(toastTimer);
 
-    clearTimeout(toast.timer);
+    toastTimer = setTimeout(() => {
+      node.classList.remove("show");
+    }, 2600);
 
-    toast.timer = setTimeout(() => {
-      element.classList.remove("show");
-    }, 2500);
-
-  }
-
-  function setStatus(message) {
-    setText("scenesSaveStatus", message);
   }
 
   function currentScene() {
@@ -102,7 +115,7 @@
 
   }
 
-  function newScene(number) {
+  function createScene(number) {
 
     return {
       id: uid("scene"),
@@ -116,11 +129,32 @@
 
   }
 
-  function releaseObjectURLs() {
+  /* =====================================================
+     IMAGENS — URL TEMPORÁRIA
+     ===================================================== */
 
-    while (objectURLs.length) {
-      URL.revokeObjectURL(objectURLs.pop());
+  function getImageURL(blob) {
+
+    if (!(blob instanceof Blob)) return "";
+
+    let url = imageURLs.get(blob);
+
+    if (!url) {
+      url = URL.createObjectURL(blob);
+      imageURLs.set(blob, url);
     }
+
+    return url;
+
+  }
+
+  function releaseImageURLs() {
+
+    for (const url of imageURLs.values()) {
+      URL.revokeObjectURL(url);
+    }
+
+    imageURLs.clear();
 
   }
 
@@ -135,19 +169,27 @@
     dirty = true;
     revision++;
 
-    setStatus("Alterações não salvas");
+    setStatus("Não salvo");
 
     clearTimeout(saveTimer);
 
     saveTimer = setTimeout(() => {
-      savePresentation();
-    }, 1200);
+      savePresentation().catch(error => {
+        toast(error.message);
+      });
+    }, 1000);
 
   }
 
   async function savePresentation() {
 
-    if (!presentation || !dirty || saving) return;
+    if (!presentation || !dirty) {
+      return savePromise;
+    }
+
+    if (saving) {
+      return savePromise;
+    }
 
     clearTimeout(saveTimer);
 
@@ -159,40 +201,58 @@
 
     setStatus("Salvando...");
 
-    try {
+    savePromise = (async () => {
 
-      const saved = await Storage.savePresentation(snapshot);
+      try {
 
-      if (
-        presentation &&
-        presentation.id === savedId
-      ) {
+        const saved = await Storage.savePresentation(snapshot);
 
-        presentation.createdAt = saved.createdAt;
-        presentation.updatedAt = saved.updatedAt;
+        if (
+          presentation &&
+          presentation.id === savedId
+        ) {
 
-        if (revision === savedRevision) {
-          dirty = false;
-          setStatus("Salvo");
+          presentation.createdAt = saved.createdAt;
+          presentation.updatedAt = saved.updatedAt;
+
+          if (revision === savedRevision) {
+            dirty = false;
+            setStatus("Salvo");
+          }
+
+        }
+
+      } catch (error) {
+
+        setStatus("Erro ao salvar");
+        throw error;
+
+      } finally {
+
+        saving = false;
+
+        if (
+          dirty &&
+          presentation &&
+          presentation.id === savedId &&
+          revision !== savedRevision
+        ) {
+
+          clearTimeout(saveTimer);
+
+          saveTimer = setTimeout(() => {
+            savePresentation().catch(error => {
+              toast(error.message);
+            });
+          }, 700);
+
         }
 
       }
 
-    } catch (error) {
+    })();
 
-      setStatus("Erro ao salvar");
-      toast(error.message);
-
-    } finally {
-
-      saving = false;
-
-      if (dirty && presentation?.id === savedId) {
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(savePresentation, 700);
-      }
-
-    }
+    return savePromise;
 
   }
 
@@ -200,64 +260,38 @@
 
     clearTimeout(saveTimer);
 
-    while (saving) {
-      await new Promise(resolve => setTimeout(resolve, 50));
+    if (savePromise && saving) {
+      await savePromise;
     }
 
     if (dirty) {
-
       await savePresentation();
+    }
 
-      while (saving) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-
-      if (dirty) {
-        throw new Error("Não foi possível salvar as alterações.");
-      }
-
+    if (dirty) {
+      throw new Error(
+        "Ainda existem alterações não salvas."
+      );
     }
 
   }
 
   /* =====================================================
-     BIBLIOTECA DE APRESENTAÇÕES
+     BIBLIOTECA
      ===================================================== */
-
-  async function showLibrary() {
-
-    if (presentation) {
-      await flushSave();
-    }
-
-    presentation = null;
-    selectedElementId = null;
-    dirty = false;
-
-    $("scenesEditorView").hidden = true;
-    $("scenesLibraryView").hidden = false;
-
-    $("scenesSaveButton").disabled = true;
-
-    await renderLibrary();
-
-  }
 
   async function renderLibrary() {
 
-    const presentations = await Storage.getPresentations();
+    const items = await Storage.getPresentations();
 
     const query = $("scenesSearchInput")
-      .value
-      .trim()
-      .toLocaleLowerCase("pt-BR");
+      .value.trim().toLocaleLowerCase("pt-BR");
 
-    const filtered = presentations.filter(item =>
+    const filtered = items.filter(item =>
       item.title.toLocaleLowerCase("pt-BR").includes(query)
     );
 
     const grid = $("scenesPresentationGrid");
-
     grid.replaceChildren();
 
     $("scenesLibraryEmpty").hidden = filtered.length > 0;
@@ -290,27 +324,27 @@
       const actions = document.createElement("div");
       actions.className = "scenes-presentation-actions";
 
-      function button(label, callback, extraClass = "") {
+      function addButton(label, callback, extra = "") {
 
-        const element = document.createElement("button");
+        const button = document.createElement("button");
 
-        element.type = "button";
-        element.className = `scenes-button ${extraClass}`;
-        element.textContent = label;
+        button.type = "button";
+        button.className = `scenes-button ${extra}`;
+        button.textContent = label;
 
-        element.addEventListener("click", callback);
+        button.addEventListener("click", callback);
 
-        actions.appendChild(element);
+        actions.appendChild(button);
 
       }
 
-      button(
+      addButton(
         "Abrir",
         () => openPresentation(item.id),
         "scenes-button-primary"
       );
 
-      button("Duplicar", async () => {
+      addButton("Duplicar", async () => {
 
         try {
           await Storage.duplicatePresentation(item.id);
@@ -322,15 +356,18 @@
 
       });
 
-      button("Excluir", () => {
+      addButton("Excluir", () => {
 
         askConfirmation(
           "Excluir apresentação",
           `Excluir "${item.title}" permanentemente?`,
           async () => {
+
             await Storage.deletePresentation(item.id);
             await renderLibrary();
+
             toast("Apresentação excluída.");
+
           }
         );
 
@@ -338,6 +375,7 @@
 
       info.append(title, meta, actions);
       card.append(thumbnail, info);
+
       grid.appendChild(card);
 
     }
@@ -351,7 +389,7 @@
       const created = await Storage.createPresentation({
         title: "Nova apresentação",
         aspectRatio: "16:9",
-        scenes: [newScene(1)]
+        scenes: [createScene(1)]
       });
 
       await openPresentation(created.id);
@@ -366,6 +404,12 @@
 
     try {
 
+      if (presentation) {
+        await flushSave();
+      }
+
+      releaseImageURLs();
+
       const loaded = await Storage.getPresentation(id);
 
       if (!loaded) {
@@ -377,16 +421,44 @@
       selectedElementId = null;
 
       dirty = false;
+      revision = 0;
 
       $("scenesLibraryView").hidden = true;
       $("scenesEditorView").hidden = false;
 
       $("scenesSaveButton").disabled = false;
-      $("scenesPresentationTitle").value = loaded.title;
+
+      $("scenesPresentationTitle").value =
+        presentation.title;
 
       setStatus("Salvo");
 
       renderEditor();
+
+    } catch (error) {
+      toast(error.message);
+    }
+
+  }
+
+  async function showLibrary() {
+
+    try {
+
+      await flushSave();
+
+      releaseImageURLs();
+
+      presentation = null;
+      selectedElementId = null;
+      drag = null;
+
+      $("scenesEditorView").hidden = true;
+      $("scenesLibraryView").hidden = false;
+
+      $("scenesSaveButton").disabled = true;
+
+      await renderLibrary();
 
     } catch (error) {
       toast(error.message);
@@ -403,7 +475,7 @@
     if (!presentation) return;
 
     presentation.scenes.push(
-      newScene(presentation.scenes.length + 1)
+      createScene(presentation.scenes.length + 1)
     );
 
     currentSceneIndex = presentation.scenes.length - 1;
@@ -435,7 +507,6 @@
   function duplicateScene() {
 
     const scene = currentScene();
-
     if (!scene) return;
 
     const copy = clone(scene);
@@ -474,7 +545,7 @@
         presentation.scenes.splice(currentSceneIndex, 1);
 
         if (!presentation.scenes.length) {
-          presentation.scenes.push(newScene(1));
+          presentation.scenes.push(createScene(1));
         }
 
         currentSceneIndex = Math.min(
@@ -499,7 +570,6 @@
   function addElement(type, properties = {}) {
 
     const scene = currentScene();
-
     if (!scene) return;
 
     const element = {
@@ -515,7 +585,6 @@
     };
 
     scene.elements.push(element);
-
     selectedElementId = element.id;
 
     markDirty();
@@ -535,7 +604,6 @@
   function duplicateElement() {
 
     const element = selectedElement();
-
     if (!element) return;
 
     const copy = clone(element);
@@ -586,8 +654,8 @@
       return;
     }
 
-    if (file.size > 12 * 1024 * 1024) {
-      toast("Imagem acima do limite de 12 MB.");
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast("Imagem acima de 12 MB.");
       return;
     }
 
@@ -602,21 +670,33 @@
   }
 
   /* =====================================================
-     RENDERIZAÇÃO VISUAL
+     FUNDO
      ===================================================== */
 
   function applyBackground(node, scene) {
 
     if (scene.background?.type === "solid") {
-      node.style.backgroundColor =
+
+      node.style.background =
         scene.background.color || "#ffffff";
+
     } else {
-      node.style.backgroundColor = "transparent";
+
+      node.style.background = "transparent";
+
     }
 
   }
 
-  function createElementNode(element, editable, stageWidth) {
+  /* =====================================================
+     ELEMENTOS VISUAIS
+     ===================================================== */
+
+  function createElementNode(
+    element,
+    editable,
+    stageWidth
+  ) {
 
     const node = document.createElement("div");
 
@@ -638,9 +718,13 @@
     node.style.transform =
       `rotate(${element.rotation || 0}deg)`;
 
-    node.style.opacity = String(element.opacity ?? 1);
+    node.style.opacity =
+      String(element.opacity ?? 1);
 
-    if (editable && element.id === selectedElementId) {
+    if (
+      editable &&
+      element.id === selectedElementId
+    ) {
       node.classList.add("selected");
     }
 
@@ -651,10 +735,12 @@
       content.className = "scenes-element-text";
       content.textContent = element.text || "";
 
-      content.style.color = element.color || "#ffffff";
+      content.style.color =
+        element.color || "#ffffff";
 
       content.style.fontSize =
-        `${(element.fontSize || 48) * stageWidth / BASE_WIDTH}px`;
+        `${(element.fontSize || 48) *
+          stageWidth / BASE_WIDTH}px`;
 
       node.appendChild(content);
 
@@ -668,12 +754,7 @@
       image.alt = "";
 
       if (element.blob instanceof Blob) {
-
-        const url = URL.createObjectURL(element.blob);
-
-        objectURLs.push(url);
-        image.src = url;
-
+        image.src = getImageURL(element.blob);
       }
 
       node.appendChild(image);
@@ -685,6 +766,7 @@
       const shape = document.createElement("div");
 
       shape.className = "scenes-element-shape";
+
       shape.style.backgroundColor =
         element.color || "#3287ff";
 
@@ -704,7 +786,15 @@
     if (editable) {
 
       node.addEventListener("pointerdown", event => {
-        startDrag(event, element, "move");
+
+        if (event.target.closest(
+          ".scenes-element-resize, .scenes-element-rotate"
+        )) {
+          return;
+        }
+
+        startDrag(event, element.id, "move");
+
       });
 
       if (element.id === selectedElementId) {
@@ -713,14 +803,14 @@
         resize.className = "scenes-element-resize";
 
         resize.addEventListener("pointerdown", event => {
-          startDrag(event, element, "resize");
+          startDrag(event, element.id, "resize");
         });
 
         const rotate = document.createElement("span");
         rotate.className = "scenes-element-rotate";
 
         rotate.addEventListener("pointerdown", event => {
-          startDrag(event, element, "rotate");
+          startDrag(event, element.id, "rotate");
         });
 
         node.append(resize, rotate);
@@ -733,13 +823,14 @@
 
   }
 
+  /* =====================================================
+     RENDERIZAÇÃO DO PALCO
+     ===================================================== */
+
   function renderStage() {
 
     const scene = currentScene();
-
     if (!scene) return;
-
-    releaseObjectURLs();
 
     const stage = $("scenesStage");
     const layer = $("scenesStageElements");
@@ -748,7 +839,8 @@
 
     layer.replaceChildren();
 
-    const stageWidth = stage.getBoundingClientRect().width;
+    const stageWidth =
+      stage.getBoundingClientRect().width;
 
     for (const element of scene.elements) {
 
@@ -767,7 +859,6 @@
   function renderSlides() {
 
     const list = $("scenesSlideList");
-
     list.replaceChildren();
 
     presentation.scenes.forEach((scene, index) => {
@@ -787,13 +878,12 @@
       const name = document.createElement("div");
       name.className = "scenes-slide-name";
 
-      name.textContent = `${index + 1}. ${scene.title}`;
+      name.textContent =
+        `${index + 1}. ${scene.title}`;
 
       button.append(thumbnail, name);
 
-      button.addEventListener("click", () => {
-        selectScene(index);
-      });
+      button.onclick = () => selectScene(index);
 
       list.appendChild(button);
 
@@ -806,7 +896,6 @@
   function renderProperties() {
 
     const scene = currentScene();
-
     if (!scene) return;
 
     $("scenesSceneTitle").value = scene.title;
@@ -863,24 +952,31 @@
   }
 
   /* =====================================================
-     MOVIMENTAÇÃO, REDIMENSIONAMENTO E ROTAÇÃO
+     COORDENADAS
      ===================================================== */
 
   function pointerPosition(event) {
 
-    const rect = $("scenesStage").getBoundingClientRect();
+    const rect =
+      $("scenesStage").getBoundingClientRect();
 
     return {
-      x: (event.clientX - rect.left) /
+      x:
+        (event.clientX - rect.left) /
         rect.width * BASE_WIDTH,
 
-      y: (event.clientY - rect.top) /
+      y:
+        (event.clientY - rect.top) /
         rect.height * BASE_HEIGHT
     };
 
   }
 
-  function startDrag(event, element, mode) {
+  /* =====================================================
+     MOVIMENTAÇÃO CORRIGIDA
+     ===================================================== */
+
+  function startDrag(event, elementId, mode) {
 
     if (
       event.pointerType === "mouse" &&
@@ -889,46 +985,101 @@
       return;
     }
 
+    const scene = currentScene();
+
+    const element = scene?.elements.find(
+      item => item.id === elementId
+    );
+
+    if (!element) return;
+
     event.preventDefault();
     event.stopPropagation();
 
-    if (selectedElementId !== element.id) {
-      selectElement(element.id);
-    }
+    selectedElementId = elementId;
 
     const position = pointerPosition(event);
 
-    dragging = {
-      id: element.id,
+    const original = {
+      x: element.x,
+      y: element.y,
+      width: element.width,
+      height: element.height,
+      rotation: element.rotation || 0
+    };
+
+    const centerX =
+      original.x + original.width / 2;
+
+    const centerY =
+      original.y + original.height / 2;
+
+    const startAngle = Math.atan2(
+      position.y - centerY,
+      position.x - centerX
+    );
+
+    drag = {
+      elementId,
       pointerId: event.pointerId,
       mode,
       startX: position.x,
       startY: position.y,
-      original: { ...element }
+      startAngle,
+      original
     };
 
-    $("scenesStage").setPointerCapture(event.pointerId);
+    $("scenesStage").setPointerCapture(
+      event.pointerId
+    );
+
+    // Atualiza apenas a seleção visual.
+    // Não reconstrói o elemento neste momento.
+    updateSelectionStyles();
+
+    renderProperties();
+
+  }
+
+  function updateSelectionStyles() {
+
+    document.querySelectorAll(
+      "#scenesStageElements .scenes-element"
+    ).forEach(node => {
+
+      node.classList.toggle(
+        "selected",
+        node.dataset.id === selectedElementId
+      );
+
+    });
 
   }
 
   function updateDrag(event) {
 
-    if (!dragging) return;
+    if (!drag) return;
 
-    if (event.pointerId !== dragging.pointerId) return;
+    if (event.pointerId !== drag.pointerId) {
+      return;
+    }
 
-    const element = selectedElement();
+    const scene = currentScene();
 
-    if (!element || element.id !== dragging.id) return;
+    const element = scene?.elements.find(
+      item => item.id === drag.elementId
+    );
+
+    if (!element) return;
 
     const position = pointerPosition(event);
 
-    const dx = position.x - dragging.startX;
-    const dy = position.y - dragging.startY;
+    const dx = position.x - drag.startX;
+    const dy = position.y - drag.startY;
 
-    const original = dragging.original;
+    const original = drag.original;
 
-    if (dragging.mode === "move") {
+    if (drag.mode === "move") {
 
       element.x = clamp(
         original.x + dx,
@@ -944,7 +1095,7 @@
 
     }
 
-    if (dragging.mode === "resize") {
+    if (drag.mode === "resize") {
 
       element.width = clamp(
         original.width + dx,
@@ -960,7 +1111,7 @@
 
     }
 
-    if (dragging.mode === "rotate") {
+    if (drag.mode === "rotate") {
 
       const centerX =
         original.x + original.width / 2;
@@ -968,27 +1119,57 @@
       const centerY =
         original.y + original.height / 2;
 
-      element.rotation = Math.round(
-        Math.atan2(
-          position.y - centerY,
-          position.x - centerX
-        ) * 180 / Math.PI + 90
+      const angle = Math.atan2(
+        position.y - centerY,
+        position.x - centerX
       );
+
+      element.rotation =
+        original.rotation +
+        (angle - drag.startAngle) *
+        180 / Math.PI;
+
+    }
+
+    const node = document.querySelector(
+      `#scenesStageElements [data-id="${element.id}"]`
+    );
+
+    if (node) {
+
+      node.style.left =
+        `${element.x / BASE_WIDTH * 100}%`;
+
+      node.style.top =
+        `${element.y / BASE_HEIGHT * 100}%`;
+
+      node.style.width =
+        `${element.width / BASE_WIDTH * 100}%`;
+
+      node.style.height =
+        `${element.height / BASE_HEIGHT * 100}%`;
+
+      node.style.transform =
+        `rotate(${element.rotation || 0}deg)`;
 
     }
 
     markDirty();
-    renderStage();
 
   }
 
   function stopDrag(event) {
 
-    if (!dragging) return;
+    if (!drag) return;
 
-    if (event.pointerId !== dragging.pointerId) return;
+    if (event.pointerId !== drag.pointerId) {
+      return;
+    }
 
-    dragging = null;
+    drag = null;
+
+    renderStage();
+    renderProperties();
 
   }
 
@@ -1010,13 +1191,10 @@
 
   function renderPreview() {
 
-    if (!presentation) return;
-
-    const scene = presentation.scenes[previewIndex];
+    const scene =
+      presentation?.scenes[previewIndex];
 
     if (!scene) return;
-
-    releaseObjectURLs();
 
     const stage = $("scenesPreviewStage");
 
@@ -1024,7 +1202,8 @@
 
     applyBackground(stage, scene);
 
-    const width = stage.getBoundingClientRect().width;
+    const width =
+      stage.getBoundingClientRect().width;
 
     for (const element of scene.elements) {
 
@@ -1080,7 +1259,7 @@
   }
 
   /* =====================================================
-     PROPRIEDADES DOS ELEMENTOS
+     PROPRIEDADES
      ===================================================== */
 
   function changeElementProperty(property, value) {
@@ -1092,6 +1271,21 @@
     element[property] = value;
 
     markDirty();
+    renderStage();
+
+  }
+
+  /* =====================================================
+     ZOOM
+     ===================================================== */
+
+  function applyZoom() {
+
+    $("scenesStage").style.width =
+      `${zoom}%`;
+
+    setText("scenesZoomLabel", `${zoom}%`);
+
     renderStage();
 
   }
@@ -1109,18 +1303,17 @@
       renderLibrary().catch(error => toast(error.message));
     };
 
-    $("scenesLibraryButton").onclick = () => {
-      showLibrary().catch(error => toast(error.message));
-    };
+    $("scenesLibraryButton").onclick = showLibrary;
 
-    $("scenesSaveButton").onclick = savePresentation;
+    $("scenesSaveButton").onclick = () => {
+      savePresentation().catch(error => toast(error.message));
+    };
 
     $("scenesPresentationTitle").oninput = event => {
 
       if (!presentation) return;
 
       presentation.title = event.target.value;
-
       markDirty();
 
     };
@@ -1136,7 +1329,6 @@
     $("scenesSceneTitle").oninput = event => {
 
       const scene = currentScene();
-
       if (!scene) return;
 
       scene.title = event.target.value;
@@ -1151,7 +1343,6 @@
     $("scenesBackgroundType").onchange = event => {
 
       const scene = currentScene();
-
       if (!scene) return;
 
       scene.background.type = event.target.value;
@@ -1165,7 +1356,6 @@
     $("scenesBackgroundColor").oninput = event => {
 
       const scene = currentScene();
-
       if (!scene) return;
 
       scene.background.color = event.target.value;
@@ -1230,7 +1420,7 @@
 
       changeElementProperty(
         "fontSize",
-        clamp(Number(event.target.value) || 48, 8, 300)
+        clamp(number(event.target.value, 48), 8, 300)
       );
 
     };
@@ -1239,7 +1429,7 @@
 
       changeElementProperty(
         "opacity",
-        Number(event.target.value) / 100
+        number(event.target.value, 100) / 100
       );
 
     };
@@ -1248,7 +1438,7 @@
 
       changeElementProperty(
         "rotation",
-        Number(event.target.value) || 0
+        number(event.target.value, 0)
       );
 
     };
@@ -1270,10 +1460,14 @@
     stage.addEventListener("pointermove", updateDrag);
     stage.addEventListener("pointerup", stopDrag);
     stage.addEventListener("pointercancel", stopDrag);
+    stage.addEventListener("lostpointercapture", () => {
+      drag = null;
+    });
 
     $("scenesPreviewButton").onclick = openPreview;
 
-    $("scenesClosePreviewButton").onclick = closePreview;
+    $("scenesClosePreviewButton").onclick =
+      closePreview;
 
     $("scenesPreviousPreviewButton").onclick = () => {
 
@@ -1296,20 +1490,16 @@
 
     };
 
-    $("scenesConfirmCancel").onclick = closeConfirmation;
+    $("scenesConfirmCancel").onclick =
+      closeConfirmation;
 
     $("scenesConfirmAccept").onclick = async () => {
 
       const callback = confirmCallback;
-
       closeConfirmation();
 
       try {
-
-        if (callback) {
-          await callback();
-        }
-
+        if (callback) await callback();
       } catch (error) {
         toast(error.message);
       }
@@ -1384,19 +1574,14 @@
 
     });
 
-  }
+    window.addEventListener("beforeunload", event => {
 
-  /* =====================================================
-     ZOOM
-     ===================================================== */
+      if (!dirty) return;
 
-  function applyZoom() {
+      event.preventDefault();
+      event.returnValue = "";
 
-    $("scenesStage").style.width = `${zoom}%`;
-
-    setText("scenesZoomLabel", `${zoom}%`);
-
-    renderStage();
+    });
 
   }
 
@@ -1407,11 +1592,10 @@
   async function initialize() {
 
     if (!Storage) {
-
-      toast("Erro: scenes-storage.js não foi carregado.");
-
+      console.error(
+        "[Cenas] scenes-storage.js não carregado."
+      );
       return;
-
     }
 
     bindEvents();
@@ -1424,15 +1608,23 @@
 
     } catch (error) {
 
-      toast(`Erro ao iniciar Cenas: ${error.message}`);
+      toast(`Erro ao iniciar: ${error.message}`);
 
     }
 
   }
 
-  document.addEventListener(
-    "DOMContentLoaded",
-    initialize
-  );
+  if (document.readyState === "loading") {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      initialize
+    );
+
+  } else {
+
+    initialize();
+
+  }
 
 })();
