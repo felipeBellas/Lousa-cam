@@ -235,7 +235,13 @@
     readerText.style.fontSize =
       `${fontSize}px`;
 
-     if (opacityInput) {
+    /* =======================================================
+   TELEPROMPTER 11B.1
+   TRANSPARÊNCIA REAL DO FUNDO
+   ======================================================= */
+
+if (opacityInput) {
+
   const opacity = safeNumber(
     opacityInput.value,
     30,
@@ -245,10 +251,29 @@
 
   opacityInput.value = String(opacity);
 
-  reader.style.backgroundColor =
-    `rgba(0, 0, 0, ${opacity / 100})`;
-}
+  const alpha = opacity / 100;
 
+  // Transparência da janela externa
+  const windowPanel =
+    layer.querySelector(".teleprompter-window");
+
+  if (windowPanel) {
+
+    windowPanel.style.backgroundColor =
+      `rgba(12, 12, 14, ${alpha})`;
+
+    // Evita que o desfoque continue escondendo a câmera
+    windowPanel.style.backdropFilter = "none";
+    windowPanel.style.webkitBackdropFilter = "none";
+
+  }
+
+  // Fundo do leitor totalmente transparente.
+  // A opacidade é controlada pela janela externa.
+  reader.style.backgroundColor =
+    "transparent";
+
+}
   }
 
 
