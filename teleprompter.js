@@ -75,6 +75,11 @@
   );
    const editButton =
   document.getElementById("teleprompterEdit");
+   
+   /* TELEPROMPTER 11B.3 — LARGURA */
+
+const widthInput =
+  document.getElementById("teleprompterWidth");
 
 
   /* =======================================================
