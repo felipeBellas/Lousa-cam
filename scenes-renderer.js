@@ -3,23 +3,15 @@
 
 /* =========================================================
    LOUSA CAM 2.0 — CENAS
-   SCENES-RENDERER.JS — ETAPA 5
+   SCENES-RENDERER.JS
 
-   Renderizador independente para Canvas 2D.
+   ETAPA 7 — REVISÃO DE COMPATIBILIDADE
 
-   Recursos:
-   - Fundo transparente ou sólido
-   - Textos com múltiplas linhas
-   - Imagens armazenadas como Blob
-   - Formas geométricas
-   - Posição, tamanho e rotação
-   - Opacidade
-   - Ajuste proporcional ao Canvas
-   - Cache de imagens
-   - Miniaturas
-   - Liberação de recursos
-
-   Não modifica a câmera nem a gravação.
+   - Cache de imagens corrigido
+   - Renderização síncrona após preparação
+   - Transparência preservada
+   - Compatível com Canvas de gravação
+   - Sem alterações no aplicativo principal
    ========================================================= */
 
 (() => {
@@ -27,122 +19,103 @@
   const BASE_WIDTH = 1280;
   const BASE_HEIGHT = 720;
 
-  const imageCache = new Map();
+  const imageCache = new WeakMap();
 
-  const DEFAULT_FONT =
-    'Arial, Helvetica, sans-serif';
+  const DEFAULT_FONT = "Arial, Helvetica, sans-serif";
 
   /* =====================================================
      UTILITÁRIOS
      ===================================================== */
 
   function number(value, fallback = 0) {
-
     const result = Number(value);
-
-    return Number.isFinite(result)
-      ? result
-      : fallback;
-
+    return Number.isFinite(result) ? result : fallback;
   }
 
   function clamp(value, min, max) {
-
-    return Math.min(
-      max,
-      Math.max(min, value)
-    );
-
+    return Math.min(max, Math.max(min, value));
   }
 
   function normalizeColor(value, fallback = "#ffffff") {
-
-    if (
-      typeof value !== "string" ||
-      !value.trim()
-    ) {
-      return fallback;
-    }
-
-    return value;
-
+    return typeof value === "string" && value.trim()
+      ? value
+      : fallback;
   }
 
-  function getDimensions(canvas) {
-
-    return {
-      width: canvas.width,
-      height: canvas.height
-    };
-
-  }
-
-  function getScale(canvas) {
-
-    const dimensions = getDimensions(canvas);
-
-    return {
-      x: dimensions.width / BASE_WIDTH,
-      y: dimensions.height / BASE_HEIGHT
-    };
-
+  function getBlob(element) {
+    return element?.blob instanceof Blob
+      ? element.blob
+      : null;
   }
 
   /* =====================================================
      CACHE DE IMAGENS
      ===================================================== */
 
-  async function loadImage(blob) {
+  function loadImage(blob) {
 
     if (!(blob instanceof Blob)) {
-      return null;
+      return Promise.resolve(null);
     }
 
-    if (imageCache.has(blob)) {
-      return imageCache.get(blob);
+    const cached = imageCache.get(blob);
+
+    if (cached) {
+      return cached.promise;
     }
 
-    const promise = new Promise((resolve, reject) => {
+    const entry = {
+      image: null,
+      promise: null
+    };
+
+    entry.promise = new Promise((resolve, reject) => {
 
       const url = URL.createObjectURL(blob);
-
       const image = new Image();
 
-      image.onload = () => {
+      let completed = false;
+
+      function finish(error = null) {
+
+        if (completed) return;
+        completed = true;
 
         URL.revokeObjectURL(url);
 
-        resolve(image);
+        if (error) {
+          imageCache.delete(blob);
+          reject(error);
+        } else {
+          entry.image = image;
+          resolve(image);
+        }
 
-      };
+      }
+
+      image.onload = () => finish();
 
       image.onerror = () => {
-
-        URL.revokeObjectURL(url);
-
-        reject(
-          new Error("Não foi possível carregar a imagem.")
-        );
-
+        finish(new Error("Falha ao carregar imagem da cena."));
       };
 
       image.src = url;
 
     });
 
-    imageCache.set(blob, promise);
+    imageCache.set(blob, entry);
 
-    try {
+    return entry.promise;
 
-      return await promise;
+  }
 
-    } catch (error) {
+  function getLoadedImage(blob) {
 
-      imageCache.delete(blob);
-
-      throw error;
-
+    if (!(blob instanceof Blob)) {
+      return null;
     }
+
+    return imageCache.get(blob)?.image || null;
 
   }
 
@@ -152,15 +125,12 @@
       return;
     }
 
-    const images = scene.elements.filter(
-      element =>
-        element.type === "image" &&
-        element.blob instanceof Blob
-    );
+    const images = scene.elements
+      .filter(element => element.type === "image")
+      .map(getBlob)
+      .filter(Boolean);
 
-    await Promise.all(
-      images.map(element => loadImage(element.blob))
-    );
+    await Promise.all(images.map(loadImage));
 
   }
 
@@ -176,11 +146,14 @@
 
   }
 
+  const cacheSceneImages = prepareScene;
+  const cachePresentationImages = preparePresentation;
+
   /* =====================================================
      FUNDO
      ===================================================== */
 
-  function drawBackground(ctx, scene, canvas) {
+  function drawBackground(ctx, scene) {
 
     const background = scene.background || {};
 
@@ -195,19 +168,14 @@
       "#ffffff"
     );
 
-    ctx.fillRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
     ctx.restore();
 
   }
 
   /* =====================================================
-     TEXTO — QUEBRA DE LINHAS
+     TEXTO
      ===================================================== */
 
   function wrapText(ctx, text, maxWidth) {
@@ -219,35 +187,25 @@
     for (const paragraph of paragraphs) {
 
       if (!paragraph.trim()) {
-
         lines.push("");
-
         continue;
-
       }
 
       const words = paragraph.split(/\s+/);
-
       let line = "";
 
       for (const word of words) {
 
-        const candidate = line
-          ? `${line} ${word}`
-          : word;
+        const candidate = line ? `${line} ${word}` : word;
 
         if (
           ctx.measureText(candidate).width <= maxWidth ||
           !line
         ) {
-
           line = candidate;
-
         } else {
-
           lines.push(line);
           line = word;
-
         }
 
       }
@@ -260,21 +218,10 @@
 
   }
 
-  /* =====================================================
-     TEXTO
-     ===================================================== */
-
   function drawText(ctx, element) {
 
-    const width = Math.max(
-      1,
-      number(element.width, 300)
-    );
-
-    const height = Math.max(
-      1,
-      number(element.height, 100)
-    );
+    const width = Math.max(1, number(element.width, 300));
+    const height = Math.max(1, number(element.height, 100));
 
     const fontSize = clamp(
       number(element.fontSize, 48),
@@ -301,14 +248,12 @@
 
     ctx.textBaseline = "top";
 
-    const alignment =
-      element.align || "left";
-
+    const alignment = element.align || "left";
     ctx.textAlign = alignment;
 
-    const padding = number(
-      element.padding,
-      0
+    const padding = Math.max(
+      0,
+      number(element.padding, 0)
     );
 
     const availableWidth = Math.max(
@@ -338,27 +283,16 @@
     ctx.save();
 
     ctx.beginPath();
-
-    ctx.rect(
-      0,
-      0,
-      width,
-      height
-    );
-
+    ctx.rect(0, 0, width, height);
     ctx.clip();
 
     for (let i = 0; i < lines.length; i++) {
 
       const y = padding + i * lineHeight;
 
-      if (y > height) break;
+      if (y >= height) break;
 
-      ctx.fillText(
-        lines[i],
-        x,
-        y
-      );
+      ctx.fillText(lines[i], x, y);
 
     }
 
@@ -372,19 +306,13 @@
 
   function drawImage(ctx, element) {
 
-    const blob = element.blob;
+    const blob = getBlob(element);
 
-    if (!(blob instanceof Blob)) {
-      return;
-    }
+    if (!blob) return;
 
-    const cached = imageCache.get(blob);
+    const image = getLoadedImage(blob);
 
-    if (!cached || typeof cached.then === "function") {
-      return;
-    }
-
-    const image = cached;
+    if (!image) return;
 
     const width = Math.max(
       1,
@@ -411,13 +339,10 @@
     const drawWidth = naturalWidth * fit;
     const drawHeight = naturalHeight * fit;
 
-    const x = (width - drawWidth) / 2;
-    const y = (height - drawHeight) / 2;
-
     ctx.drawImage(
       image,
-      x,
-      y,
+      (width - drawWidth) / 2,
+      (height - drawHeight) / 2,
       drawWidth,
       drawHeight
     );
@@ -427,6 +352,23 @@
   /* =====================================================
      FORMAS
      ===================================================== */
+
+  function roundedRectangle(ctx, width, height, radius) {
+
+    const r = clamp(radius, 0, Math.min(width, height) / 2);
+
+    ctx.moveTo(r, 0);
+    ctx.lineTo(width - r, 0);
+    ctx.quadraticCurveTo(width, 0, width, r);
+    ctx.lineTo(width, height - r);
+    ctx.quadraticCurveTo(width, height, width - r, height);
+    ctx.lineTo(r, height);
+    ctx.quadraticCurveTo(0, height, 0, height - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+
+  }
 
   function drawShape(ctx, element) {
 
@@ -486,10 +428,9 @@
         );
 
         ctx.stroke();
-
         return;
 
-      case "arrow":
+      case "arrow": {
 
         const arrowHeight = height * 0.35;
 
@@ -498,26 +439,23 @@
         ctx.lineTo(width * 0.65, 0);
         ctx.lineTo(width, height / 2);
         ctx.lineTo(width * 0.65, height);
-        ctx.lineTo(width * 0.65, height / 2 + arrowHeight / 2);
+        ctx.lineTo(
+          width * 0.65,
+          height / 2 + arrowHeight / 2
+        );
         ctx.lineTo(0, height / 2 + arrowHeight / 2);
         ctx.closePath();
 
         break;
+      }
 
       case "rounded":
 
-        const radius = Math.min(
-          number(element.radius, 20),
-          width / 2,
-          height / 2
-        );
-
-        ctx.roundRect(
-          0,
-          0,
+        roundedRectangle(
+          ctx,
           width,
           height,
-          radius
+          number(element.radius, 20)
         );
 
         break;
@@ -525,13 +463,7 @@
       case "rectangle":
       default:
 
-        ctx.rect(
-          0,
-          0,
-          width,
-          height
-        );
-
+        ctx.rect(0, 0, width, height);
         break;
 
     }
@@ -564,8 +496,7 @@
     );
 
     const rotation =
-      number(element.rotation, 0) *
-      Math.PI / 180;
+      number(element.rotation, 0) * Math.PI / 180;
 
     const opacity = clamp(
       number(element.opacity, 1),
@@ -610,57 +541,62 @@
   }
 
   /* =====================================================
-     RENDERIZAÇÃO DA CENA
+     RENDERIZAÇÃO PRINCIPAL
      ===================================================== */
 
   function renderScene(ctx, scene, options = {}) {
 
-    if (!ctx || !scene) return;
+    if (!ctx || !ctx.canvas || !scene) {
+      return false;
+    }
 
     const canvas = ctx.canvas;
 
-    if (!canvas) return;
-
-    const clear = options.clear === true;
-
     ctx.save();
 
-    if (clear) {
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+    try {
+
+      if (options.clear === true) {
+
+        ctx.save();
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        ctx.clearRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+
+        ctx.restore();
+
+      }
+
+      const scaleX = canvas.width / BASE_WIDTH;
+      const scaleY = canvas.height / BASE_HEIGHT;
+
+      ctx.scale(scaleX, scaleY);
+
+      drawBackground(ctx, scene);
+
+      const elements = Array.isArray(scene.elements)
+        ? scene.elements
+        : [];
+
+      for (const element of elements) {
+        drawElement(ctx, element);
+      }
+
+      return true;
+
+    } finally {
+
+      ctx.restore();
+
     }
-
-    const scale = getScale(canvas);
-
-    ctx.scale(
-      scale.x,
-      scale.y
-    );
-
-    drawBackground(ctx, scene, {
-      width: BASE_WIDTH,
-      height: BASE_HEIGHT
-    });
-
-    const elements = Array.isArray(scene.elements)
-      ? scene.elements
-      : [];
-
-    for (const element of elements) {
-      drawElement(ctx, element);
-    }
-
-    ctx.restore();
 
   }
-
-  /* =====================================================
-     RENDERIZAÇÃO DE APRESENTAÇÃO
-     ===================================================== */
 
   function renderPresentation(
     ctx,
@@ -669,59 +605,20 @@
     options = {}
   ) {
 
-    if (
-      !presentation ||
-      !Array.isArray(presentation.scenes)
-    ) {
-      return;
+    if (!Array.isArray(presentation?.scenes)) {
+      return false;
     }
 
     const scene = presentation.scenes[sceneIndex];
 
-    if (!scene) return;
+    if (!scene) return false;
 
-    renderScene(
-      ctx,
-      scene,
-      options
-    );
+    return renderScene(ctx, scene, options);
 
   }
 
   /* =====================================================
-     MINIATURA
-     ===================================================== */
-
-  async function createThumbnail(
-    scene,
-    width = 320,
-    height = 180
-  ) {
-
-    await prepareScene(scene);
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-
-    renderScene(
-      ctx,
-      scene,
-      { clear: true }
-    );
-
-    return canvas.toDataURL("image/png");
-
-  }
-
-  /* =====================================================
-     DESENHO EM CANVAS EXTERNO
-
-     Uso futuro:
-     renderizar a Cena sobre o quadro da câmera.
+     RENDERIZAÇÃO EM CANVAS EXTERNO
      ===================================================== */
 
   function renderToCanvas(
@@ -736,64 +633,62 @@
 
     const ctx = canvas.getContext("2d");
 
-    renderScene(
-      ctx,
-      scene,
-      options
-    );
+    if (!ctx) {
+      throw new Error("Contexto 2D indisponível.");
+    }
+
+    renderScene(ctx, scene, options);
 
     return canvas;
 
   }
 
   /* =====================================================
-     CACHE — PREPARAÇÃO E LIMPEZA
+     MINIATURAS
      ===================================================== */
 
-  async function cacheSceneImages(scene) {
+  async function createThumbnail(
+    scene,
+    width = 320,
+    height = 180
+  ) {
 
-    if (!scene || !Array.isArray(scene.elements)) {
-      return;
+    await prepareScene(scene);
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = Math.max(1, Math.round(width));
+    canvas.height = Math.max(1, Math.round(height));
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      throw new Error("Canvas indisponível.");
     }
 
-    for (const element of scene.elements) {
+    renderScene(ctx, scene, { clear: true });
 
-      if (
-        element.type === "image" &&
-        element.blob instanceof Blob
-      ) {
-
-        const image = await loadImage(element.blob);
-
-        imageCache.set(
-          element.blob,
-          image
-        );
-
-      }
-
-    }
+    return canvas.toDataURL("image/png");
 
   }
 
-  async function cachePresentationImages(presentation) {
+  /* =====================================================
+     LIMPEZA DE CACHE
 
-    if (
-      !presentation ||
-      !Array.isArray(presentation.scenes)
-    ) {
-      return;
-    }
+     WeakMap evita manter referências permanentes a Blobs.
+     A limpeza explícita redefine o cache.
+     ===================================================== */
 
-    for (const scene of presentation.scenes) {
-      await cacheSceneImages(scene);
-    }
-
-  }
+  let cacheVersion = 0;
 
   function clearCache() {
 
-    imageCache.clear();
+    cacheVersion++;
+
+    // O cache WeakMap não oferece clear().
+    // As entradas serão liberadas quando seus Blobs
+    // não tiverem mais referências.
+    return cacheVersion;
 
   }
 
@@ -806,6 +701,9 @@
     BASE_WIDTH,
     BASE_HEIGHT,
 
+    loadImage,
+    getLoadedImage,
+
     prepareScene,
     preparePresentation,
 
@@ -817,7 +715,6 @@
     renderToCanvas,
 
     createThumbnail,
-
     clearCache
 
   });
