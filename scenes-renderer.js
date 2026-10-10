@@ -5,13 +5,14 @@
    LOUSA CAM 2.0 — CENAS
    SCENES-RENDERER.JS
 
-   ETAPA 7 — REVISÃO DE COMPATIBILIDADE
+   ETAPA 9 — CORREÇÃO DE LEGIBILIDADE DOS TEXTOS
 
-   - Cache de imagens corrigido
-   - Renderização síncrona após preparação
-   - Transparência preservada
-   - Compatível com Canvas de gravação
-   - Sem alterações no aplicativo principal
+   - Preserva imagens e formas
+   - Preserva transparência
+   - Preserva navegação e compatibilidade com o Player
+   - Melhora contraste de textos claros
+   - Não modifica os dados das apresentações
+   - Não altera o aplicativo principal
    ========================================================= */
 
 (() => {
@@ -19,7 +20,7 @@
   const BASE_WIDTH = 1280;
   const BASE_HEIGHT = 720;
 
-  const imageCache = new WeakMap();
+  let imageCache = new WeakMap();
 
   const DEFAULT_FONT = "Arial, Helvetica, sans-serif";
 
@@ -38,7 +39,7 @@
 
   function normalizeColor(value, fallback = "#ffffff") {
     return typeof value === "string" && value.trim()
-      ? value
+      ? value.trim()
       : fallback;
   }
 
@@ -46,6 +47,71 @@
     return element?.blob instanceof Blob
       ? element.blob
       : null;
+  }
+
+  /* =====================================================
+     CONTRASTE DOS TEXTOS
+     ===================================================== */
+
+  function getRGB(color) {
+
+    if (typeof color !== "string") {
+      return null;
+    }
+
+    const value = color.trim();
+
+    const shortHex = /^#([0-9a-f]{3,4})$/i.exec(value);
+
+    if (shortHex) {
+      const hex = shortHex[1];
+
+      return {
+        r: parseInt(hex[0] + hex[0], 16),
+        g: parseInt(hex[1] + hex[1], 16),
+        b: parseInt(hex[2] + hex[2], 16)
+      };
+    }
+
+    const longHex = /^#([0-9a-f]{6}|[0-9a-f]{8})$/i.exec(value);
+
+    if (longHex) {
+      const hex = longHex[1];
+
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+
+    const rgb = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(value);
+
+    if (rgb) {
+      return {
+        r: clamp(Number(rgb[1]), 0, 255),
+        g: clamp(Number(rgb[2]), 0, 255),
+        b: clamp(Number(rgb[3]), 0, 255)
+      };
+    }
+
+    return null;
+  }
+
+  function isLightColor(color) {
+
+    const rgb = getRGB(color);
+
+    if (!rgb) {
+      return false;
+    }
+
+    const brightness =
+      rgb.r * 0.299 +
+      rgb.g * 0.587 +
+      rgb.b * 0.114;
+
+    return brightness >= 190;
   }
 
   /* =====================================================
@@ -79,6 +145,7 @@
       function finish(error = null) {
 
         if (completed) return;
+
         completed = true;
 
         URL.revokeObjectURL(url);
@@ -90,7 +157,6 @@
           entry.image = image;
           resolve(image);
         }
-
       }
 
       image.onload = () => finish();
@@ -100,13 +166,11 @@
       };
 
       image.src = url;
-
     });
 
     imageCache.set(blob, entry);
 
     return entry.promise;
-
   }
 
   function getLoadedImage(blob) {
@@ -116,7 +180,6 @@
     }
 
     return imageCache.get(blob)?.image || null;
-
   }
 
   async function prepareScene(scene) {
@@ -131,7 +194,6 @@
       .filter(Boolean);
 
     await Promise.all(images.map(loadImage));
-
   }
 
   async function preparePresentation(presentation) {
@@ -143,7 +205,6 @@
     for (const scene of presentation.scenes) {
       await prepareScene(scene);
     }
-
   }
 
   const cacheSceneImages = prepareScene;
@@ -168,21 +229,24 @@
       "#ffffff"
     );
 
-    ctx.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+    ctx.fillRect(
+      0,
+      0,
+      BASE_WIDTH,
+      BASE_HEIGHT
+    );
 
     ctx.restore();
-
   }
 
   /* =====================================================
-     TEXTO
+     QUEBRA DE LINHAS DO TEXTO
      ===================================================== */
 
   function wrapText(ctx, text, maxWidth) {
 
     const lines = [];
-
-    const paragraphs = String(text || "").split("\n");
+    const paragraphs = String(text ?? "").split("\n");
 
     for (const paragraph of paragraphs) {
 
@@ -196,7 +260,9 @@
 
       for (const word of words) {
 
-        const candidate = line ? `${line} ${word}` : word;
+        const candidate = line
+          ? `${line} ${word}`
+          : word;
 
         if (
           ctx.measureText(candidate).width <= maxWidth ||
@@ -207,21 +273,29 @@
           lines.push(line);
           line = word;
         }
-
       }
 
       lines.push(line);
-
     }
 
     return lines;
-
   }
+
+  /* =====================================================
+     DESENHO DO TEXTO
+     ===================================================== */
 
   function drawText(ctx, element) {
 
-    const width = Math.max(1, number(element.width, 300));
-    const height = Math.max(1, number(element.height, 100));
+    const width = Math.max(
+      1,
+      number(element.width, 300)
+    );
+
+    const height = Math.max(
+      1,
+      number(element.height, 100)
+    );
 
     const fontSize = clamp(
       number(element.fontSize, 48),
@@ -238,17 +312,24 @@
     const fontStyle =
       element.fontStyle || "normal";
 
-    ctx.font =
-      `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
-
-    ctx.fillStyle = normalizeColor(
+    const color = normalizeColor(
       element.color,
       "#ffffff"
     );
 
+    ctx.save();
+
+    ctx.font =
+      `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+
+    ctx.fillStyle = color;
     ctx.textBaseline = "top";
 
-    const alignment = element.align || "left";
+    const alignment = ["left", "center", "right"]
+      .includes(element.align)
+        ? element.align
+        : "left";
+
     ctx.textAlign = alignment;
 
     const padding = Math.max(
@@ -263,12 +344,15 @@
 
     const lines = wrapText(
       ctx,
-      element.text || "",
+      element.text ?? "",
       availableWidth
     );
 
     const lineHeight =
-      fontSize * number(element.lineHeight, 1.15);
+      fontSize * Math.max(
+        0.5,
+        number(element.lineHeight, 1.15)
+      );
 
     let x = padding;
 
@@ -280,7 +364,28 @@
       x = width - padding;
     }
 
-    ctx.save();
+    /* ---------------------------------------------
+       CONTRASTE
+
+       Textos claros recebem contorno escuro fino.
+       A cor original do texto permanece inalterada.
+       --------------------------------------------- */
+
+    const needsOutline = isLightColor(color);
+
+    if (needsOutline) {
+
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
+
+      ctx.lineWidth = clamp(
+        fontSize * 0.055,
+        1,
+        5
+      );
+
+      ctx.lineJoin = "round";
+      ctx.miterLimit = 2;
+    }
 
     ctx.beginPath();
     ctx.rect(0, 0, width, height);
@@ -290,14 +395,24 @@
 
       const y = padding + i * lineHeight;
 
-      if (y >= height) break;
+      if (y >= height) {
+        break;
+      }
 
-      ctx.fillText(lines[i], x, y);
+      const line = lines[i];
 
+      if (!line) {
+        continue;
+      }
+
+      if (needsOutline) {
+        ctx.strokeText(line, x, y);
+      }
+
+      ctx.fillText(line, x, y);
     }
 
     ctx.restore();
-
   }
 
   /* =====================================================
@@ -346,7 +461,6 @@
       drawWidth,
       drawHeight
     );
-
   }
 
   /* =====================================================
@@ -355,7 +469,11 @@
 
   function roundedRectangle(ctx, width, height, radius) {
 
-    const r = clamp(radius, 0, Math.min(width, height) / 2);
+    const r = clamp(
+      radius,
+      0,
+      Math.min(width, height) / 2
+    );
 
     ctx.moveTo(r, 0);
     ctx.lineTo(width - r, 0);
@@ -367,7 +485,6 @@
     ctx.lineTo(0, r);
     ctx.quadraticCurveTo(0, 0, r, 0);
     ctx.closePath();
-
   }
 
   function drawShape(ctx, element) {
@@ -422,6 +539,7 @@
         ctx.lineTo(width, height / 2);
 
         ctx.strokeStyle = ctx.fillStyle;
+
         ctx.lineWidth = Math.max(
           2,
           number(element.strokeWidth, 5)
@@ -434,16 +552,30 @@
 
         const arrowHeight = height * 0.35;
 
-        ctx.moveTo(0, height / 2 - arrowHeight / 2);
-        ctx.lineTo(width * 0.65, height / 2 - arrowHeight / 2);
+        ctx.moveTo(
+          0,
+          height / 2 - arrowHeight / 2
+        );
+
+        ctx.lineTo(
+          width * 0.65,
+          height / 2 - arrowHeight / 2
+        );
+
         ctx.lineTo(width * 0.65, 0);
         ctx.lineTo(width, height / 2);
         ctx.lineTo(width * 0.65, height);
+
         ctx.lineTo(
           width * 0.65,
           height / 2 + arrowHeight / 2
         );
-        ctx.lineTo(0, height / 2 + arrowHeight / 2);
+
+        ctx.lineTo(
+          0,
+          height / 2 + arrowHeight / 2
+        );
+
         ctx.closePath();
 
         break;
@@ -465,11 +597,9 @@
 
         ctx.rect(0, 0, width, height);
         break;
-
     }
 
     ctx.fill();
-
   }
 
   /* =====================================================
@@ -496,7 +626,8 @@
     );
 
     const rotation =
-      number(element.rotation, 0) * Math.PI / 180;
+      number(element.rotation, 0) *
+      Math.PI / 180;
 
     const opacity = clamp(
       number(element.opacity, 1),
@@ -533,11 +664,9 @@
       case "shape":
         drawShape(ctx, element);
         break;
-
     }
 
     ctx.restore();
-
   }
 
   /* =====================================================
@@ -570,11 +699,13 @@
         );
 
         ctx.restore();
-
       }
 
-      const scaleX = canvas.width / BASE_WIDTH;
-      const scaleY = canvas.height / BASE_HEIGHT;
+      const scaleX =
+        canvas.width / BASE_WIDTH;
+
+      const scaleY =
+        canvas.height / BASE_HEIGHT;
 
       ctx.scale(scaleX, scaleY);
 
@@ -591,11 +722,8 @@
       return true;
 
     } finally {
-
       ctx.restore();
-
     }
-
   }
 
   function renderPresentation(
@@ -614,7 +742,6 @@
     if (!scene) return false;
 
     return renderScene(ctx, scene, options);
-
   }
 
   /* =====================================================
@@ -640,7 +767,6 @@
     renderScene(ctx, scene, options);
 
     return canvas;
-
   }
 
   /* =====================================================
@@ -657,8 +783,15 @@
 
     const canvas = document.createElement("canvas");
 
-    canvas.width = Math.max(1, Math.round(width));
-    canvas.height = Math.max(1, Math.round(height));
+    canvas.width = Math.max(
+      1,
+      Math.round(width)
+    );
+
+    canvas.height = Math.max(
+      1,
+      Math.round(height)
+    );
 
     const ctx = canvas.getContext("2d");
 
@@ -669,27 +802,17 @@
     renderScene(ctx, scene, { clear: true });
 
     return canvas.toDataURL("image/png");
-
   }
 
   /* =====================================================
      LIMPEZA DE CACHE
-
-     WeakMap evita manter referências permanentes a Blobs.
-     A limpeza explícita redefine o cache.
      ===================================================== */
-
-  let cacheVersion = 0;
 
   function clearCache() {
 
-    cacheVersion++;
+    imageCache = new WeakMap();
 
-    // O cache WeakMap não oferece clear().
-    // As entradas serão liberadas quando seus Blobs
-    // não tiverem mais referências.
-    return cacheVersion;
-
+    return true;
   }
 
   /* =====================================================
@@ -716,7 +839,6 @@
 
     createThumbnail,
     clearCache
-
   });
 
 })();
