@@ -235,6 +235,20 @@
     readerText.style.fontSize =
       `${fontSize}px`;
 
+     if (opacityInput) {
+  const opacity = safeNumber(
+    opacityInput.value,
+    30,
+    0,
+    90
+  );
+
+  opacityInput.value = String(opacity);
+
+  reader.style.backgroundColor =
+    `rgba(0, 0, 0, ${opacity / 100})`;
+}
+
   }
 
 
@@ -570,16 +584,29 @@
   );
 
 
-  speedInput.addEventListener(
+ /* =======================================================
+   CONTROLES DO TELEPROMPTER
+   ======================================================= */
+
+// Velocidade da leitura
+speedInput.addEventListener(
+  "input",
+  updateSettings
+);
+
+// Tamanho do texto
+fontSizeInput.addEventListener(
+  "input",
+  updateSettings
+);
+
+// Transparência do fundo — Etapa 11B.1
+if (opacityInput) {
+  opacityInput.addEventListener(
     "input",
     updateSettings
   );
-
-
-  fontSizeInput.addEventListener(
-    "input",
-    updateSettings
-  );
+}
 
 
   editor.addEventListener(
