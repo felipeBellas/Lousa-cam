@@ -69,6 +69,10 @@
     document.getElementById(
       "teleprompterFontSize"
     );
+   const opacityInput =
+  document.getElementById(
+     "teleprompterOpacity"
+  );
 
 
   /* =======================================================
