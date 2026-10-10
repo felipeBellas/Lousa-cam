@@ -73,6 +73,8 @@
   document.getElementById(
      "teleprompterOpacity"
   );
+   const editButton =
+  document.getElementById("teleprompterEdit");
 
 
   /* =======================================================
@@ -417,6 +419,7 @@ if (opacityInput) {
       return;
 
     }
+     setEditing(false);
 
 
     isPlaying = true;
@@ -472,6 +475,60 @@ if (opacityInput) {
 
   }
 
+   /* =====================================================
+   TELEPROMPTER 11B — EDITOR RECOLHÍVEL
+   ===================================================== */
+
+function setEditing(editing) {
+
+  layer.classList.toggle(
+    "editing",
+    editing
+  );
+
+  if (editButton) {
+
+    editButton.setAttribute(
+      "aria-expanded",
+      editing ? "true" : "false"
+    );
+
+    editButton.textContent =
+      editing ? "✓ Pronto" : "✎ Editar";
+
+  }
+
+}
+
+if (editButton) {
+
+  editButton.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const editing =
+        layer.classList.contains("editing");
+
+      if (!editing) {
+        pause();
+      }
+
+      setEditing(!editing);
+
+      if (!editing) {
+        editor.focus();
+      } else {
+        editor.blur();
+      }
+
+    }
+  );
+
+}
+
 
   /* =======================================================
      ABRIR
@@ -487,6 +544,12 @@ if (opacityInput) {
 
 
     isOpen = true;
+
+     document.body.classList.add(
+  "teleprompter-active"
+);
+
+setEditing(!getScript().trim());
 
 
     updateReader();
@@ -536,6 +599,12 @@ if (opacityInput) {
 
 
     isOpen = false;
+
+     document.body.classList.remove(
+  "teleprompter-active"
+);
+
+setEditing(false);
 
 
     layer.classList.remove(
