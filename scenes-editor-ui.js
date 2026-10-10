@@ -456,6 +456,96 @@
 
   }
 
+   
+  /* =====================================================
+     CONTROLES DE TAMANHO DA FONTE
+     ===================================================== */
+
+  function changeFontSize(step) {
+
+    const input = $("scenesElementFontSize");
+    const properties = $("scenesElementProperties");
+
+    // Só permite alterar texto selecionado.
+    if (
+      !input ||
+      !properties ||
+      properties.hidden ||
+      input.parentElement?.hidden
+    ) {
+      return;
+    }
+
+    const current = Number(input.value) || 48;
+
+    const next = Math.max(
+      8,
+      Math.min(300, current + step)
+    );
+
+    if (next === current) return;
+
+    // Usa o mecanismo original do scenes.js.
+    input.value = String(next);
+
+    input.dispatchEvent(
+      new Event("input", {
+        bubbles: true
+      })
+    );
+
+  }
+
+  function createFontControls() {
+
+    const wrapper = document.createElement("span");
+
+    wrapper.className = "scenes-editor-ui-extra";
+    wrapper.id = "scenesEditorUIFontControls";
+
+    const decrease = document.createElement("button");
+
+    decrease.type = "button";
+    decrease.className = "scenes-tool-button";
+    decrease.textContent = "A−";
+    decrease.title = "Diminuir tamanho da fonte";
+    decrease.setAttribute(
+      "aria-label",
+      "Diminuir tamanho da fonte"
+    );
+
+    decrease.style.fontWeight = "700";
+    decrease.style.fontSize = "16px";
+
+    decrease.addEventListener("click", () => {
+      changeFontSize(-2);
+    });
+
+    const increase = document.createElement("button");
+
+    increase.type = "button";
+    increase.className = "scenes-tool-button";
+    increase.textContent = "A+";
+    increase.title = "Aumentar tamanho da fonte";
+    increase.setAttribute(
+      "aria-label",
+      "Aumentar tamanho da fonte"
+    );
+
+    increase.style.fontWeight = "700";
+    increase.style.fontSize = "16px";
+
+    increase.addEventListener("click", () => {
+      changeFontSize(2);
+    });
+
+    wrapper.append(decrease, increase);
+
+    return wrapper;
+
+  }
+
+
   function initialize() {
 
     const toolbar = document.querySelector(".scenes-tools");
@@ -539,7 +629,13 @@
 
     const toneControls = createToneControls();
 
+    
     extra.appendChild(toneControls);
+
+    // Botões de tamanho da fonte.
+    const fontControls = createFontControls();
+
+    extra.appendChild(fontControls);
 
     toolbar.appendChild(extra);
 
