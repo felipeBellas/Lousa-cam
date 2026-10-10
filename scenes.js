@@ -906,16 +906,29 @@
 
         // Dois toques sobre um texto:
         // selecionar, abrir edição e teclado.
+        
         if (shouldEditText(event, element)) {
 
-          event.preventDefault();
           event.stopPropagation();
 
-          openTextEditor(element.id);
+          // Não inicia o arraste no segundo toque.
+          // Aguarda o dedo sair da tela para abrir
+          // a edição no Safari do iPhone.
+
+          node.addEventListener(
+            "pointerup",
+            () => {
+
+              openTextEditor(element.id);
+
+            },
+            { once: true }
+          );
 
           return;
 
         }
+
 
         // Um toque ou arraste:
         // mantém a movimentação original.
