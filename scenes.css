@@ -1298,14 +1298,15 @@ textarea {
     -12px 0;
 }
 
-/*
-   O JavaScript continua controlando esta camada:
-   - transparente: deixa aparecer o quadriculado
-   - cor sólida: cobre o quadriculado
-*/
+
+/* A camada transparente não deve esconder
+   o fundo de visualização do editor. */
+
 .scenes-editor-view .scenes-stage-background {
+  background-color: transparent;
   background-image: none;
 }
+
 
 /*
    Melhora a leitura de textos brancos no editor,
