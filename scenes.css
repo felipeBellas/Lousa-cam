@@ -1251,3 +1251,68 @@ textarea {
   }
 
 }
+
+
+/* =========================================================
+   LOUSA CAM 2.0 — CENAS
+   CORREÇÃO: SUPERFÍCIE VISUAL DO EDITOR
+
+   - Facilita a edição de textos escuros
+   - Preserva as cores originais dos elementos
+   - Não modifica a transparência da cena
+   - Não altera o Player nem o Renderizador
+   ========================================================= */
+
+/* Apenas a superfície de trabalho do editor */
+.scenes-editor-view .scenes-stage {
+  background-color: #ffffff;
+
+  background-image:
+    linear-gradient(
+      45deg,
+      #e5e7eb 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      #e5e7eb 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      #e5e7eb 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      #e5e7eb 75%
+    );
+
+  background-size: 24px 24px;
+
+  background-position:
+    0 0,
+    0 12px,
+    12px -12px,
+    -12px 0;
+}
+
+/*
+   O JavaScript continua controlando esta camada:
+   - transparente: deixa aparecer o quadriculado
+   - cor sólida: cobre o quadriculado
+*/
+.scenes-editor-view .scenes-stage-background {
+  background-image: none;
+}
+
+/*
+   Melhora a leitura de textos brancos no editor,
+   sem modificar a cor salva no elemento.
+*/
+.scenes-editor-view .scenes-element-text {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
