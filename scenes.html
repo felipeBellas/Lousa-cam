@@ -1,0 +1,668 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta name="theme-color" content="#10151f">
+
+  <title>Cenas — Lousa Cam 2.0</title>
+
+  <link rel="stylesheet" href="scenes.css">
+
+  <style>
+    /* Estilo mínimo de segurança.
+       O visual completo ficará em scenes.css. */
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #10151f;
+      color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="scenesApp" class="scenes-app">
+
+    <!-- ================================================
+         CABEÇALHO
+         ================================================ -->
+
+    <header class="scenes-header">
+
+      <div class="scenes-header-left">
+
+        <a
+          href="./index.html"
+          class="scenes-icon-button"
+          id="scenesBackButton"
+          aria-label="Voltar ao Lousa Cam"
+          title="Voltar ao Lousa Cam"
+        >
+          <span aria-hidden="true">←</span>
+        </a>
+
+        <div class="scenes-brand">
+          <strong>Cenas</strong>
+          <small>Lousa Cam 2.0</small>
+        </div>
+
+      </div>
+
+      <div class="scenes-header-right">
+
+        <span
+          id="scenesSaveStatus"
+          class="scenes-save-status"
+          role="status"
+          aria-live="polite"
+        >
+          Pronto
+        </span>
+
+        <button
+          type="button"
+          id="scenesSaveButton"
+          class="scenes-button scenes-button-primary"
+        >
+          Salvar
+        </button>
+
+      </div>
+
+    </header>
+
+    <!-- ================================================
+         TELA INICIAL — BIBLIOTECA
+         ================================================ -->
+
+    <main
+      id="scenesLibraryView"
+      class="scenes-library-view"
+    >
+
+      <div class="scenes-library-heading">
+
+        <div>
+          <h1>Minhas apresentações</h1>
+          <p>
+            Prepare cenas para utilizar sobre a câmera
+            durante suas gravações.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="scenesNewPresentationButton"
+          class="scenes-button scenes-button-primary"
+        >
+          + Nova apresentação
+        </button>
+
+      </div>
+
+      <div class="scenes-library-toolbar">
+
+        <label for="scenesSearchInput">
+          Buscar apresentações
+        </label>
+
+        <input
+          type="search"
+          id="scenesSearchInput"
+          placeholder="Pesquisar pelo nome..."
+          autocomplete="off"
+        >
+
+      </div>
+
+      <div
+        id="scenesLibraryEmpty"
+        class="scenes-empty-state"
+        hidden
+      >
+
+        <div class="scenes-empty-icon" aria-hidden="true">
+          ▧
+        </div>
+
+        <h2>Nenhuma apresentação encontrada</h2>
+
+        <p>
+          Crie sua primeira apresentação e organize
+          as cenas que deseja utilizar.
+        </p>
+
+      </div>
+
+      <div
+        id="scenesPresentationGrid"
+        class="scenes-presentation-grid"
+        aria-live="polite"
+      ></div>
+
+    </main>
+
+    <!-- ================================================
+         EDITOR
+         ================================================ -->
+
+    <main
+      id="scenesEditorView"
+      class="scenes-editor-view"
+      hidden
+    >
+
+      <!-- BARRA DO EDITOR -->
+
+      <div class="scenes-editor-topbar">
+
+        <div class="scenes-editor-title-group">
+
+          <button
+            type="button"
+            id="scenesLibraryButton"
+            class="scenes-icon-button"
+            title="Voltar às apresentações"
+            aria-label="Voltar às apresentações"
+          >
+            ←
+          </button>
+
+          <label
+            class="scenes-field"
+            for="scenesPresentationTitle"
+          >
+            <span>Apresentação</span>
+
+            <input
+              type="text"
+              id="scenesPresentationTitle"
+              placeholder="Nome da apresentação"
+              maxlength="120"
+            >
+          </label>
+
+        </div>
+
+        <div class="scenes-editor-actions">
+
+          <button
+            type="button"
+            id="scenesPreviewButton"
+            class="scenes-button"
+          >
+            Visualizar
+          </button>
+
+          <button
+            type="button"
+            id="scenesAddSceneButton"
+            class="scenes-button scenes-button-primary"
+          >
+            + Cena
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- ÁREA PRINCIPAL -->
+
+      <div class="scenes-workspace">
+
+        <!-- LISTA DE CENAS -->
+
+        <aside
+          class="scenes-sidebar"
+          aria-label="Lista de cenas"
+        >
+
+          <div class="scenes-panel-heading">
+            <h2>Cenas</h2>
+
+            <span id="scenesCount">
+              0
+            </span>
+          </div>
+
+          <div
+            id="scenesSlideList"
+            class="scenes-slide-list"
+          ></div>
+
+        </aside>
+
+        <!-- ÁREA CENTRAL -->
+
+        <section
+          class="scenes-stage-section"
+          aria-label="Editor visual"
+        >
+
+          <div
+            class="scenes-tools"
+            role="toolbar"
+            aria-label="Ferramentas da cena"
+          >
+
+            <button
+              type="button"
+              id="scenesSelectTool"
+              class="scenes-tool-button active"
+              data-tool="select"
+              title="Selecionar e mover"
+              aria-label="Selecionar e mover"
+              aria-pressed="true"
+            >
+              ↖
+            </button>
+
+            <button
+              type="button"
+              id="scenesTextTool"
+              class="scenes-tool-button"
+              data-tool="text"
+              title="Adicionar texto"
+            >
+              Texto
+            </button>
+
+            <button
+              type="button"
+              id="scenesImageTool"
+              class="scenes-tool-button"
+              data-tool="image"
+              title="Adicionar imagem"
+            >
+              Imagem
+            </button>
+
+            <button
+              type="button"
+              id="scenesShapeTool"
+              class="scenes-tool-button"
+              data-tool="shape"
+              title="Adicionar forma"
+            >
+              Formas
+            </button>
+
+            <span class="scenes-tool-separator"></span>
+
+            <button
+              type="button"
+              id="scenesDuplicateElementButton"
+              class="scenes-tool-button"
+              title="Duplicar elemento selecionado"
+            >
+              Duplicar
+            </button>
+
+            <button
+              type="button"
+              id="scenesDeleteElementButton"
+              class="scenes-tool-button"
+              title="Excluir elemento selecionado"
+            >
+              Excluir
+            </button>
+
+          </div>
+
+          <!-- SUPERFÍCIE DE EDIÇÃO -->
+
+          <div class="scenes-stage-outer">
+
+            <div
+              id="scenesStage"
+              class="scenes-stage"
+              tabindex="0"
+              aria-label="Área de edição da cena"
+            >
+
+              <div
+                id="scenesStageBackground"
+                class="scenes-stage-background"
+              ></div>
+
+              <div
+                id="scenesStageElements"
+                class="scenes-stage-elements"
+              ></div>
+
+              <div
+                id="scenesStageEmpty"
+                class="scenes-stage-empty"
+              >
+                Selecione uma cena para começar.
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="scenes-stage-footer">
+
+            <span id="scenesCurrentSceneLabel">
+              Nenhuma cena selecionada
+            </span>
+
+            <div class="scenes-zoom-controls">
+
+              <button
+                type="button"
+                id="scenesZoomOutButton"
+                aria-label="Diminuir zoom"
+              >
+                −
+              </button>
+
+              <span id="scenesZoomLabel">
+                100%
+              </span>
+
+              <button
+                type="button"
+                id="scenesZoomInButton"
+                aria-label="Aumentar zoom"
+              >
+                +
+              </button>
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- PROPRIEDADES -->
+
+        <aside
+          class="scenes-properties"
+          aria-label="Propriedades da cena"
+        >
+
+          <div class="scenes-panel-heading">
+            <h2>Propriedades</h2>
+          </div>
+
+          <div id="scenesSceneProperties">
+
+            <label class="scenes-field">
+              <span>Nome da cena</span>
+
+              <input
+                type="text"
+                id="scenesSceneTitle"
+                maxlength="100"
+                placeholder="Cena 1"
+              >
+            </label>
+
+            <label class="scenes-field">
+              <span>Fundo</span>
+
+              <select id="scenesBackgroundType">
+                <option value="transparent">
+                  Transparente
+                </option>
+
+                <option value="solid">
+                  Cor sólida
+                </option>
+              </select>
+            </label>
+
+            <label class="scenes-field">
+              <span>Cor do fundo</span>
+
+              <input
+                type="color"
+                id="scenesBackgroundColor"
+                value="#ffffff"
+              >
+            </label>
+
+            <button
+              type="button"
+              id="scenesDuplicateSceneButton"
+              class="scenes-button"
+            >
+              Duplicar cena
+            </button>
+
+            <button
+              type="button"
+              id="scenesDeleteSceneButton"
+              class="scenes-button scenes-button-danger"
+            >
+              Excluir cena
+            </button>
+
+          </div>
+
+          <div
+            id="scenesElementProperties"
+            class="scenes-element-properties"
+            hidden
+          >
+
+            <h3>Elemento selecionado</h3>
+
+            <label class="scenes-field">
+              <span>Texto</span>
+
+              <textarea
+                id="scenesElementText"
+                rows="3"
+              ></textarea>
+            </label>
+
+            <label class="scenes-field">
+              <span>Cor</span>
+
+              <input
+                type="color"
+                id="scenesElementColor"
+                value="#ffffff"
+              >
+            </label>
+
+            <label class="scenes-field">
+              <span>Tamanho da fonte</span>
+
+              <input
+                type="number"
+                id="scenesElementFontSize"
+                min="8"
+                max="300"
+                value="48"
+              >
+            </label>
+
+            <label class="scenes-field">
+              <span>Opacidade (%)</span>
+
+              <input
+                type="range"
+                id="scenesElementOpacity"
+                min="0"
+                max="100"
+                value="100"
+              >
+            </label>
+
+            <label class="scenes-field">
+              <span>Rotação (graus)</span>
+
+              <input
+                type="number"
+                id="scenesElementRotation"
+                min="-360"
+                max="360"
+                value="0"
+              >
+            </label>
+
+          </div>
+
+        </aside>
+
+      </div>
+
+    </main>
+
+    <!-- ================================================
+         VISUALIZAÇÃO
+         ================================================ -->
+
+    <div
+      id="scenesPreviewOverlay"
+      class="scenes-preview-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Visualização da apresentação"
+      hidden
+    >
+
+      <div class="scenes-preview-header">
+
+        <span id="scenesPreviewTitle">
+          Visualização
+        </span>
+
+        <button
+          type="button"
+          id="scenesClosePreviewButton"
+          class="scenes-icon-button"
+          aria-label="Fechar visualização"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div
+        id="scenesPreviewStage"
+        class="scenes-preview-stage"
+      ></div>
+
+      <div class="scenes-preview-controls">
+
+        <button
+          type="button"
+          id="scenesPreviousPreviewButton"
+          class="scenes-button"
+        >
+          ← Anterior
+        </button>
+
+        <span id="scenesPreviewCounter">
+          1 / 1
+        </span>
+
+        <button
+          type="button"
+          id="scenesNextPreviewButton"
+          class="scenes-button"
+        >
+          Próxima →
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ================================================
+         ENTRADA DE IMAGENS
+         ================================================ -->
+
+    <input
+      type="file"
+      id="scenesImageInput"
+      accept="image/png,image/jpeg,image/webp,image/gif"
+      hidden
+    >
+
+    <!-- ================================================
+         DIÁLOGO DE CONFIRMAÇÃO
+         ================================================ -->
+
+    <div
+      id="scenesConfirmOverlay"
+      class="scenes-confirm-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="scenesConfirmTitle"
+      hidden
+    >
+
+      <div class="scenes-confirm-dialog">
+
+        <h2 id="scenesConfirmTitle">
+          Confirmar ação
+        </h2>
+
+        <p id="scenesConfirmMessage">
+          Deseja continuar?
+        </p>
+
+        <div class="scenes-confirm-actions">
+
+          <button
+            type="button"
+            id="scenesConfirmCancel"
+            class="scenes-button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            id="scenesConfirmAccept"
+            class="scenes-button scenes-button-danger"
+          >
+            Confirmar
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================================================
+         NOTIFICAÇÕES
+         ================================================ -->
+
+    <div
+      id="scenesToast"
+      class="scenes-toast"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+  </div>
+
+  <!-- ================================================
+       MÓDULOS INDEPENDENTES
+       ================================================ -->
+
+  <script src="scenes-storage.js"></script>
+  <script src="scenes.js"></script>
+
+</body>
+</html>
