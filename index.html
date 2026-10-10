@@ -3014,6 +3014,106 @@ body.teleprompter-active #bottom {
       repeat(3, minmax(0, 1fr));
   }
 }
+    /* =====================================================
+   TELEPROMPTER 11B.3
+   LARGURA AJUSTÁVEL DA ÁREA DE LEITURA
+   ===================================================== */
+
+/* Controle independente no cabeçalho */
+
+.teleprompter-width-control {
+  display: flex;
+  flex: 0 1 116px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 2px;
+
+  width: 116px;
+  min-width: 70px;
+
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.teleprompter-width-control span {
+  line-height: 13px;
+}
+
+#teleprompterWidth {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+
+  height: 18px;
+  margin: 0;
+
+  accent-color: #fff;
+
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Centraliza a faixa sem modificar sua altura */
+
+.teleprompter-layer .teleprompter-reader {
+  left: 50%;
+  right: auto;
+
+  width: 100%;
+  max-width: calc(100vw - 24px);
+
+  transform: translateX(-50%);
+}
+
+/* Ajuste para iPhone vertical */
+
+@media (orientation: portrait) and (max-width: 520px) {
+
+  .teleprompter-width-control {
+    flex-basis: 82px;
+    width: 82px;
+    min-width: 65px;
+  }
+
+  .teleprompter-header strong {
+    font-size: 12px;
+  }
+
+  #teleprompterEdit {
+    min-width: 66px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+}
+
+/* Ajuste para horizontal */
+
+@media (orientation: landscape) {
+
+  .teleprompter-width-control {
+    flex-basis: 120px;
+    width: 120px;
+  }
+
+  .teleprompter-layer .teleprompter-reader {
+    left: 50%;
+    right: auto;
+
+    max-width: calc(100vw - 48px);
+
+    transform: translateX(-50%);
+  }
+
+}
 
     </style>
 
