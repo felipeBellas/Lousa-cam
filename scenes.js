@@ -891,17 +891,38 @@
 
     if (editable) {
 
+      
       node.addEventListener("pointerdown", event => {
 
-        if (event.target.closest(
-          ".scenes-element-resize, .scenes-element-rotate"
-        )) {
+        // Preserva os controles originais
+        // de redimensionamento e rotação.
+        if (
+          event.target.closest(
+            ".scenes-element-resize, .scenes-element-rotate"
+          )
+        ) {
           return;
         }
 
+        // Dois toques sobre um texto:
+        // selecionar, abrir edição e teclado.
+        if (shouldEditText(event, element)) {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          openTextEditor(element.id);
+
+          return;
+
+        }
+
+        // Um toque ou arraste:
+        // mantém a movimentação original.
         startDrag(event, element.id, "move");
 
       });
+
 
       if (element.id === selectedElementId) {
 
