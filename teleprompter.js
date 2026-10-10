@@ -81,6 +81,10 @@
 const widthInput =
   document.getElementById("teleprompterWidth");
 
+   /* TELEPROMPTER 11B.4 — POSIÇÃO */
+
+const positionInput =
+  document.getElementById("teleprompterPosition");
 
   /* =======================================================
      VERIFICAÇÃO
@@ -230,6 +234,47 @@ function updateReaderWidth() {
 
 }
 
+   /* =====================================================
+   TELEPROMPTER 11B.4
+   POSIÇÃO VERTICAL DO LEITOR
+   ===================================================== */
+
+function updateReaderPosition() {
+
+  if (!positionInput) {
+    return;
+  }
+
+  const position = safeNumber(
+    positionInput.value,
+    0,
+    0,
+    100
+  );
+
+  positionInput.value = String(position);
+
+  const landscape =
+    window.matchMedia("(orientation: landscape)").matches;
+
+  const baseTop = landscape ? 90 : 122;
+
+  const maxMovement = Math.max(
+    0,
+    window.innerHeight -
+    baseTop -
+    reader.offsetHeight -
+    170
+  );
+
+  const movement =
+    maxMovement * (position / 100);
+
+  reader.style.top =
+    `calc(max(${baseTop}px, env(safe-area-inset-top) + ${landscape ? 82 : 110}px) + ${movement}px)`;
+
+}
+
 
   /* =======================================================
      CONFIGURAÇÕES
@@ -237,7 +282,10 @@ function updateReaderWidth() {
 
   function updateSettings() {
 
-     updateReaderWidth();
+  updateReaderWidth();
+  updateReaderPosition();
+
+  // Mantenha o restante da função atual.
 
     speed =
       safeNumber(
