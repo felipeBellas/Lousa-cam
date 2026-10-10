@@ -2684,6 +2684,44 @@ input[type="range"] {
   }
 
 }
+    /* =====================================================
+   TELEPROMPTER 11B.1 — TRANSPARÊNCIA
+   ===================================================== */
+
+.teleprompter-controls {
+  grid-template-columns:
+    42px
+    42px
+    repeat(3, minmax(0, 1fr));
+}
+
+.teleprompter-control {
+  grid-template-columns: 1fr;
+  grid-template-rows: 13px 1fr;
+  justify-items: stretch;
+  gap: 2px;
+}
+
+.teleprompter-control span {
+  text-align: center;
+  line-height: 13px;
+}
+
+.teleprompter-control input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  touch-action: none;
+}
+
+@media (orientation: landscape) {
+  .teleprompter-controls {
+    grid-template-columns:
+      40px
+      40px
+      repeat(3, minmax(0, 1fr));
+  }
+}
 
     </style>
 
