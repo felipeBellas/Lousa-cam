@@ -43,6 +43,112 @@
   let drag = null;
   let previewIndex = 0;
   let confirmCallback = null;
+  
+  /* =====================================================
+     EDIÇÃO DE TEXTO — DUPLO TOQUE
+     ===================================================== */
+
+  let lastTextTap = {
+    id: null,
+    time: 0,
+    x: 0,
+    y: 0
+  };
+
+  function shouldEditText(event, element) {
+
+    if (!element || element.type !== "text") {
+      return false;
+    }
+
+    if (
+      event.pointerType === "mouse" &&
+      event.button !== 0
+    ) {
+      return false;
+    }
+
+    const now = performance.now();
+
+    const sameElement =
+      lastTextTap.id === element.id;
+
+    const withinTime =
+      now - lastTextTap.time < 350;
+
+    const withinDistance =
+      Math.hypot(
+        event.clientX - lastTextTap.x,
+        event.clientY - lastTextTap.y
+      ) < 28;
+
+    const isDoubleTap =
+      sameElement &&
+      withinTime &&
+      withinDistance;
+
+    if (isDoubleTap) {
+
+      lastTextTap = {
+        id: null,
+        time: 0,
+        x: 0,
+        y: 0
+      };
+
+      return true;
+
+    }
+
+    lastTextTap = {
+      id: element.id,
+      time: now,
+      x: event.clientX,
+      y: event.clientY
+    };
+
+    return false;
+
+  }
+
+  function openTextEditor(elementId) {
+
+    const scene = currentScene();
+
+    const element = scene?.elements.find(
+      item => item.id === elementId
+    );
+
+    if (!element || element.type !== "text") {
+      return;
+    }
+
+    selectedElementId = elementId;
+
+    // Atualiza o painel existente sem criar
+    // outro sistema de salvamento.
+    updateSelectionStyles();
+    renderProperties();
+
+    const field = $("scenesElementText");
+
+    if (!field) return;
+
+    // O foco acontece diretamente no gesto
+    // para permitir o teclado do Safari.
+    field.focus({ preventScroll: true });
+
+    // Posiciona o cursor no final do texto.
+    try {
+      const end = field.value.length;
+      field.setSelectionRange(end, end);
+    } catch (error) {
+      // Alguns navegadores podem não aceitar
+      // a seleção programática.
+    }
+
+  }
+
 
   let zoom = 100;
   let toastTimer = null;
