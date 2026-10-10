@@ -206,12 +206,38 @@ const widthInput =
 
   }
 
+   /* =====================================================
+   TELEPROMPTER 11B.3
+   AJUSTE DA LARGURA DO ROTEIRO
+   ===================================================== */
+
+function updateReaderWidth() {
+
+  if (!widthInput) {
+    return;
+  }
+
+  const width = safeNumber(
+    widthInput.value,
+    100,
+    40,
+    100
+  );
+
+  widthInput.value = String(width);
+
+  reader.style.width = `${width}%`;
+
+}
+
 
   /* =======================================================
      CONFIGURAÇÕES
      ======================================================= */
 
   function updateSettings() {
+
+     updateReaderWidth();
 
     speed =
       safeNumber(
