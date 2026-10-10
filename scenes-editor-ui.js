@@ -300,11 +300,10 @@
 
   let currentTone = readSavedTone();
 
+  
   function setTone(tone) {
 
-    if (!Object.hasOwn(TONES, tone)) {
-      return;
-    }
+    if (!Object.hasOwn(TONES, tone)) return;
 
     currentTone = tone;
 
@@ -314,82 +313,112 @@
       stage.dataset.editTone = tone;
     }
 
-    document.querySelectorAll(
-      ".scenes-editor-ui-tone-menu button[data-tone]"
-    ).forEach(button => {
+    const button = $("scenesEditorUIToneButton");
+
+    if (button) {
+
+      const names = {
+        light: "claro",
+        medium: "cinza",
+        dark: "escuro"
+      };
+
+      button.title =
+        `Contraste de edição: ${names[tone]}`;
 
       button.setAttribute(
-        "aria-pressed",
-        String(button.dataset.tone === tone)
+        "aria-label",
+        `Contraste ${names[tone]}. Toque para alternar`
       );
 
-    });
+      button.style.backgroundColor = TONES[tone];
+
+      button.style.color =
+        tone === "dark" ? "#ffffff" : "#172033";
+
+      button.style.borderColor = "#62738d";
+
+    }
 
     try {
       localStorage.setItem(STORAGE_KEY, tone);
     } catch (error) {
-      // O controle continua funcionando na sessão.
+      // Mantém o controle ativo nesta sessão.
     }
 
   }
 
+
+ 
   function createToneControls() {
 
     const wrapper = document.createElement("span");
 
     wrapper.className = "scenes-editor-ui-extra";
 
-    const menu = document.createElement("span");
+    const button = document.createElement("button");
 
-    menu.className = "scenes-editor-ui-tone-menu";
-    menu.setAttribute(
-      "role",
-      "group"
-    );
-    menu.setAttribute(
+    button.type = "button";
+    button.id = "scenesEditorUIToneButton";
+
+    button.className = "scenes-editor-ui-tone-toggle";
+
+    button.title = "Alternar contraste da edição";
+
+    button.setAttribute(
       "aria-label",
-      "Fundo auxiliar de edição"
+      "Alternar fundo auxiliar de edição"
     );
 
-    const choices = [
-      ["light", "Claro"],
-      ["medium", "Cinza"],
-      ["dark", "Escuro"]
+    button.style.width = "38px";
+    button.style.height = "38px";
+    button.style.minWidth = "38px";
+    button.style.borderRadius = "9px";
+    button.style.border = "1px solid #62738d";
+    button.style.cursor = "pointer";
+    button.style.flexShrink = "0";
+
+    const sequence = [
+      "light",
+      "medium",
+      "dark"
     ];
 
-    for (const [tone, label] of choices) {
+    function updateButton() {
 
-      const button = document.createElement("button");
+      button.style.backgroundColor =
+        TONES[currentTone];
 
-      button.type = "button";
-      button.dataset.tone = tone;
+      button.style.color =
+        currentTone === "dark"
+          ? "#ffffff"
+          : "#172033";
 
-      button.title = `Fundo ${label.toLowerCase()}`;
-      button.setAttribute(
-        "aria-label",
-        `Fundo ${label.toLowerCase()}`
-      );
-
-      button.setAttribute(
-        "aria-pressed",
-        String(tone === currentTone)
-      );
-
-      button.style.backgroundColor = TONES[tone];
-
-      button.addEventListener("click", () => {
-        setTone(tone);
-      });
-
-      menu.appendChild(button);
+      button.textContent = "◐";
 
     }
 
-    wrapper.appendChild(menu);
+    button.addEventListener("click", () => {
+
+      const index = sequence.indexOf(currentTone);
+
+      const nextTone =
+        sequence[(index + 1) % sequence.length];
+
+      setTone(nextTone);
+
+      updateButton();
+
+    });
+
+    updateButton();
+
+    wrapper.appendChild(button);
 
     return wrapper;
 
   }
+
 
   function openElementColor() {
 
