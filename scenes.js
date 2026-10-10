@@ -972,10 +972,9 @@
     if (editable) {
 
       
+      
       node.addEventListener("pointerdown", event => {
 
-        // Preserva os controles originais
-        // de redimensionamento e rotação.
         if (
           event.target.closest(
             ".scenes-element-resize, .scenes-element-rotate"
@@ -984,34 +983,23 @@
           return;
         }
 
-        // Dois toques sobre um texto:
-        // selecionar, abrir edição e teclado.
-        
+        // Segundo toque em um texto:
+        // abre imediatamente o campo editável.
         if (shouldEditText(event, element)) {
 
+          event.preventDefault();
           event.stopPropagation();
 
-          // Não inicia o arraste no segundo toque.
-          // Aguarda o dedo sair da tela para abrir
-          // a edição no Safari do iPhone.
-
-          node.addEventListener(
-            "pointerup",
-            () => {
-
-              openTextEditor(element.id);
-
-            },
-            { once: true }
-          );
+          // Não inicia o arraste.
+          // Não aguarda pointerup.
+          openTextEditor(element.id);
 
           return;
 
         }
 
-
-        // Um toque ou arraste:
-        // mantém a movimentação original.
+        // Comportamento original:
+        // selecionar e movimentar.
         startDrag(event, element.id, "move");
 
       });
