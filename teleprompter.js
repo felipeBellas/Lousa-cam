@@ -690,7 +690,7 @@ setEditing(false);
   );
 
 
- /* =======================================================
+/* =======================================================
    CONTROLES DO TELEPROMPTER
    ======================================================= */
 
@@ -708,69 +708,93 @@ fontSizeInput.addEventListener(
 
 // Transparência do fundo — Etapa 11B.1
 if (opacityInput) {
+
   opacityInput.addEventListener(
     "input",
     updateSettings
   );
+
 }
 
+/* =======================================================
+   TELEPROMPTER 11B.3
+   CONTROLE DE LARGURA DO ROTEIRO
+   ======================================================= */
 
-  editor.addEventListener(
+if (widthInput) {
+
+  widthInput.addEventListener(
     "input",
-    () => {
-
-      if (
-        editor.value.length >
-        MAX_SCRIPT_LENGTH
-      ) {
-
-        editor.value =
-          editor.value.slice(
-            0,
-            MAX_SCRIPT_LENGTH
-          );
-
-      }
-
-
-      updateReader();
-
-    }
+    updateReaderWidth
   );
 
+}
 
-  document.addEventListener(
-    "visibilitychange",
-    () => {
+/* =======================================================
+   ATUALIZAÇÃO DO ROTEIRO
+   ======================================================= */
 
-      if (
-        document.visibilityState !==
-        "visible"
-      ) {
+editor.addEventListener(
+  "input",
+  () => {
 
-        pause();
+    if (
+      editor.value.length >
+      MAX_SCRIPT_LENGTH
+    ) {
 
-      }
-
-    }
-  );
-
-
-  document.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Escape" &&
-        isOpen
-      ) {
-
-        close();
-
-      }
+      editor.value =
+        editor.value.slice(
+          0,
+          MAX_SCRIPT_LENGTH
+        );
 
     }
-  );
+
+    updateReader();
+
+  }
+);
+
+/* =======================================================
+   PAUSAR AO SAIR DA TELA
+   ======================================================= */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (
+      document.visibilityState !==
+      "visible"
+    ) {
+
+      pause();
+
+    }
+
+  }
+);
+
+/* =======================================================
+   TECLA ESC — FECHAR TELEPROMPTER
+   ======================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Escape" &&
+      isOpen
+    ) {
+
+      close();
+
+    }
+
+  }
+);
 
 
   /* =======================================================
