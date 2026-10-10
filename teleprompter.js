@@ -778,6 +778,27 @@ if (widthInput) {
 
 }
 
+   /* TELEPROMPTER 11B.4 — POSIÇÃO */
+
+if (positionInput) {
+
+  positionInput.addEventListener(
+    "input",
+    updateReaderPosition
+  );
+
+  window.addEventListener(
+    "resize",
+    updateReaderPosition
+  );
+
+  window.addEventListener(
+    "orientationchange",
+    updateReaderPosition
+  );
+
+}
+
 /* =======================================================
    ATUALIZAÇÃO DO ROTEIRO
    ======================================================= */
