@@ -1,6 +1,6 @@
 "use strict";
 
-
+ 
 
 /* =========================================================
 
@@ -1116,13 +1116,19 @@
 
       addButton(
 
-        "Abrir",
+        "Editar",
 
         () => openPresentation(item.id),
 
         "scenes-button-primary"
 
       );
+
+      addButton("Apresentar", () => {
+        const url = new URL("./index.html", window.location.href);
+        url.searchParams.set("presentation", item.id);
+        window.location.assign(url.href);
+      });
 
  
 
@@ -3484,9 +3490,22 @@
 
  
 
-    $("scenesSaveButton").onclick = () => {
+    $("scenesSaveButton").onclick = async () => {
 
-      savePresentation().catch(error => toast(error.message));
+      const button = $("scenesSaveButton");
+      button.disabled = true;
+
+      try {
+        // Aguarda inclusive o salvamento automático em andamento.
+        await flushSave();
+        // Retorna à biblioteca após a gravação no IndexedDB.
+        await showLibrary();
+        toast("Apresentação salva com sucesso.");
+      } catch (error) {
+        toast("Erro ao salvar: " + error.message);
+      } finally {
+        button.disabled = !presentation;
+      }
 
     };
 
