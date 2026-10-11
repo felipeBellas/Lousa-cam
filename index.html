@@ -3269,6 +3269,83 @@ body:has(#galleryLayer.show) #modeDock #record {
 }
 #permissionHint { color: rgba(246,248,245,.65); }
 
+
+/* LOUSA CAM 3 — ETAPA 2: CAMERA BLOQUEADA + GLASS DINAMICO */
+#modeDock {
+  position: fixed !important;
+  z-index: 60 !important;
+  width: min(96vw, 520px) !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-around;
+  min-height: 76px;
+  padding: 9px 5px !important;
+  border-radius: 29px !important;
+  background: rgba(240,244,241,.20) !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(170%) !important;
+  backdrop-filter: blur(28px) saturate(170%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.32), 0 8px 30px rgba(0,0,0,.16);
+  opacity: .72 !important;
+  transition: opacity .35s ease, background .35s ease, box-shadow .35s ease;
+}
+#modeDock.active, #modeDock:focus-within, #modeDock:hover {
+  opacity: 1 !important;
+  background: rgba(246,248,245,.28) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 10px 34px rgba(0,0,0,.20);
+}
+#modeDock button:not(#cameraModeButton) {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  height: 62px;
+  padding: 3px 1px !important;
+  color: #fff;
+  font-size: 10px !important;
+  background: transparent;
+  white-space: normal;
+}
+#modeDock .lc-icon { font-size: 25px; line-height: 28px; font-weight: 400; }
+#modeDock small { font-size: clamp(8px,2.2vw,11px); font-weight: 500; line-height: 1.1; }
+#modeDock #cameraModeButton { display: none !important; }
+#modeDock #record {
+  flex: 0 0 66px;
+  width: 66px; min-width: 66px; height: 66px;
+  border: 2px solid rgba(255,255,255,.94);
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  gap: 1px;
+}
+#modeDock #record span { background: #FF6368; width: 30px; height: 30px; }
+#modeDock #record small { color: #fff; }
+#modeDock #record:disabled { opacity: .46; filter: grayscale(.45); pointer-events: none; }
+#startOverlay {
+  background: radial-gradient(ellipse at 50% 47%, #353a39 0%, #202524 50%, #0b0d0d 100%) !important;
+  padding-bottom: 118px;
+}
+#startCard { max-width: 390px; }
+#startCard h1 { color: #F6F8F5; }
+#startCard p { color: #E2EBE6; }
+#startBtn {
+  background: #B5E2D0 !important;
+  color: #20332C !important;
+  font-weight: 750;
+  box-shadow: 0 8px 30px rgba(140,221,185,.19);
+}
+#startBtn:active { transform: scale(.98); }
+#startOverlay:not(.hidden) ~ #modeDock { opacity: .8; }
+body:has(#startOverlay:not(.hidden)) #modeDock button:not(#record) { opacity: .65; }
+body:has(#startOverlay:not(.hidden)) #modeDock { background: rgba(210,218,215,.18) !important; }
+body:has(#galleryLayer.show) #modeDock { display: none !important; }
+@media (prefers-reduced-motion: reduce) { #modeDock { transition: none !important; } }
+
 </style>
 
   <link
@@ -4299,49 +4376,15 @@ body:has(#galleryLayer.show) #modeDock #record {
      NAVEGAÇÃO PRINCIPAL
      ================================================= -->
 
-<nav
-  id="modeDock"
-  aria-label="Navegação principal">
-
-  <button
-    id="cameraModeButton"
-    type="button"
-    class="active"
-    aria-pressed="true">
-
-    Câmera
-
-  </button>
-
-
-  <!-- Mesmo botão original, sem duplicar eventos -->
-  <button
-    id="record"
-    type="button"
-    aria-label="Gravar"
-    title="Gravar">
-    <span></span>
-  </button>
-
-  <button
-    id="galleryModeButton"
-    type="button"
-    aria-pressed="false">
-
-    Galeria
-
-  </button>
-
-
-  <button
-    id="teleprompterButton"
-    type="button"
-    aria-pressed="false">
-
-    Teleprompter
-
-  </button>
-
+<nav id="modeDock" aria-label="Navegação principal">
+  <button id="glassMenuButton" type="button" aria-label="Menu" title="Menu"><span class="lc-icon">☰</span><small>Menu</small></button>
+  <button id="teleprompterButton" type="button" aria-pressed="false"><span class="lc-icon">▤</span><small>Teleprompter</small></button>
+  <!-- O ID original record preserva o listener existente em app.js. -->
+  <button id="record" type="button" aria-label="Gravar" title="Gravar" disabled><span></span><small>Gravar</small></button>
+  <button id="galleryModeButton" type="button" aria-pressed="false"><span class="lc-icon">▧</span><small>Galeria</small></button>
+  <button id="glassScenesButton" type="button" aria-label="Cenas" title="Cenas"><span class="lc-icon">▣</span><small>Cenas</small></button>
+  <!-- Mantido para a navegação existente, mas não exibido no dock da câmera. -->
+  <button id="cameraModeButton" type="button" class="active" aria-pressed="true" hidden>Câmera</button>
 </nav>
 
       <div id="status"></div>
@@ -4777,5 +4820,37 @@ body:has(#galleryLayer.show) #modeDock #record {
 </script>
 
   
+
+<script>
+/* LOUSA CAM 3 — DOCK: integra comandos sem substituir eventos existentes */
+(() => {
+  'use strict';
+  const startOverlay = document.getElementById('startOverlay');
+  const record = document.getElementById('record');
+  const menu = document.getElementById('glassMenuButton');
+  const scenes = document.getElementById('glassScenesButton');
+  const dock = document.getElementById('modeDock');
+  const cameraIsActive = () => !!startOverlay && startOverlay.classList.contains('hidden');
+  const syncRecordingAccess = () => {
+    if (record) record.disabled = !cameraIsActive();
+    if (dock) dock.classList.toggle('camera-locked', !cameraIsActive());
+  };
+  syncRecordingAccess();
+  if (startOverlay) new MutationObserver(syncRecordingAccess).observe(startOverlay, { attributes: true, attributeFilter: ['class','style'] });
+  if (menu) menu.addEventListener('click', () => {
+    if (!cameraIsActive()) return;
+    document.getElementById('menuBtn')?.click();
+  });
+  if (scenes) scenes.addEventListener('click', () => {
+    if (!cameraIsActive()) return;
+    // Reaproveita o botão Cenas criado pelo módulo existente, se presente.
+    const original = Array.from(document.querySelectorAll('button')).find(b =>
+      b !== scenes && (b.id || '').toLowerCase().includes('scene') &&
+      /cenas|scenes/i.test([b.title,b.getAttribute('aria-label'),b.textContent].join(' '))
+    );
+    if (original) original.click();
+  });
+})();
+</script>
 </body>
 </html>
