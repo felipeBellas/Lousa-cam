@@ -3167,7 +3167,109 @@ body.teleprompter-active #bottom {
 
 }
 
-    </style>
+    
+/* =====================================================
+   LOUSA CAM 3.0 — ETAPA 1: NATURE LIGHT + DOCK
+   Alteracoes somente visuais; nao altera gravacao.
+   ===================================================== */
+:root {
+  --lc-neve: #F6F8F5;
+  --lc-salvia: #DDEDE5;
+  --lc-branco: #FFFFFF;
+  --lc-ink: #29332F;
+}
+
+/* A imagem da camera permanece ocupando a tela inteira. */
+#app, #video { background-color: #000; }
+
+/* Barra superior continua na posicao original. A tela
+   inicial ja a encobre ate a ativacao da camera. */
+
+/* Dock original, com Liquid Glass mais transparente. */
+#modeDock {
+  width: min(94vw, 430px);
+  max-width: calc(100vw - 20px);
+  justify-content: space-between;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 28px;
+  background: rgba(246,248,245,.14);
+  border: 1px solid rgba(255,255,255,.34);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22),
+              0 5px 22px rgba(0,0,0,.12);
+  opacity: 1;
+}
+#modeDock.active { background: rgba(246,248,245,.19); }
+#modeDock button:not(#record) {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 5px;
+  font-size: clamp(10px, 2.6vw, 12px);
+  white-space: nowrap;
+}
+
+/* Botao de gravacao original, agora central no dock.
+   Nao substituir o ID nem criar outro listener. */
+#modeDock #record {
+  position: relative;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.88);
+  background: rgba(255,255,255,.17);
+  box-shadow: 0 3px 12px rgba(0,0,0,.18);
+  opacity: 1;
+  touch-action: manipulation;
+}
+#modeDock #record span {
+  display: block;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #F05D60;
+}
+#modeDock #record.recording span {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: #FFFFFF;
+}
+/* Enquanto a galeria estiver aberta, nao exibir Gravar.
+   Mantemos o botao Camera para voltar; seta virá depois. */
+body:has(#galleryLayer.show) #modeDock #record {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Tela de permissao: fundo preto de ponta a ponta,
+   cartao removido, acento em Neve e Salvia. */
+#startOverlay {
+  background: #050707;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+#startCard {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  max-width: 370px;
+}
+#startCard h1 { color: var(--lc-neve); }
+#startCard p { color: var(--lc-salvia); }
+#startBtn {
+  background: var(--lc-salvia);
+  color: var(--lc-ink);
+  box-shadow: 0 6px 22px rgba(221,237,229,.14);
+}
+#permissionHint { color: rgba(246,248,245,.65); }
+
+</style>
 
   <link
     rel="stylesheet"
@@ -3997,25 +4099,8 @@ body.teleprompter-active #bottom {
   aria-label="Editar texto">
 </div>
 
-    <!-- =================================================
-         BOTÃO GRAVAR
-         ================================================= -->
-
-    <div
-      id="bottom"
-      class="bar">
-
-      <button
-        id="record"
-        aria-label="Gravar"
-        title="Gravar">
-
-        <span></span>
-
-      </button>
-
-    </div>
-
+    <!-- Botão Gravar foi movido para o dock inferior.
+         O ID original #record foi preservado. -->
 
     <!-- =================================================
          GALERIA INTERNA
@@ -4228,6 +4313,15 @@ body.teleprompter-active #bottom {
 
   </button>
 
+
+  <!-- Mesmo botão original, sem duplicar eventos -->
+  <button
+    id="record"
+    type="button"
+    aria-label="Gravar"
+    title="Gravar">
+    <span></span>
+  </button>
 
   <button
     id="galleryModeButton"
