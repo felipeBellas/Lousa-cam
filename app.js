@@ -13471,6 +13471,42 @@ startBtn.addEventListener(
    GRAVAÇÃO
    ========================================================= */
 
+/* =========================================================
+   RETORNO DIRETO DA BIBLIOTECA DE CENAS
+
+   Somente tenta ativar a câmera quando a navegação
+   veio da biblioteca. A abertura normal permanece igual.
+   Se o navegador exigir interação para liberar a câmera,
+   o botão original continua disponível.
+   ========================================================= */
+
+(() => {
+  const params = new URLSearchParams(window.location.search);
+  const returnToCamera =
+    params.get("camera") === "1" ||
+    Boolean(params.get("presentation"));
+
+  if (!returnToCamera) return;
+
+  const activateCamera = async () => {
+    try {
+      const success = await startCamera();
+      if (success) {
+        startOverlay.classList.add("hidden");
+      }
+    } catch (error) {
+      console.warn("[Lousa Cam] Ativação automática indisponível:", error);
+    }
+  };
+
+  // Aguarda os demais scripts iniciarem; não modifica o botão original.
+  if (document.readyState === "complete") {
+    activateCamera();
+  } else {
+    window.addEventListener("load", activateCamera, { once: true });
+  }
+})();
+
 recordBtn.addEventListener(
   "click",
   async () => {
