@@ -588,20 +588,24 @@
 
     panel.hidden = true;
 
+    
     Object.assign(panel.style, {
-      position: "absolute",
-      top: "calc(100% + 8px)",
-      right: "0",
-      zIndex: "1000",
-      width: "220px",
+      position: "fixed",
+      top: "auto",
+      left: "auto",
+      right: "12px",
+      bottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
+      zIndex: "99999",
+      width: "240px",
       maxWidth: "calc(100vw - 24px)",
       padding: "14px",
       border: "1px solid #44546b",
       borderRadius: "12px",
       background: "#192333",
-      boxShadow: "0 10px 28px rgba(0,0,0,.35)",
+      boxShadow: "0 10px 28px rgba(0,0,0,.45)",
       color: "#ffffff"
     });
+
 
     const heading = document.createElement("div");
 
