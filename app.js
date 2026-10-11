@@ -14389,6 +14389,59 @@ function renderRecordingFrame() {
   }
 
 
+ 
+  /* =====================================================
+     CENAS — INTEGRAÇÃO COM A GRAVAÇÃO
+
+     Ordem de composição:
+     1. Câmera ou fundo da lousa
+     2. Apresentação de cenas
+     3. Pencil, textos, imagens e formas
+
+     Não modifica MediaRecorder nem áudio.
+     ===================================================== */
+
+  const scenesRecordingCanvas =
+    document.getElementById("scenesCameraCanvas");
+
+  const scenesRecordingActive =
+    window.ScenesPlayer &&
+    typeof window.ScenesPlayer.isActive === "function" &&
+    window.ScenesPlayer.isActive() &&
+    scenesRecordingCanvas &&
+    scenesRecordingCanvas.style.display !== "none" &&
+    !document
+      .getElementById("galleryLayer")
+      ?.classList.contains("show") &&
+    !document.body.classList.contains(
+      "teleprompter-active"
+    );
+
+  if (
+    scenesRecordingActive &&
+    scenesRecordingCanvas.width > 0 &&
+    scenesRecordingCanvas.height > 0
+  ) {
+
+    renderCtx.save();
+
+    /*
+      Desenha a mesma apresentação visível
+      na tela, respeitando o enquadramento
+      atual da gravação.
+    */
+
+    renderCtx.drawImage(
+      scenesRecordingCanvas,
+      offsetX,
+      offsetY,
+      contentWidth,
+      contentHeight
+    );
+
+    renderCtx.restore();
+  }
+
   /*
     =====================================================
     LOUSA / DESENHOS / FORMAS / TEXTO / IMAGENS
@@ -14402,6 +14455,7 @@ function renderRecordingFrame() {
   */
 
   renderCtx.save();
+
 
 
   renderCtx.translate(
