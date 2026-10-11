@@ -458,39 +458,34 @@
       "Escolher cor do elemento"
     );
 
+    
     Object.assign(picker.style, {
       position: "absolute",
       inset: "0",
       width: "100%",
       height: "100%",
-      opacity: "0.01",
+      opacity: "0",
       cursor: "pointer",
       zIndex: "2",
       margin: "0",
       padding: "0",
-      border: "0"
+      border: "0",
+      appearance: "none",
+      WebkitAppearance: "none"
     });
 
-    // Atualiza a cor inicial ao tocar.
+
+    // Sincroniza a cor antes da abertura nativa.
     picker.addEventListener("pointerdown", () => {
 
       const original = $("scenesElementColor");
-      const properties = $("scenesElementProperties");
 
-      if (
-        !original ||
-        !properties ||
-        properties.hidden ||
-        original.parentElement?.hidden
-      ) {
-        picker.disabled = true;
-        return;
+      if (original) {
+        picker.value = original.value || "#ffffff";
       }
 
-      picker.disabled = false;
-      picker.value = original.value || "#ffffff";
-
     });
+
 
     picker.addEventListener("input", () => {
 
