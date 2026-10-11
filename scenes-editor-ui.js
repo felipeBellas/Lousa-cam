@@ -750,11 +750,11 @@
     // Fecha ao tocar fora.
     document.addEventListener("pointerdown", event => {
 
-      if (
-        !panel.hidden &&
-        !wrapper.contains(event.target)
-      ) {
-
+     if (
+  !panel.hidden &&
+  !wrapper.contains(event.target) &&
+  !panel.contains(event.target)
+) {
         panel.hidden = true;
 
         button.setAttribute(
