@@ -1448,6 +1448,22 @@ return wrapper;
      // Botões compactos de duplicar e excluir cena.
     createCompactSceneActions();
 
+    // Botão independente: o scenes.js mantém os dados e o salvamento.
+    const zoomBar = document.querySelector(".scenes-zoom-controls");
+    if (zoomBar && !$("scenesOrientationButton")) {
+      const orientationButton = document.createElement("button");
+      orientationButton.type = "button";
+      orientationButton.id = "scenesOrientationButton";
+      orientationButton.textContent = "▭";
+      orientationButton.title = "Alternar orientação da cena";
+      orientationButton.setAttribute("aria-label", orientationButton.title);
+      orientationButton.style.cssText = "width:34px;height:34px;min-width:34px;font-size:23px;flex-shrink:0";
+      orientationButton.addEventListener("click", () => {
+        document.dispatchEvent(new Event("scenes:toggle-orientation"));
+      });
+      zoomBar.appendChild(orientationButton);
+    }
+
     /* -----------------------------------------------
        FUNDO INICIAL
        ----------------------------------------------- */
