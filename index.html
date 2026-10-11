@@ -3419,6 +3419,33 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
   opacity: .38 !important;
 }
 
+/* LOUSA CAM 3.0 — IMAGEM DE ABERTURA RESPONSIVA
+   Adicionar no FINAL do CSS existente, antes de </style>.
+   Arquivos .webp na mesma pasta do index.html.
+   A imagem NÃO substitui botões, logo ou textos do HTML. */
+#startOverlay {
+  background-image:
+    linear-gradient(180deg, rgba(13,20,18,.22), rgba(13,20,18,.43)),
+    url("./lousa-abertura-smartphone.webp") !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+}
+@media (min-width: 700px) and (orientation: portrait) {
+  #startOverlay {
+    background-image:
+      linear-gradient(180deg, rgba(13,20,18,.24), rgba(13,20,18,.46)),
+      url("./lousa-abertura-tablet.webp") !important;
+  }
+}
+@media (orientation: landscape) {
+  #startOverlay {
+    background-image:
+      linear-gradient(90deg, rgba(13,20,18,.38), rgba(13,20,18,.24)),
+      url("./lousa-abertura-horizontal.webp") !important;
+  }
+}
+
 </style>
 
   <link
