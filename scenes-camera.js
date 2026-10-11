@@ -3,14 +3,13 @@
 
 /* =========================================================
    LOUSA CAM 2.0 — SCENES-CAMERA.JS
-   ETAPA 2 — ACESSO RÁPIDO E NAVEGAÇÃO LATERAL
+   ETAPA 3 — BARRA DE NAVEGAÇÃO COM ÍCONES
 
-   - Botão Cenas ao lado de Teleprompter
-   - Remove botão anterior do menu principal
-   - Abre seletor ou fecha apresentação
-   - Setas nas laterais da câmera
-   - Mantém centro da tela livre
-   - Não altera câmera, Pencil ou gravação
+   - Câmera, Galeria, Teleprompter e Cenas com ícones
+   - Preserva os botões e eventos originais
+   - Mantém a navegação lateral entre cenas
+   - Mantém a visualização sobre a câmera
+   - Não modifica gravação, Pencil ou MediaRecorder
    ========================================================= */
 
 (() => {
@@ -19,32 +18,88 @@
 
   const app = document.getElementById("app");
   const dock = document.getElementById("modeDock");
+
+  const cameraButton =
+    document.getElementById("cameraModeButton");
+
+  const galleryButton =
+    document.getElementById("galleryModeButton");
+
   const teleprompterButton =
     document.getElementById("teleprompterButton");
 
-  if (!Player || !app || !dock || !teleprompterButton) {
+  if (
+    !Player ||
+    !app ||
+    !dock ||
+    !cameraButton ||
+    !galleryButton ||
+    !teleprompterButton
+  ) {
+
     console.error(
       "[ScenesCamera] Dependências indisponíveis."
     );
+
     return;
   }
 
   /* =====================================================
-     REMOVER ACESSO ANTIGO DO MENU
+     ÍCONES SVG
      ===================================================== */
 
-  const oldMenuButton =
-    document.getElementById("scenesCameraMenuButton");
+  const ICONS = {
 
-  if (oldMenuButton) {
-    const oldRow = oldMenuButton.closest(".row");
+    camera: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect
+          x="3" y="5"
+          width="13" height="14"
+          rx="2"
+        />
+        <path d="m16 10 5-3v10l-5-3z"/>
+      </svg>
+    `,
 
-    if (oldRow && oldRow.children.length === 1) {
-      oldRow.remove();
-    } else {
-      oldMenuButton.remove();
-    }
-  }
+    gallery: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect
+          x="3" y="3"
+          width="18" height="18"
+          rx="2"
+        />
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="m21 15-5-5L5 21"/>
+      </svg>
+    `,
+
+    teleprompter: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect
+          x="4" y="3"
+          width="16" height="18"
+          rx="2"
+        />
+        <path d="M8 8h8"/>
+        <path d="M8 12h8"/>
+        <path d="M8 16h5"/>
+      </svg>
+    `,
+
+    scenes: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect
+          x="3" y="4"
+          width="18" height="14"
+          rx="2"
+        />
+        <path d="M8 21h8"/>
+        <path d="M12 18v3"/>
+        <path d="m10 8 5 3-5 3z"/>
+      </svg>
+    `
+
+  };
 
   /* =====================================================
      ESTILOS
@@ -53,6 +108,72 @@
   const style = document.createElement("style");
 
   style.textContent = `
+
+    /* ---------------------------------------------
+       BARRA INFERIOR
+       --------------------------------------------- */
+
+    #modeDock {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      max-width: calc(100% - 12px);
+    }
+
+    #modeDock button {
+      box-sizing: border-box;
+      width: 52px;
+      min-width: 52px;
+      height: 42px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 1;
+      font-size: 0;
+      touch-action: manipulation;
+    }
+
+    #modeDock button svg {
+      display: block;
+      width: 23px;
+      height: 23px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    #modeDock button.active {
+      color: #ffffff;
+    }
+
+    @media (max-width: 390px) {
+
+      #modeDock {
+        gap: 2px;
+      }
+
+      #modeDock button {
+        width: 45px;
+        min-width: 45px;
+        height: 40px;
+      }
+
+      #modeDock button svg {
+        width: 21px;
+        height: 21px;
+      }
+
+    }
+
+    /* ---------------------------------------------
+       CANVAS DAS CENAS
+       --------------------------------------------- */
+
     #scenesCameraCanvas {
       position: absolute;
       inset: 0;
@@ -63,25 +184,9 @@
       pointer-events: none;
     }
 
-    #modeDock #scenesCameraDockButton {
-      min-width: 48px;
-      width: 48px;
-      padding: 0 9px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-shrink: 0;
-    }
-
-    #scenesCameraDockButton svg {
-      width: 21px;
-      height: 21px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
+    /* ---------------------------------------------
+       SETAS LATERAIS
+       --------------------------------------------- */
 
     #scenesCameraPrev,
     #scenesCameraNext {
@@ -119,6 +224,10 @@
       opacity: .24;
       pointer-events: none;
     }
+
+    /* ---------------------------------------------
+       SELETOR DE APRESENTAÇÕES
+       --------------------------------------------- */
 
     #scenesCameraDialog {
       position: absolute;
@@ -181,56 +290,89 @@
     }
 
     @media (max-width: 430px) {
-      #modeDock {
-        max-width: calc(100% - 12px);
-      }
-
-      #modeDock button {
-        min-width: 0;
-        padding-left: 9px;
-        padding-right: 9px;
-        font-size: 12px;
-      }
-
-      #modeDock #scenesCameraDockButton {
-        width: 42px;
-        min-width: 42px;
-      }
 
       #scenesCameraPrev,
       #scenesCameraNext {
         width: 40px;
         height: 54px;
       }
+
     }
+
   `;
 
   document.head.appendChild(style);
 
   /* =====================================================
-     BOTÃO CENAS NO DOCK
+     CONVERTER BOTÕES EXISTENTES EM ÍCONES
+
+     Preserva:
+     - IDs
+     - Classes
+     - Eventos de clique
+     - aria-pressed
+     - Funcionamento original
      ===================================================== */
 
-  const scenesButton = document.createElement("button");
+  function applyIcon(button, icon, label) {
 
-  scenesButton.id = "scenesCameraDockButton";
-  scenesButton.type = "button";
-  scenesButton.title = "Cenas";
-  scenesButton.setAttribute("aria-label", "Abrir cenas");
-  scenesButton.setAttribute("aria-pressed", "false");
+    button.innerHTML = icon;
 
-  scenesButton.innerHTML = `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="14" rx="2"/>
-      <path d="M8 21h8"/>
-      <path d="M12 18v3"/>
-      <path d="m10 8 5 3-5 3z"/>
-    </svg>
-  `;
+    button.setAttribute(
+      "aria-label",
+      label
+    );
 
-  teleprompterButton.insertAdjacentElement(
-    "afterend",
-    scenesButton
+    button.title = label;
+  }
+
+  applyIcon(
+    cameraButton,
+    ICONS.camera,
+    "Câmera"
+  );
+
+  applyIcon(
+    galleryButton,
+    ICONS.gallery,
+    "Galeria"
+  );
+
+  applyIcon(
+    teleprompterButton,
+    ICONS.teleprompter,
+    "Teleprompter"
+  );
+
+  /* =====================================================
+     BOTÃO CENAS
+     ===================================================== */
+
+  let scenesButton =
+    document.getElementById("scenesCameraDockButton");
+
+  if (!scenesButton) {
+
+    scenesButton = document.createElement("button");
+
+    scenesButton.id = "scenesCameraDockButton";
+    scenesButton.type = "button";
+
+    teleprompterButton.insertAdjacentElement(
+      "afterend",
+      scenesButton
+    );
+  }
+
+  applyIcon(
+    scenesButton,
+    ICONS.scenes,
+    "Abrir cenas"
+  );
+
+  scenesButton.setAttribute(
+    "aria-pressed",
+    "false"
   );
 
   /* =====================================================
@@ -238,8 +380,13 @@
      ===================================================== */
 
   const canvas = document.createElement("canvas");
+
   canvas.id = "scenesCameraCanvas";
-  canvas.setAttribute("aria-hidden", "true");
+
+  canvas.setAttribute(
+    "aria-hidden",
+    "true"
+  );
 
   app.appendChild(canvas);
 
@@ -248,45 +395,77 @@
      ===================================================== */
 
   const prev = document.createElement("button");
+
   prev.id = "scenesCameraPrev";
   prev.type = "button";
   prev.textContent = "‹";
-  prev.setAttribute("aria-label", "Cena anterior");
+
+  prev.setAttribute(
+    "aria-label",
+    "Cena anterior"
+  );
 
   const next = document.createElement("button");
+
   next.id = "scenesCameraNext";
   next.type = "button";
   next.textContent = "›";
-  next.setAttribute("aria-label", "Próxima cena");
+
+  next.setAttribute(
+    "aria-label",
+    "Próxima cena"
+  );
 
   app.appendChild(prev);
   app.appendChild(next);
 
   /* =====================================================
-     SELETOR
+     SELETOR DE APRESENTAÇÕES
      ===================================================== */
 
   const dialog = document.createElement("div");
+
   dialog.id = "scenesCameraDialog";
 
-  dialog.setAttribute("role", "dialog");
-  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute(
+    "role",
+    "dialog"
+  );
+
+  dialog.setAttribute(
+    "aria-modal",
+    "true"
+  );
+
   dialog.setAttribute(
     "aria-label",
     "Selecionar apresentação"
   );
 
   dialog.innerHTML = `
+
     <div class="sc-panel">
+
       <div class="sc-header">
+
         <strong>Apresentações salvas</strong>
-        <button type="button" id="scenesCameraDismiss">
+
+        <button
+          type="button"
+          id="scenesCameraDismiss">
           Fechar
         </button>
+
       </div>
+
       <div id="scenesCameraList"></div>
-      <p id="scenesCameraStatus" role="status"></p>
+
+      <p
+        id="scenesCameraStatus"
+        role="status"></p>
+
     </div>
+
   `;
 
   app.appendChild(dialog);
@@ -309,16 +488,21 @@
 
   function syncSize() {
 
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio =
+      window.devicePixelRatio || 1;
 
     const width = Math.max(
       1,
-      Math.round(app.clientWidth * pixelRatio)
+      Math.round(
+        app.clientWidth * pixelRatio
+      )
     );
 
     const height = Math.max(
       1,
-      Math.round(app.clientHeight * pixelRatio)
+      Math.round(
+        app.clientHeight * pixelRatio
+      )
     );
 
     if (
@@ -342,17 +526,25 @@
   function updateControls() {
 
     const state = Player.getState();
+
     const active = state.active;
 
-    canvas.style.display = active ? "block" : "none";
+    canvas.style.display =
+      active ? "block" : "none";
 
-    prev.style.display = active ? "flex" : "none";
-    next.style.display = active ? "flex" : "none";
+    prev.style.display =
+      active ? "flex" : "none";
+
+    next.style.display =
+      active ? "flex" : "none";
 
     prev.disabled = !state.hasPrevious;
     next.disabled = !state.hasNext;
 
-    scenesButton.classList.toggle("active", active);
+    scenesButton.classList.toggle(
+      "active",
+      active
+    );
 
     scenesButton.setAttribute(
       "aria-pressed",
@@ -369,22 +561,27 @@
   }
 
   /* =====================================================
-     SELETOR DE APRESENTAÇÕES
+     SELETOR
      ===================================================== */
 
   function hideDialog() {
+
     selectionGeneration++;
+
     dialog.style.display = "none";
   }
 
   async function showDialog() {
 
-    const generation = ++selectionGeneration;
+    const generation =
+      ++selectionGeneration;
 
     dialog.style.display = "flex";
 
     list.replaceChildren();
-    status.textContent = "Carregando apresentações…";
+
+    status.textContent =
+      "Carregando apresentações…";
 
     try {
 
@@ -401,10 +598,13 @@
 
       for (const presentation of presentations) {
 
-        const button = document.createElement("button");
+        const button =
+          document.createElement("button");
+
         button.type = "button";
 
-        const count = presentation.scenes?.length || 0;
+        const count =
+          presentation.scenes?.length || 0;
 
         button.textContent =
           `${presentation.title || "Sem título"} — ` +
@@ -421,18 +621,25 @@
     } catch (error) {
 
       if (generation === selectionGeneration) {
+
         status.textContent =
           `Erro ao listar: ${error.message}`;
       }
     }
   }
 
+  /* =====================================================
+     ABRIR APRESENTAÇÃO
+     ===================================================== */
+
   async function openPresentation(id) {
 
     if (opening) return;
 
     opening = true;
-    status.textContent = "Preparando apresentação…";
+
+    status.textContent =
+      "Preparando apresentação…";
 
     try {
 
@@ -442,7 +649,9 @@
         await Player.loadPresentation(id);
 
       if (loaded) {
+
         hideDialog();
+
         updateControls();
       }
 
@@ -454,36 +663,51 @@
       updateControls();
 
     } finally {
+
       opening = false;
     }
   }
 
   /* =====================================================
-     BOTÃO DE ACESSO RÁPIDO
+     BOTÃO CENAS
      ===================================================== */
 
-  scenesButton.addEventListener("click", event => {
+  scenesButton.addEventListener(
+    "click",
+    event => {
 
-    event.stopPropagation();
+      event.stopPropagation();
 
-    if (Player.isActive()) {
-      Player.closePresentation();
-      hideDialog();
-    } else {
-      showDialog();
+      if (Player.isActive()) {
+
+        Player.closePresentation();
+
+        hideDialog();
+
+      } else {
+
+        showDialog();
+      }
     }
-  });
+  );
 
-  dismiss.addEventListener("click", hideDialog);
+  dismiss.addEventListener(
+    "click",
+    hideDialog
+  );
 
-  dialog.addEventListener("click", event => {
-    if (event.target === dialog) {
-      hideDialog();
+  dialog.addEventListener(
+    "click",
+    event => {
+
+      if (event.target === dialog) {
+        hideDialog();
+      }
     }
-  });
+  );
 
   /* =====================================================
-     NAVEGAÇÃO
+     NAVEGAÇÃO ENTRE CENAS
      ===================================================== */
 
   prev.addEventListener(
@@ -496,18 +720,37 @@
     () => Player.nextScene()
   );
 
-  Player.on("scenechange", updateControls);
-  Player.on("loaded", updateControls);
-  Player.on("closed", updateControls);
+  Player.on(
+    "scenechange",
+    updateControls
+  );
+
+  Player.on(
+    "loaded",
+    updateControls
+  );
+
+  Player.on(
+    "closed",
+    updateControls
+  );
 
   /* =====================================================
      REDIMENSIONAMENTO
      ===================================================== */
 
-  window.addEventListener("resize", syncSize);
-  window.addEventListener("orientationchange", syncSize);
+  window.addEventListener(
+    "resize",
+    syncSize
+  );
+
+  window.addEventListener(
+    "orientationchange",
+    syncSize
+  );
 
   if (typeof ResizeObserver !== "undefined") {
+
     new ResizeObserver(syncSize).observe(app);
   }
 
@@ -516,12 +759,17 @@
      ===================================================== */
 
   syncSize();
+
   Player.setCanvas(canvas);
+
   updateControls();
 
   window.ScenesCamera = Object.freeze({
+
     openSelector: showDialog,
+
     close: () => Player.closePresentation()
+
   });
 
 })();
