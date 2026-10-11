@@ -1577,6 +1577,65 @@
 
   }
 
+   
+  /* =====================================================
+     ESPESSURA DE LINHAS E SETAS
+     Comunicação com a interface compacta.
+     ===================================================== */
+
+  document.addEventListener(
+    "scenes:stroke-width",
+    event => {
+
+      const element = selectedElement();
+
+      if (
+        !element ||
+        element.type !== "shape" ||
+        !["line", "arrow"].includes(element.shape)
+      ) {
+        return;
+      }
+
+      const thickness = clamp(
+        number(event.detail?.value, 5),
+        1,
+        20
+      );
+
+      changeElementProperty(
+        "strokeWidth",
+        thickness
+      );
+
+    }
+  );
+
+  document.addEventListener(
+    "scenes:get-stroke-width",
+    event => {
+
+      const element = selectedElement();
+
+      const valid = Boolean(
+        element &&
+        element.type === "shape" &&
+        ["line", "arrow"].includes(element.shape)
+      );
+
+      if (typeof event.detail?.respond === "function") {
+        event.detail.respond({
+          valid,
+          value: valid
+            ? clamp(number(element.strokeWidth, 5), 1, 20)
+            : 5
+        });
+      }
+
+    }
+  );
+
+
   /* =====================================================
      PROPRIEDADES
      ===================================================== */
