@@ -3360,36 +3360,43 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
 
 
 /* =========================================================
-   LOUSA CAM 3.0 — ETAPA 2C
-   Fundo ilustrado + dock persistente na tela bloqueada.
-   Não altera câmera, gravação, Pencil ou módulos externos.
+   LOUSA CAM 3.0 — ETAPA 2D
+   Corrige imagem de abertura e oculta barra superior
+   enquanto a câmera não foi ativada.
+   Não altera scripts nem botões existentes.
    ========================================================= */
 
-/* A imagem é um arquivo separado, sem textos ou botões embutidos. */
-#startOverlay {
-  background:
-    linear-gradient(180deg,
-      rgba(16,23,22,.34) 0%,
-      rgba(16,23,22,.46) 42%,
-      rgba(11,18,17,.66) 100%),
-    url("./lousa-cam-abertura-fundo.jpg") center center / cover no-repeat
-    !important;
+#startOverlay:not(.hidden) {
+  background-color: #222a27 !important;
+  background-image:
+    linear-gradient(180deg, rgba(10,16,14,.20), rgba(10,16,14,.48)),
+    url("./lousa-abertura-smartphone.webp") !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-
-/* Texto e botão originais continuam no lugar e acima da imagem. */
-#startCard {
-  position: relative;
-  z-index: 1;
+@media (min-width: 700px) and (orientation: portrait) {
+  #startOverlay:not(.hidden) {
+    background-image:
+      linear-gradient(180deg, rgba(10,16,14,.20), rgba(10,16,14,.48)),
+      url("./lousa-abertura-tablet.webp") !important;
+  }
 }
-#startCard h1,
-#startCard p,
-#permissionHint {
-  text-shadow: 0 2px 10px rgba(0,0,0,.48);
+@media (orientation: landscape) {
+  #startOverlay:not(.hidden) {
+    background-image:
+      linear-gradient(90deg, rgba(10,16,14,.40), rgba(10,16,14,.22)),
+      url("./lousa-abertura-horizontal.webp") !important;
+  }
 }
-
-/* A barra permanece visível; não perde opacidade ao toque. */
+/* A barra superior só aparece depois de ativar a câmera. */
+body:has(#startOverlay:not(.hidden)) #top {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* Mantém o dock visível durante a tela de permissão. */
 #modeDock,
 #modeDock.active,
 #modeDock:hover,
@@ -3397,54 +3404,12 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
 #modeDock.camera-locked {
   opacity: 1 !important;
 }
-#modeDock {
-  transition: background .25s ease, box-shadow .25s ease !important;
-}
-#modeDock.camera-locked {
-  background: rgba(185,194,190,.31) !important;
-}
-
-/* Na tela de permissão, os atalhos permanecem visíveis,
-   mas não podem abrir telas sobre a solicitação de acesso. */
-#modeDock.camera-locked #teleprompterButton,
-#modeDock.camera-locked #galleryModeButton,
-#modeDock.camera-locked #glassScenesButton {
-  pointer-events: none !important;
-  opacity: .65 !important;
-}
-
-/* Gravar somente após a ativação da câmera. */
 #modeDock.camera-locked #record {
   pointer-events: none !important;
   opacity: .38 !important;
 }
-
-/* LOUSA CAM 3.0 — IMAGEM DE ABERTURA RESPONSIVA
-   Adicionar no FINAL do CSS existente, antes de </style>.
-   Arquivos .webp na mesma pasta do index.html.
-   A imagem NÃO substitui botões, logo ou textos do HTML. */
-#startOverlay {
-  background-image:
-    linear-gradient(180deg, rgba(13,20,18,.22), rgba(13,20,18,.43)),
-    url("./lousa-abertura-smartphone.webp") !important;
-  background-position: center center !important;
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-}
-@media (min-width: 700px) and (orientation: portrait) {
-  #startOverlay {
-    background-image:
-      linear-gradient(180deg, rgba(13,20,18,.24), rgba(13,20,18,.46)),
-      url("./lousa-abertura-tablet.webp") !important;
-  }
-}
-@media (orientation: landscape) {
-  #startOverlay {
-    background-image:
-      linear-gradient(90deg, rgba(13,20,18,.38), rgba(13,20,18,.24)),
-      url("./lousa-abertura-horizontal.webp") !important;
-  }
-}
+#startCard { position: relative; z-index: 1; }
+#startCard h1, #startCard p { text-shadow: 0 2px 10px rgba(0,0,0,.6); }
 
 </style>
 
