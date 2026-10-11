@@ -676,7 +676,8 @@
 
     }
 
-        button.addEventListener("click", event => {
+       
+    button.addEventListener("click", event => {
 
       event.stopPropagation();
 
@@ -690,6 +691,24 @@
 
       if (opening) {
         synchronize();
+
+        const rect = button.getBoundingClientRect();
+
+        const panelWidth = 240;
+        const margin = 12;
+
+        const left = Math.max(
+          margin,
+          Math.min(
+            rect.left,
+            window.innerWidth - panelWidth - margin
+          )
+        );
+
+        panel.style.left = `${left}px`;
+        panel.style.right = "auto";
+        panel.style.top = `${rect.bottom + 8}px`;
+        panel.style.bottom = "auto";
       }
 
       panel.hidden = !opening;
@@ -700,6 +719,7 @@
       );
 
     });
+
 
     slider.addEventListener("input", () => {
        
