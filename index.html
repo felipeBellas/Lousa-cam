@@ -3346,6 +3346,18 @@ body:has(#startOverlay:not(.hidden)) #modeDock { background: rgba(210,218,215,.1
 body:has(#galleryLayer.show) #modeDock { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #modeDock { transition: none !important; } }
 
+/* ETAPA 2B — correções após teste no Safari */
+#modeDock { z-index: 10000 !important; }
+#modeDock #record { flex: 0 0 66px !important; }
+#modeDock #record span { margin: auto; }
+#modeDock #record small { display: none !important; }
+#modeDock.camera-locked #record { opacity: .38 !important; }
+/* A tela bloqueada continua cobrindo a câmera, mas o dock permanece visível. */
+#startOverlay { z-index: 50 !important; }
+#modeDock.camera-locked { opacity: .92 !important; background: rgba(200,210,207,.23) !important; }
+#modeDock .lc-icon { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Emoji', sans-serif; }
+
+
 </style>
 
   <link
@@ -4378,9 +4390,9 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
 
 <nav id="modeDock" aria-label="Navegação principal">
   <button id="glassMenuButton" type="button" aria-label="Menu" title="Menu"><span class="lc-icon">☰</span><small>Menu</small></button>
-  <button id="teleprompterButton" type="button" aria-pressed="false"><span class="lc-icon">▤</span><small>Teleprompter</small></button>
+  <button id="teleprompterButton" type="button" aria-pressed="false"><span class="lc-icon">📜</span><small>Teleprompter</small></button>
   <!-- O ID original record preserva o listener existente em app.js. -->
-  <button id="record" type="button" aria-label="Gravar" title="Gravar" disabled><span></span><small>Gravar</small></button>
+  <button id="record" type="button" aria-label="Gravar" title="Gravar" disabled><span></span></button>
   <button id="galleryModeButton" type="button" aria-pressed="false"><span class="lc-icon">▧</span><small>Galeria</small></button>
   <button id="glassScenesButton" type="button" aria-label="Cenas" title="Cenas"><span class="lc-icon">▣</span><small>Cenas</small></button>
   <!-- Mantido para a navegação existente, mas não exibido no dock da câmera. -->
@@ -4836,7 +4848,17 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
     if (dock) dock.classList.toggle('camera-locked', !cameraIsActive());
   };
   syncRecordingAccess();
+  // O módulo Cenas conserva seu próprio botão; não duplicá-lo visualmente no dock.
+  const removeDuplicateSceneFromDock = () => {
+    if (!dock) return;
+    dock.querySelectorAll("button").forEach(b => {
+      if (b !== scenes && /scene/i.test(b.id || "") && b.id !== "cameraModeButton") b.style.display = "none";
+    });
+  };
+  removeDuplicateSceneFromDock();
   if (startOverlay) new MutationObserver(syncRecordingAccess).observe(startOverlay, { attributes: true, attributeFilter: ['class','style'] });
+  // Dock fora do contêiner da câmera para não ficar encoberto pelo overlay.
+  if (dock && dock.parentElement !== document.body) document.body.appendChild(dock);
   if (menu) menu.addEventListener('click', () => {
     if (!cameraIsActive()) return;
     document.getElementById('menuBtn')?.click();
