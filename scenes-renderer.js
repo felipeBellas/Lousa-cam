@@ -11,6 +11,7 @@
    - Preserva transparência
    - Preserva navegação e compatibilidade com o Player
    - Melhora contraste de textos claros
+   - Suporta apresentações 16:9 e 9:16
    - Não modifica os dados das apresentações
    - Não altera o aplicativo principal
    ========================================================= */
@@ -19,6 +20,8 @@
 
   const BASE_WIDTH = 1280;
   const BASE_HEIGHT = 720;
+  const PORTRAIT_WIDTH = 720;
+  const PORTRAIT_HEIGHT = 1280;
 
   let imageCache = new WeakMap();
 
@@ -214,7 +217,12 @@
      FUNDO
      ===================================================== */
 
-  function drawBackground(ctx, scene) {
+  function drawBackground(
+    ctx,
+    scene,
+    baseWidth = BASE_WIDTH,
+    baseHeight = BASE_HEIGHT
+  ) {
 
     const background = scene.background || {};
 
@@ -232,8 +240,8 @@
     ctx.fillRect(
       0,
       0,
-      BASE_WIDTH,
-      BASE_HEIGHT
+      baseWidth,
+      baseHeight
     );
 
     ctx.restore();
@@ -701,15 +709,37 @@
         ctx.restore();
       }
 
-      const scaleX =
-        canvas.width / BASE_WIDTH;
+      // Dimensões lógicas da apresentação.
+      // Mantém o padrão horizontal para chamadas antigas.
+      const baseWidth = options.aspectRatio === "9:16"
+        ? PORTRAIT_WIDTH
+        : BASE_WIDTH;
 
-      const scaleY =
-        canvas.height / BASE_HEIGHT;
+      const baseHeight = options.aspectRatio === "9:16"
+        ? PORTRAIT_HEIGHT
+        : BASE_HEIGHT;
 
-      ctx.scale(scaleX, scaleY);
+      // Encaixe proporcional, sem deformação.
+      const scale = Math.min(
+        canvas.width / baseWidth,
+        canvas.height / baseHeight
+      );
 
-      drawBackground(ctx, scene);
+      const offsetX =
+        (canvas.width - baseWidth * scale) / 2;
+
+      const offsetY =
+        (canvas.height - baseHeight * scale) / 2;
+
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      drawBackground(
+        ctx,
+        scene,
+        baseWidth,
+        baseHeight
+      );
 
       const elements = Array.isArray(scene.elements)
         ? scene.elements
@@ -741,7 +771,11 @@
 
     if (!scene) return false;
 
-    return renderScene(ctx, scene, options);
+    return renderScene(ctx, scene, {
+      ...options,
+      aspectRatio:
+        options.aspectRatio || presentation.aspectRatio
+    });
   }
 
   /* =====================================================
@@ -823,6 +857,8 @@
 
     BASE_WIDTH,
     BASE_HEIGHT,
+    PORTRAIT_WIDTH,
+    PORTRAIT_HEIGHT,
 
     loadImage,
     getLoadedImage,
