@@ -13472,60 +13472,52 @@ startBtn.addEventListener(
    ========================================================= */
 
 /* =========================================================
-   RETORNO DIRETO DA BIBLIOTECA DE CENAS
-
-   Somente tenta ativar a câmera quando a navegação
-   veio da biblioteca. A abertura normal permanece igual.
-   Se o navegador exigir interação para liberar a câmera,
-   o botão original continua disponível.
+   RETORNO DA BIBLIOTECA DE CENAS
+   Safari: mantém a ativação manual da câmera.
+   PWA: permite retorno automático.
    ========================================================= */
 
 (() => {
   const params = new URLSearchParams(window.location.search);
+
   const returnToCamera =
     params.get("camera") === "1" ||
     Boolean(params.get("presentation"));
 
   if (!returnToCamera) return;
 
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  // Safari no navegador:
+  // preserva o botão original e evita solicitar
+  // permissão automaticamente ao abrir a página.
+  if (!isStandalone) return;
+
   const activateCamera = async () => {
     try {
       const success = await startCamera();
+
       if (success) {
         startOverlay.classList.add("hidden");
       }
     } catch (error) {
-      console.warn("[Lousa Cam] Ativação automática indisponível:", error);
+      console.warn(
+        "[Lousa Cam] Não foi possível ativar a câmera:",
+        error
+      );
     }
   };
 
-  // Aguarda os demais scripts iniciarem; não modifica o botão original.
   if (document.readyState === "complete") {
     activateCamera();
   } else {
-    window.addEventListener("load", activateCamera, { once: true });
+    window.addEventListener("load", activateCamera, {
+      once: true
+    });
   }
 })();
-
-recordBtn.addEventListener(
-  "click",
-  async () => {
-
-    if (
-      recording
-    ) {
-
-      stopRecording();
-
-    } else {
-
-      await startRecording();
-
-    }
-
-  }
-);
-
 
 /* =========================================================
    INICIAR GRAVAÇÃO
