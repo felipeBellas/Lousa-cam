@@ -13470,7 +13470,26 @@ startBtn.addEventListener(
 /* =========================================================
    GRAVAÇÃO
    ========================================================= */
+/* =========================================================
+   BOTÃO GRAVAR — RESTAURAR EVENTO
+   ========================================================= */
 
+recordBtn.addEventListener(
+  "click",
+  async () => {
+
+    if (recording) {
+
+      stopRecording();
+
+    } else {
+
+      await startRecording();
+
+    }
+
+  }
+);
 /* =========================================================
    RETORNO DA BIBLIOTECA DE CENAS
    Safari: mantém a ativação manual da câmera.
