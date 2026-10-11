@@ -676,35 +676,33 @@
 
     }
 
-    button.addEventListener("click", () => {
+        button.addEventListener("click", event => {
+
+      event.stopPropagation();
 
       if (!hasSelection()) {
-
         panel.hidden = true;
-
-        button.setAttribute(
-          "aria-expanded",
-          "false"
-        );
-
+        button.setAttribute("aria-expanded", "false");
         return;
       }
 
-      if (panel.hidden) {
+      const opening = panel.hidden;
+
+      if (opening) {
         synchronize();
       }
 
-      panel.hidden = !panel.hidden;
+      panel.hidden = !opening;
 
       button.setAttribute(
         "aria-expanded",
-        String(!panel.hidden)
+        String(opening)
       );
 
     });
 
     slider.addEventListener("input", () => {
-
+       
       const original = getOriginalInput();
 
       if (!original || !hasSelection()) {
