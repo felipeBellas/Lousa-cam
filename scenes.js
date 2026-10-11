@@ -1125,6 +1125,15 @@
       );
 
       addButton("Apresentar", () => {
+        // Quando a biblioteca está dentro da câmera, não navega.
+        if (window.parent !== window) {
+          window.parent.postMessage({
+            type: "lousa-cam-scenes-present",
+            id: item.id
+          }, window.location.origin);
+          return;
+        }
+        // Mantém compatibilidade com acesso direto a scenes.html.
         const url = new URL("./index.html", window.location.href);
         url.searchParams.set("camera", "1");
         url.searchParams.set("presentation", item.id);
