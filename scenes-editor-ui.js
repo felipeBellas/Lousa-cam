@@ -782,11 +782,13 @@
 
     });
 
-    panel.append(heading, slider);
+   panel.append(heading, slider);
 
-    wrapper.append(button, panel);
+wrapper.appendChild(button);
 
-    return wrapper;
+document.body.appendChild(panel);
+
+return wrapper;
 
   }
 
