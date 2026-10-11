@@ -1126,6 +1126,7 @@
 
       addButton("Apresentar", () => {
         const url = new URL("./index.html", window.location.href);
+        url.searchParams.set("camera", "1");
         url.searchParams.set("presentation", item.id);
         window.location.assign(url.href);
       });
