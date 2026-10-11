@@ -726,9 +726,62 @@
      BOTÃO CENAS — ABRE A BIBLIOTECA DIRETAMENTE
      ===================================================== */
 
+  // Biblioteca como camada interna: não recarrega index.html nem
+  // interrompe o stream da câmera (mesmo princípio da Galeria).
+  const libraryLayer = document.createElement("div");
+  libraryLayer.id = "scenesEmbeddedLibrary";
+  Object.assign(libraryLayer.style, {
+    position: "fixed", inset: "0", zIndex: "200",
+    background: "#09090b", display: "none", pointerEvents: "auto"
+  });
+  const libraryFrame = document.createElement("iframe");
+  libraryFrame.title = "Biblioteca de cenas";
+  libraryFrame.setAttribute("aria-label", "Biblioteca de cenas");
+  Object.assign(libraryFrame.style, {
+    width: "100%", height: "100%", border: "0", display: "block"
+  });
+  libraryLayer.appendChild(libraryFrame);
+  document.body.appendChild(libraryLayer);
+
+  function closeEmbeddedLibrary() {
+    libraryLayer.style.display = "none";
+    // Descarta o editor apenas ao sair, liberando memória.
+    libraryFrame.removeAttribute("src");
+  }
+
+  function openEmbeddedLibrary() {
+    libraryLayer.style.display = "block";
+    libraryFrame.src = "./scenes.html";
+  }
+
+  libraryFrame.addEventListener("load", () => {
+    try {
+      const doc = libraryFrame.contentDocument;
+      const back = doc && doc.getElementById("scenesBackButton");
+      if (back) {
+        back.addEventListener("click", event => {
+          event.preventDefault();
+          closeEmbeddedLibrary();
+        }, true);
+      }
+    } catch (error) {
+      console.error("[ScenesCamera] Não foi possível vincular a seta:", error);
+    }
+  });
+
+  window.addEventListener("message", event => {
+    if (event.origin !== window.location.origin ||
+        event.source !== libraryFrame.contentWindow) return;
+    const data = event.data;
+    if (!data || data.type !== "lousa-cam-scenes-present" ||
+        typeof data.id !== "string") return;
+    closeEmbeddedLibrary();
+    openPresentation(data.id);
+  });
+
   scenesButton.addEventListener("click", event => {
     event.stopPropagation();
-    window.location.assign("./scenes.html");
+    openEmbeddedLibrary();
   });
 
   /* =====================================================
