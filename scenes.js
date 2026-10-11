@@ -1016,7 +1016,10 @@
         );
         line.setAttribute("y2", "50");
         line.setAttribute("stroke", color);
-        line.setAttribute("stroke-width", "5");
+        line.setAttribute(
+        "stroke-width",
+        String(clamp(number(element.strokeWidth, 5), 1, 20))
+        );
         line.setAttribute("stroke-linecap", "round");
 
         graphic.appendChild(line);
@@ -1028,10 +1031,21 @@
             "polygon"
           );
 
-          tip.setAttribute(
-            "points",
-            "100,50 82,37 82,63"
-          );
+          const thickness = clamp(
+         number(element.strokeWidth, 5),
+         1,
+         20
+         );
+
+         const halfTipHeight = Math.min(
+         30,
+         10 + thickness * 0.6
+         );
+
+        tip.setAttribute(
+        "points",
+        `100,50 82,${50 - halfTipHeight} 82,${50 + halfTipHeight}`
+         );
 
           tip.setAttribute("fill", color);
 
