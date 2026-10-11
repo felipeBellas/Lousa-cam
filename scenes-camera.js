@@ -753,15 +753,160 @@
     new ResizeObserver(syncSize).observe(app);
   }
 
+
   /* =====================================================
-     INICIALIZAÇÃO
+     SINCRONIZAÇÃO COM CÂMERA, GALERIA E TELEPROMPTER
      ===================================================== */
+
+  const cameraModeButton =
+    document.getElementById("cameraModeButton");
+
+  const galleryModeButton =
+    document.getElementById("galleryModeButton");
+
+  const teleprompterModeButton =
+    document.getElementById("teleprompterButton");
+
+  const galleryLayer =
+    document.getElementById("galleryLayer");
+
+  let scenesModeVisible = false;
+
+  function syncScenesVisibility() {
+
+    const galleryOpen =
+      galleryLayer?.classList.contains("show") || false;
+
+    const teleprompterOpen =
+      document.body.classList.contains(
+        "teleprompter-active"
+      );
+
+    const visible =
+      scenesModeVisible &&
+      Player.isActive() &&
+      !galleryOpen &&
+      !teleprompterOpen;
+
+    canvas.style.display =
+      visible ? "block" : "none";
+
+    prev.style.display =
+      visible ? "flex" : "none";
+
+    next.style.display =
+      visible ? "flex" : "none";
+
+    scenesButton.classList.toggle(
+      "active",
+      visible
+    );
+  }
+
+  function suspendScenes() {
+
+    scenesModeVisible = false;
+
+    hideDialog();
+
+    syncScenesVisibility();
+  }
+
+  function resumeScenes() {
+
+    scenesModeVisible = true;
+
+    syncScenesVisibility();
+
+    if (Player.isActive()) {
+      syncSize();
+      Player.render();
+    }
+  }
+
+  /* Os modos originais continuam responsáveis
+     por abrir suas próprias interfaces. */
+
+  cameraModeButton?.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  galleryModeButton?.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  teleprompterModeButton?.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  /* Ao tocar em Cenas, fechar a Galeria
+     utilizando o botão original da Câmera. */
+
+  scenesButton.addEventListener(
+    "click",
+    () => {
+
+      if (
+        galleryLayer?.classList.contains("show") ||
+        document.body.classList.contains(
+          "teleprompter-active"
+        )
+      ) {
+
+        cameraModeButton?.click();
+      }
+
+      if (Player.isActive()) {
+        scenesModeVisible = false;
+      } else {
+        scenesModeVisible = true;
+      }
+
+      queueMicrotask(syncScenesVisibility);
+
+    }
+  );
+
+  /* Atualizar a visibilidade quando uma
+     apresentação for carregada ou fechada. */
+
+  Player.on("loaded", () => {
+    scenesModeVisible = true;
+    syncScenesVisibility();
+  });
+
+  Player.on("closed", () => {
+    scenesModeVisible = false;
+    syncScenesVisibility();
+  });
+
+  Player.on("scenechange", syncScenesVisibility);
+
+  /* Observar alterações da Galeria. */
+
+  if (galleryLayer && typeof MutationObserver !== "undefined") {
+
+    new MutationObserver(
+      syncScenesVisibility
+    ).observe(galleryLayer, {
+      attributes: true,
+      attributeFilter: ["class"]
+    });
+  }
+
+  /* Inicialização original preservada. */
 
   syncSize();
 
   Player.setCanvas(canvas);
 
   updateControls();
+
+  syncScenesVisibility();
+
 
   window.ScenesCamera = Object.freeze({
 
