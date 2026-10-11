@@ -1348,259 +1348,27 @@ textarea {
 
 }
 
-
 /* =====================================================
-   LOUSA CAM 2.0 — LAYOUT COMPACTO DO EDITOR
-   ETAPA: IPHONE / CELULAR
-
-   - Cabeçalho compacto
-   - Palco antes das miniaturas
-   - Miniaturas reduzidas
-   - Ferramentas preservadas
-   - Não modifica as dimensões salvas das cenas
+   CENAS — FORMATO VERTICAL 9:16
+   Somente palco, miniaturas e visualização.
    ===================================================== */
-
+.scenes-stage.scenes-portrait {
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+}
+.scenes-preview-stage.scenes-portrait {
+  aspect-ratio: 9 / 16;
+  width: min(100%, calc(70dvh * 9 / 16));
+  max-height: 70dvh;
+}
+.scenes-slide-thumbnail.scenes-portrait {
+  aspect-ratio: 9 / 16;
+  max-height: 100px;
+  width: auto;
+  margin: 0 auto;
+}
 @media (max-width: 760px) {
-
-  /* CABEÇALHO PRINCIPAL */
-
-  .scenes-header {
-    gap: 8px;
-    padding:
-      calc(7px + var(--scenes-safe-top))
-      calc(10px + var(--scenes-safe-right))
-      7px
-      calc(10px + var(--scenes-safe-left));
-  }
-
-  .scenes-header-left,
-  .scenes-header-right {
-    gap: 7px;
-    min-width: 0;
-  }
-
-  .scenes-brand strong {
-    font-size: 15px;
-  }
-
-  .scenes-brand small {
-    font-size: 10px;
-  }
-
-  .scenes-header .scenes-icon-button {
-    width: 36px;
-    height: 36px;
-    font-size: 21px;
-  }
-
-  #scenesSaveButton {
-    min-height: 36px;
-    padding: 7px 11px;
-    font-size: 12px;
-  }
-
-  /* VISUALIZAR E NOVA CENA NO CABEÇALHO */
-
-  .scenes-header-right > #scenesPreviewButton,
-  .scenes-header-right > #scenesAddSceneButton {
-    display: none;
-    width: 36px;
-    height: 36px;
-    min-height: 36px;
-    padding: 0;
-    font-size: 21px;
-    border-radius: 9px;
-  }
-
-  body:has(#scenesEditorView:not([hidden]))
-  .scenes-header-right > #scenesPreviewButton,
-  body:has(#scenesEditorView:not([hidden]))
-  .scenes-header-right > #scenesAddSceneButton {
-    display: inline-flex;
-  }
-
-  /* TÍTULO DA APRESENTAÇÃO */
-
-  .scenes-editor-topbar {
-    display: flex;
-    padding: 6px 10px;
-    gap: 0;
-  }
-
-  .scenes-editor-title-group {
-    width: 100%;
-    gap: 8px;
-  }
-
-  #scenesLibraryButton {
-    width: 34px;
-    height: 34px;
-    font-size: 20px;
-  }
-
-  .scenes-editor-title-group .scenes-field {
-    flex: 1;
-    width: auto;
-    margin: 0;
-    gap: 0;
-  }
-
-  .scenes-editor-title-group .scenes-field > span {
-    display: none;
-  }
-
-  #scenesPresentationTitle {
-    height: 36px;
-    padding: 6px 10px;
-    font-size: 14px;
-  }
-
-  /* ESTRUTURA PRINCIPAL */
-
-  .scenes-workspace {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    min-height: 0;
-  }
-
-  /* EDITOR PRIMEIRO */
-
-  .scenes-stage-section {
-    order: 1;
-    width: 100%;
-    min-height: 0;
-    flex: 0 0 auto;
-  }
-
-  /* BARRA DE FERRAMENTAS */
-
-  .scenes-tools {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 5px 7px;
-    gap: 5px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .scenes-tool-button {
-    flex: 0 0 auto;
-    min-height: 34px;
-  }
-
-  /* PAINEL DE EDIÇÃO */
-
-  .scenes-stage-outer {
-    flex: 0 0 auto;
-    min-height: 0;
-    width: 100%;
-    padding: 8px 5px;
-    overflow: auto;
-  }
-
-  .scenes-stage {
-    width: 100%;
-    max-width: 100%;
-    aspect-ratio: 16 / 9;
-  }
-
-  /* RODAPÉ E ZOOM */
-
-  .scenes-stage-footer {
-    min-height: 42px;
-    padding: 5px 9px;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .scenes-zoom-controls {
-    gap: 5px;
-  }
-
-  .scenes-zoom-controls button {
-    width: 30px;
-    height: 30px;
-  }
-
-  /* MINIATURAS DEPOIS DO EDITOR */
-
-  .scenes-sidebar {
-    order: 2;
-    width: 100%;
-    max-height: none;
-    padding: 7px 9px 9px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    border-right: 0;
-    border-top: 1px solid var(--scenes-border);
-    border-bottom: 0;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .scenes-sidebar .scenes-panel-heading {
-    margin-bottom: 6px;
-    padding: 0 2px;
-  }
-
-  .scenes-sidebar .scenes-panel-heading h2 {
-    font-size: 12px;
-  }
-
-  .scenes-slide-list {
-    display: flex;
-    flex-direction: row;
-    gap: 7px;
-  }
-
-  .scenes-slide-item {
-    flex: 0 0 92px;
-    width: 92px;
-    padding: 5px;
-    border-radius: 8px;
-  }
-
-  .scenes-slide-thumbnail {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    border-radius: 4px;
-  }
-
-  .scenes-slide-name {
-    margin-top: 4px;
-    font-size: 10px;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-  }
-
-  /* PROPRIEDADES: MANTER ESTRUTURA ORIGINAL */
-
-  .scenes-properties {
-    order: 3;
-  }
-
+  .scenes-stage-outer { align-items: flex-start; }
+  .scenes-stage.scenes-portrait { margin: 0 auto; }
+  .scenes-zoom-controls { flex-wrap: wrap; }
 }
-
-/* CELULARES MAIS ESTREITOS */
-
-@media (max-width: 380px) {
-
-  .scenes-brand small {
-    display: none;
-  }
-
-  .scenes-header-right {
-    gap: 5px;
-  }
-
-  .scenes-slide-item {
-    flex-basis: 82px;
-    width: 82px;
-  }
-
-}
-
-
