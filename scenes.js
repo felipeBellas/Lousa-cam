@@ -1621,6 +1621,8 @@
 
     };
 
+
+    // Mantém o comportamento original como alternativa.
     $("scenesShapeTool").onclick = () => {
 
       addElement("shape", {
@@ -1631,6 +1633,25 @@
       });
 
     };
+
+    // Permite ao menu compacto adicionar outras formas.
+    document.addEventListener("scenes:add-shape", event => {
+
+      const shape = event.detail?.shape;
+
+      if (!["rectangle", "ellipse", "triangle"].includes(shape)) {
+        return;
+      }
+
+      addElement("shape", {
+        shape,
+        color: "#3287ff",
+        width: shape === "ellipse" ? 240 : 350,
+        height: shape === "ellipse" ? 240 : 220
+      });
+
+    });
+
 
     $("scenesSelectTool").onclick = () => {
       selectElement(null);
