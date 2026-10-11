@@ -853,8 +853,112 @@ document.body.appendChild(panel);
 return wrapper;
 
   }
+  /* =====================================================
+     LOUSA CAM 2.0 — AÇÕES COMPACTAS DA CENA
+     Duplicar e excluir ao lado do zoom.
+     Preserva os botões e eventos originais.
+     ===================================================== */
+
+  function createCompactSceneActions() {
+
+    const zoomControls = document.querySelector(
+      ".scenes-zoom-controls"
+    );
+
+    const duplicateButton = $(
+      "scenesDuplicateSceneButton"
+    );
+
+    const deleteButton = $(
+      "scenesDeleteSceneButton"
+    );
+
+    if (
+      !zoomControls ||
+      !duplicateButton ||
+      !deleteButton
+    ) {
+      return;
+    }
+
+    // Evita instalar os controles duas vezes.
+    if ($("scenesCompactSceneActions")) {
+      return;
+    }
+
+    const wrapper = document.createElement("span");
+
+    wrapper.id = "scenesCompactSceneActions";
+
+    Object.assign(wrapper.style, {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "6px",
+      marginLeft: "8px",
+      paddingLeft: "8px",
+      borderLeft: "1px solid #44546b",
+      flexShrink: "0"
+    });
+
+    function compactButton(button, iconName, label) {
+
+      // Preserva o botão original e seu evento onclick.
+      button.innerHTML = svg(iconName);
+
+      button.className = "scenes-tool-button";
+
+      button.type = "button";
+      button.title = label;
+
+      button.setAttribute(
+        "aria-label",
+        label
+      );
+
+      Object.assign(button.style, {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "34px",
+        minWidth: "34px",
+        height: "34px",
+        padding: "0",
+        margin: "0",
+        border: "1px solid #44546b",
+        borderRadius: "8px",
+        background: "#192333",
+        color: "#f4f7fc",
+        cursor: "pointer",
+        flexShrink: "0"
+      });
+
+    }
+
+    compactButton(
+      duplicateButton,
+      "duplicate",
+      "Duplicar cena"
+    );
+
+    compactButton(
+      deleteButton,
+      "delete",
+      "Excluir cena"
+    );
+
+    deleteButton.style.color = "#f4a6b3";
+
+    wrapper.append(
+      duplicateButton,
+      deleteButton
+    );
+
+    zoomControls.appendChild(wrapper);
+
+  }
 
 
+   
 
   function initialize() {
 
@@ -943,6 +1047,9 @@ return wrapper;
 
 
     toolbar.appendChild(extra);
+
+     // Botões compactos de duplicar e excluir cena.
+    createCompactSceneActions();
 
     /* -----------------------------------------------
        FUNDO INICIAL
