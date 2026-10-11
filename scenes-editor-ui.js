@@ -426,41 +426,102 @@
   }
 
 
-  function openElementColor() {
 
-    const input = $("scenesElementColor");
+  function createColorControl() {
 
-    if (!input) {
-      return;
-    }
+    const wrapper = document.createElement("span");
 
-    /*
-       Utiliza o seletor original do editor.
-       Assim, a alteração continua sendo feita
-       e salva pelo scenes.js.
-    */
+    wrapper.className = "scenes-editor-ui-extra";
 
-    if (input.disabled) {
-      return;
-    }
+    Object.assign(wrapper.style, {
+      position: "relative",
+      display: "inline-flex",
+      flexShrink: "0"
+    });
 
-    try {
+    const button = createToolButton(
+      "scenesEditorUIColorButton",
+      "palette",
+      "Cor do elemento selecionado"
+    );
 
-      if (typeof input.showPicker === "function") {
-        input.showPicker();
-      } else {
-        input.click();
+    button.classList.add("scenes-editor-ui-color");
+
+    // Seletor nativo diretamente sobre o ícone.
+    const picker = document.createElement("input");
+
+    picker.type = "color";
+    picker.value = "#ffffff";
+
+    picker.setAttribute(
+      "aria-label",
+      "Escolher cor do elemento"
+    );
+
+    Object.assign(picker.style, {
+      position: "absolute",
+      inset: "0",
+      width: "100%",
+      height: "100%",
+      opacity: "0.01",
+      cursor: "pointer",
+      zIndex: "2",
+      margin: "0",
+      padding: "0",
+      border: "0"
+    });
+
+    // Atualiza a cor inicial ao tocar.
+    picker.addEventListener("pointerdown", () => {
+
+      const original = $("scenesElementColor");
+      const properties = $("scenesElementProperties");
+
+      if (
+        !original ||
+        !properties ||
+        properties.hidden ||
+        original.parentElement?.hidden
+      ) {
+        picker.disabled = true;
+        return;
       }
 
-    } catch (error) {
+      picker.disabled = false;
+      picker.value = original.value || "#ffffff";
 
-      // Alternativa para navegadores que não
-      // permitem showPicker neste contexto.
-      input.click();
+    });
 
-    }
+    picker.addEventListener("input", () => {
+
+      const original = $("scenesElementColor");
+      const properties = $("scenesElementProperties");
+
+      if (
+        !original ||
+        !properties ||
+        properties.hidden ||
+        original.parentElement?.hidden
+      ) {
+        return;
+      }
+
+      original.value = picker.value;
+
+      original.dispatchEvent(
+        new Event("input", {
+          bubbles: true
+        })
+      );
+
+    });
+
+    wrapper.append(button, picker);
+
+    return wrapper;
 
   }
+
 
    
   /* =====================================================
@@ -864,22 +925,11 @@ return wrapper;
     extra.id = "scenesEditorUIExtra";
     extra.className = "scenes-editor-ui-extra";
 
-    const colorButton = createToolButton(
-      "scenesEditorUIColorButton",
-      "palette",
-      "Cor do elemento selecionado"
-    );
 
-    colorButton.classList.add(
-      "scenes-editor-ui-color"
-    );
+    const colorControl = createColorControl();
 
-    colorButton.addEventListener(
-      "click",
-      openElementColor
-    );
+    extra.appendChild(colorControl);
 
-    extra.appendChild(colorButton);
 
     const toneControls = createToneControls();
 
