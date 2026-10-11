@@ -3358,6 +3358,67 @@ body:has(#galleryLayer.show) #modeDock { display: none !important; }
 #modeDock .lc-icon { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Emoji', sans-serif; }
 
 
+
+/* =========================================================
+   LOUSA CAM 3.0 — ETAPA 2C
+   Fundo ilustrado + dock persistente na tela bloqueada.
+   Não altera câmera, gravação, Pencil ou módulos externos.
+   ========================================================= */
+
+/* A imagem é um arquivo separado, sem textos ou botões embutidos. */
+#startOverlay {
+  background:
+    linear-gradient(180deg,
+      rgba(16,23,22,.34) 0%,
+      rgba(16,23,22,.46) 42%,
+      rgba(11,18,17,.66) 100%),
+    url("./lousa-cam-abertura-fundo.jpg") center center / cover no-repeat
+    !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Texto e botão originais continuam no lugar e acima da imagem. */
+#startCard {
+  position: relative;
+  z-index: 1;
+}
+#startCard h1,
+#startCard p,
+#permissionHint {
+  text-shadow: 0 2px 10px rgba(0,0,0,.48);
+}
+
+/* A barra permanece visível; não perde opacidade ao toque. */
+#modeDock,
+#modeDock.active,
+#modeDock:hover,
+#modeDock:focus-within,
+#modeDock.camera-locked {
+  opacity: 1 !important;
+}
+#modeDock {
+  transition: background .25s ease, box-shadow .25s ease !important;
+}
+#modeDock.camera-locked {
+  background: rgba(185,194,190,.31) !important;
+}
+
+/* Na tela de permissão, os atalhos permanecem visíveis,
+   mas não podem abrir telas sobre a solicitação de acesso. */
+#modeDock.camera-locked #teleprompterButton,
+#modeDock.camera-locked #galleryModeButton,
+#modeDock.camera-locked #glassScenesButton {
+  pointer-events: none !important;
+  opacity: .65 !important;
+}
+
+/* Gravar somente após a ativação da câmera. */
+#modeDock.camera-locked #record {
+  pointer-events: none !important;
+  opacity: .38 !important;
+}
+
 </style>
 
   <link
