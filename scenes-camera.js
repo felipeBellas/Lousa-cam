@@ -175,14 +175,15 @@
        --------------------------------------------- */
 
     #scenesCameraCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
-  display: none;
-  pointer-events: none;
-}
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      display: none;
+      pointer-events: none;
+    }
+
     /* ---------------------------------------------
        SETAS LATERAIS
        --------------------------------------------- */
@@ -478,9 +479,6 @@
   const status =
     dialog.querySelector("#scenesCameraStatus");
 
-  let opening = false;
-  let selectionGeneration = 0;
-
   /* =====================================================
      DIMENSIONAMENTO
      ===================================================== */
@@ -519,49 +517,69 @@
   }
 
   /* =====================================================
-     ESTADO DA INTERFACE
+     ESTADO E VISIBILIDADE — CONTROLE ÚNICO
      ===================================================== */
 
-  function updateControls() {
+  const galleryLayer =
+    document.getElementById("galleryLayer");
+
+  let scenesVisible = false;
+  let opening = false;
+  let selectionGeneration = 0;
+
+  function isGalleryOpen() {
+
+    return !!galleryLayer?.classList.contains("show");
+  }
+
+  function isTeleprompterOpen() {
+
+    return document.body.classList.contains(
+      "teleprompter-active"
+    );
+  }
+
+  function syncVisibility() {
 
     const state = Player.getState();
 
-    const active = state.active;
+    const visible = !!(
+      scenesVisible &&
+      state.active &&
+      !isGalleryOpen() &&
+      !isTeleprompterOpen()
+    );
 
     canvas.style.display =
-      active ? "block" : "none";
+      visible ? "block" : "none";
 
     prev.style.display =
-      active ? "flex" : "none";
+      visible ? "flex" : "none";
 
     next.style.display =
-      active ? "flex" : "none";
+      visible ? "flex" : "none";
 
     prev.disabled = !state.hasPrevious;
     next.disabled = !state.hasNext;
 
     scenesButton.classList.toggle(
       "active",
-      active
+      visible
     );
 
     scenesButton.setAttribute(
       "aria-pressed",
-      active ? "true" : "false"
+      String(visible)
     );
 
     scenesButton.setAttribute(
       "aria-label",
-      active ? "Fechar cenas" : "Abrir cenas"
+      visible ? "Ocultar cenas" : "Abrir cenas"
     );
 
     scenesButton.title =
-      active ? "Fechar cenas" : "Abrir cenas";
+      visible ? "Ocultar cenas" : "Abrir cenas";
   }
-
-  /* =====================================================
-     SELETOR
-     ===================================================== */
 
   function hideDialog() {
 
@@ -569,6 +587,19 @@
 
     dialog.style.display = "none";
   }
+
+  function suspendScenes() {
+
+    scenesVisible = false;
+
+    hideDialog();
+
+    syncVisibility();
+  }
+
+  /* =====================================================
+     SELETOR DE APRESENTAÇÕES
+     ===================================================== */
 
   async function showDialog() {
 
@@ -649,9 +680,11 @@
 
       if (loaded) {
 
+        scenesVisible = true;
+
         hideDialog();
 
-        updateControls();
+        syncVisibility();
       }
 
     } catch (error) {
@@ -659,7 +692,7 @@
       status.textContent =
         `Não foi possível abrir: ${error.message}`;
 
-      updateControls();
+      syncVisibility();
 
     } finally {
 
@@ -668,7 +701,29 @@
   }
 
   /* =====================================================
-     BOTÃO CENAS
+     ALTERNÂNCIA ENTRE MODOS
+     ===================================================== */
+
+  // Ao sair de Cenas, apenas ocultamos a apresentação.
+  // A cena atual permanece carregada.
+
+  cameraButton.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  galleryButton.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  teleprompterButton.addEventListener(
+    "click",
+    suspendScenes
+  );
+
+  /* =====================================================
+     BOTÃO CENAS — EVENTO ÚNICO
      ===================================================== */
 
   scenesButton.addEventListener(
@@ -677,18 +732,60 @@
 
       event.stopPropagation();
 
-      if (Player.isActive()) {
+      // Se a Galeria estiver aberta,
+      // utilizamos o botão original da Câmera.
 
-        Player.closePresentation();
+      if (isGalleryOpen()) {
+        cameraButton.click();
+      }
+
+      // Não alteramos diretamente o funcionamento
+      // do Teleprompter.
+
+      if (isTeleprompterOpen()) {
 
         hideDialog();
 
-      } else {
+        syncVisibility();
 
-        showDialog();
+        return;
       }
+
+      // Retoma a apresentação na mesma cena,
+      // sem carregar novamente o arquivo.
+
+      if (Player.isActive()) {
+
+        scenesVisible = !scenesVisible;
+
+        hideDialog();
+
+        if (scenesVisible) {
+
+          syncSize();
+
+          Player.render();
+        }
+
+        syncVisibility();
+
+        return;
+      }
+
+      // Se nenhuma apresentação estiver carregada,
+      // abre a lista de apresentações.
+
+      scenesVisible = false;
+
+      syncVisibility();
+
+      showDialog();
     }
   );
+
+  /* =====================================================
+     FECHAMENTO DO SELETOR
+     ===================================================== */
 
   dismiss.addEventListener(
     "click",
@@ -721,18 +818,69 @@
 
   Player.on(
     "scenechange",
-    updateControls
+    syncVisibility
   );
 
   Player.on(
     "loaded",
-    updateControls
+    syncVisibility
   );
 
   Player.on(
     "closed",
-    updateControls
+    () => {
+
+      scenesVisible = false;
+
+      syncVisibility();
+    }
   );
+
+  /* =====================================================
+     OBSERVAÇÃO DOS MODOS ORIGINAIS
+     ===================================================== */
+
+  if (typeof MutationObserver !== "undefined") {
+
+    if (galleryLayer) {
+
+      new MutationObserver(() => {
+
+        if (isGalleryOpen()) {
+
+          suspendScenes();
+
+        } else {
+
+          syncVisibility();
+        }
+
+      }).observe(galleryLayer, {
+
+        attributes: true,
+        attributeFilter: ["class"]
+
+      });
+    }
+
+    new MutationObserver(() => {
+
+      if (isTeleprompterOpen()) {
+
+        suspendScenes();
+
+      } else {
+
+        syncVisibility();
+      }
+
+    }).observe(document.body, {
+
+      attributes: true,
+      attributeFilter: ["class"]
+
+    });
+  }
 
   /* =====================================================
      REDIMENSIONAMENTO
@@ -753,166 +901,30 @@
     new ResizeObserver(syncSize).observe(app);
   }
 
-
   /* =====================================================
-     SINCRONIZAÇÃO COM CÂMERA, GALERIA E TELEPROMPTER
+     INICIALIZAÇÃO
      ===================================================== */
-
-  const cameraModeButton =
-    document.getElementById("cameraModeButton");
-
-  const galleryModeButton =
-    document.getElementById("galleryModeButton");
-
-  const teleprompterModeButton =
-    document.getElementById("teleprompterButton");
-
-  const galleryLayer =
-    document.getElementById("galleryLayer");
-
-  let scenesModeVisible = false;
-
-  function syncScenesVisibility() {
-
-    const galleryOpen =
-      galleryLayer?.classList.contains("show") || false;
-
-    const teleprompterOpen =
-      document.body.classList.contains(
-        "teleprompter-active"
-      );
-
-    const visible =
-      scenesModeVisible &&
-      Player.isActive() &&
-      !galleryOpen &&
-      !teleprompterOpen;
-
-    canvas.style.display =
-      visible ? "block" : "none";
-
-    prev.style.display =
-      visible ? "flex" : "none";
-
-    next.style.display =
-      visible ? "flex" : "none";
-
-    scenesButton.classList.toggle(
-      "active",
-      visible
-    );
-  }
-
-  function suspendScenes() {
-
-    scenesModeVisible = false;
-
-    hideDialog();
-
-    syncScenesVisibility();
-  }
-
-  function resumeScenes() {
-
-    scenesModeVisible = true;
-
-    syncScenesVisibility();
-
-    if (Player.isActive()) {
-      syncSize();
-      Player.render();
-    }
-  }
-
-  /* Os modos originais continuam responsáveis
-     por abrir suas próprias interfaces. */
-
-  cameraModeButton?.addEventListener(
-    "click",
-    suspendScenes
-  );
-
-  galleryModeButton?.addEventListener(
-    "click",
-    suspendScenes
-  );
-
-  teleprompterModeButton?.addEventListener(
-    "click",
-    suspendScenes
-  );
-
-  /* Ao tocar em Cenas, fechar a Galeria
-     utilizando o botão original da Câmera. */
-
-  scenesButton.addEventListener(
-    "click",
-    () => {
-
-      if (
-        galleryLayer?.classList.contains("show") ||
-        document.body.classList.contains(
-          "teleprompter-active"
-        )
-      ) {
-
-        cameraModeButton?.click();
-      }
-
-      if (Player.isActive()) {
-        scenesModeVisible = false;
-      } else {
-        scenesModeVisible = true;
-      }
-
-      queueMicrotask(syncScenesVisibility);
-
-    }
-  );
-
-  /* Atualizar a visibilidade quando uma
-     apresentação for carregada ou fechada. */
-
-  Player.on("loaded", () => {
-    scenesModeVisible = true;
-    syncScenesVisibility();
-  });
-
-  Player.on("closed", () => {
-    scenesModeVisible = false;
-    syncScenesVisibility();
-  });
-
-  Player.on("scenechange", syncScenesVisibility);
-
-  /* Observar alterações da Galeria. */
-
-  if (galleryLayer && typeof MutationObserver !== "undefined") {
-
-    new MutationObserver(
-      syncScenesVisibility
-    ).observe(galleryLayer, {
-      attributes: true,
-      attributeFilter: ["class"]
-    });
-  }
-
-  /* Inicialização original preservada. */
 
   syncSize();
 
   Player.setCanvas(canvas);
 
-  updateControls();
-
-  syncScenesVisibility();
-
+  syncVisibility();
 
   window.ScenesCamera = Object.freeze({
 
     openSelector: showDialog,
 
-    close: () => Player.closePresentation()
+    close: () => {
+
+      scenesVisible = false;
+
+      hideDialog();
+
+      Player.closePresentation();
+
+      syncVisibility();
+    }
 
   });
 
