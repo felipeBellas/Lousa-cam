@@ -175,15 +175,14 @@
        --------------------------------------------- */
 
     #scenesCameraCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 4;
-      display: none;
-      pointer-events: none;
-    }
-
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: none;
+  pointer-events: none;
+}
     /* ---------------------------------------------
        SETAS LATERAIS
        --------------------------------------------- */
