@@ -113,6 +113,12 @@
     style.id = "scenesEditorUIStyles";
 
     style.textContent = `
+    /* Oculta a régua original de opacidade.
+   O novo botão continua utilizando seu valor. */
+
+#scenesElementOpacity {
+  display: none !important;
+}
 
       /* ===============================================
          FUNDO AUXILIAR DE EDIÇÃO
