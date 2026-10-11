@@ -662,10 +662,124 @@
        ================================================ -->
 
   
+
 <script src="scenes-storage.js"></script>
 <script src="scenes.js"></script>
 <script src="scenes-editor-ui.js"></script>
 
+<!-- ==================================================
+     LOUSA CAM 2.0
+     CABEÇALHO COMPACTO PARA CELULAR
+
+     Move os botões originais, sem duplicá-los.
+     Preserva os eventos de Visualizar e Nova Cena.
+     No desktop, mantém a posição original.
+     ================================================== -->
+
+<script>
+(function () {
+  "use strict";
+
+  const previewButton =
+    document.getElementById("scenesPreviewButton");
+
+  const addSceneButton =
+    document.getElementById("scenesAddSceneButton");
+
+  const headerRight =
+    document.querySelector(".scenes-header-right");
+
+  const originalActions =
+    document.querySelector(".scenes-editor-actions");
+
+  if (
+    !previewButton ||
+    !addSceneButton ||
+    !headerRight ||
+    !originalActions
+  ) {
+    return;
+  }
+
+  const mobileQuery =
+    window.matchMedia("(max-width: 760px)");
+
+  function updateCompactHeader() {
+
+    if (mobileQuery.matches) {
+
+      // Mantém a ordem:
+      // Visualizar | Nova cena | Salvar
+
+      const saveButton =
+        document.getElementById("scenesSaveButton");
+
+      if (saveButton) {
+
+        headerRight.insertBefore(
+          previewButton,
+          saveButton
+        );
+
+        headerRight.insertBefore(
+          addSceneButton,
+          saveButton
+        );
+
+      }
+
+      previewButton.textContent = "◉";
+      previewButton.title = "Visualizar apresentação";
+      previewButton.setAttribute(
+        "aria-label",
+        "Visualizar apresentação"
+      );
+
+      addSceneButton.textContent = "+";
+      addSceneButton.title = "Adicionar nova cena";
+      addSceneButton.setAttribute(
+        "aria-label",
+        "Adicionar nova cena"
+      );
+
+    } else {
+
+      // Restaura o layout original no notebook.
+
+      originalActions.appendChild(
+        previewButton
+      );
+
+      originalActions.appendChild(
+        addSceneButton
+      );
+
+      previewButton.textContent = "Visualizar";
+      addSceneButton.textContent = "+ Cena";
+
+    }
+
+  }
+
+  updateCompactHeader();
+
+  if (mobileQuery.addEventListener) {
+
+    mobileQuery.addEventListener(
+      "change",
+      updateCompactHeader
+    );
+
+  } else {
+
+    mobileQuery.addListener(
+      updateCompactHeader
+    );
+
+  }
+
+})();
+</script>
 
 </body>
 </html>
