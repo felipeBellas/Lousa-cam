@@ -911,9 +911,75 @@
 
   syncVisibility();
 
+ 
+  /* =====================================================
+     INTEGRAÇÃO COM O EDITOR DE CENAS
+
+     O editor continua na página scenes.html.
+
+     Não altera:
+     - Reprodução das apresentações
+     - Gravação
+     - Pencil
+     - Câmera
+     - Navegação entre cenas
+     ===================================================== */
+
+  const editorButton = document.createElement("button");
+
+  editorButton.id = "scenesOpenEditorButton";
+  editorButton.type = "button";
+
+  editorButton.textContent = "＋ Abrir Editor de Cenas";
+
+  editorButton.setAttribute(
+    "aria-label",
+    "Abrir Editor de Cenas"
+  );
+
+  editorButton.style.width = "100%";
+  editorButton.style.marginTop = "12px";
+  editorButton.style.padding = "13px";
+  editorButton.style.fontWeight = "600";
+  editorButton.style.background = "#2563eb";
+  editorButton.style.borderColor = "#3b82f6";
+
+  // O botão permanece no painel de apresentações,
+  // abaixo da lista de apresentações salvas.
+
+  list.insertAdjacentElement(
+    "afterend",
+    editorButton
+  );
+
+  editorButton.addEventListener("click", () => {
+
+    /*
+      O editor usa a mesma origem e o mesmo
+      IndexedDB do Lousa Cam.
+
+      Abrimos a página própria do editor.
+      Ao voltar, o aplicativo será carregado
+      novamente com as apresentações salvas.
+    */
+
+    window.location.href = "./scenes.html";
+
+  });
+
+  /* =====================================================
+     API PÚBLICA — PRESERVADA
+     ===================================================== */
+
   window.ScenesCamera = Object.freeze({
 
     openSelector: showDialog,
+
+    openEditor: () => {
+
+      window.location.href = "./scenes.html";
+
+    },
 
     close: () => {
 
@@ -929,3 +995,4 @@
   });
 
 })();
+
