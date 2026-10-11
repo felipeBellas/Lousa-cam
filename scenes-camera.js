@@ -723,65 +723,13 @@
   );
 
   /* =====================================================
-     BOTÃO CENAS — EVENTO ÚNICO
+     BOTÃO CENAS — ABRE A BIBLIOTECA DIRETAMENTE
      ===================================================== */
 
-  scenesButton.addEventListener(
-    "click",
-    event => {
-
-      event.stopPropagation();
-
-      // Se a Galeria estiver aberta,
-      // utilizamos o botão original da Câmera.
-
-      if (isGalleryOpen()) {
-        cameraButton.click();
-      }
-
-      // Não alteramos diretamente o funcionamento
-      // do Teleprompter.
-
-      if (isTeleprompterOpen()) {
-
-        hideDialog();
-
-        syncVisibility();
-
-        return;
-      }
-
-      // Retoma a apresentação na mesma cena,
-      // sem carregar novamente o arquivo.
-
-      if (Player.isActive()) {
-
-        scenesVisible = !scenesVisible;
-
-        hideDialog();
-
-        if (scenesVisible) {
-
-          syncSize();
-
-          Player.render();
-        }
-
-        syncVisibility();
-
-        return;
-      }
-
-      // Se nenhuma apresentação estiver carregada,
-      // abre a lista de apresentações.
-
-      scenesVisible = false;
-
-      syncVisibility();
-
-      showDialog();
-    }
-  );
+  scenesButton.addEventListener("click", event => {
+    event.stopPropagation();
+    window.location.assign("./scenes.html");
+  });
 
   /* =====================================================
      FECHAMENTO DO SELETOR
@@ -913,59 +861,27 @@
 
  
   /* =====================================================
-     INTEGRAÇÃO COM O EDITOR DE CENAS
-
-     O editor continua na página scenes.html.
-
-     Não altera:
-     - Reprodução das apresentações
-     - Gravação
-     - Pencil
-     - Câmera
-     - Navegação entre cenas
+     ABRIR APRESENTAÇÃO SELECIONADA NA BIBLIOTECA
      ===================================================== */
 
-  const editorButton = document.createElement("button");
+  const presentationId = new URLSearchParams(
+    window.location.search
+  ).get("presentation");
 
-  editorButton.id = "scenesOpenEditorButton";
-  editorButton.type = "button";
-
-  editorButton.textContent = "＋ Abrir Editor de Cenas";
-
-  editorButton.setAttribute(
-    "aria-label",
-    "Abrir Editor de Cenas"
-  );
-
-  editorButton.style.width = "100%";
-  editorButton.style.marginTop = "12px";
-  editorButton.style.padding = "13px";
-  editorButton.style.fontWeight = "600";
-  editorButton.style.background = "#2563eb";
-  editorButton.style.borderColor = "#3b82f6";
-
-  // O botão permanece no painel de apresentações,
-  // abaixo da lista de apresentações salvas.
-
-  list.insertAdjacentElement(
-    "afterend",
-    editorButton
-  );
-
-  editorButton.addEventListener("click", () => {
-
-    /*
-      O editor usa a mesma origem e o mesmo
-      IndexedDB do Lousa Cam.
-
-      Abrimos a página própria do editor.
-      Ao voltar, o aplicativo será carregado
-      novamente com as apresentações salvas.
-    */
-
-    window.location.href = "./scenes.html";
-
-  });
+  if (presentationId) {
+    // A mesma função já usada pelo seletor antigo ativa o
+    // canvas, as setas e a renderização para gravação.
+    openPresentation(presentationId).then(() => {
+      // Mantém a URL limpa após a tentativa de carregamento.
+      const cleanURL = new URL(window.location.href);
+      cleanURL.searchParams.delete("presentation");
+      window.history.replaceState(
+        window.history.state,
+        "",
+        cleanURL.pathname + cleanURL.search + cleanURL.hash
+      );
+    });
+  }
 
   /* =====================================================
      API PÚBLICA — PRESERVADA
@@ -995,4 +911,3 @@
   });
 
 })();
-
