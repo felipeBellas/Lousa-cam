@@ -975,6 +975,75 @@
 
     if (element.type === "shape") {
 
+      
+      // Linha reta e seta: desenho vetorial.
+      // Mantém os controles originais de movimento,
+      // redimensionamento, rotação e opacidade.
+
+      if (
+        element.shape === "line" ||
+        element.shape === "arrow"
+      ) {
+
+        const svgNS = "http://www.w3.org/2000/svg";
+
+        const graphic = document.createElementNS(
+          svgNS,
+          "svg"
+        );
+
+        graphic.setAttribute("viewBox", "0 0 100 100");
+        graphic.setAttribute("preserveAspectRatio", "none");
+        graphic.setAttribute("width", "100%");
+        graphic.setAttribute("height", "100%");
+
+        graphic.style.display = "block";
+        graphic.style.overflow = "visible";
+        graphic.style.pointerEvents = "none";
+
+        const color = element.color || "#3287ff";
+
+        const line = document.createElementNS(
+          svgNS,
+          "line"
+        );
+
+        line.setAttribute("x1", "2");
+        line.setAttribute("y1", "50");
+        line.setAttribute(
+          "x2",
+          element.shape === "arrow" ? "88" : "98"
+        );
+        line.setAttribute("y2", "50");
+        line.setAttribute("stroke", color);
+        line.setAttribute("stroke-width", "5");
+        line.setAttribute("stroke-linecap", "round");
+
+        graphic.appendChild(line);
+
+        if (element.shape === "arrow") {
+
+          const tip = document.createElementNS(
+            svgNS,
+            "polygon"
+          );
+
+          tip.setAttribute(
+            "points",
+            "100,50 82,37 82,63"
+          );
+
+          tip.setAttribute("fill", color);
+
+          graphic.appendChild(tip);
+
+        }
+
+        node.appendChild(graphic);
+
+      } else {
+
+
       const shape = document.createElement("div");
 
       shape.className = "scenes-element-shape";
@@ -991,9 +1060,11 @@
           "polygon(50% 0%, 100% 100%, 0% 100%)";
       }
 
-      node.appendChild(shape);
+     node.appendChild(shape);
 
-    }
+      } // Fecha o else das formas existentes.
+
+    } // Fecha o bloco de elementos shape.
 
     if (editable) {
 
