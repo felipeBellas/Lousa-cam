@@ -1710,16 +1710,32 @@
 
       const shape = event.detail?.shape;
 
-      if (!["rectangle", "ellipse", "triangle"].includes(shape)) {
+      if (![
+  "rectangle",
+  "ellipse",
+  "triangle",
+  "line",
+  "arrow"
+  ].includes(shape)) {
         return;
       }
+
+      
+      const isLinear =
+        shape === "line" ||
+        shape === "arrow";
 
       addElement("shape", {
         shape,
         color: "#3287ff",
-        width: shape === "ellipse" ? 240 : 350,
-        height: shape === "ellipse" ? 240 : 220
+        width: isLinear
+          ? 400
+          : shape === "ellipse" ? 240 : 350,
+        height: isLinear
+          ? 60
+          : shape === "ellipse" ? 240 : 220
       });
+
 
     });
 
