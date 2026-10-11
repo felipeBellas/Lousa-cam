@@ -545,6 +545,230 @@
 
   }
 
+   
+  /* =====================================================
+     LOUSA CAM 2.0 — CONTROLE DE OPACIDADE
+     Acesso compacto ao controle original.
+     ===================================================== */
+
+  function createOpacityControl() {
+
+    const wrapper = document.createElement("span");
+
+    wrapper.id = "scenesEditorUIOpacity";
+    wrapper.className = "scenes-editor-ui-extra";
+
+    Object.assign(wrapper.style, {
+      position: "relative",
+      display: "inline-flex",
+      alignItems: "center",
+      flexShrink: "0"
+    });
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "scenes-tool-button";
+    button.textContent = "◐";
+    button.title = "Opacidade do elemento";
+    button.setAttribute(
+      "aria-label",
+      "Ajustar opacidade do elemento"
+    );
+    button.setAttribute("aria-expanded", "false");
+
+    Object.assign(button.style, {
+      minWidth: "38px",
+      minHeight: "38px",
+      fontSize: "23px",
+      fontWeight: "600"
+    });
+
+    const panel = document.createElement("div");
+
+    panel.hidden = true;
+
+    Object.assign(panel.style, {
+      position: "absolute",
+      top: "calc(100% + 8px)",
+      right: "0",
+      zIndex: "1000",
+      width: "220px",
+      maxWidth: "calc(100vw - 24px)",
+      padding: "14px",
+      border: "1px solid #44546b",
+      borderRadius: "12px",
+      background: "#192333",
+      boxShadow: "0 10px 28px rgba(0,0,0,.35)",
+      color: "#ffffff"
+    });
+
+    const heading = document.createElement("div");
+
+    heading.style.display = "flex";
+    heading.style.justifyContent = "space-between";
+    heading.style.marginBottom = "12px";
+    heading.style.fontSize = "13px";
+
+    const label = document.createElement("span");
+    label.textContent = "Opacidade";
+
+    const value = document.createElement("strong");
+    value.textContent = "100%";
+
+    heading.append(label, value);
+
+    const slider = document.createElement("input");
+
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.step = "1";
+    slider.value = "100";
+
+    Object.assign(slider.style, {
+      width: "100%",
+      margin: "0",
+      padding: "0",
+      accentColor: "#3287ff",
+      touchAction: "auto"
+    });
+
+    function getOriginalInput() {
+
+      return document.getElementById(
+        "scenesElementOpacity"
+      );
+
+    }
+
+    function hasSelection() {
+
+      const properties = document.getElementById(
+        "scenesElementProperties"
+      );
+
+      return Boolean(
+        properties &&
+        !properties.hidden &&
+        getOriginalInput()
+      );
+
+    }
+
+    function synchronize() {
+
+      const original = getOriginalInput();
+
+      if (!original) return;
+
+      const opacity = Math.max(
+        0,
+        Math.min(100, Number(original.value) || 0)
+      );
+
+      slider.value = String(opacity);
+      value.textContent = `${opacity}%`;
+
+    }
+
+    button.addEventListener("click", () => {
+
+      if (!hasSelection()) {
+
+        panel.hidden = true;
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        return;
+      }
+
+      if (panel.hidden) {
+        synchronize();
+      }
+
+      panel.hidden = !panel.hidden;
+
+      button.setAttribute(
+        "aria-expanded",
+        String(!panel.hidden)
+      );
+
+    });
+
+    slider.addEventListener("input", () => {
+
+      const original = getOriginalInput();
+
+      if (!original || !hasSelection()) {
+        return;
+      }
+
+      value.textContent = `${slider.value}%`;
+
+      // Aproveita o evento original do scenes.js.
+      original.value = slider.value;
+
+      original.dispatchEvent(
+        new Event("input", {
+          bubbles: true
+        })
+      );
+
+    });
+
+    // Impede que o toque na régua feche o painel.
+    panel.addEventListener("click", event => {
+      event.stopPropagation();
+    });
+
+    // Fecha ao tocar fora.
+    document.addEventListener("pointerdown", event => {
+
+      if (
+        !panel.hidden &&
+        !wrapper.contains(event.target)
+      ) {
+
+        panel.hidden = true;
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+
+    });
+
+    // Fecha com Escape no computador.
+    document.addEventListener("keydown", event => {
+
+      if (event.key === "Escape") {
+
+        panel.hidden = true;
+
+        button.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+
+    });
+
+    panel.append(heading, slider);
+
+    wrapper.append(button, panel);
+
+    return wrapper;
+
+  }
+
+
 
   function initialize() {
 
@@ -636,6 +860,12 @@
     const fontControls = createFontControls();
 
     extra.appendChild(fontControls);
+    
+    // Controle compacto de opacidade.
+    const opacityControl = createOpacityControl();
+
+    extra.appendChild(opacityControl);
+
 
     toolbar.appendChild(extra);
 
