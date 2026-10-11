@@ -113,6 +113,24 @@
     style.id = "scenesEditorUIStyles";
 
     style.textContent = `
+
+    
+/* =====================================================
+   LOUSA CAM — PAINEL DE PROPRIEDADES COMPACTO
+   Mantém os campos e eventos no DOM.
+   ===================================================== */
+
+.scenes-properties {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  clip-path: inset(50%) !important;
+}
+
+
     /* Oculta a régua original de opacidade.
    O novo botão continua utilizando seu valor. */
 
