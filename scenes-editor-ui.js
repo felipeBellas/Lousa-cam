@@ -1126,6 +1126,228 @@ return wrapper;
 
   }
 
+   
+  /* =====================================================
+     LOUSA CAM 2.0 — ESPESSURA DE LINHA E SETA
+     Controle compacto independente.
+     ===================================================== */
+
+  function createStrokeWidthControl() {
+
+    const wrapper = document.createElement("span");
+
+    wrapper.id = "scenesEditorUIStroke";
+    wrapper.className = "scenes-editor-ui-extra";
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "scenes-tool-button";
+    button.textContent = "☰";
+    button.title = "Espessura da linha ou seta";
+
+    button.setAttribute(
+      "aria-label",
+      "Ajustar espessura da linha ou seta"
+    );
+
+    button.setAttribute("aria-expanded", "false");
+
+    button.style.fontSize = "21px";
+    button.style.fontWeight = "700";
+
+    const panel = document.createElement("div");
+
+    panel.id = "scenesStrokeWidthPanel";
+    panel.hidden = true;
+
+    Object.assign(panel.style, {
+      position: "fixed",
+      zIndex: "99999",
+      width: "240px",
+      maxWidth: "calc(100vw - 24px)",
+      padding: "14px",
+      border: "1px solid #44546b",
+      borderRadius: "12px",
+      background: "#192333",
+      color: "#ffffff",
+      boxShadow: "0 10px 28px rgba(0,0,0,.45)"
+    });
+
+    const heading = document.createElement("div");
+
+    Object.assign(heading.style, {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "12px",
+      fontSize: "13px"
+    });
+
+    const label = document.createElement("span");
+    label.textContent = "Espessura";
+
+    const value = document.createElement("strong");
+    value.textContent = "5";
+
+    heading.append(label, value);
+
+    const slider = document.createElement("input");
+
+    slider.type = "range";
+    slider.min = "1";
+    slider.max = "20";
+    slider.step = "1";
+    slider.value = "5";
+
+    Object.assign(slider.style, {
+      width: "100%",
+      margin: "0",
+      padding: "0",
+      accentColor: "#3287ff",
+      touchAction: "auto"
+    });
+
+    function getSelectedStroke() {
+
+      let result = {
+        valid: false,
+        value: 5
+      };
+
+      document.dispatchEvent(
+        new CustomEvent("scenes:get-stroke-width", {
+          detail: {
+            respond(data) {
+              result = data;
+            }
+          }
+        })
+      );
+
+      return result;
+    }
+
+    function closePanel() {
+
+      panel.hidden = true;
+
+      button.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+    }
+
+    button.addEventListener("click", event => {
+
+      event.stopPropagation();
+
+      if (!panel.hidden) {
+        closePanel();
+        return;
+      }
+
+      const selection = getSelectedStroke();
+
+      if (!selection.valid) {
+        closePanel();
+        return;
+      }
+
+      slider.value = String(selection.value);
+      value.textContent = String(selection.value);
+
+      const rect = button.getBoundingClientRect();
+
+      const panelWidth = 240;
+      const margin = 12;
+
+      const left = Math.max(
+        margin,
+        Math.min(
+          rect.left,
+          window.innerWidth - panelWidth - margin
+        )
+      );
+
+      panel.style.left = `${left}px`;
+      panel.style.right = "auto";
+
+      const panelHeight = 105;
+
+      const top = Math.min(
+        rect.bottom + 8,
+        window.innerHeight - panelHeight - margin
+      );
+
+      panel.style.top = `${Math.max(margin, top)}px`;
+      panel.style.bottom = "auto";
+
+      panel.hidden = false;
+
+      button.setAttribute(
+        "aria-expanded",
+        "true"
+      );
+
+    });
+
+    slider.addEventListener("input", () => {
+
+      const selection = getSelectedStroke();
+
+      if (!selection.valid) {
+        closePanel();
+        return;
+      }
+
+      value.textContent = slider.value;
+
+      document.dispatchEvent(
+        new CustomEvent("scenes:stroke-width", {
+          detail: {
+            value: Number(slider.value)
+          }
+        })
+      );
+
+    });
+
+    panel.addEventListener("pointerdown", event => {
+      event.stopPropagation();
+    });
+
+    document.addEventListener("pointerdown", event => {
+
+      if (
+        !panel.hidden &&
+        !panel.contains(event.target) &&
+        !wrapper.contains(event.target)
+      ) {
+        closePanel();
+      }
+
+    });
+
+    document.addEventListener("keydown", event => {
+
+      if (event.key === "Escape") {
+        closePanel();
+      }
+
+    });
+
+    wrapper.appendChild(button);
+    panel.append(heading, slider);
+
+    document.body.appendChild(panel);
+
+    return wrapper;
+
+  }
+
+
 
   function initialize() {
 
@@ -1214,6 +1436,11 @@ return wrapper;
     const opacityControl = createOpacityControl();
 
     extra.appendChild(opacityControl);
+
+    // Controle compacto da espessura de linhas e setas.
+    const strokeWidthControl = createStrokeWidthControl();
+
+    extra.appendChild(strokeWidthControl);
 
 
     toolbar.appendChild(extra);
