@@ -1,6 +1,7 @@
 
 "use strict";
 
+
 /* =========================================================
    LOUSA CAM 2.0 — CENAS
    SCENES-PLAYER.JS — ETAPA 6
