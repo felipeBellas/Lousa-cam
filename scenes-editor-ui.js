@@ -1056,9 +1056,12 @@ return wrapper;
 
     }
 
+    
     addOption("▭", "Retângulo", "rectangle");
     addOption("◯", "Círculo / elipse", "ellipse");
     addOption("△", "Triângulo", "triangle");
+    addOption("─", "Linha reta", "line");
+    addOption("➜", "Seta", "arrow");
 
     // Substitui apenas a ação do botão de formas.
     shapeButton.onclick = null;
