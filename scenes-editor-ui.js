@@ -977,6 +977,152 @@ return wrapper;
 
 
    
+  /* =====================================================
+     LOUSA CAM 2.0 — MENU DE FORMAS
+     Retângulo, círculo/elipse e triângulo.
+     ===================================================== */
+
+  function createShapesMenu() {
+
+    const shapeButton = $("scenesShapeTool");
+
+    if (!shapeButton || $("scenesShapesMenu")) {
+      return;
+    }
+
+    const panel = document.createElement("div");
+
+    panel.id = "scenesShapesMenu";
+    panel.hidden = true;
+
+    Object.assign(panel.style, {
+      position: "fixed",
+      zIndex: "99999",
+      display: "none",
+      flexDirection: "column",
+      gap: "5px",
+      width: "174px",
+      padding: "8px",
+      border: "1px solid #44546b",
+      borderRadius: "11px",
+      background: "#192333",
+      boxShadow: "0 10px 28px rgba(0,0,0,.45)"
+    });
+
+    function closeMenu() {
+      panel.hidden = true;
+      panel.style.display = "none";
+      shapeButton.setAttribute("aria-expanded", "false");
+    }
+
+    function addOption(symbol, label, shape) {
+
+      const option = document.createElement("button");
+
+      option.type = "button";
+      option.textContent = `${symbol}  ${label}`;
+
+      Object.assign(option.style, {
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        minHeight: "38px",
+        padding: "8px 10px",
+        border: "1px solid #44546b",
+        borderRadius: "7px",
+        background: "#253247",
+        color: "#ffffff",
+        fontSize: "14px",
+        textAlign: "left",
+        cursor: "pointer",
+        touchAction: "manipulation"
+      });
+
+      option.addEventListener("click", event => {
+
+        event.stopPropagation();
+
+        closeMenu();
+
+        document.dispatchEvent(
+          new CustomEvent("scenes:add-shape", {
+            detail: { shape }
+          })
+        );
+
+      });
+
+      panel.appendChild(option);
+
+    }
+
+    addOption("▭", "Retângulo", "rectangle");
+    addOption("◯", "Círculo / elipse", "ellipse");
+    addOption("△", "Triângulo", "triangle");
+
+    // Substitui apenas a ação do botão de formas.
+    shapeButton.onclick = null;
+
+    shapeButton.setAttribute("aria-haspopup", "true");
+    shapeButton.setAttribute("aria-expanded", "false");
+
+    shapeButton.addEventListener("click", event => {
+
+      event.stopPropagation();
+
+      if (!panel.hidden) {
+        closeMenu();
+        return;
+      }
+
+      const rect = shapeButton.getBoundingClientRect();
+
+      const panelWidth = 174;
+      const margin = 8;
+
+      const left = Math.max(
+        margin,
+        Math.min(
+          rect.left,
+          window.innerWidth - panelWidth - margin
+        )
+      );
+
+      panel.style.left = `${left}px`;
+      panel.style.top = `${rect.bottom + 8}px`;
+      panel.style.display = "flex";
+      panel.hidden = false;
+
+      shapeButton.setAttribute("aria-expanded", "true");
+
+    });
+
+    document.addEventListener("pointerdown", event => {
+
+      if (
+        !panel.hidden &&
+        !panel.contains(event.target) &&
+        !shapeButton.contains(event.target)
+      ) {
+        closeMenu();
+      }
+
+    });
+
+    document.addEventListener("keydown", event => {
+
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+
+    });
+
+    window.addEventListener("resize", closeMenu);
+
+    document.body.appendChild(panel);
+
+  }
+
 
   function initialize() {
 
@@ -1020,6 +1166,9 @@ return wrapper;
       "shape",
       "Adicionar forma"
     );
+
+     // Ativa o menu compacto de formas geométricas.
+    createShapesMenu();
 
     replaceButtonContent(
       "scenesDuplicateElementButton",
