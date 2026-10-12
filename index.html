@@ -3653,34 +3653,41 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 
 <body>
   
-<div id="lcSplash" role="status" aria-label="Abrindo Lousa Cam">
+<div id="lcSplash" role="status" aria-label="Abrindo Lousa Cam. Toque para pular.">
   <div class="lc-splash-center">
-    <svg class="lc-splash-drawing" viewBox="0 0 320 320" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <svg class="lc-splash-art" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
-        <linearGradient id="lcGlassFill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7fffb" stop-opacity=".95"/><stop offset=".48" stop-color="#b2e2d0" stop-opacity=".72"/><stop offset="1" stop-color="#5eb79a" stop-opacity=".87"/></linearGradient>
-        <linearGradient id="lcRim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#5da88c"/><stop offset="1" stop-color="#e6fff5"/></linearGradient>
-        <radialGradient id="lcLensOuter"><stop stop-color="#b3f4dd"/><stop offset=".6" stop-color="#378e76"/><stop offset="1" stop-color="#185744"/></radialGradient>
-        <radialGradient id="lcLensMiddle"><stop stop-color="#0c4e43"/><stop offset=".72" stop-color="#236d60"/><stop offset="1" stop-color="#a3ddc8"/></radialGradient>
-        <radialGradient id="lcLensInner" cx=".3" cy=".25"><stop stop-color="#9adfc9"/><stop offset=".35" stop-color="#276f5d"/><stop offset="1" stop-color="#0d4238"/></radialGradient>
+        <linearGradient id="lcPenGlass" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#e9fff5"/>
+          <stop offset=".5" stop-color="#8fdcc0"/>
+          <stop offset="1" stop-color="#126c51"/>
+        </linearGradient>
+        <!-- Caminhos de movimento e revelacao, ajustados para o PNG oficial 1024x1024. -->
+        <path id="lcCameraPath" pathLength="100" d="M174 366 Q174 247 306 246 L339 246 Q363 245 381 208 Q401 157 450 157 L570 157 Q611 157 633 207 Q651 245 692 246 L738 246 Q821 246 821 333 L821 561 Q821 651 732 651 L259 651 Q174 651 174 565 Z"/>
+        <path id="lcLensPath" pathLength="100" d="M660 435 A158 158 0 1 1 344 435 A158 158 0 1 1 660 435"/>
+        <path id="lcPenPath" pathLength="100" d="M916 219 Q892 248 856 311 L747 487 L674 646"/>
+        <path id="lcWavePath" pathLength="100" d="M222 620 Q300 667 403 584 Q443 556 428 607 Q396 663 471 668 Q571 642 671 646"/>
+        <mask id="lcLogoMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+          <rect width="1024" height="1024" fill="black"/>
+          <use href="#lcCameraPath" class="lc-reveal-stroke lc-camera-reveal" stroke="white"/>
+          <use href="#lcLensPath" class="lc-reveal-stroke lc-lens-reveal" stroke="white"/>
+          <use href="#lcPenPath" class="lc-reveal-stroke lc-pen-reveal" stroke="white"/>
+          <use href="#lcWavePath" class="lc-reveal-stroke lc-wave-reveal" stroke="white"/>
+          <rect class="lc-name-reveal" x="105" y="700" width="820" height="205" fill="white"/>
+          <rect class="lc-full-reveal" width="1024" height="1024" fill="white"/>
+        </mask>
       </defs>
-      <!-- Câmera: contorno arredondado e corpo translúcido -->
-      <path class="lc-glass-body" d="M76 87 Q76 70 94 70 H119 Q127 55 142 55 H184 Q199 55 207 70 H226 Q244 70 244 89 V212 Q244 230 225 230 H95 Q76 230 76 212 Z"/>
-      <path class="lc-glass-rim" d="M76 87 Q76 70 94 70 H119 Q127 55 142 55 H184 Q199 55 207 70 H226 Q244 70 244 89 V212 Q244 230 225 230 H95 Q76 230 76 212 Z"/>
-      <path class="lc-glass-highlight" d="M91 110 V92 Q91 85 100 85 H132"/>
-      <!-- Lente formada em camadas -->
-      <circle class="lc-lens-outer" cx="160" cy="145" r="58"/>
-      <circle class="lc-lens-middle" cx="160" cy="145" r="42"/>
-      <circle class="lc-lens-inner" cx="160" cy="145" r="28"/>
-      <!-- Caneta diagonal e traço -->
-      <g class="lc-pen-glass">
-        <path d="M240 72 L259 85 L213 192 L197 205 L200 184 Z" fill="#b8ecdb" stroke="#398c73" stroke-width="4"/>
-        <path d="M240 72 L259 85 L251 102 L231 89 Z" fill="#f8fffc" stroke="#5ca88e" stroke-width="2"/>
-        <path d="M197 205 L200 184 L213 192 Z" fill="#1d5f4d"/>
+      <!-- UM UNICO LOGOTIPO: o mesmo PNG e revelado durante toda a animacao. -->
+      <image href="./logo.png" x="0" y="0" width="1024" height="1024" preserveAspectRatio="xMidYMid meet" mask="url(#lcLogoMask)"/>
+      <!-- Caneta guia temporaria: acompanha a borda; nao faz parte do logo final. -->
+      <g id="lcMovingPen" class="lc-drawing-pen" transform="translate(174 366)">
+        <g transform="rotate(-40)">
+          <path class="lc-pen-body" d="M-8 -61 Q-8 -70 0 -70 Q8 -70 8 -61 L8 -12 L-8 -12 Z"/>
+          <path fill="#f4fff9" opacity=".75" d="M-4 -59 H-1 V-18 H-4 Z"/>
+          <path class="lc-pen-tip" d="M-8 -12 L0 0 L8 -12 Z"/>
+        </g>
       </g>
-      <path class="lc-pen-trace" d="M99 236 Q158 256 224 223"/>
     </svg>
-    <!-- Revela a imagem ORIGINAL ao final: sem diferenças no logotipo definitivo -->
-    <img class="lc-official-logo" src="./logo.png" alt="LOUSA CAM" decoding="async" fetchpriority="high">
   </div>
 </div>
 <div id="app">
