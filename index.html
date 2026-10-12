@@ -3657,16 +3657,11 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   <div class="lc-splash-center">
     <svg class="lc-splash-art" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
-        <linearGradient id="lcPenGlass" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#e9fff5"/>
-          <stop offset=".5" stop-color="#8fdcc0"/>
-          <stop offset="1" stop-color="#126c51"/>
-        </linearGradient>
-        <!-- Caminhos de movimento e revelacao, ajustados para o PNG oficial 1024x1024. -->
         <path id="lcCameraPath" pathLength="100" d="M174 366 Q174 247 306 246 L339 246 Q363 245 381 208 Q401 157 450 157 L570 157 Q611 157 633 207 Q651 245 692 246 L738 246 Q821 246 821 333 L821 561 Q821 651 732 651 L259 651 Q174 651 174 565 Z"/>
         <path id="lcLensPath" pathLength="100" d="M660 435 A158 158 0 1 1 344 435 A158 158 0 1 1 660 435"/>
         <path id="lcPenPath" pathLength="100" d="M916 219 Q892 248 856 311 L747 487 L674 646"/>
         <path id="lcWavePath" pathLength="100" d="M222 620 Q300 667 403 584 Q443 556 428 607 Q396 663 471 668 Q571 642 671 646"/>
+        <!-- Máscara de revelação original: preserva os quatro movimentos aprovados. -->
         <mask id="lcLogoMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
           <rect width="1024" height="1024" fill="black"/>
           <use href="#lcCameraPath" class="lc-reveal-stroke lc-camera-reveal" stroke="white"/>
@@ -3676,20 +3671,33 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
           <rect class="lc-name-reveal" x="105" y="700" width="820" height="205" fill="white"/>
           <rect class="lc-full-reveal" width="1024" height="1024" fill="white"/>
         </mask>
+        <!-- Suaviza as bordas externas do PNG sem alterar a câmera ou a tipografia. -->
+        <radialGradient id="lcEdgeFade" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="white"/>
+          <stop offset="65%" stop-color="white"/>
+          <stop offset="100%" stop-color="black"/>
+        </radialGradient>
+        <mask id="lcEdgeMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+          <rect width="1024" height="1024" fill="url(#lcEdgeFade)"/>
+        </mask>
+        <!-- Recorte da caneta DO PRÓPRIO LOGO: mantém cor, reflexos e formato. -->
+        <clipPath id="lcOfficialPenClip" clipPathUnits="userSpaceOnUse">
+          <path d="M665 655 Q660 639 671 615 L697 550 L728 483 L774 398 L817 312 L856 245 Q878 205 906 204 Q930 207 944 233 Q956 252 941 278 L906 341 L863 421 L814 510 L773 581 L728 640 L683 666 Z"/>
+        </clipPath>
       </defs>
-      <!-- UM UNICO LOGOTIPO: o mesmo PNG e revelado durante toda a animacao. -->
-      <image href="./logo.png" x="0" y="0" width="1024" height="1024" preserveAspectRatio="xMidYMid meet" mask="url(#lcLogoMask)"/>
-      <!-- Caneta guia temporaria: acompanha a borda; nao faz parte do logo final. -->
+      <g mask="url(#lcEdgeMask)">
+        <image href="./logo.png" x="0" y="0" width="1024" height="1024" preserveAspectRatio="xMidYMid meet" mask="url(#lcLogoMask)"/>
+      </g>
+      <!-- O PNG da caneta é recortado da mesma imagem e sua ponta segue o percurso. -->
       <g id="lcMovingPen" class="lc-drawing-pen" transform="translate(174 366)">
-        <g transform="rotate(-40)">
-          <path class="lc-pen-body" d="M-8 -61 Q-8 -70 0 -70 Q8 -70 8 -61 L8 -12 L-8 -12 Z"/>
-          <path fill="#f4fff9" opacity=".75" d="M-4 -59 H-1 V-18 H-4 Z"/>
-          <path class="lc-pen-tip" d="M-8 -12 L0 0 L8 -12 Z"/>
+        <g transform="translate(-674 -646)" clip-path="url(#lcOfficialPenClip)">
+          <image href="./logo.png" x="0" y="0" width="1024" height="1024" preserveAspectRatio="xMidYMid meet"/>
         </g>
       </g>
     </svg>
   </div>
 </div>
+
 <div id="app">
 
 
