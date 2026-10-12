@@ -1,0 +1,15 @@
+/* CENAS PRO — Tipografia, independente do CSS da câmera */
+.scenes-pro-toolbar{padding:12px 14px;background:#fff;border-bottom:1px solid #d7e4da;color:#263c32}
+.scenes-pro-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px}
+.scenes-pro-head span{font-size:11px;color:#65796d}
+.scenes-pro-controls{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
+.scenes-pro-controls label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#65796d;min-width:76px}
+.scenes-pro-controls label:first-child{min-width:160px}
+.scenes-pro-controls input,.scenes-pro-controls select{height:35px;min-width:0;padding:5px 8px;border:1px solid #d7e4da;border-radius:9px;background:#f6f8f5;color:#263c32;font-size:12px}
+.scenes-pro-controls input[type=color]{width:55px;padding:3px}
+.scenes-pro-controls input[type=number]{width:77px}
+.scenes-pro-buttons{display:flex;gap:4px}
+.scenes-pro-buttons button{width:35px;height:35px;border:1px solid #d7e4da;border-radius:9px;background:#f0f6f1;color:#263c32}
+.scenes-pro-buttons button.active{background:#a8d9c5;border-color:#6eb89c}
+.scenes-pro-controls :disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:760px){.scenes-pro-toolbar{padding:9px}.scenes-pro-controls{flex-wrap:nowrap;overflow-x:auto;padding-bottom:7px;align-items:end}.scenes-pro-controls label{flex:0 0 auto}.scenes-pro-buttons{flex:0 0 auto}}
