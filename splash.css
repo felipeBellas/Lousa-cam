@@ -17,3 +17,49 @@
 #lcSplash.lc-logo-complete .lc-pen-hide{opacity:0;transition:opacity .20s ease}
 #lcSplash.lc-logo-complete .lc-drawing-pen{opacity:0!important;transition:opacity .15s ease}
 @media(prefers-reduced-motion:reduce){#lcSplash .lc-full-reveal{opacity:1}#lcSplash .lc-pen-hide{opacity:0}#lcSplash{transition-duration:.01ms}}
+
+
+/* =====================================================
+   LOUSA CAM — ETAPA 3C
+   CORREÇÃO DAS BORDAS EXTERNAS DO LOGO
+   Não altera o movimento da caneta.
+   ===================================================== */
+
+/* Aplica a suavização somente ao PNG oficial. */
+#lcSplash .lc-splash-art > image {
+  -webkit-mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    );
+
+  -webkit-mask-composite: source-in;
+
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 6%,
+      black 94%,
+      transparent 100%
+    );
+
+  mask-composite: intersect;
+}
