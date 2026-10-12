@@ -3528,6 +3528,21 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   #top button { transition: none !important; }
 }
+    
+
+
+/* Devolve a navegacao principal a sua posicao habitual.
+   Sobrescreve o deslocamento inserido em scenes-camera.js. */
+body.teleprompter-active #modeDock {
+  display: flex !important;
+  bottom: max(18px, env(safe-area-inset-bottom)) !important;
+}
+
+/* Mantem os controles de leitura acima do botao Gravar. */
+body.teleprompter-active .teleprompter-layer .teleprompter-controls {
+  bottom: max(170px, calc(env(safe-area-inset-bottom) + 158px)) !important;
+}
+    
 </style>
 
   <link
