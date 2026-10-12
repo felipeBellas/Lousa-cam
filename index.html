@@ -3429,6 +3429,12 @@ body:has(#startOverlay:not(.hidden)) #modeDock button {
 /* Biblioteca de Cenas aberta: dock da câmera oculto. */
 body.lc-scenes-library-open #modeDock { display: none !important; }
 
+
+/* ETAPA 2G — retorno da Galeria */
+#galleryLayer .lc-gallery-header { display:flex; align-items:center; gap:14px; margin:8px 0 22px; }
+#galleryLayer .lc-gallery-header h1 { margin:0; }
+#galleryBackButton { flex:0 0 42px; width:42px; height:42px; font-size:25px; background:rgba(255,255,255,.13); color:#fff; border:1px solid rgba(255,255,255,.2); touch-action:manipulation; }
+
 </style>
 
   <link
@@ -4271,7 +4277,10 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
       id="galleryLayer"
       aria-hidden="true">
 
-      <h1>Galeria</h1>
+      <div class="lc-gallery-header">
+        <button id="galleryBackButton" type="button" aria-label="Voltar para a câmera" title="Voltar para a câmera">&#8592;</button>
+        <h1>Galeria</h1>
+      </div>
 
       <div id="galleryLayerContent">
 
@@ -4951,16 +4960,33 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   if (startOverlay) new MutationObserver(syncRecordingAccess).observe(startOverlay, { attributes: true, attributeFilter: ['class','style'] });
   // Dock fora do contêiner da câmera para não ficar encoberto pelo overlay.
   if (dock && dock.parentElement !== document.body) document.body.appendChild(dock);
-  // O Menu inferior controla o painel diretamente, sem simular toque no Menu superior.
-  if (menu) menu.addEventListener('click', event => {
-    if (!cameraIsActive()) return;
+  // Impede que os listeners globais de fechamento recebam o toque no próprio Menu.
+  // O evento click continua sendo processado normalmente pelo botão.
+  if (menu) {
+    ['pointerdown', 'touchstart', 'mousedown'].forEach(type => {
+      menu.addEventListener(type, event => {
+        if (cameraIsActive()) event.stopPropagation();
+      }, { passive: true });
+    });
+    menu.addEventListener('click', event => {
+      if (!cameraIsActive()) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const panel = document.getElementById('menuPanel');
+      if (!panel) return;
+      const willOpen = !panel.classList.contains('open');
+      document.querySelectorAll('#menuPanel, #biologyPanel').forEach(p => p.classList.remove('open'));
+      if (willOpen) panel.classList.add('open');
+      menu.setAttribute('aria-expanded', String(willOpen));
+    });
+  }
+
+  // Volta para a câmera usando a navegação já existente, sem reiniciar o stream.
+  const galleryBack = document.getElementById('galleryBackButton');
+  if (galleryBack) galleryBack.addEventListener('click', event => {
+    event.preventDefault();
     event.stopPropagation();
-    const panel = document.getElementById('menuPanel');
-    if (!panel) return;
-    const willOpen = !panel.classList.contains('open');
-    document.querySelectorAll('#menuPanel, #biologyPanel').forEach(p => p.classList.remove('open'));
-    if (willOpen) panel.classList.add('open');
-    menu.setAttribute('aria-expanded', String(willOpen));
+    document.getElementById('cameraModeButton')?.click();
   });
 
   // Fecha o menu quando o usuário toca fora, sem interferir em outros controles.
