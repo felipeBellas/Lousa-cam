@@ -11,7 +11,6 @@
    - Preserva transparência
    - Preserva navegação e compatibilidade com o Player
    - Melhora contraste de textos claros
-   - Suporta apresentações 16:9 e 9:16
    - Não modifica os dados das apresentações
    - Não altera o aplicativo principal
    ========================================================= */
@@ -217,12 +216,7 @@
      FUNDO
      ===================================================== */
 
-  function drawBackground(
-    ctx,
-    scene,
-    baseWidth = BASE_WIDTH,
-    baseHeight = BASE_HEIGHT
-  ) {
+  function drawBackground(ctx, scene, baseWidth = BASE_WIDTH, baseHeight = BASE_HEIGHT) {
 
     const background = scene.background || {};
 
@@ -350,11 +344,14 @@
       width - padding * 2
     );
 
-    const lines = wrapText(
-      ctx,
-      element.text ?? "",
-      availableWidth
-    );
+    const transform = element.textTransform || "none";
+    const originalText = String(element.text ?? "");
+    const displayText = transform === "uppercase" ? originalText.toLocaleUpperCase("pt-BR")
+      : transform === "lowercase" ? originalText.toLocaleLowerCase("pt-BR")
+      : transform === "capitalize" ? originalText.replace(/\b\p{L}/gu, c => c.toLocaleUpperCase("pt-BR"))
+      : originalText;
+    const letterSpacing = clamp(number(element.letterSpacing, 0), -5, 30);
+    const lines = wrapText(ctx, displayText, availableWidth);
 
     const lineHeight =
       fontSize * Math.max(
@@ -417,7 +414,22 @@
         ctx.strokeText(line, x, y);
       }
 
+      if (letterSpacing !== 0 && "letterSpacing" in ctx) {
+        ctx.letterSpacing = `${letterSpacing}px`;
+      }
       ctx.fillText(line, x, y);
+      if (element.textDecoration === "underline") {
+        const lineWidth = ctx.measureText(line).width;
+        const left = alignment === "center" ? x - lineWidth / 2 : alignment === "right" ? x - lineWidth : x;
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(1, fontSize / 18);
+        ctx.beginPath();
+        ctx.moveTo(left, y + fontSize * 1.03);
+        ctx.lineTo(left + lineWidth, y + fontSize * 1.03);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     ctx.restore();
@@ -709,37 +721,25 @@
         ctx.restore();
       }
 
-      // Dimensões lógicas da apresentação.
+      // Usa as dimensões lógicas informadas pelo Player.
       // Mantém o padrão horizontal para chamadas antigas.
       const baseWidth = options.aspectRatio === "9:16"
-        ? PORTRAIT_WIDTH
-        : BASE_WIDTH;
-
+        ? PORTRAIT_WIDTH : BASE_WIDTH;
       const baseHeight = options.aspectRatio === "9:16"
-        ? PORTRAIT_HEIGHT
-        : BASE_HEIGHT;
+        ? PORTRAIT_HEIGHT : BASE_HEIGHT;
 
-      // Encaixe proporcional, sem deformação.
+      // Encaixe proporcional: evita deformar cenas verticais.
       const scale = Math.min(
         canvas.width / baseWidth,
         canvas.height / baseHeight
       );
-
-      const offsetX =
-        (canvas.width - baseWidth * scale) / 2;
-
-      const offsetY =
-        (canvas.height - baseHeight * scale) / 2;
+      const offsetX = (canvas.width - baseWidth * scale) / 2;
+      const offsetY = (canvas.height - baseHeight * scale) / 2;
 
       ctx.translate(offsetX, offsetY);
       ctx.scale(scale, scale);
 
-      drawBackground(
-        ctx,
-        scene,
-        baseWidth,
-        baseHeight
-      );
+      drawBackground(ctx, scene, baseWidth, baseHeight);
 
       const elements = Array.isArray(scene.elements)
         ? scene.elements
@@ -771,11 +771,7 @@
 
     if (!scene) return false;
 
-    return renderScene(ctx, scene, {
-      ...options,
-      aspectRatio:
-        options.aspectRatio || presentation.aspectRatio
-    });
+    return renderScene(ctx, scene, { ...options, aspectRatio: options.aspectRatio || presentation.aspectRatio });
   }
 
   /* =====================================================
