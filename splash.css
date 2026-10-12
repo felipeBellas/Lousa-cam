@@ -1,0 +1,15 @@
+/* LOUSA CAM — ETAPA 3A | Abertura isolada */
+#lcSplash{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f6f8f5;color:#355d4e;overflow:hidden;opacity:1;transition:opacity .45s ease;isolation:isolate}
+#lcSplash.lc-splash-out{opacity:0;pointer-events:none}
+#lcSplash .lc-splash-center{width:min(76vw,320px);display:flex;align-items:center;flex-direction:column;gap:10px;transform:translateY(-12px)}
+#lcSplash .lc-splash-drawing{width:min(54vw,210px);height:auto;overflow:visible;filter:drop-shadow(0 8px 18px rgba(77,130,105,.13))}
+#lcSplash .lc-splash-line{fill:none;stroke:#76b69b;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:450;stroke-dashoffset:450;animation:lcDraw 1.55s cubic-bezier(.3,.05,.2,1) forwards}
+#lcSplash .lc-splash-lens{animation-delay:.5s;stroke:#477f69;stroke-dasharray:220;stroke-dashoffset:220}
+#lcSplash .lc-splash-spark{animation-delay:1.05s;stroke-dasharray:100;stroke-dashoffset:100;stroke-width:5}
+#lcSplash .lc-splash-pen{transform-origin:40px 112px;animation:lcPen 1.8s ease-in-out forwards;opacity:0}
+#lcSplash .lc-splash-name{font:700 clamp(25px,6vw,36px)/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.17em;color:#355d4e;opacity:0;transform:translateY(10px);animation:lcReveal .6s ease 1.7s forwards;text-align:center}
+#lcSplash .lc-splash-sub{font:400 12px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.13em;color:#668879;opacity:0;animation:lcReveal .5s ease 2.05s forwards;text-align:center}
+@keyframes lcDraw{to{stroke-dashoffset:0}}
+@keyframes lcReveal{to{opacity:1;transform:translateY(0)}}
+@keyframes lcPen{0%{opacity:0;transform:translate(-25px,15px) rotate(-12deg)}15%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(125px,-75px) rotate(12deg)}}
+@media(prefers-reduced-motion:reduce){#lcSplash *,#lcSplash *::before,#lcSplash *::after{animation-duration:.01ms!important;animation-delay:0ms!important}#lcSplash{transition-duration:.01ms}}
