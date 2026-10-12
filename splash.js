@@ -1,62 +1,65 @@
-/* LOUSA CAM — ETAPA 3C | AJUSTE FINO — caneta recortada do logo.png */
-
+/* LOUSA CAM — ETAPA 3C | Mascara e caneta sincronizadas, sem vazamento antecipado */
 (function () {
   'use strict';
   function initSplash() {
     var splash = document.getElementById('lcSplash');
     if (!splash) return;
-    var finished = false, raf = 0, timer = 0;
-    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var pen = splash.querySelector('#lcMovingPen');
-    var paths = [
-      { id: 'lcCameraPath', from: 200, to: 2100 },
-      { id: 'lcLensPath', from: 1950, to: 2950 },
-      { id: 'lcPenPath', from: 2800, to: 3650 },
-      { id: 'lcWavePath', from: 3350, to: 3950 }
-    ];
+    var name = splash.querySelector('#lcNameReveal');
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var finished = false, raf = 0, timer = 0;
+    // Cada etapa so revela o que a ponta ja percorreu.
+    var stages = [
+      { id: 'lcCameraPath', from: 150, to: 2350, selector: '.lc-camera-reveal' },
+      { id: 'lcLensPath', from: 2350, to: 3400, selector: '.lc-lens-reveal' },
+      { id: 'lcWavePath', from: 3400, to: 4020, selector: '.lc-wave-reveal' }
+    ].map(function (s) {
+      return { path: splash.querySelector('#' + s.id), mask: splash.querySelector(s.selector), from: s.from, to: s.to };
+    });
     function finish() {
       if (finished) return;
       finished = true;
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
       if (pen) pen.style.opacity = '0';
       splash.classList.add('lc-splash-out');
-      window.setTimeout(function () {
-        if (splash.parentNode) splash.parentNode.removeChild(splash);
-      }, reduced ? 30 : 500);
+      setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, reduced ? 30 : 500);
     }
-    if (!reduced && pen) {
+    function complete() {
+      splash.classList.add('lc-logo-complete');
+      if (pen) pen.style.opacity = '0';
+    }
+    if (reduced) {
+      complete();
+      timer = setTimeout(finish, 350);
+    } else {
       var start = performance.now();
-      var nodes = paths.map(function (entry) {
-        return { path: splash.querySelector('#' + entry.id), from: entry.from, to: entry.to };
-      });
       function animate(now) {
         if (finished) return;
         var elapsed = now - start;
         var active = null;
-        for (var i = 0; i < nodes.length; i++) {
-          if (elapsed >= nodes[i].from && elapsed <= nodes[i].to && nodes[i].path) {
-            active = nodes[i];
-            break;
-          }
+        stages.forEach(function (s) {
+          if (!s.path || !s.mask) return;
+          var t = Math.max(0, Math.min(1, (elapsed - s.from) / (s.to - s.from)));
+          // A mesma fracao t move a ponta E abre a mascara: sem partes futuras visiveis.
+          s.mask.style.strokeDashoffset = String(100 * (1 - t));
+          if (elapsed >= s.from && elapsed < s.to) active = { path: s.path, t: t };
+        });
+        if (name) {
+          var n = Math.max(0, Math.min(1, (elapsed - 4020) / 380));
+          name.style.transform = 'scaleX(' + n.toFixed(4) + ')';
         }
-        if (active) {
-          var t = Math.min(1, Math.max(0, (elapsed - active.from) / (active.to - active.from)));
-          var length = active.path.getTotalLength();
-          var point = active.path.getPointAtLength(t * length);
-          // Mantém a ponta da caneta oficial alinhada ao percurso.
-          // Não giramos a imagem recortada: preserva a perspectiva Liquid Glass original.
-          pen.setAttribute('transform', 'translate(' + point.x.toFixed(2) + ' ' + point.y.toFixed(2) + ')');
+        if (active && pen) {
+          var p = active.path.getPointAtLength(active.t * active.path.getTotalLength());
+          pen.setAttribute('transform', 'translate(' + p.x.toFixed(2) + ' ' + p.y.toFixed(2) + ')');
           pen.style.opacity = '1';
-        } else {
-          pen.style.opacity = '0';
-        }
-        if (elapsed < 4300) raf = window.requestAnimationFrame(animate);
-        else pen.style.opacity = '0';
+        } else if (pen) pen.style.opacity = '0';
+        if (elapsed >= 4400) complete();
+        if (elapsed < 4700) raf = requestAnimationFrame(animate);
       }
-      raf = window.requestAnimationFrame(animate);
+      raf = requestAnimationFrame(animate);
+      timer = setTimeout(finish, 4900);
     }
-    timer = window.setTimeout(finish, reduced ? 350 : 4700);
     splash.addEventListener('click', finish, { once: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSplash, { once: true });
