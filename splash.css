@@ -1,15 +1,22 @@
-/* LOUSA CAM — ETAPA 3A | Abertura isolada */
+/* LOUSA CAM — ETAPA 3C | Animação visual isolada, sem acesso à câmera */
 #lcSplash{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f6f8f5;color:#355d4e;overflow:hidden;opacity:1;transition:opacity .45s ease;isolation:isolate}
 #lcSplash.lc-splash-out{opacity:0;pointer-events:none}
-#lcSplash .lc-splash-center{width:min(76vw,320px);display:flex;align-items:center;flex-direction:column;gap:10px;transform:translateY(-12px)}
-#lcSplash .lc-splash-drawing{width:min(54vw,210px);height:auto;overflow:visible;filter:drop-shadow(0 8px 18px rgba(77,130,105,.13))}
-#lcSplash .lc-splash-line{fill:none;stroke:#76b69b;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:450;stroke-dashoffset:450;animation:lcDraw 1.55s cubic-bezier(.3,.05,.2,1) forwards}
-#lcSplash .lc-splash-lens{animation-delay:.5s;stroke:#477f69;stroke-dasharray:220;stroke-dashoffset:220}
-#lcSplash .lc-splash-spark{animation-delay:1.05s;stroke-dasharray:100;stroke-dashoffset:100;stroke-width:5}
-#lcSplash .lc-splash-pen{transform-origin:40px 112px;animation:lcPen 1.8s ease-in-out forwards;opacity:0}
-#lcSplash .lc-splash-name{font:700 clamp(25px,6vw,36px)/1.2 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.17em;color:#355d4e;opacity:0;transform:translateY(10px);animation:lcReveal .6s ease 1.7s forwards;text-align:center}
-#lcSplash .lc-splash-sub{font:400 12px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.13em;color:#668879;opacity:0;animation:lcReveal .5s ease 2.05s forwards;text-align:center}
-@keyframes lcDraw{to{stroke-dashoffset:0}}
-@keyframes lcReveal{to{opacity:1;transform:translateY(0)}}
-@keyframes lcPen{0%{opacity:0;transform:translate(-25px,15px) rotate(-12deg)}15%{opacity:1}85%{opacity:1}100%{opacity:0;transform:translate(125px,-75px) rotate(12deg)}}
-@media(prefers-reduced-motion:reduce){#lcSplash *,#lcSplash *::before,#lcSplash *::after{animation-duration:.01ms!important;animation-delay:0ms!important}#lcSplash{transition-duration:.01ms}}
+#lcSplash .lc-splash-center{position:relative;width:min(78vw,340px);aspect-ratio:1;display:grid;place-items:center;transform:translateY(-8px)}
+#lcSplash .lc-splash-drawing{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 10px 15px rgba(59,116,90,.13));animation:lcVectorExit .4s ease 2.2s forwards}
+#lcSplash .lc-glass-body{fill:url(#lcGlassFill);stroke:#83bda8;stroke-width:3;stroke-linejoin:round;stroke-dasharray:720;stroke-dashoffset:720;animation:lcTrace 1.05s cubic-bezier(.28,.06,.22,1) forwards,lcGlassAppear .65s ease .65s forwards;fill-opacity:0}
+#lcSplash .lc-glass-rim{fill:none;stroke:url(#lcRim);stroke-width:5;stroke-linecap:round;stroke-dasharray:720;stroke-dashoffset:720;animation:lcTrace 1.15s ease .12s forwards}
+#lcSplash .lc-glass-highlight{fill:none;stroke:#fff;stroke-opacity:0;stroke-width:7;stroke-linecap:round;animation:lcShine .55s ease 1.05s forwards}
+#lcSplash .lc-lens-outer{fill:url(#lcLensOuter);stroke:#4b9980;stroke-width:5;opacity:0;transform:scale(.65);transform-origin:160px 145px;animation:lcLens .55s cubic-bezier(.15,1.3,.4,1) .85s forwards}
+#lcSplash .lc-lens-middle{fill:url(#lcLensMiddle);stroke:#c8f5e4;stroke-width:3;opacity:0;transform:scale(.65);transform-origin:160px 145px;animation:lcLens .55s cubic-bezier(.15,1.3,.4,1) 1.05s forwards}
+#lcSplash .lc-lens-inner{fill:url(#lcLensInner);opacity:0;transform:scale(.5);transform-origin:160px 145px;animation:lcLens .55s cubic-bezier(.15,1.3,.4,1) 1.2s forwards}
+#lcSplash .lc-pen-glass{opacity:0;transform:translate(24px,-22px) rotate(8deg);transform-origin:230px 170px;animation:lcPenEnter .6s cubic-bezier(.2,.8,.2,1) 1.45s forwards}
+#lcSplash .lc-pen-trace{fill:none;stroke:#55b997;stroke-width:8;stroke-linecap:round;stroke-dasharray:190;stroke-dashoffset:190;animation:lcTrace .55s ease 1.65s forwards}
+#lcSplash .lc-official-logo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(.985);animation:lcOfficialReveal .65s ease 2.15s forwards}
+@keyframes lcTrace{to{stroke-dashoffset:0}}
+@keyframes lcGlassAppear{to{fill-opacity:1}}
+@keyframes lcShine{to{stroke-opacity:.8}}
+@keyframes lcLens{to{opacity:1;transform:scale(1)}}
+@keyframes lcPenEnter{to{opacity:1;transform:translate(0,0) rotate(0)}}
+@keyframes lcVectorExit{to{opacity:0}}
+@keyframes lcOfficialReveal{to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){#lcSplash *,#lcSplash *::before,#lcSplash *::after{animation-duration:.01ms!important;animation-delay:0ms!important}#lcSplash .lc-splash-drawing{opacity:0!important}#lcSplash .lc-official-logo{opacity:1!important;transform:none!important}#lcSplash{transition-duration:.01ms}}
