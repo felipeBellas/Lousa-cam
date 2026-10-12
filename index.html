@@ -3595,6 +3595,56 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 #lcCascadeMenu .lc-cascade-section,#lcCascadeMenu .lc-cascade-footer { display:block!important; }
 @media(prefers-reduced-motion:reduce){#lcCascadeMenu .lc-cascade-animate,#lcCascadeMenu.lc-cascade-closing { animation:none!important; }}
 
+
+/* =====================================================
+   ETAPA 2N — SELETOR DE FUNDO LIQUID GLASS
+   Apenas acabamento do painel de fundo.
+   ===================================================== */
+#boardPanel {
+  width: min(224px, calc(100vw - 32px));
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 22px;
+  background: rgba(246,248,245,.80);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
+  backdrop-filter: blur(24px) saturate(155%);
+  box-shadow: 0 12px 34px rgba(20,35,28,.17), inset 0 1px 0 rgba(255,255,255,.8);
+  color: #29332F;
+}
+#boardPanel .board-title {
+  color: #52675D;
+  font-size: 11px;
+  padding: 4px 8px 6px;
+}
+#boardPanel .board-option {
+  min-height: 46px;
+  height: auto;
+  padding: 8px 12px;
+  gap: 12px;
+  border: 1px solid rgba(221,237,229,.9);
+  border-radius: 14px;
+  background: rgba(255,255,255,.56);
+  color: #29332F;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+#boardPanel .board-option.active {
+  background: #A8D9C5;
+  border-color: #A8D9C5;
+  color: #29332F;
+}
+#boardPanel .board-option:focus-visible {
+  outline: 2px solid #729D89;
+  outline-offset: 2px;
+}
+#boardPanel .board-dot {
+  border: 1px solid rgba(60,75,65,.28);
+}
+#boardPanel .board-dot.green { background: #A8D9C5; }
+
 </style>
 
 
@@ -5270,6 +5320,26 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   document.getElementById('lcCascadeClose').addEventListener('click',close);
   document.getElementById('lcCascadeBack').addEventListener('click',showHome);
   document.addEventListener('keydown',event=>{if(root.hidden)return;if(event.key==='Escape'){event.preventDefault();detail.hidden?close():showHome();}if(event.key==='Tab'){const focusables=Array.from(root.querySelectorAll('button')).filter(b=>b.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
+})();
+</script>
+
+
+<script>
+/* ETAPA 2N — Fechar opções de Fundo ao tocar fora.
+   Listener em captura, sem bloquear o toque original da lousa. */
+(() => {
+  'use strict';
+  const panel = document.getElementById('boardPanel');
+  const trigger = document.getElementById('flip');
+  if (!panel || !trigger) return;
+
+  document.addEventListener('pointerdown', (event) => {
+    if (!panel.classList.contains('open')) return;
+    if (panel.contains(event.target) || trigger.contains(event.target)) return;
+    panel.classList.remove('open');
+    panel.setAttribute('aria-hidden', 'true');
+    trigger.setAttribute('aria-expanded', 'false');
+  }, true);
 })();
 </script>
 
