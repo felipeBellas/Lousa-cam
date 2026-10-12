@@ -1,19 +1,16 @@
-/* LOUSA CAM — ETAPA 3C REVISADA | PNG original revelado por mascara SVG */
-
+/* LOUSA CAM — ETAPA 3C | AJUSTE FINO — mantém o PNG oficial */
 #lcSplash{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f6f8f5;overflow:hidden;opacity:1;transition:opacity .45s ease;isolation:isolate;cursor:pointer}
 #lcSplash.lc-splash-out{opacity:0;pointer-events:none}
 #lcSplash .lc-splash-center{width:min(82vw,390px);display:flex;align-items:center;justify-content:center}
 #lcSplash .lc-splash-art{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 10px 22px rgba(51,115,87,.10))}
 #lcSplash .lc-reveal-stroke{fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:100}
 #lcSplash .lc-camera-reveal{stroke-width:140;animation:lcRevealPath 1.9s ease-in-out .2s forwards}
-#lcSplash .lc-lens-reveal{stroke-width:165;animation:lcRevealPath 1.0s ease-in-out 1.95s forwards}
+#lcSplash .lc-lens-reveal{stroke-width:165;animation:lcRevealPath 1s ease-in-out 1.95s forwards}
 #lcSplash .lc-pen-reveal{stroke-width:150;animation:lcRevealPath .85s ease-in-out 2.8s forwards}
 #lcSplash .lc-wave-reveal{stroke-width:90;animation:lcRevealPath .6s ease-in-out 3.35s forwards}
 #lcSplash .lc-name-reveal{transform:scaleX(0);transform-origin:50% 50%;animation:lcRevealName .65s ease 3.55s forwards}
 #lcSplash .lc-full-reveal{opacity:0;animation:lcComplete .65s ease 3.9s forwards}
-#lcSplash .lc-drawing-pen{opacity:0;filter:drop-shadow(0 3px 5px rgba(17,84,65,.25));pointer-events:none}
-#lcSplash .lc-pen-body{fill:url(#lcPenGlass);stroke:#287a5d;stroke-width:3}
-#lcSplash .lc-pen-tip{fill:#07543c}
+#lcSplash .lc-drawing-pen{opacity:0;pointer-events:none;filter:drop-shadow(0 5px 8px rgba(17,84,65,.22))}
 @keyframes lcRevealPath{to{stroke-dashoffset:0}}
 @keyframes lcRevealName{to{transform:scaleX(1)}}
 @keyframes lcComplete{to{opacity:1}}
