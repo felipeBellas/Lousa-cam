@@ -3411,6 +3411,18 @@ body:has(#startOverlay:not(.hidden)) #top {
 #startCard { position: relative; z-index: 1; }
 #startCard h1, #startCard p { text-shadow: 0 2px 10px rgba(0,0,0,.6); }
 
+
+/* ETAPA 2E — Barra sempre visível enquanto a câmera está bloqueada. */
+body:has(#startOverlay:not(.hidden)) #modeDock {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+body:has(#startOverlay:not(.hidden)) #modeDock button {
+  cursor: default;
+}
+
 </style>
 
   <link
@@ -4899,8 +4911,29 @@ body:has(#startOverlay:not(.hidden)) #top {
   const syncRecordingAccess = () => {
     if (record) record.disabled = !cameraIsActive();
     if (dock) dock.classList.toggle('camera-locked', !cameraIsActive());
+    if (!cameraIsActive()) {
+      const gallery = document.getElementById('galleryLayer');
+      if (gallery) {
+        gallery.classList.remove('show');
+        gallery.setAttribute('aria-hidden', 'true');
+      }
+    }
   };
   syncRecordingAccess();
+  /* Enquanto a câmera não foi ativada, bloquear comandos no CAPTURE.
+     Assim os eventos existentes de Galeria/Teleprompter não são disparados. */
+  if (dock) {
+    const blockWhileLocked = event => {
+      if (cameraIsActive()) return;
+      const control = event.target.closest('button');
+      if (!control || !dock.contains(control)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+    dock.addEventListener('pointerdown', blockWhileLocked, true);
+    dock.addEventListener('click', blockWhileLocked, true);
+    dock.addEventListener('touchstart', blockWhileLocked, { capture: true, passive: false });
+  }
   // O módulo Cenas conserva seu próprio botão; não duplicá-lo visualmente no dock.
   const removeDuplicateSceneFromDock = () => {
     if (!dock) return;
