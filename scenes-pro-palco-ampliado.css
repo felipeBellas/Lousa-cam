@@ -1,0 +1,58 @@
+/* =========================================================
+   LOUSA CAM — CENAS PRO | CORRECAO DO PALCO NO IPHONE
+   Acrescentar DEPOIS de scenes-pro-layout.css.
+   Nao altera JavaScript, dados ou ferramentas.
+   ========================================================= */
+@media (max-width: 760px) {
+  /* Mantem a pagina fixa, mas permite navegar pela cena. */
+  html.scenes-pro-editor-active .scenes-stage-outer {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 14px;
+  }
+
+  /* Horizontal: largura minima para nao achatar textos e objetos.
+     Se ultrapassar a tela, a rolagem fica apenas no palco. */
+  html.scenes-pro-editor-active .scenes-stage:not(.scenes-portrait) {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: max(100%, 540px);
+    min-width: 540px;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: 16 / 9;
+    margin: 0;
+  }
+
+  /* Vertical: preserva 9:16, com altura natural da cena. */
+  html.scenes-pro-editor-active .scenes-stage.scenes-portrait {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: min(100%, 400px);
+    min-width: min(320px, 85vw);
+    height: auto;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: 9 / 16;
+    margin: 0 auto;
+  }
+
+  /* Miniaturas permanecem embaixo, sem reduzir o palco ainda mais. */
+  html.scenes-pro-editor-active .scenes-sidebar {
+    height: 104px;
+    max-height: 104px;
+  }
+  html.scenes-pro-editor-active .scenes-slide-list {
+    height: 72px;
+  }
+  html.scenes-pro-editor-active .scenes-slide-thumbnail {
+    max-height: 46px;
+  }
+}
