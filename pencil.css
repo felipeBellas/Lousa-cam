@@ -779,39 +779,80 @@
   outline-offset: 2px;
 }
 
-/* ETAPA 2P — Liquid Glass claro; preserva eventos e ferramentas */
+/* =====================================================
+   ETAPA 2Q — ESCALA COMPACTA DAS IMAGENS
+   Somente visual. Sem alterações no Pencil JS.
+   ===================================================== */
+
 #pencilFloat {
-  min-height: 68px;
-  padding: 6px;
-  border: 1px solid rgba(255,255,255,.85);
-  border-radius: 35px;
-  background: rgba(246,248,245,.66);
+  min-height: 58px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, .85);
+  border-radius: 30px;
+  background: rgba(246, 248, 245, .68);
   -webkit-backdrop-filter: blur(22px) saturate(155%);
   backdrop-filter: blur(22px) saturate(155%);
   box-shadow: 0 8px 25px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.8);
 }
-#pencilFloat.compact { width: 68px; }
-#pencilFloat.expanded { width: min(535px, calc(100vw - 20px)); }
-#pencilToggle {
-  flex: 0 0 54px; width: 54px; height: 54px;
-  border-radius: 27px; background: rgba(255,255,255,.53);
+#pencilFloat.compact { width: 58px; }
+#pencilFloat.expanded { width: min(430px, calc(100vw - 24px)); }
+
+#pencilFloat #pencilToggle {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  border-radius: 23px;
+  background: rgba(255,255,255,.54);
+  overflow: hidden;
 }
-#pencilContent { height: 54px; margin-left: 5px; }
-.pencil-tools { gap: 5px; }
-.pencil-tool {
-  flex: 0 0 52px; width: 52px; height: 52px;
-  border-radius: 18px; background: rgba(255,255,255,.28);
+#pencilFloat #pencilContent { height: 46px; margin-left: 4px; }
+#pencilFloat .pencil-tools { gap: 3px; }
+#pencilFloat .pencil-tool {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.27);
+  overflow: hidden;
 }
-.pencil-tool.active { background: #A8D9C5; }
-#pencilFloat .pencil-art {
-  display: block; width: 46px; height: 46px;
-  object-fit: contain; flex: none; pointer-events: none;
-  user-select: none; -webkit-user-drag: none;
-  filter: drop-shadow(0 2px 2px rgba(32,49,44,.12));
+#pencilFloat .pencil-tool.active { background: #A8D9C5; }
+
+/* Regras específicas e !important para evitar estilos globais de img
+   que poderiam ampliar as imagens além do botão no Safari. */
+#pencilFloat button img.pencil-art {
+  display: block !important;
+  position: static !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 30px !important;
+  max-height: 30px !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 30px !important;
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 1px 1px rgba(32,49,44,.12));
 }
-#pencilToggle .pencil-art { width: 49px; height: 49px; }
-.pencil-tool-color { bottom: 1px; }
-.pencil-divider { background: rgba(53,78,67,.24); }
+#pencilFloat #pencilToggle img.pencil-art {
+  width: 32px !important;
+  height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  flex-basis: 32px !important;
+}
+#pencilFloat .pencil-tool-color { bottom: 1px; }
+#pencilFloat .pencil-divider { background: rgba(53,78,67,.24); }
+
 #pencilContextPanel {
   border: 1px solid rgba(255,255,255,.82);
   background: rgba(246,248,245,.78);
@@ -823,7 +864,3 @@
 .pencil-context-title { color: #40584d; }
 .pencil-size { background: rgba(70,100,86,.10); }
 .pencil-size.active { background: #A8D9C5; }
-@media (max-width: 390px) {
-  .pencil-tools { gap: 3px; }
-  .pencil-tool { flex-basis: 50px; width: 50px; height: 50px; }
-}
