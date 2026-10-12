@@ -171,6 +171,19 @@
     }
 
     /* ---------------------------------------------
+       CENAS + TELEPROMPTER (compatibilidade)
+       Mantém o dock acessível acima dos controles
+       do Teleprompter, sem sobrepor sua barra.
+       --------------------------------------------- */
+
+    body.teleprompter-active #modeDock {
+      display: flex !important;
+      position: fixed;
+      bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px));
+      z-index: 81;
+    }
+
+    /* ---------------------------------------------
        CANVAS DAS CENAS
        --------------------------------------------- */
 
@@ -546,8 +559,7 @@
     const visible = !!(
       scenesVisible &&
       state.active &&
-      !isGalleryOpen() &&
-      !isTeleprompterOpen()
+      !isGalleryOpen()
     );
 
     canvas.style.display =
@@ -717,10 +729,8 @@
     suspendScenes
   );
 
-  teleprompterButton.addEventListener(
-    "click",
-    suspendScenes
-  );
+  // Teleprompter e Cenas podem permanecer ativos simultaneamente.
+  // Não suspender as cenas ao abrir o Teleprompter.
 
   /* =====================================================
      BOTÃO CENAS — ABRE A BIBLIOTECA DIRETAMENTE
@@ -865,16 +875,8 @@
     }
 
     new MutationObserver(() => {
-
-      if (isTeleprompterOpen()) {
-
-        suspendScenes();
-
-      } else {
-
-        syncVisibility();
-      }
-
+      // Sincroniza a interface sem ocultar a apresentação.
+      syncVisibility();
     }).observe(document.body, {
 
       attributes: true,
