@@ -3655,14 +3655,32 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   
 <div id="lcSplash" role="status" aria-label="Abrindo Lousa Cam">
   <div class="lc-splash-center">
-    <svg class="lc-splash-drawing" viewBox="0 0 220 180" aria-hidden="true">
-      <path class="lc-splash-line" d="M39 62 H78 L94 44 H143 L159 62 H181 Q195 62 195 77 V131 Q195 146 180 146 H39 Q25 146 25 132 V77 Q25 62 39 62 Z"/>
-      <circle class="lc-splash-line lc-splash-lens" cx="111" cy="104" r="31"/>
-      <path class="lc-splash-line lc-splash-spark" d="M165 91 h12 M171 85 v12"/>
-      <g class="lc-splash-pen"><path d="M38 110 L51 81 L61 89 L42 115 Z" fill="#a8d9c5" stroke="#477f69" stroke-width="2"/><path d="M38 110 L42 115 L35 119 Z" fill="#355d4e"/></g>
+    <svg class="lc-splash-drawing" viewBox="0 0 320 320" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lcGlassFill" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7fffb" stop-opacity=".95"/><stop offset=".48" stop-color="#b2e2d0" stop-opacity=".72"/><stop offset="1" stop-color="#5eb79a" stop-opacity=".87"/></linearGradient>
+        <linearGradient id="lcRim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#5da88c"/><stop offset="1" stop-color="#e6fff5"/></linearGradient>
+        <radialGradient id="lcLensOuter"><stop stop-color="#b3f4dd"/><stop offset=".6" stop-color="#378e76"/><stop offset="1" stop-color="#185744"/></radialGradient>
+        <radialGradient id="lcLensMiddle"><stop stop-color="#0c4e43"/><stop offset=".72" stop-color="#236d60"/><stop offset="1" stop-color="#a3ddc8"/></radialGradient>
+        <radialGradient id="lcLensInner" cx=".3" cy=".25"><stop stop-color="#9adfc9"/><stop offset=".35" stop-color="#276f5d"/><stop offset="1" stop-color="#0d4238"/></radialGradient>
+      </defs>
+      <!-- Câmera: contorno arredondado e corpo translúcido -->
+      <path class="lc-glass-body" d="M76 87 Q76 70 94 70 H119 Q127 55 142 55 H184 Q199 55 207 70 H226 Q244 70 244 89 V212 Q244 230 225 230 H95 Q76 230 76 212 Z"/>
+      <path class="lc-glass-rim" d="M76 87 Q76 70 94 70 H119 Q127 55 142 55 H184 Q199 55 207 70 H226 Q244 70 244 89 V212 Q244 230 225 230 H95 Q76 230 76 212 Z"/>
+      <path class="lc-glass-highlight" d="M91 110 V92 Q91 85 100 85 H132"/>
+      <!-- Lente formada em camadas -->
+      <circle class="lc-lens-outer" cx="160" cy="145" r="58"/>
+      <circle class="lc-lens-middle" cx="160" cy="145" r="42"/>
+      <circle class="lc-lens-inner" cx="160" cy="145" r="28"/>
+      <!-- Caneta diagonal e traço -->
+      <g class="lc-pen-glass">
+        <path d="M240 72 L259 85 L213 192 L197 205 L200 184 Z" fill="#b8ecdb" stroke="#398c73" stroke-width="4"/>
+        <path d="M240 72 L259 85 L251 102 L231 89 Z" fill="#f8fffc" stroke="#5ca88e" stroke-width="2"/>
+        <path d="M197 205 L200 184 L213 192 Z" fill="#1d5f4d"/>
+      </g>
+      <path class="lc-pen-trace" d="M99 236 Q158 256 224 223"/>
     </svg>
-    <div class="lc-splash-name">LOUSA CAM</div>
-    <div class="lc-splash-sub">CRIAR · EXPLICAR · INSPIRAR</div>
+    <!-- Revela a imagem ORIGINAL ao final: sem diferenças no logotipo definitivo -->
+    <img class="lc-official-logo" src="./logo.png" alt="LOUSA CAM" decoding="async" fetchpriority="high">
   </div>
 </div>
 <div id="app">
