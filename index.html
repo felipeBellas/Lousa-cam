@@ -3647,12 +3647,24 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 
 </style>
 
-
+<link rel="stylesheet" href="./splash.css?v=20261012-3A">
 </head>
 
 
 <body>
-
+  
+<div id="lcSplash" role="status" aria-label="Abrindo Lousa Cam">
+  <div class="lc-splash-center">
+    <svg class="lc-splash-drawing" viewBox="0 0 220 180" aria-hidden="true">
+      <path class="lc-splash-line" d="M39 62 H78 L94 44 H143 L159 62 H181 Q195 62 195 77 V131 Q195 146 180 146 H39 Q25 146 25 132 V77 Q25 62 39 62 Z"/>
+      <circle class="lc-splash-line lc-splash-lens" cx="111" cy="104" r="31"/>
+      <path class="lc-splash-line lc-splash-spark" d="M165 91 h12 M171 85 v12"/>
+      <g class="lc-splash-pen"><path d="M38 110 L51 81 L61 89 L42 115 Z" fill="#a8d9c5" stroke="#477f69" stroke-width="2"/><path d="M38 110 L42 115 L35 119 Z" fill="#355d4e"/></g>
+    </svg>
+    <div class="lc-splash-name">LOUSA CAM</div>
+    <div class="lc-splash-sub">CRIAR · EXPLICAR · INSPIRAR</div>
+  </div>
+</div>
 <div id="app">
 
 
@@ -5342,6 +5354,7 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   }, true);
 })();
 </script>
-
+<script src="./splash.js?v=20261012-3A"></script>
+  
 </body>
 </html>
