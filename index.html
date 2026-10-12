@@ -3436,41 +3436,98 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 #galleryBackButton { flex:0 0 42px; width:42px; height:42px; font-size:25px; background:rgba(255,255,255,.13); color:#fff; border:1px solid rgba(255,255,255,.2); touch-action:manipulation; }
 
 
-/* ETAPA 2L — BARRA SUPERIOR LIQUID GLASS */
+/* ETAPA 2M — BARRA SUPERIOR: ICONOGRAFIA + TOQUE CONFORTÁVEL
+   Mantém IDs, ordem, eventos e o dock inferior intactos. */
 #top {
-  gap: 8px;
-  padding: 5px 7px;
-  border: 1px solid rgba(221,237,229,.75);
-  border-radius: 999px;
-  background: rgba(246,248,245,.70);
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
-  backdrop-filter: blur(18px) saturate(145%);
-  box-shadow: 0 5px 22px rgba(25,43,34,.10);
+  gap: 12px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 28px;
+  background: rgba(240,244,241,.24);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 8px 30px rgba(0,0,0,.16);
+  /* Em celulares estreitos, permite alcançar todos os botões sem encolher a área de toque. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  justify-content: flex-start;
 }
-#top #left, #top #right { gap: clamp(2px,1.3vw,10px); min-width: 0; }
+#top::-webkit-scrollbar { display: none; }
+#top #left, #top #right {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  min-width: max-content;
+}
+#top #right { margin-left: auto; }
+#top #left > button, #top #right > button {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 15px;
+  border: 1px solid rgba(255,255,255,.34);
+  background: rgba(255,255,255,.13);
+  color: #263B32;
+  box-shadow: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#top #left > button svg, #top #right > button svg {
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
 #top #textToolButton {
   position: static !important;
-  left: auto !important; top: auto !important;
+  left: auto !important;
+  top: auto !important;
   transform: none !important;
-  flex: 0 0 auto;
   z-index: auto;
+  font-size: 23px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-#top #textToolButton:active { transform: scale(.92) !important; }
-/* Aa permanece visível sem remover seu ID ou manipuladores existentes. */
 #top #textEditorButton, #top #textEditorButton[hidden] {
   display: inline-flex !important;
-  align-items: center; justify-content: center;
+  align-items: center;
+  justify-content: center;
   visibility: visible !important;
   opacity: 1 !important;
-  flex: 0 0 auto;
+}
+#top #textEditorButton .text-editor-icon {
+  font-size: 19px;
+  font-weight: 650;
+  color: #263B32;
+}
+#top #left > button:active, #top #right > button:active {
+  background: #A8D9C5;
+  transform: scale(.96);
 }
 #top #menuBtn { display: none !important; }
 @media (max-width: 430px) {
-  #top { left: max(5px,env(safe-area-inset-left)); right: max(5px,env(safe-area-inset-right)); gap: 3px; padding: 4px; }
-  #top #left, #top #right { gap: 2px; }
-  #top #left > button, #top #right > button { width: clamp(32px,8.7vw,38px); height: clamp(32px,8.7vw,38px); padding: 5px; }
+  #top {
+    left: max(5px,env(safe-area-inset-left));
+    right: max(5px,env(safe-area-inset-right));
+    gap: 9px;
+    padding: 6px 7px;
+  }
+  #top #left, #top #right { gap: 8px; }
+  #top #right { margin-left: 0; }
 }
-@media (prefers-reduced-motion: reduce) { #top button { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  #top button { transition: none !important; }
+}
 </style>
 
   <link
