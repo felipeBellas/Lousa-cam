@@ -188,6 +188,21 @@
     `<img class="pencil-art pencil-art-toggle" src="./assets/pencil/caneta.png" alt="" draggable="false">`;
 
 
+
+
+  /* ETAPA 2R — limite direto na imagem, independente do cache do CSS. */
+  const toggleArt = pencilToggle.querySelector("img.pencil-art");
+  if (toggleArt) {
+    toggleArt.style.cssText =
+      "display:block!important;position:static!important;" +
+      "width:40px!important;height:40px!important;" +
+      "min-width:0!important;min-height:0!important;" +
+      "max-width:40px!important;max-height:40px!important;" +
+      "object-fit:contain!important;object-position:center!important;" +
+      "transform:none!important;flex:0 0 40px!important;" +
+      "margin:0!important;padding:0!important;pointer-events:none!important;";
+  }
+
   pencilToggle.setAttribute(
     "aria-label",
     "Expandir Pencil"
@@ -607,6 +622,20 @@ let contextTool =
       button.innerHTML =
         tool.icon;
 
+
+
+       /* ETAPA 2R — imagens das ferramentas com tamanho protegido. */
+       const toolArt = button.querySelector("img.pencil-art");
+       if (toolArt) {
+         toolArt.style.cssText =
+           "display:block!important;position:static!important;" +
+           "width:38px!important;height:38px!important;" +
+           "min-width:0!important;min-height:0!important;" +
+           "max-width:38px!important;max-height:38px!important;" +
+           "object-fit:contain!important;object-position:center!important;" +
+           "transform:none!important;flex:0 0 38px!important;" +
+           "margin:0!important;padding:0!important;pointer-events:none!important;";
+       }
 
       button.setAttribute(
         "aria-label",
