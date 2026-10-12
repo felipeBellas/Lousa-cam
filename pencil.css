@@ -778,3 +778,13 @@
 
   outline-offset: 2px;
 }
+
+/* ETAPA 2O — somente apresentação das imagens do Pencil */
+#pencilToggle .pencil-art { width: 35px; height: 35px; }
+.pencil-tool .pencil-art { width: 34px; height: 34px; }
+#pencilFloat .pencil-art {
+  display: block; object-fit: contain; flex: none; pointer-events: none;
+  user-select: none; -webkit-user-drag: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.12));
+}
+/* Preserva o dimensionamento e a rolagem responsiva do Pencil estável. */
