@@ -3494,6 +3494,12 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 @keyframes lcCascadeOut { to { opacity:0;transform:translateY(22px); } }
 #lcCascadeMenu.lc-cascade-dark .lc-cascade-item,#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { background:rgba(246,248,245,.13);border-color:rgba(221,237,229,.3);color:#F6F8F5; }
 #lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { color:#F6F8F5; }
+/* ETAPA 2K — menu sempre acima da câmera, com rolagem integral no iPhone */
+#lcCascadeMenu { position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; height:100dvh!important; max-width:none!important; max-height:none!important; overflow:hidden!important; z-index:2147483000!important; }
+#lcCascadeMenu .lc-cascade-scroll { display:block!important; flex:1 1 auto!important; min-height:0!important; height:100%!important; max-height:100%!important; overflow-x:hidden!important; overflow-y:scroll!important; -webkit-overflow-scrolling:touch; padding-bottom:calc(65px + env(safe-area-inset-bottom))!important; }
+#lcCascadeMenu .lc-cascade-inner { display:block!important; margin:0 auto!important; padding-bottom:18px; }
+#lcCascadeMenu .lc-cascade-item { display:flex!important; visibility:visible!important; }
+#lcCascadeMenu .lc-cascade-section,#lcCascadeMenu .lc-cascade-footer { display:block!important; }
 @media(prefers-reduced-motion:reduce){#lcCascadeMenu .lc-cascade-animate,#lcCascadeMenu.lc-cascade-closing { animation:none!important; }}
 
 </style>
@@ -4526,7 +4532,7 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 <section id="lcCascadeMenu" role="dialog" aria-modal="true" aria-label="Menu do Lousa Cam" hidden>
   <div class="lc-cascade-scroll"><div class="lc-cascade-inner">
     <div class="lc-cascade-header">
-      <div><h2 id="lcCascadeTitle">Lousa Cam 3.0</h2><p class="lc-cascade-sub" id="lcCascadeSubtitle">Sua experiência, suas preferências.</p></div>
+      <div><h2 id="lcCascadeTitle">Lousa Cam</h2><p class="lc-cascade-sub" id="lcCascadeSubtitle">Sua experiência, suas preferências. · Role para ver todas as opções</p></div>
       <button type="button" class="lc-cascade-close" id="lcCascadeClose" aria-label="Fechar menu">×</button>
     </div>
     <div id="lcCascadeHome">
@@ -4542,7 +4548,7 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:345ms" data-lc-page="help"><span class="lc-cascade-symbol">?</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Ajuda</span></span><span class="lc-cascade-chevron">›</span></button>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:385ms" data-lc-page="privacy"><span class="lc-cascade-symbol">♢</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Política de privacidade</span></span><span class="lc-cascade-chevron">›</span></button>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:425ms" data-lc-page="about"><span class="lc-cascade-symbol">ⓘ</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Sobre o Lousa Cam</span></span><span class="lc-cascade-chevron">›</span></button>
-      <div class="lc-cascade-footer">Lousa Cam 3.0</div>
+      <div class="lc-cascade-footer">Lousa Cam</div>
     </div>
     <div id="lcCascadeDetail" hidden>
       <button type="button" class="lc-cascade-back" id="lcCascadeBack" aria-label="Voltar ao menu">←</button>
@@ -5127,6 +5133,8 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 (() => {
   'use strict';
   const root=document.getElementById('lcCascadeMenu');
+  // Move o painel para o body: evita cortes e conflitos de empilhamento da câmera.
+  if (root && root.parentElement !== document.body) document.body.appendChild(root);
   const home=document.getElementById('lcCascadeHome');
   const detail=document.getElementById('lcCascadeDetail');
   const body=document.getElementById('lcCascadeDetailBody');
@@ -5142,13 +5150,13 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
     plans:['Planos e assinatura','Planos previstos: Free, Pro e Pro+. Valores, benefícios, migração e pagamentos ainda não foram implementados. Nenhuma cobrança pode ser realizada por este menu.'],
     help:['Ajuda','Central de ajuda em preparação. Para voltar à câmera, toque no X no canto superior direito.'],
     privacy:['Política de privacidade','O documento oficial da política de privacidade será disponibilizado nesta área. Este texto não substitui uma política de privacidade publicada.'],
-    about:['Sobre o Lousa Cam','Lousa Cam 3.0 — câmera, escrita e ferramentas de criação em uma mesma experiência.']
+    about:['Sobre o Lousa Cam','Lousa Cam — câmera, escrita e ferramentas de criação em uma mesma experiência.']
   };
   let closing=false, returnFocus=null;
-  function showHome(){home.hidden=false;detail.hidden=true;title.textContent='Lousa Cam 3.0';subtitle.textContent='Sua experiência, suas preferências.';}
+  function showHome(){home.hidden=false;detail.hidden=true;title.textContent='Lousa Cam';subtitle.textContent='Sua experiência, suas preferências. · Role para ver todas as opções';}
   function showPage(key){
     const page=pages[key]; if(!page)return;
-    home.hidden=true;detail.hidden=false;title.textContent=page[0];subtitle.textContent='Menu · Lousa Cam 3.0';
+    home.hidden=true;detail.hidden=false;title.textContent=page[0];subtitle.textContent='Menu · Lousa Cam';
     body.replaceChildren();
     const p=document.createElement('p');p.textContent=page[1];body.appendChild(p);
     if(key==='theme'){
