@@ -753,16 +753,27 @@
   libraryLayer.appendChild(libraryFrame);
   document.body.appendChild(libraryLayer);
 
-  function closeEmbeddedLibrary() {
-    libraryLayer.style.display = "none";
-    // Descarta o editor apenas ao sair, liberando memória.
-    libraryFrame.removeAttribute("src");
-  }
+function closeEmbeddedLibrary() {
+  libraryLayer.style.display = "none";
 
-  function openEmbeddedLibrary() {
-    libraryLayer.style.display = "block";
-    libraryFrame.src = "./scenes.html";
-  }
+  // Restaura a barra inferior
+  dock.style.removeProperty("visibility");
+
+  // Descarta o editor ao sair
+  libraryFrame.removeAttribute("src");
+}
+
+function openEmbeddedLibrary() {
+  // Oculta a barra inferior durante a biblioteca
+  dock.style.setProperty(
+    "visibility",
+    "hidden",
+    "important"
+  );
+
+  libraryLayer.style.display = "block";
+  libraryFrame.src = "./scenes.html";
+}
 
   libraryFrame.addEventListener("load", () => {
     try {
