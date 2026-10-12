@@ -756,20 +756,19 @@
 function closeEmbeddedLibrary() {
   libraryLayer.style.display = "none";
 
-  // Restaura a barra inferior
+  // Restaura o dock conforme as regras originais de cada modo.
+  dock.style.removeProperty("display");
   dock.style.removeProperty("visibility");
 
-  // Descarta o editor ao sair
+  // Descarta o editor ao sair.
   libraryFrame.removeAttribute("src");
 }
 
 function openEmbeddedLibrary() {
-  // Oculta a barra inferior durante a biblioteca
-  dock.style.setProperty(
-    "visibility",
-    "hidden",
-    "important"
-  );
+  // Oculta o dock imediatamente, inclusive com Teleprompter ativo.
+  // display:none evita transições de visibilidade durante a abertura.
+  dock.style.setProperty("display", "none", "important");
+  dock.style.setProperty("visibility", "hidden", "important");
 
   libraryLayer.style.display = "block";
   libraryFrame.src = "./scenes.html";
