@@ -3459,6 +3459,43 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 #galleryLayer .gallery-video-options {background:#fff;color:#263C32;border:1px solid #D7E4DA;box-shadow:0 10px 30px rgba(30,70,45,.12)}
 #galleryLayer .gallery-video-options button {color:#263C32;background:transparent;}
 #galleryLayer .gallery-video-options .gallery-delete-video {color:#A53A43;}
+
+
+/* LOUSA CAM 3.0 — ETAPA 2J: MENU LIQUID GLASS CASCATA */
+#lcCascadeMenu[hidden] { display:none!important; }
+#lcCascadeMenu { position:fixed; inset:0; z-index:200000; display:flex; flex-direction:column; color:#263B32; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; isolation:isolate; }
+#lcCascadeMenu::before { content:""; position:absolute; inset:0; z-index:-1; background:rgba(246,248,245,.76); -webkit-backdrop-filter:blur(30px) saturate(145%); backdrop-filter:blur(30px) saturate(145%); }
+#lcCascadeMenu.lc-cascade-dark { color:#F6F8F5; }
+#lcCascadeMenu.lc-cascade-dark::before { background:rgba(27,34,33,.82); }
+#lcCascadeMenu .lc-cascade-scroll { overflow-y:auto; overscroll-behavior:contain; flex:1; padding:calc(22px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(34px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); -webkit-overflow-scrolling:touch; }
+#lcCascadeMenu .lc-cascade-inner { width:min(100%,560px); margin:auto; }
+#lcCascadeMenu .lc-cascade-header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:23px; }
+#lcCascadeMenu .lc-cascade-header h2 { margin:0; font-size:clamp(24px,5vw,31px); letter-spacing:-.7px; color:inherit; }
+#lcCascadeMenu .lc-cascade-sub { font-size:13px; opacity:.72; margin:5px 0 0; }
+#lcCascadeMenu .lc-cascade-close,#lcCascadeMenu .lc-cascade-back { display:grid;place-items:center;flex-shrink:0; width:43px;height:43px;border:1px solid rgba(168,217,197,.7);border-radius:50%;background:rgba(255,255,255,.7);color:#263B32;font-size:23px;cursor:pointer; }
+#lcCascadeMenu .lc-cascade-section { margin:22px 3px 9px; font-size:11px;letter-spacing:1.2px;font-weight:750;opacity:.7; }
+#lcCascadeMenu .lc-cascade-item { width:100%; min-height:67px; margin:0 0 9px; display:flex;align-items:center;text-align:left;gap:13px; padding:12px 13px; border:1px solid rgba(221,237,229,.92);border-radius:19px;background:rgba(255,255,255,.67);box-shadow:0 5px 20px rgba(30,58,47,.035);color:#263B32;cursor:pointer;transition:background .2s,transform .2s; }
+#lcCascadeMenu .lc-cascade-item:active { transform:scale(.985); }
+#lcCascadeMenu .lc-cascade-item:hover,#lcCascadeMenu .lc-cascade-item:focus-visible { background:rgba(221,237,229,.93); }
+#lcCascadeMenu .lc-cascade-symbol { display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:14px;background:#DDEDE5;color:#263B32;font-size:21px; }
+#lcCascadeMenu .lc-cascade-copy { flex:1;min-width:0; }
+#lcCascadeMenu .lc-cascade-name { display:block;font-size:14px;font-weight:700; }
+#lcCascadeMenu .lc-cascade-description { display:block;font-size:12px;opacity:.72;margin-top:3px;line-height:1.4; }
+#lcCascadeMenu .lc-cascade-chevron { font-size:22px;opacity:.5; }
+#lcCascadeMenu .lc-cascade-chip { display:inline-block;background:#DDEDE5;color:#263B32;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;margin-top:10px; }
+#lcCascadeMenu .lc-cascade-detail { background:rgba(255,255,255,.7);border:1px solid #DDEDE5;border-radius:22px;padding:20px;line-height:1.6;font-size:14px;color:#263B32; }
+#lcCascadeMenu .lc-cascade-detail p { margin:0 0 13px; }
+#lcCascadeMenu .lc-cascade-detail button { border:1px solid #A8D9C5;background:#DDEDE5;border-radius:13px;color:#263B32;padding:11px 15px;font-weight:700;cursor:pointer;margin:4px; }
+#lcCascadeMenu .lc-cascade-detail button[aria-pressed="true"] { background:#A8D9C5; }
+#lcCascadeMenu .lc-cascade-footer { text-align:center;font-size:11px;opacity:.6;margin-top:23px; }
+#lcCascadeMenu .lc-cascade-animate { animation:lcCascadeIn .34s cubic-bezier(.18,.75,.28,1) both; animation-delay:var(--lc-delay,0ms); }
+#lcCascadeMenu.lc-cascade-closing { animation:lcCascadeOut .19s ease-in both; }
+@keyframes lcCascadeIn { from { opacity:0;transform:translateY(19px); } to { opacity:1;transform:translateY(0); } }
+@keyframes lcCascadeOut { to { opacity:0;transform:translateY(22px); } }
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-item,#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { background:rgba(246,248,245,.13);border-color:rgba(221,237,229,.3);color:#F6F8F5; }
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { color:#F6F8F5; }
+@media(prefers-reduced-motion:reduce){#lcCascadeMenu .lc-cascade-animate,#lcCascadeMenu.lc-cascade-closing { animation:none!important; }}
+
 </style>
 
 
@@ -4484,6 +4521,36 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
 
 </section>
 
+
+<!-- ETAPA 2J — MENU EM TELA COMPLETA, INDEPENDENTE DA CÂMERA -->
+<section id="lcCascadeMenu" role="dialog" aria-modal="true" aria-label="Menu do Lousa Cam" hidden>
+  <div class="lc-cascade-scroll"><div class="lc-cascade-inner">
+    <div class="lc-cascade-header">
+      <div><h2 id="lcCascadeTitle">Lousa Cam 3.0</h2><p class="lc-cascade-sub" id="lcCascadeSubtitle">Sua experiência, suas preferências.</p></div>
+      <button type="button" class="lc-cascade-close" id="lcCascadeClose" aria-label="Fechar menu">×</button>
+    </div>
+    <div id="lcCascadeHome">
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:35ms" data-lc-page="account"><span class="lc-cascade-symbol">♙</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Sua conta / Login</span><span class="lc-cascade-description">Entrar, cadastrar-se ou gerenciar conta</span><span class="lc-cascade-chip">Plano Free · não verificado</span></span><span class="lc-cascade-chevron">›</span></button>
+      <div class="lc-cascade-section lc-cascade-animate" style="--lc-delay:75ms">PERSONALIZAÇÃO</div>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:105ms" data-lc-page="language"><span class="lc-cascade-symbol">🌐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Idioma</span><span class="lc-cascade-description">Português, English, Español</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:145ms" data-lc-page="theme"><span class="lc-cascade-symbol">◐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Tema</span><span class="lc-cascade-description">Claro / Escuro / Sistema</span></span><span class="lc-cascade-chevron">›</span></button>
+      <div class="lc-cascade-section lc-cascade-animate" style="--lc-delay:175ms">RECURSOS E PLANOS</div>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:205ms" data-lc-page="settings"><span class="lc-cascade-symbol">⚙</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Configurações</span><span class="lc-cascade-description">Câmera, gravação e preferências</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:245ms" data-lc-page="beta"><span class="lc-cascade-symbol">⚒</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Ferramentas (Beta)</span><span class="lc-cascade-description">Recursos experimentais</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:285ms" data-lc-page="plans"><span class="lc-cascade-symbol">✧</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Planos e assinatura</span><span class="lc-cascade-description">Free · Pro · Pro+</span></span><span class="lc-cascade-chevron">›</span></button>
+      <div class="lc-cascade-section lc-cascade-animate" style="--lc-delay:315ms">INFORMAÇÕES E SUPORTE</div>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:345ms" data-lc-page="help"><span class="lc-cascade-symbol">?</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Ajuda</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:385ms" data-lc-page="privacy"><span class="lc-cascade-symbol">♢</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Política de privacidade</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:425ms" data-lc-page="about"><span class="lc-cascade-symbol">ⓘ</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Sobre o Lousa Cam</span></span><span class="lc-cascade-chevron">›</span></button>
+      <div class="lc-cascade-footer">Lousa Cam 3.0</div>
+    </div>
+    <div id="lcCascadeDetail" hidden>
+      <button type="button" class="lc-cascade-back" id="lcCascadeBack" aria-label="Voltar ao menu">←</button>
+      <div class="lc-cascade-detail" id="lcCascadeDetailBody" style="margin-top:16px"></div>
+    </div>
+  </div></div>
+</section>
+
 <!-- =================================================
      NAVEGAÇÃO PRINCIPAL
      ================================================= -->
@@ -4980,24 +5047,18 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   if (startOverlay) new MutationObserver(syncRecordingAccess).observe(startOverlay, { attributes: true, attributeFilter: ['class','style'] });
   // Dock fora do contêiner da câmera para não ficar encoberto pelo overlay.
   if (dock && dock.parentElement !== document.body) document.body.appendChild(dock);
-  // Impede que os listeners globais de fechamento recebam o toque no próprio Menu.
-  // O evento click continua sendo processado normalmente pelo botão.
+  // Menu Cascata: intercepta somente o botão Menu, sem tocar nos demais comandos.
   if (menu) {
-    ['pointerdown', 'touchstart', 'mousedown'].forEach(type => {
+    ['pointerdown','touchstart','mousedown'].forEach(type => {
       menu.addEventListener(type, event => {
         if (cameraIsActive()) event.stopPropagation();
-      }, { passive: true });
+      }, {passive:true});
     });
     menu.addEventListener('click', event => {
       if (!cameraIsActive()) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      const panel = document.getElementById('menuPanel');
-      if (!panel) return;
-      const willOpen = !panel.classList.contains('open');
-      document.querySelectorAll('#menuPanel, #biologyPanel').forEach(p => p.classList.remove('open'));
-      if (willOpen) panel.classList.add('open');
-      menu.setAttribute('aria-expanded', String(willOpen));
+      window.LousaCascadeMenu?.toggle();
     });
   }
 
@@ -5060,5 +5121,59 @@ body.lc-scenes-library-open #modeDock { display: none !important; }
   });
 })();
 </script>
+
+<script>
+/* ETAPA 2J — Apenas interface do Menu; sem login, cobrança ou tradução simulados. */
+(() => {
+  'use strict';
+  const root=document.getElementById('lcCascadeMenu');
+  const home=document.getElementById('lcCascadeHome');
+  const detail=document.getElementById('lcCascadeDetail');
+  const body=document.getElementById('lcCascadeDetailBody');
+  const title=document.getElementById('lcCascadeTitle');
+  const subtitle=document.getElementById('lcCascadeSubtitle');
+  const trigger=document.getElementById('glassMenuButton');
+  const pages={
+    account:['Sua conta / Login','O login e o cadastro serão integrados em uma etapa futura. Ainda não há uma conta autenticada ou plano verificado nesta interface.'],
+    language:['Idioma','A seleção de idioma e a tradução completa do aplicativo estão em preparação. Idioma atual da interface: Português (Brasil).'],
+    theme:['Tema','Prévia do tema deste menu. A aplicação do tema a todas as telas será integrada posteriormente.'],
+    settings:['Configurações','As configurações atuais da câmera continuam disponíveis nos controles existentes do Lousa Cam. A central unificada está em preparação.'],
+    beta:['Ferramentas (Beta)','Área reservada para ferramentas experimentais. Nenhum recurso experimental será ativado sem sua escolha.'],
+    plans:['Planos e assinatura','Planos previstos: Free, Pro e Pro+. Valores, benefícios, migração e pagamentos ainda não foram implementados. Nenhuma cobrança pode ser realizada por este menu.'],
+    help:['Ajuda','Central de ajuda em preparação. Para voltar à câmera, toque no X no canto superior direito.'],
+    privacy:['Política de privacidade','O documento oficial da política de privacidade será disponibilizado nesta área. Este texto não substitui uma política de privacidade publicada.'],
+    about:['Sobre o Lousa Cam','Lousa Cam 3.0 — câmera, escrita e ferramentas de criação em uma mesma experiência.']
+  };
+  let closing=false, returnFocus=null;
+  function showHome(){home.hidden=false;detail.hidden=true;title.textContent='Lousa Cam 3.0';subtitle.textContent='Sua experiência, suas preferências.';}
+  function showPage(key){
+    const page=pages[key]; if(!page)return;
+    home.hidden=true;detail.hidden=false;title.textContent=page[0];subtitle.textContent='Menu · Lousa Cam 3.0';
+    body.replaceChildren();
+    const p=document.createElement('p');p.textContent=page[1];body.appendChild(p);
+    if(key==='theme'){
+      const saved=root.classList.contains('lc-cascade-dark')?'dark':'light';
+      [['light','Claro'],['dark','Escuro'],['system','Sistema']].forEach(([value,label])=>{
+        const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.setAttribute('aria-pressed',String(value===saved));
+        btn.addEventListener('click',()=>{
+          const dark=value==='dark'||(value==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+          root.classList.toggle('lc-cascade-dark',dark);
+          body.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));
+        });body.appendChild(btn);
+      });
+    }
+    root.querySelector('.lc-cascade-scroll').scrollTop=0;
+    document.getElementById('lcCascadeBack').focus();
+  }
+  function open(){if(!root.hidden)return;closing=false;returnFocus=document.activeElement;showHome();root.classList.remove('lc-cascade-closing');root.hidden=false;trigger?.setAttribute('aria-expanded','true');document.getElementById('menuPanel')?.classList.remove('open');document.getElementById('lcCascadeClose').focus();}
+  function close(){if(root.hidden||closing)return;closing=true;root.classList.add('lc-cascade-closing');trigger?.setAttribute('aria-expanded','false');setTimeout(()=>{root.hidden=true;root.classList.remove('lc-cascade-closing');closing=false;(returnFocus?.isConnected?returnFocus:trigger)?.focus();},190);}
+  window.LousaCascadeMenu={open,close,toggle:()=>root.hidden?open():close()};
+  root.querySelectorAll('[data-lc-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.lcPage)));
+  document.getElementById('lcCascadeClose').addEventListener('click',close);
+  document.getElementById('lcCascadeBack').addEventListener('click',showHome);
+  document.addEventListener('keydown',event=>{if(root.hidden)return;if(event.key==='Escape'){event.preventDefault();detail.hidden?close():showHome();}if(event.key==='Tab'){const focusables=Array.from(root.querySelectorAll('button')).filter(b=>b.getClientRects().length);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}});
+})();
+</script>
+
 </body>
 </html>
