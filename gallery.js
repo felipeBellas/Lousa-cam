@@ -88,10 +88,10 @@ function galleryConfirm(message) {
       "24px";
 
     panel.style.background =
-      "rgba(28, 28, 30, 0.88)";
+      "rgba(255, 255, 255, 0.97)";
 
     panel.style.border =
-      "1px solid rgba(255, 255, 255, 0.18)";
+      "1px solid #D7E4DA";
 
     panel.style.boxShadow =
       "0 18px 50px rgba(0, 0, 0, 0.48)";
@@ -129,7 +129,7 @@ function galleryConfirm(message) {
       "0 0 8px";
 
     title.style.color =
-      "#ffffff";
+      "#263C32";
 
     title.style.fontSize =
       "20px";
@@ -158,7 +158,7 @@ function galleryConfirm(message) {
       "0 0 22px";
 
     text.style.color =
-      "rgba(255, 255, 255, 0.72)";
+      "rgba(38, 60, 50, 0.72)";
 
     text.style.fontSize =
       "14px";
@@ -216,13 +216,13 @@ function galleryConfirm(message) {
       "14px";
 
     cancelButton.style.border =
-      "1px solid rgba(255, 255, 255, 0.16)";
+      "1px solid #D7E4DA";
 
     cancelButton.style.background =
-      "rgba(255, 255, 255, 0.08)";
+      "rgba(221, 237, 229, 0.85)";
 
     cancelButton.style.color =
-      "#ffffff";
+      "#263C32";
 
     cancelButton.style.fontSize =
       "15px";
@@ -278,7 +278,7 @@ function galleryConfirm(message) {
       "rgba(255, 59, 48, 0.90)";
 
     deleteButton.style.color =
-      "#ffffff";
+      "#263C32";
 
     deleteButton.style.fontSize =
       "15px";
