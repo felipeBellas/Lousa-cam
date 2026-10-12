@@ -1,4 +1,5 @@
 /* LOUSA CAM — ETAPA 3C | AJUSTE FINO — caneta recortada do logo.png */
+
 (function () {
   'use strict';
   function initSplash() {
