@@ -4,7 +4,7 @@
 
    SCENES.CSS — ETAPA 3
 
-
+ 
 
    Interface independente do aplicativo principal.
 
@@ -2757,8 +2757,8 @@ textarea {
   --scenes-border:#D7E4DA;
   --scenes-text:#263C32;
   --scenes-muted:#65796D;
-  --scenes-primary:#337E61;
-  --scenes-primary-hover:#276B50;
+  --scenes-primary:#A8D9C5;
+  --scenes-primary-hover:#DDEDE5;
   --scenes-danger:#B4454D;
   --scenes-radius:18px;
 }
@@ -2770,25 +2770,67 @@ html,body,.scenes-app {background:#F6F8F5;color:var(--scenes-text)}
 .scenes-stage-outer {background:radial-gradient(circle at center,#F7FAF7,#E8F0EA)}
 .scenes-button,.scenes-icon-button {background:#F0F6F1;color:#263C32;border-color:#D7E4DA;border-radius:12px;box-shadow:none}
 .scenes-button:hover:not(:disabled),.scenes-icon-button:hover {background:#E5F1E9;border-color:#B3D1BD}
-.scenes-button-primary {background:#337E61;border-color:#337E61;color:white}
-.scenes-button-primary:hover:not(:disabled) {background:#276B50;border-color:#276B50}
+.scenes-button-primary {background:#A8D9C5;border-color:#A8D9C5;color:white}
+.scenes-button-primary:hover:not(:disabled) {background:#DDEDE5;border-color:#DDEDE5}
 .scenes-button-danger {background:#FFF1F0;color:#A53A43;border-color:#F0C5C5}
 .scenes-button-danger:hover:not(:disabled) {background:#FFE6E5}
 .scenes-tool-button {color:#263C32}
-.scenes-tool-button.active {background:#DDEDE5;color:#245B43;border-color:#8EBBA1}
+.scenes-tool-button.active {background:#DDEDE5;color:#263C32;border-color:#A8D9C5}
 .scenes-tool-button:hover {background:#E5F1E9}
 .scenes-presentation-card,.scenes-slide-item,.scenes-empty-state,.scenes-confirm-dialog {background:#fff;border-color:#D7E4DA;box-shadow:0 8px 25px rgba(36,77,53,.07)}
-.scenes-slide-item.active {border-color:#337E61;box-shadow:0 0 0 2px rgba(51,126,97,.18)}
+.scenes-slide-item.active {border-color:#A8D9C5;box-shadow:0 0 0 2px rgba(51,126,97,.18)}
 .scenes-presentation-thumbnail,.scenes-slide-thumbnail {background-color:#E9F0EB;background-image:linear-gradient(45deg,#DDE8DF 25%,transparent 25%),linear-gradient(-45deg,#DDE8DF 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#DDE8DF 75%),linear-gradient(-45deg,transparent 75%,#DDE8DF 75%)}
 .scenes-presentation-thumbnail .scenes-thumbnail-placeholder {color:#769D84}
 input:not([type=color]),select,textarea {background:#fff;color:#263C32;border-color:#D7E4DA}
-input:focus,select:focus,textarea:focus {border-color:#337E61;box-shadow:0 0 0 3px rgba(51,126,97,.13)}
-.scenes-panel-heading span {background:#DDEDE5;color:#337E61}
+input:focus,select:focus,textarea:focus {border-color:#A8D9C5;box-shadow:0 0 0 3px rgba(51,126,97,.13)}
+.scenes-panel-heading span {background:#DDEDE5;color:#A8D9C5}
 .scenes-preview-overlay {background:rgba(246,248,245,.97);color:#263C32}
 .scenes-preview-header,.scenes-preview-controls {background:rgba(255,255,255,.93);color:#263C32;border-color:#D7E4DA}
 .scenes-confirm-overlay {background:rgba(31,51,40,.28)}
 .scenes-confirm-dialog {color:#263C32}
 .scenes-confirm-dialog h2 {color:#263C32}
 .scenes-confirm-dialog p {color:#65796D}
-.scenes-toast {background:#337E61;color:#fff}
+.scenes-toast {background:#A8D9C5;color:#fff}
 /* A tela de edição da cena e as cores escolhidas pelo usuário permanecem intactas. */
+
+
+/* =========================================================
+   ETAPA 2I — MENTA COMO TOM MAIS ESCURO DE DESTAQUE
+   Mantém contraste com texto grafite, sem verde escuro.
+   ========================================================= */
+:root {
+  --scenes-primary: #A8D9C5;
+  --scenes-primary-hover: #DDEDE5;
+}
+.scenes-button-primary,
+.scenes-button-primary:disabled {
+  background: #A8D9C5;
+  border-color: #A8D9C5;
+  color: #263C32;
+}
+.scenes-button-primary:hover:not(:disabled) {
+  background: #DDEDE5;
+  border-color: #A8D9C5;
+  color: #263C32;
+}
+.scenes-tool-button.active {
+  background: #DDEDE5;
+  border-color: #A8D9C5;
+  color: #263C32;
+}
+.scenes-slide-item.active {
+  border-color: #A8D9C5;
+  box-shadow: 0 0 0 2px rgba(168,217,197,.32);
+}
+.scenes-panel-heading span {
+  background: #DDEDE5;
+  color: #263C32;
+}
+.scenes-toast {
+  background: #A8D9C5;
+  color: #263C32;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #A8D9C5;
+  box-shadow: 0 0 0 3px rgba(168,217,197,.3);
+}
