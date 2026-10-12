@@ -1928,6 +1928,17 @@
 
         element.color || "#ffffff";
 
+      content.style.fontFamily = element.fontFamily || "Arial, sans-serif";
+      content.style.fontWeight = element.fontWeight || "normal";
+      content.style.fontStyle = element.fontStyle || "normal";
+      content.style.textAlign = element.align || "left";
+      content.style.lineHeight = String(element.lineHeight || 1.15);
+      content.style.letterSpacing = `${(element.letterSpacing || 0) * stageWidth / getBaseWidth()}px`;
+      content.style.textTransform = element.textTransform || "none";
+      content.style.textDecoration = element.textDecoration || "none";
+      content.style.padding = `${(element.padding || 0) * stageWidth / getBaseWidth()}px`;
+
+
  
 
       content.style.fontSize =
@@ -4146,6 +4157,34 @@
   }
 
  
+
+  /* =====================================================
+     CENAS PRO — API LOCAL DO EDITOR
+     Não expõe câmera, gravação nem objetos da lousa.
+     ===================================================== */
+  window.ScenesProBridge = Object.freeze({
+    getSelected() {
+      const element = selectedElement();
+      return element ? { ...element } : null;
+    },
+    setProperties(properties) {
+      const element = selectedElement();
+      if (!element || element.type !== "text") return false;
+      for (const [key, value] of Object.entries(properties)) {
+        if (["fontFamily", "fontWeight", "fontStyle", "align", "lineHeight", "letterSpacing", "textTransform", "textDecoration", "fontSize", "color", "opacity", "rotation", "padding"].includes(key)) {
+          element[key] = value;
+        }
+      }
+      markDirty();
+      renderStage();
+      renderProperties();
+      document.dispatchEvent(new Event("scenespro:change"));
+      return true;
+    },
+    selectChanged() {
+      document.dispatchEvent(new Event("scenespro:change"));
+    }
+  });
 
   /* =====================================================
 
