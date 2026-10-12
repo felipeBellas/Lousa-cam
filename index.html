@@ -3539,8 +3539,29 @@ body.teleprompter-active #modeDock {
 }
 
 /* Mantem os controles de leitura acima do botao Gravar. */
-body.teleprompter-active .teleprompter-layer .teleprompter-controls {
-  bottom: calc(env(safe-area-inset-bottom) + 108px) !important;
+
+body.teleprompter-active
+.teleprompter-layer .teleprompter-controls {
+
+  /* Mantém a posição já aprovada */
+  bottom: calc(
+    env(safe-area-inset-bottom) + 108px
+  ) !important;
+
+  /* Fundo Liquid Glass com tonalidade Neve */
+  background: rgba(245, 248, 250, 0.16) !important;
+
+  /* Borda translúcida */
+  border: 1px solid rgba(255, 255, 255, 0.38) !important;
+
+  /* Efeito de vidro */
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+
+  /* Reflexo e sombra */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 8px 28px rgba(0, 0, 0, 0.18) !important;
 }
     
 </style>
