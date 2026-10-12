@@ -185,7 +185,7 @@
 
 
   pencilToggle.innerHTML =
-    icons.toggle;
+    `<img class="pencil-art pencil-art-toggle" src="./assets/pencil/caneta.png" alt="" draggable="false">`;
 
 
   pencilToggle.setAttribute(
@@ -302,37 +302,37 @@
     {
       id: "pen",
       label: "Caneta",
-      icon: icons.pen
+      icon: `<img class="pencil-art" src="./assets/pencil/caneta.png" alt="" draggable="false">`
     },
 
     {
       id: "brush",
       label: "Pincel",
-      icon: icons.brush
+      icon: `<img class="pencil-art" src="./assets/pencil/pincel.png" alt="" draggable="false">`
     },
 
     {
       id: "pencil",
       label: "Lápis",
-      icon: icons.pencil
+      icon: `<img class="pencil-art" src="./assets/pencil/lapis.png" alt="" draggable="false">`
     },
 
     {
       id: "marker",
       label: "Marcador",
-      icon: icons.marker
+      icon: `<img class="pencil-art" src="./assets/pencil/marcador.png" alt="" draggable="false">`
     },
 
     {
       id: "eraser",
       label: "Borracha",
-      icon: icons.eraser
+      icon: `<img class="pencil-art" src="./assets/pencil/borracha.png" alt="" draggable="false">`
     },
 
     {
       id: "ruler",
       label: "Régua",
-      icon: icons.ruler
+      icon: `<img class="pencil-art" src="./assets/pencil/regua.png" alt="" draggable="false">`
     },
 
     {
