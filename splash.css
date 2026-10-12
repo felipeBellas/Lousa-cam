@@ -1,4 +1,5 @@
 /* LOUSA CAM — ETAPA 3C | AJUSTE FINO — mantém o PNG oficial */
+
 #lcSplash{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;background:#f6f8f5;overflow:hidden;opacity:1;transition:opacity .45s ease;isolation:isolate;cursor:pointer}
 #lcSplash.lc-splash-out{opacity:0;pointer-events:none}
 #lcSplash .lc-splash-center{width:min(82vw,390px);display:flex;align-items:center;justify-content:center}
