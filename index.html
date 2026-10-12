@@ -3423,6 +3423,12 @@ body:has(#startOverlay:not(.hidden)) #modeDock button {
   cursor: default;
 }
 
+
+/* ETAPA 2F — Menu superior reservado para reestruturação futura. */
+#menuBtn { display: none !important; }
+/* Biblioteca de Cenas aberta: dock da câmera oculto. */
+body.lc-scenes-library-open #modeDock { display: none !important; }
+
 </style>
 
   <link
@@ -4945,10 +4951,58 @@ body:has(#startOverlay:not(.hidden)) #modeDock button {
   if (startOverlay) new MutationObserver(syncRecordingAccess).observe(startOverlay, { attributes: true, attributeFilter: ['class','style'] });
   // Dock fora do contêiner da câmera para não ficar encoberto pelo overlay.
   if (dock && dock.parentElement !== document.body) document.body.appendChild(dock);
-  if (menu) menu.addEventListener('click', () => {
+  // O Menu inferior controla o painel diretamente, sem simular toque no Menu superior.
+  if (menu) menu.addEventListener('click', event => {
     if (!cameraIsActive()) return;
-    document.getElementById('menuBtn')?.click();
+    event.stopPropagation();
+    const panel = document.getElementById('menuPanel');
+    if (!panel) return;
+    const willOpen = !panel.classList.contains('open');
+    document.querySelectorAll('#menuPanel, #biologyPanel').forEach(p => p.classList.remove('open'));
+    if (willOpen) panel.classList.add('open');
+    menu.setAttribute('aria-expanded', String(willOpen));
   });
+
+  // Fecha o menu quando o usuário toca fora, sem interferir em outros controles.
+  document.addEventListener('click', event => {
+    const panel = document.getElementById('menuPanel');
+    if (!panel || !panel.classList.contains('open')) return;
+    if (panel.contains(event.target) || menu?.contains(event.target)) return;
+    panel.classList.remove('open');
+    menu?.setAttribute('aria-expanded', 'false');
+  });
+
+  // A biblioteca é criada dinamicamente por scenes-camera.js (iframe scenes.html).
+  // Identificamos apenas o iframe da biblioteca e seus ancestrais visíveis.
+  const scenesLibraryVisible = () => {
+    const frames = Array.from(document.querySelectorAll('iframe'))
+      .filter(frame => /(?:^|\/)scenes\.html(?:[?#]|$)/i.test(frame.getAttribute('src') || ''));
+    return frames.some(frame => {
+      let node = frame;
+      while (node && node !== document.documentElement) {
+        if (node.hidden || node.getAttribute('aria-hidden') === 'true') return false;
+        const style = getComputedStyle(node);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        node = node.parentElement;
+      }
+      const rect = frame.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+  };
+  let lastScenesState = null;
+  const syncScenesDock = () => {
+    const open = scenesLibraryVisible();
+    if (open !== lastScenesState) {
+      document.body.classList.toggle('lc-scenes-library-open', open);
+      lastScenesState = open;
+    }
+  };
+  const scenesObserver = new MutationObserver(syncScenesDock);
+  scenesObserver.observe(document.body, {
+    childList: true, subtree: true, attributes: true,
+    attributeFilter: ['style', 'class', 'hidden', 'aria-hidden', 'src']
+  });
+  syncScenesDock();
   if (scenes) scenes.addEventListener('click', () => {
     if (!cameraIsActive()) return;
     // Reaproveita o botão Cenas criado pelo módulo existente, se presente.
