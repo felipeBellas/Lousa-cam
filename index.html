@@ -3563,6 +3563,72 @@ body.teleprompter-active
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
     0 8px 28px rgba(0, 0, 0, 0.18) !important;
 }
+    /* ==========================================
+   LOUSA CAM — TELEPROMPTER
+   LIQUID GLASS + NEVE
+   ========================================== */
+
+/* Botões Voltar e Play */
+.teleprompter-layer .teleprompter-controls > button {
+  background: rgba(245, 248, 250, 0.18) !important;
+  border: 1px solid rgba(255,255,255,0.38) !important;
+  border-radius: 14px !important;
+  color: #ffffff !important;
+
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.24),
+    0 3px 12px rgba(0,0,0,0.16) !important;
+}
+
+/* Botões Pronto, Editar e Fechar */
+.teleprompter-layer #teleprompterEdit,
+.teleprompter-layer #teleprompterClose {
+  background: rgba(245,248,250,0.20) !important;
+  border: 1px solid rgba(255,255,255,0.42) !important;
+  color: #ffffff !important;
+
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    0 4px 14px rgba(0,0,0,0.18) !important;
+}
+
+/* Pronto / Editar — formato cápsula */
+.teleprompter-layer #teleprompterEdit {
+  border-radius: 20px !important;
+}
+
+/* Fechar — formato circular */
+.teleprompter-layer #teleprompterClose {
+  border-radius: 50% !important;
+}
+
+/* Área de escrita — Neve */
+.teleprompter-layer #teleprompterEditor {
+  background: #F6F8F5 !important;
+  color: #24332D !important;
+
+  border: 1px solid rgba(80,110,95,0.28) !important;
+  border-radius: 18px !important;
+
+  box-shadow:
+    0 8px 28px rgba(0,0,0,0.18) !important;
+
+  caret-color: #26785B !important;
+}
+
+/* Texto de orientação no editor */
+.teleprompter-layer #teleprompterEditor::placeholder {
+  color: #78867E !important;
+  opacity: 1;
+}
+
+
     
 </style>
 
