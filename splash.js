@@ -1,12 +1,10 @@
-/* LOUSA CAM — ETAPA 3C REVISADA | Animacao isolada da camera e do Pencil */
+/* LOUSA CAM — ETAPA 3C | AJUSTE FINO — caneta recortada do logo.png */
 (function () {
   'use strict';
   function initSplash() {
     var splash = document.getElementById('lcSplash');
     if (!splash) return;
-    var finished = false;
-    var raf = 0;
-    var timer = 0;
+    var finished = false, raf = 0, timer = 0;
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var pen = splash.querySelector('#lcMovingPen');
     var paths = [
@@ -45,6 +43,8 @@
           var t = Math.min(1, Math.max(0, (elapsed - active.from) / (active.to - active.from)));
           var length = active.path.getTotalLength();
           var point = active.path.getPointAtLength(t * length);
+          // Mantém a ponta da caneta oficial alinhada ao percurso.
+          // Não giramos a imagem recortada: preserva a perspectiva Liquid Glass original.
           pen.setAttribute('transform', 'translate(' + point.x.toFixed(2) + ' ' + point.y.toFixed(2) + ')');
           pen.style.opacity = '1';
         } else {
@@ -58,7 +58,6 @@
     timer = window.setTimeout(finish, reduced ? 350 : 4700);
     splash.addEventListener('click', finish, { once: true });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSplash, { once: true });
-  } else initSplash();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSplash, { once: true });
+  else initSplash();
 }());
