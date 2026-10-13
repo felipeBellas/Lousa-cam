@@ -2834,3 +2834,37 @@ input:focus, select:focus, textarea:focus {
   border-color: #A8D9C5;
   box-shadow: 0 0 0 3px rgba(168,217,197,.3);
 }
+
+/* =====================================================
+   TEMA GLOBAL INTEGRADO — LOUSA CAM
+   ===================================================== */
+/* LOUSA CAM — TEMA GLOBAL / CENAS
+   Mantém a paleta original menta (#A8D9C5), grafite e branco.
+   Não altera superfícies, fundos ou elementos das cenas salvas. */
+html[data-lc-theme="dark"] {
+ --scenes-bg:#101815;--scenes-panel:#1C2722;--scenes-panel-alt:#28352F;
+ --scenes-panel-hover:#34473D;--scenes-border:#52675B;
+ --scenes-text:#F6F8F5;--scenes-muted:#B8C8BD;
+ --scenes-primary:#A8D9C5;--scenes-primary-hover:#DDEDE5;
+ color-scheme:dark;
+}
+html[data-lc-theme="dark"],html[data-lc-theme="dark"] body {background:#101815;color:#F6F8F5;}
+html[data-lc-theme="dark"] .scenes-header,html[data-lc-theme="dark"] .scenes-editor-topbar,
+html[data-lc-theme="dark"] .scenes-sidebar,html[data-lc-theme="dark"] .scenes-properties,
+html[data-lc-theme="dark"] .scenes-presentation-card,html[data-lc-theme="dark"] .scenes-slide-item,
+html[data-lc-theme="dark"] .scenes-empty-state,html[data-lc-theme="dark"] .scenes-confirm-dialog,
+html[data-lc-theme="dark"] .scenes-preview-header,html[data-lc-theme="dark"] .scenes-preview-controls {background:#1C2722;color:#F6F8F5;border-color:#52675B;}
+html[data-lc-theme="dark"] .scenes-tools,html[data-lc-theme="dark"] .scenes-stage-footer {background:#28352F;color:#F6F8F5;border-color:#52675B;}
+html[data-lc-theme="dark"] .scenes-button:not(.scenes-button-primary):not(.scenes-button-danger),
+html[data-lc-theme="dark"] .scenes-icon-button {background:#28352F;color:#F6F8F5;border-color:#52675B;}
+html[data-lc-theme="dark"] .scenes-button-primary {background:#A8D9C5;color:#263C32;border-color:#A8D9C5;}
+html[data-lc-theme="dark"] .scenes-tool-button {color:#F6F8F5;}
+html[data-lc-theme="dark"] .scenes-tool-button.active {background:#34473D;color:#DDEDE5;border-color:#A8D9C5;}
+html[data-lc-theme="dark"] input:not([type="color"]),html[data-lc-theme="dark"] select,html[data-lc-theme="dark"] textarea {background:#28352F;color:#F6F8F5;border-color:#52675B;}
+html[data-lc-theme="dark"] .scenes-panel-heading span {background:#34473D;color:#DDEDE5;}
+html[data-lc-theme="dark"] .scenes-preview-overlay {background:rgba(16,24,21,.97);color:#F6F8F5;}
+html[data-lc-theme="dark"] .scenes-confirm-overlay {background:rgba(0,0,0,.72);}
+html[data-lc-theme="dark"] .scenes-confirm-dialog h2 {color:#F6F8F5;}
+html[data-lc-theme="dark"] .scenes-confirm-dialog p {color:#B8C8BD;}
+/* A área de edição e a visualização das cenas não recebem recoloração. */
+
