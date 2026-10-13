@@ -5622,8 +5622,18 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
         });
       addSettingAction('Limpar arquivos temporários · Em preparação',
         'A limpeza só será ativada depois de identificar dados descartáveis. Apresentações, fotos, vídeos e preferências nunca serão incluídos.',null,false);
-      addSettingAction('Exportar backup · Em preparação',
-        'A exportação será ativada após validar o formato portátil das Cenas e os arquivos da Galeria. Nenhum backup é gerado nesta versão.',null,false);
+      const backup=addSettingAction('Exportar backup',
+        'Cria um arquivo ZIP no dispositivo. Escolha apenas Cenas ou Cenas e vídeos da Galeria. Nenhum arquivo original será apagado.',async()=>{
+          if(!window.LousaCamBackup?.exportBackup){backup.info.textContent='Módulo de backup indisponível. Confira backup.js.';return;}
+          const includeGallery=window.confirm('Incluir os vídeos da Galeria no backup?\n\nOK: Cenas + Galeria\nCancelar: somente Cenas');
+          backup.button.disabled=true;
+          backup.info.textContent='Preparando backup… Aguarde sem fechar o aplicativo.';
+          try{
+            const result=await window.LousaCamBackup.exportBackup(includeGallery);
+            backup.info.textContent='Arquivo preparado: '+result.filename+' · '+result.presentations+' apresentações · '+result.videos+' vídeos. Verifique se o arquivo foi salvo no dispositivo.';
+          }catch(error){console.error('Falha no backup:',error);backup.info.textContent='Não foi possível exportar: '+(error?.message||'erro desconhecido');}
+          finally{backup.button.disabled=false;}
+        });
       const helpButton=document.createElement('button');helpButton.type='button';helpButton.className='lc-settings-link';
       helpButton.textContent='Ajuda e solução de problemas  ›';helpButton.addEventListener('click',()=>showPage('help'));body.appendChild(helpButton);
     }
@@ -5706,6 +5716,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   }, true);
 })();
 </script>
+<script src="./backup.js?v=20261013-1"></script>
 <script src="./splash.js?v=20261012-3A"></script>
   
 </body>
