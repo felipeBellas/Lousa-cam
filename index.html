@@ -3772,6 +3772,20 @@ body.teleprompter-active
 #lcCascadeMenu .lc-about-footnote {font-size:12px;opacity:.75;line-height:1.5;margin-top:18px;}
 #lcCascadeMenu.lc-cascade-dark .lc-about-card {background:rgba(246,248,245,.10);border-color:rgba(221,237,229,.24);}
 
+/* ETAPA AJUDA — cartões expansíveis sem interferir nas demais telas */
+#lcCascadeMenu .lc-help-intro {margin:0 0 15px;line-height:1.6;}
+#lcCascadeMenu .lc-help-topic {margin:10px 0;border:1px solid rgba(75,110,91,.22);border-radius:16px;background:rgba(255,255,255,.4);overflow:hidden;}
+#lcCascadeMenu .lc-help-topic summary {padding:15px 17px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#lcCascadeMenu .lc-help-topic summary::-webkit-details-marker {display:none;}
+#lcCascadeMenu .lc-help-topic summary::after {content:'+';font-size:20px;font-weight:400;line-height:1;}
+#lcCascadeMenu .lc-help-topic[open] summary::after {content:'−';}
+#lcCascadeMenu .lc-help-topic .lc-help-content {padding:0 17px 15px;font-size:13px;line-height:1.65;}
+#lcCascadeMenu .lc-help-topic .lc-help-content p {margin:0;}
+#lcCascadeMenu .lc-help-note {font-size:12px;opacity:.78;line-height:1.5;margin-top:17px;}
+#lcCascadeMenu.lc-cascade-dark .lc-help-topic {background:rgba(246,248,245,.10);border-color:rgba(221,237,229,.24);}
+#lcCascadeMenu .lc-help-topic summary:focus-visible {outline:2px solid #78B99C;outline-offset:-3px;}
+
+
 /* Tema global: paleta menta / grafite existente. Sem alterar câmera e canvas. */
 #lcCascadeMenu .lc-theme-toggle-row {display:flex;align-items:center;justify-content:space-between;width:100%;min-height:55px;margin:8px 0;padding:9px 14px;border:1px solid #D7E4DA;border-radius:17px;background:rgba(255,255,255,.55);color:#263C32;font-weight:650;text-align:left;}
 #lcCascadeMenu .lc-theme-track {width:49px;height:29px;flex:0 0 49px;border-radius:30px;padding:3px;background:#CBD8D0;border:1px solid rgba(38,60,50,.14);display:flex;align-items:center;transition:background .2s;}
@@ -5515,6 +5529,31 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
         });
         body.appendChild(row);
       });
+    }
+    if(key==='help'){
+      body.replaceChildren();
+      const intro=document.createElement('p');intro.className='lc-help-intro';
+      intro.textContent='Encontre orientações rápidas para utilizar os principais recursos do Lousa Cam. Toque em um assunto para ver as instruções.';
+      body.appendChild(intro);
+      const topics=[
+        ['Câmera e lousa','Autorize o acesso à câmera e ao microfone quando solicitado. Use as ferramentas disponíveis na tela para escrever, desenhar ou acrescentar elementos visuais. Se a imagem não aparecer, confira as permissões do navegador e tente reabrir a câmera.'],
+        ['Galeria','Abra a Galeria pelo controle correspondente do aplicativo para consultar os conteúdos disponíveis. Se um arquivo não aparecer, confira se o salvamento foi concluído e procure também no aplicativo Fotos ou Arquivos do dispositivo.'],
+        ['Cenas','Abra Cenas para criar e organizar apresentações. Adicione cenas e elementos visuais, utilize Salvar para registrar as alterações e Visualizar para conferir a apresentação antes de usá-la.'],
+        ['Teleprompter','Abra o Teleprompter pelo controle correspondente, prepare o texto do roteiro e ajuste as opções disponíveis para acompanhar a leitura durante a gravação.'],
+        ['Tema claro e escuro','No menu principal, abra Tema e selecione Claro, Escuro ou Sistema. A escolha é guardada neste dispositivo; Sistema acompanha a aparência configurada no aparelho.'],
+        ['Câmera ou microfone não funcionam','Verifique as permissões de câmera e microfone nas configurações do Safari ou do navegador. Feche outros aplicativos que estejam utilizando a câmera. Se necessário, recarregue a página e tente novamente.'],
+        ['Alterações não aparecem','Em aplicativos instalados pela tela inicial, uma versão anterior pode permanecer no cache. Feche e reabra o Lousa Cam e, se necessário, atualize a página no Safari. Evite apagar dados do site sem antes confirmar que seus conteúdos estão salvos.']
+      ];
+      topics.forEach(([heading,description])=>{
+        const item=document.createElement('details');item.className='lc-help-topic';
+        const summary=document.createElement('summary');summary.textContent=heading;
+        const content=document.createElement('div');content.className='lc-help-content';
+        const text=document.createElement('p');text.textContent=description;
+        content.appendChild(text);item.append(summary,content);body.appendChild(item);
+      });
+      const note=document.createElement('p');note.className='lc-help-note';
+      note.textContent='Alguns comandos podem variar conforme a versão do aplicativo e o dispositivo. Esta central reúne orientações de uso e não altera as configurações do Lousa Cam.';
+      body.appendChild(note);
     }
     if(key==='about'){
       body.replaceChildren();
