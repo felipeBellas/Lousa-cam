@@ -5536,13 +5536,13 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
       intro.textContent='Encontre orientações rápidas para utilizar os principais recursos do Lousa Cam. Toque em um assunto para ver as instruções.';
       body.appendChild(intro);
       const topics=[
-        ['Câmera e lousa','Autorize o acesso à câmera e ao microfone quando solicitado. Use as ferramentas disponíveis na tela para escrever, desenhar ou acrescentar elementos visuais. Se a imagem não aparecer, confira as permissões do navegador e tente reabrir a câmera.'],
+        ['Câmera e lousa','Autorize o acesso à câmera e ao microfone quando solicitado. Use as ferramentas disponíveis na tela para escrever, desenhar ou acrescentar elementos visuais. Se a imagem não aparecer, confira as permissões do Lousa Cam nas configurações do dispositivo e tente reabrir o aplicativo.'],
         ['Galeria','Abra a Galeria pelo controle correspondente do aplicativo para consultar os conteúdos disponíveis. Se um arquivo não aparecer, confira se o salvamento foi concluído e procure também no aplicativo Fotos ou Arquivos do dispositivo.'],
         ['Cenas','Abra Cenas para criar e organizar apresentações. Adicione cenas e elementos visuais, utilize Salvar para registrar as alterações e Visualizar para conferir a apresentação antes de usá-la.'],
         ['Teleprompter','Abra o Teleprompter pelo controle correspondente, prepare o texto do roteiro e ajuste as opções disponíveis para acompanhar a leitura durante a gravação.'],
         ['Tema claro e escuro','No menu principal, abra Tema e selecione Claro, Escuro ou Sistema. A escolha é guardada neste dispositivo; Sistema acompanha a aparência configurada no aparelho.'],
-        ['Câmera ou microfone não funcionam','Verifique as permissões de câmera e microfone nas configurações do Safari ou do navegador. Feche outros aplicativos que estejam utilizando a câmera. Se necessário, recarregue a página e tente novamente.'],
-        ['Alterações não aparecem','Em aplicativos instalados pela tela inicial, uma versão anterior pode permanecer no cache. Feche e reabra o Lousa Cam e, se necessário, atualize a página no Safari. Evite apagar dados do site sem antes confirmar que seus conteúdos estão salvos.']
+        ['Câmera ou microfone não funcionam','No iPhone, abra Ajustes e localize o Lousa Cam para conferir o acesso à Câmera e ao Microfone. No Android, abra Configurações > Apps > Lousa Cam > Permissões. Feche outros aplicativos que estejam utilizando a câmera e abra o Lousa Cam novamente.'],
+        ['O aplicativo apresenta falhas ou não atualiza','Feche completamente o Lousa Cam e abra novamente. Reinicie o dispositivo se o problema continuar. Confira se existe uma atualização na App Store ou no Google Play e se há espaço livre no aparelho. Não desinstale nem apague os dados do aplicativo sem antes garantir que suas apresentações e arquivos estejam preservados.']
       ];
       topics.forEach(([heading,description])=>{
         const item=document.createElement('details');item.className='lc-help-topic';
