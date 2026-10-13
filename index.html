@@ -3702,6 +3702,18 @@ body.teleprompter-active
   border-color:#A8D9C5;
 }
 
+
+/* CONFIGURAÇÕES — componentes locais, preservando a paleta Liquid Glass */
+#lcCascadeMenu .lc-settings-heading { display:block;margin:17px 0 10px;font-size:14px; }
+#lcCascadeMenu .lc-cascade-detail .lc-settings-link,
+#lcCascadeMenu .lc-cascade-detail .lc-settings-toggle { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:53px;margin:8px 0;padding:12px 15px;text-align:left;border-radius:16px; }
+#lcCascadeMenu .lc-settings-note {font-size:12px;opacity:.76;margin:8px 0 20px;}
+#lcCascadeMenu .lc-settings-toggle .lc-theme-track {flex-shrink:0;}
+#lcCascadeMenu .lc-settings-toggle[aria-checked="true"] .lc-theme-track {background:#A8D9C5;}
+#lcCascadeMenu .lc-settings-toggle[aria-checked="false"] .lc-theme-track {background:#CBD8D0;}
+#lcCascadeMenu.lc-cascade-no-motion .lc-cascade-animate,
+#lcCascadeMenu.lc-cascade-no-motion.lc-cascade-closing {animation:none!important;}
+
 /* ETAPA 2K — menu sempre acima da câmera, com rolagem integral no iPhone */
 #lcCascadeMenu { position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; height:100dvh!important; max-width:none!important; max-height:none!important; overflow:hidden!important; z-index:2147483000!important; }
 #lcCascadeMenu .lc-cascade-scroll { display:block!important; flex:1 1 auto!important; min-height:0!important; height:100%!important; max-height:100%!important; overflow-x:hidden!important; overflow-y:scroll!important; -webkit-overflow-scrolling:touch; padding-bottom:calc(65px + env(safe-area-inset-bottom))!important; }
@@ -5477,7 +5489,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
     account:['Sua conta / Login','O login e o cadastro serão integrados em uma etapa futura. Ainda não há uma conta autenticada ou plano verificado nesta interface.'],
     language:['Idioma','A seleção de idioma e a tradução completa do aplicativo estão em preparação. Idioma atual da interface: Português (Brasil).'],
     theme:['Tema','Escolha a aparência do Lousa Cam: Menu, Galeria e Cenas.'],
-    settings:['Configurações','As configurações atuais da câmera continuam disponíveis nos controles existentes do Lousa Cam. A central unificada está em preparação.'],
+    settings:['Configurações','Personalize a experiência do Lousa Cam. Os ajustes de câmera e gravação continuam nos controles da câmera.'],
     beta:['Ferramentas (Beta)','Área reservada para ferramentas experimentais. Nenhum recurso experimental será ativado sem sua escolha.'],
     plans:['Planos e assinatura','Planos previstos: Free, Pro e Pro+. Valores, benefícios, migração e pagamentos ainda não foram implementados. Nenhuma cobrança pode ser realizada por este menu.'],
     help:['Ajuda','Central de ajuda em preparação. Para voltar à câmera, toque no X no canto superior direito.'],
@@ -5500,6 +5512,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
     document.documentElement.dataset.lcThemeChoice=selectedTheme;
   }
   applyTheme();
+  try{root.classList.toggle('lc-cascade-no-motion',localStorage.getItem('lousaCam.menuAnimations')==='off');}catch(_){}
   const onSystemThemeChange=()=>{ if(selectedTheme==='system')applyTheme(); };
   if(themeQuery.addEventListener)themeQuery.addEventListener('change',onSystemThemeChange);
   else if(themeQuery.addListener)themeQuery.addListener(onSystemThemeChange);
@@ -5529,6 +5542,37 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
         });
         body.appendChild(row);
       });
+    }
+    if(key==='settings'){
+      body.replaceChildren();
+      const intro=document.createElement('p');
+      intro.textContent='Preferências gerais deste dispositivo. Os controles de câmera e gravação permanecem na tela principal.';
+      body.appendChild(intro);
+      const heading=document.createElement('strong');heading.className='lc-settings-heading';heading.textContent='Interface';body.appendChild(heading);
+      const themeButton=document.createElement('button');themeButton.type='button';themeButton.className='lc-settings-link';
+      themeButton.textContent='Aparência  ·  '+({light:'Claro',dark:'Escuro',system:'Sistema'}[selectedTheme]);
+      themeButton.addEventListener('click',()=>showPage('theme'));body.appendChild(themeButton);
+      const animationsKey='lousaCam.menuAnimations';
+      let animationsEnabled=true;
+      try{animationsEnabled=localStorage.getItem(animationsKey)!=='off';}catch(_){}
+      const animationsButton=document.createElement('button');animationsButton.type='button';animationsButton.className='lc-settings-toggle';
+      animationsButton.setAttribute('role','switch');animationsButton.setAttribute('aria-checked',String(animationsEnabled));
+      const label=document.createElement('span');label.textContent='Animações do menu';
+      const track=document.createElement('span');track.className='lc-theme-track';track.setAttribute('aria-hidden','true');
+      const thumb=document.createElement('span');thumb.className='lc-theme-thumb';track.appendChild(thumb);
+      animationsButton.append(label,track);
+      animationsButton.addEventListener('click',()=>{
+        animationsEnabled=!animationsEnabled;
+        animationsButton.setAttribute('aria-checked',String(animationsEnabled));
+        root.classList.toggle('lc-cascade-no-motion',!animationsEnabled);
+        try{localStorage.setItem(animationsKey,animationsEnabled?'on':'off');}catch(_){}
+      });
+      body.appendChild(animationsButton);
+      const note=document.createElement('p');note.className='lc-settings-note';
+      note.textContent='Desativar as animações afeta somente as transições deste menu; não altera vídeos, gravações ou apresentações.';
+      body.appendChild(note);
+      const helpButton=document.createElement('button');helpButton.type='button';helpButton.className='lc-settings-link';
+      helpButton.textContent='Ajuda e solução de problemas  ›';helpButton.addEventListener('click',()=>showPage('help'));body.appendChild(helpButton);
     }
     if(key==='help'){
       body.replaceChildren();
