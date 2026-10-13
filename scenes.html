@@ -678,6 +678,24 @@
 
   </div>
 
+  <script>
+  /* Tema compartilhado; leitura defensiva caso armazenamento esteja indisponível. */
+  (function(){
+    var key='lousaCam.menuTheme';
+    var query=window.matchMedia('(prefers-color-scheme: dark)');
+    function update(){
+      var selected='system';
+      try{selected=localStorage.getItem(key)||'system';}catch(_){}
+      if(!['light','dark','system'].includes(selected))selected='system';
+      document.documentElement.dataset.lcTheme=(selected==='dark'||(selected==='system'&&query.matches))?'dark':'light';
+    }
+    update();
+    window.addEventListener('pageshow',update);
+    window.addEventListener('storage',update);
+    if(query.addEventListener)query.addEventListener('change',update);
+    else if(query.addListener)query.addListener(update);
+  })();
+  </script>
   <!-- ================================================
        MÓDULOS INDEPENDENTES
        ================================================ -->
