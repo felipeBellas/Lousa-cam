@@ -3630,6 +3630,11 @@ body.teleprompter-active
 
 
     
+
+/* ETAPA CONFIGURAÇÕES — armazenamento e segurança */
+#lcCascadeMenu .lc-storage-setting { margin: 8px 0 14px; }
+#lcCascadeMenu .lc-storage-setting .lc-settings-note { margin: 3px 8px 12px; line-height: 1.45; }
+#lcCascadeMenu .lc-storage-setting button:disabled { opacity: .58; cursor: not-allowed; }
 </style>
 
   <link
@@ -5571,6 +5576,44 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
       const note=document.createElement('p');note.className='lc-settings-note';
       note.textContent='Desativar as animações afeta somente as transições deste menu; não altera vídeos, gravações ou apresentações.';
       body.appendChild(note);
+      // Armazenamento e segurança: sem apagar bancos ou arquivos do usuário.
+      const storageHeading=document.createElement('strong');
+      storageHeading.className='lc-settings-heading';
+      storageHeading.textContent='Armazenamento e segurança';
+      body.appendChild(storageHeading);
+      const storageIntro=document.createElement('p');
+      storageIntro.className='lc-settings-note';
+      storageIntro.textContent='As apresentações e os arquivos locais permanecem neste dispositivo. Evite apagar os dados do aplicativo antes de criar uma cópia de segurança.';
+      body.appendChild(storageIntro);
+      function addSettingAction(label,description,handler,enabled=true){
+        const section=document.createElement('section');
+        section.className='lc-storage-setting';
+        const button=document.createElement('button');
+        button.type='button';button.className='lc-settings-link';
+        button.textContent=label;
+        button.disabled=!enabled;
+        if(enabled)button.addEventListener('click',handler);
+        const info=document.createElement('p');info.className='lc-settings-note';
+        info.textContent=description;
+        section.append(button,info);body.appendChild(section);
+        return {button,info};
+      }
+      addSettingAction('Desbloquear todas as imagens · Em preparação',
+        'O comando será conectado ao bloqueio individual existente na lousa. Nenhuma imagem é alterada por enquanto.',null,false);
+      const usage=addSettingAction('Consultar espaço utilizado',
+        'Consulta a estimativa de armazenamento fornecida pelo sistema. Não exclui arquivos.',async()=>{
+          usage.info.textContent='Consultando armazenamento…';
+          try{
+            if(!navigator.storage || !navigator.storage.estimate)throw new Error('Indisponível');
+            const estimate=await navigator.storage.estimate();
+            const mb=bytes=>(bytes/1048576).toLocaleString('pt-BR',{maximumFractionDigits:1});
+            usage.info.textContent='Uso local estimado: '+mb(estimate.usage||0)+' MB'+(estimate.quota?' · Limite estimado: '+mb(estimate.quota)+' MB':'')+'. Os valores incluem dados do site/aplicativo e não representam apenas Galeria e Cenas.';
+          }catch(_){usage.info.textContent='Este dispositivo não disponibiliza uma estimativa de armazenamento.';}
+        });
+      addSettingAction('Limpar arquivos temporários · Em preparação',
+        'A limpeza só será ativada depois de identificar dados descartáveis. Apresentações, fotos, vídeos e preferências nunca serão incluídos.',null,false);
+      addSettingAction('Exportar backup · Em preparação',
+        'A exportação será ativada após validar o formato portátil das Cenas e os arquivos da Galeria. Nenhum backup é gerado nesta versão.',null,false);
       const helpButton=document.createElement('button');helpButton.type='button';helpButton.className='lc-settings-link';
       helpButton.textContent='Ajuda e solução de problemas  ›';helpButton.addEventListener('click',()=>showPage('help'));body.appendChild(helpButton);
     }
