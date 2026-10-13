@@ -1,6 +1,7 @@
 /* LOUSA CAM 2.0 — CENAS PRO | layout com rolagem externa, como a Galeria
    Substituir integralmente scenes-pro-layout.css.
    Preserva scenes.css, cenas, ferramentas e proporcoes. */
+
 .scenes-pro-properties-toggle,.scenes-pro-focus-toggle{display:none}
 @media(min-width:761px){
  .scenes-workspace{grid-template-columns:190px minmax(0,1fr) 245px}
