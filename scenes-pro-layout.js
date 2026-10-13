@@ -1,4 +1,5 @@
 /* LOUSA CAM — CENAS PRO | controles do layout iPhone */
+
 (() => {
   'use strict';
   const editor=document.getElementById('scenesEditorView');
