@@ -14,7 +14,18 @@
 
   <title>Cenas — Lousa Cam 3.0</title>
 
-  <link rel="stylesheet" href="scenes.css?v=20261012-2H">
+  <script>
+  (function(){
+    try {
+      var value=localStorage.getItem('lousaCam.menuTheme')||'system';
+      var dark=value==='dark'||(value==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.lcTheme=dark?'dark':'light';
+    } catch(_) {
+      document.documentElement.dataset.lcTheme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+    }
+  })();
+  </script>
+  <link rel="stylesheet" href="scenes.css?v=20261013-tema03">
   <link rel="stylesheet" href="scenes-pro.css?v=20261012-01">
   <link rel="stylesheet" href="scenes-pro-layout.css?v=20261013-02">
   <link rel="stylesheet" href="scenes-integrated-toolbar.css?v=20261013-01">
