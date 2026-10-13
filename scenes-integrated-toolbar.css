@@ -1,0 +1,54 @@
+/* LOUSA CAM — Barra integrada | ETAPA 1
+   Não modifica dimensões, fluxo, rolagem ou posicionamento do palco. */
+#scenesEditorView .scenes-tools{
+  align-items:center;
+  gap:6px;
+  -webkit-overflow-scrolling:touch;
+}
+#scenesEditorView .scenes-tools .scenes-tool-button{
+  flex:0 0 auto;
+  min-height:38px;
+  white-space:nowrap;
+}
+#scenesEditorView #scenesProToolbar{
+  transition:none;
+}
+#scenesEditorView #scenesProToolbar[hidden]{display:none!important}
+#scenesEditorView #scenesProToolbar .scenes-pro-head strong{
+  font-size:13px;
+  letter-spacing:.01em;
+}
+#scenesEditorView #scenesProToolbar .scenes-pro-controls{
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+}
+#scenesEditorView #scenesProToolbar input,
+#scenesEditorView #scenesProToolbar select{
+  min-height:34px;
+}
+@media(max-width:760px){
+  #scenesEditorView .scenes-tools{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding-block:6px;
+    touch-action:pan-x;
+  }
+  #scenesEditorView #scenesProToolbar .scenes-pro-head{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px 10px;
+  }
+  #scenesEditorView #scenesProToolbar .scenes-pro-controls{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
+    gap:8px;
+  }
+  #scenesEditorView #scenesProToolbar .scenes-pro-controls>label,
+  #scenesEditorView #scenesProToolbar .scenes-pro-buttons{
+    flex:0 0 auto;
+  }
+}
