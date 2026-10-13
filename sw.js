@@ -1,4 +1,5 @@
-const CACHE_NAME = "lousa-cam-v20261002-01";
+/* LOUSA CAM — Service Worker | atualização pontual do Editor de Cenas */
+const CACHE_NAME = "lousa-cam-v20261013-03";
 
 const APP_FILES = [
   "./",
@@ -12,200 +13,85 @@ const APP_FILES = [
   "./logo.png"
 ];
 
-
-/* =========================================================
-   INSTALL
-   ========================================================= */
-
 self.addEventListener("install", event => {
-
   event.waitUntil(
-
-    caches.open(CACHE_NAME)
-      .then(cache => {
-
-        return cache.addAll(APP_FILES);
-
-      })
-
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_FILES))
   );
-
   self.skipWaiting();
-
 });
-
-
-/* =========================================================
-   ACTIVATE
-   ========================================================= */
 
 self.addEventListener("activate", event => {
-
   event.waitUntil(
-
-    caches.keys()
-      .then(keys => {
-
-        return Promise.all(
-
-          keys
-            .filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-
-        );
-
-      })
-
+    caches.keys().then(keys => Promise.all(
+      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+    ))
   );
-
   self.clients.claim();
-
 });
 
-
-/* =========================================================
-   FETCH
-   ========================================================= */
-
 self.addEventListener("fetch", event => {
-
   const request = event.request;
-
-  if (request.method !== "GET") {
-    return;
-  }
-
+  if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  const path = url.pathname;
 
+  // Não interceptar recursos de outros domínios.
+  if (url.origin !== self.location.origin) return;
 
-  const isAppFile =
-    url.pathname.endsWith("/index.html") ||
-    url.pathname.endsWith("/app.js") ||
-    url.pathname.endsWith("/camera.js") ||
-    url.pathname.endsWith("/gallery.js") ||
-    url.pathname.endsWith("/video-storage.js") ||
-    url.pathname.endsWith("/pencil.js") ||
-    url.pathname.endsWith("/manifest.json") ||
-    url.pathname.endsWith("/sw.js");
+  const networkFirst = [
+    "/index.html",
+    "/app.js",
+    "/camera.js",
+    "/gallery.js",
+    "/video-storage.js",
+    "/pencil.js",
+    "/manifest.json",
+    "/sw.js",
+    "/scenes.html",
+    "/scenes-pro-layout.css",
+    "/scenes-pro-layout.js"
+  ].some(file => path.endsWith(file));
 
-
-  /* =======================================================
-     ARQUIVOS PRINCIPAIS
-
-     Sempre tenta buscar a versão atual primeiro.
-     Só usa cache se estiver sem internet.
-     ======================================================= */
-
-  if (isAppFile) {
-
+  if (networkFirst) {
     event.respondWith(
-
-      fetch(request)
-
-        .then(response => {
-
-          if (
-            response &&
-            response.ok
-          ) {
-
-            const responseClone =
-              response.clone();
-
+      fetch(request).then(response => {
+        if (response && response.ok) {
+          const copy = response.clone();
+          event.waitUntil(
             caches.open(CACHE_NAME)
-              .then(cache => {
-
-                cache.put(
-                  request,
-                  responseClone
-                );
-
-              })
-              .catch(() => {});
-
-          }
-
-          return response;
-
-        })
-
-        .catch(() => {
-
-          return caches.match(request)
-            .then(cached => {
-
-              if (cached) {
-                return cached;
-              }
-
-              return caches.match("./index.html");
-
-            });
-
-        })
-
+              .then(cache => cache.put(request, copy))
+              .catch(() => {})
+          );
+        }
+        return response;
+      }).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        // Não entregar index.html no lugar de JS/CSS/Editor de Cenas.
+        if (path.endsWith("/index.html")) {
+          const fallback = await caches.match("./index.html");
+          if (fallback) return fallback;
+        }
+        return Response.error();
+      })
     );
-
     return;
-
   }
 
-
-  /* =======================================================
-     OUTROS ARQUIVOS
-
-     Cache primeiro.
-     ======================================================= */
-
   event.respondWith(
-
-    caches.match(request)
-
-      .then(cached => {
-
-        if (cached) {
-          return cached;
-        }
-
-
-        return fetch(request)
-
-          .then(response => {
-
-            if (
-              !response ||
-              !response.ok ||
-              response.type === "opaque"
-            ) {
-
-              return response;
-
-            }
-
-
-            const responseClone =
-              response.clone();
-
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-
-                cache.put(
-                  request,
-                  responseClone
-                );
-
-              })
-              .catch(() => {});
-
-
-            return response;
-
-          });
-
-      })
-
+    caches.match(request).then(cached => {
+      if (cached) return cached;
+      return fetch(request).then(response => {
+        if (!response || !response.ok || response.type === "opaque") return response;
+        const copy = response.clone();
+        event.waitUntil(
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(request, copy))
+            .catch(() => {})
+        );
+        return response;
+      });
+    })
   );
-
 });
