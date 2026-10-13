@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="pt-BR">
 
-  
 <head>
 
   <meta charset="utf-8">
@@ -3765,6 +3764,14 @@ body.teleprompter-active
 
 <link rel="stylesheet" href="./splash.css?v=20261012-3A">
 <style id="lcUnifiedThemeStyles">
+/* Página Sobre — apenas conteúdo do menu; respeita os temas existentes. */
+#lcCascadeMenu .lc-about-intro {line-height:1.65;margin:0 0 16px;}
+#lcCascadeMenu .lc-about-card {padding:15px 16px;margin:10px 0;border:1px solid rgba(75,110,91,.20);border-radius:17px;background:rgba(255,255,255,.42);}
+#lcCascadeMenu .lc-about-card strong {display:block;margin-bottom:5px;font-size:14px;}
+#lcCascadeMenu .lc-about-card p {margin:0;line-height:1.55;font-size:13px;}
+#lcCascadeMenu .lc-about-footnote {font-size:12px;opacity:.75;line-height:1.5;margin-top:18px;}
+#lcCascadeMenu.lc-cascade-dark .lc-about-card {background:rgba(246,248,245,.10);border-color:rgba(221,237,229,.24);}
+
 /* Tema global: paleta menta / grafite existente. Sem alterar câmera e canvas. */
 #lcCascadeMenu .lc-theme-toggle-row {display:flex;align-items:center;justify-content:space-between;width:100%;min-height:55px;margin:8px 0;padding:9px 14px;border:1px solid #D7E4DA;border-radius:17px;background:rgba(255,255,255,.55);color:#263C32;font-weight:650;text-align:left;}
 #lcCascadeMenu .lc-theme-track {width:49px;height:29px;flex:0 0 49px;border-radius:30px;padding:3px;background:#CBD8D0;border:1px solid rgba(38,60,50,.14);display:flex;align-items:center;transition:background .2s;}
@@ -5508,6 +5515,28 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
         });
         body.appendChild(row);
       });
+    }
+    if(key==='about'){
+      body.replaceChildren();
+      const intro=document.createElement('p');
+      intro.className='lc-about-intro';
+      intro.textContent='O Lousa Cam reúne câmera, lousa digital e recursos visuais para criar explicações, aulas, tutoriais e outros conteúdos.';
+      body.appendChild(intro);
+      const sections=[
+        ['Câmera e lousa','Combine a imagem da câmera com anotações e elementos visuais durante a criação do conteúdo.'],
+        ['Galeria','Acesse a área destinada aos conteúdos registrados no aplicativo.'],
+        ['Cenas','Organize apresentações e elementos visuais para utilizar em suas produções.'],
+        ['Aparência','Escolha entre os temas Claro, Escuro e Sistema, com preferência salva neste dispositivo.']
+      ];
+      sections.forEach(([heading,description])=>{
+        const card=document.createElement('section');card.className='lc-about-card';
+        const h=document.createElement('strong');h.textContent=heading;
+        const descriptionText=document.createElement('p');descriptionText.textContent=description;
+        card.append(h,descriptionText);body.appendChild(card);
+      });
+      const note=document.createElement('p');note.className='lc-about-footnote';
+      note.textContent='Lousa Cam · Em desenvolvimento. Alguns recursos podem variar conforme o navegador e o dispositivo.';
+      body.appendChild(note);
     }
     root.querySelector('.lc-cascade-scroll').scrollTop=0;
     document.getElementById('lcCascadeBack').focus();
