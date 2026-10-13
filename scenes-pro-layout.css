@@ -1,45 +1,118 @@
-/* LOUSA CAM — CENAS PRO | layout iPhone consolidado
-   Substitui integralmente scenes-pro-layout.css anterior.
-   Nao utilizar scenes-pro-palco-ampliado.css junto deste arquivo. */
-.scenes-pro-properties-toggle,.scenes-pro-focus-toggle{display:none}
-@media (min-width:761px){
- .scenes-workspace{grid-template-columns:190px minmax(0,1fr) 245px}
- .scenes-pro-controls{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}
- .scenes-pro-controls>label,.scenes-pro-buttons{flex:0 0 auto}
+/* LOUSA CAM 2.0 — CENAS PRO
+   Layout responsivo do editor. Substitui scenes-pro-layout.css.
+   Mantem scenes.css original e NAO usa scenes-pro-palco-ampliado.css.
+   O JS calcula as dimensoes reais do palco, sem subtracoes fixas de 100dvh. */
+
+.scenes-pro-properties-toggle,
+.scenes-pro-focus-toggle { display: none; }
+
+@media (min-width: 761px) {
+  .scenes-workspace { grid-template-columns: 190px minmax(0, 1fr) 245px; }
+  .scenes-pro-controls { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; }
+  .scenes-pro-controls > label,
+  .scenes-pro-buttons { flex: 0 0 auto; }
 }
-@media (max-width:760px){
- html.scenes-pro-editor-active,html.scenes-pro-editor-active body{height:100%;overflow:hidden;overscroll-behavior:none}
- html.scenes-pro-editor-active .scenes-app{height:100dvh;min-height:0;overflow:hidden}
- html.scenes-pro-editor-active .scenes-header{flex:0 0 auto;min-height:0}
- html.scenes-pro-editor-active .scenes-editor-view{flex:1 1 auto;min-height:0;overflow:hidden}
- html.scenes-pro-editor-active .scenes-editor-topbar{flex:0 0 auto;gap:4px;padding:5px 9px}
- html.scenes-pro-editor-active .scenes-editor-title-group .scenes-field{margin-bottom:2px}
- html.scenes-pro-editor-active .scenes-workspace{display:flex;flex-direction:column;height:auto;min-height:0;flex:1 1 auto;overflow:hidden}
- html.scenes-pro-editor-active .scenes-stage-section{order:1;flex:1 1 auto;min-height:0;overflow:hidden}
- html.scenes-pro-editor-active .scenes-tools{flex:0 0 auto;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
- html.scenes-pro-editor-active .scenes-tools::-webkit-scrollbar{display:none}
- html.scenes-pro-editor-active .scenes-pro-toolbar{flex:0 0 auto;padding:6px 9px}
- html.scenes-pro-editor-active .scenes-pro-head{margin-bottom:4px}
- html.scenes-pro-editor-active .scenes-pro-controls{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;gap:7px;padding-bottom:3px}
- html.scenes-pro-editor-active .scenes-pro-controls>label,html.scenes-pro-editor-active .scenes-pro-buttons{flex:0 0 auto}
- html.scenes-pro-editor-active .scenes-stage-outer{flex:1 1 auto;min-height:0;overflow:hidden;padding:8px;display:flex;align-items:center;justify-content:center}
- html.scenes-pro-editor-active .scenes-stage{box-sizing:border-box;flex:0 0 auto;width:min(100%,calc((100dvh - 340px)*16/9));height:auto;max-width:100%;max-height:none;aspect-ratio:16/9;margin:auto}
- html.scenes-pro-editor-active .scenes-stage.scenes-portrait{width:min(calc(100% - 4px),calc((100dvh - 340px)*9/16));min-width:0;height:auto;max-width:100%;max-height:none;aspect-ratio:9/16;margin:auto}
- html.scenes-pro-editor-active .scenes-stage-footer{flex:0 0 auto;min-height:38px;padding:4px 10px}
- html.scenes-pro-editor-active .scenes-sidebar{order:2;flex:0 0 auto;width:100%;height:112px;max-height:112px;overflow:hidden;padding:6px 9px;border:0;border-top:1px solid var(--scenes-border);background:var(--scenes-panel)}
- html.scenes-pro-editor-active .scenes-sidebar .scenes-panel-heading{margin-bottom:5px}
- html.scenes-pro-editor-active .scenes-slide-list{display:flex;flex-direction:row;gap:8px;overflow-x:auto;overflow-y:hidden;height:80px;-webkit-overflow-scrolling:touch}
- html.scenes-pro-editor-active .scenes-slide-item{width:105px;flex:0 0 105px;padding:4px}
- html.scenes-pro-editor-active .scenes-slide-thumbnail{max-height:55px}
- html.scenes-pro-editor-active .scenes-slide-name{font-size:10px;margin-top:3px}
- html.scenes-pro-editor-active .scenes-properties{order:3;flex:0 0 auto;max-height:0;overflow:hidden;padding:0;border:0}
- html.scenes-pro-editor-active.scenes-pro-properties-open .scenes-properties{max-height:38dvh;overflow-y:auto;padding:12px;border-top:1px solid var(--scenes-border)}
- html.scenes-pro-editor-active .scenes-pro-properties-toggle,html.scenes-pro-editor-active .scenes-pro-focus-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:36px;padding:6px 12px;background:var(--scenes-panel-alt);color:var(--scenes-text);border:1px solid var(--scenes-border);border-radius:9px;font-size:12px}
- /* Modo palco: abre espaco real para a cena, sem rolagem ou corte. */
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-header,
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-editor-topbar,
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-pro-toolbar,
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-sidebar{display:none!important}
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-stage.scenes-portrait{width:min(calc(100% - 4px),calc((100dvh - 125px)*9/16))}
- html.scenes-pro-editor-active.scenes-pro-focus .scenes-stage:not(.scenes-portrait){width:min(calc(100% - 4px),calc((100dvh - 125px)*16/9))}
+
+@media (max-width: 760px) {
+  html.scenes-pro-editor-active,
+  html.scenes-pro-editor-active body {
+    width: 100%; height: 100%; overflow: hidden;
+    overscroll-behavior: none;
+  }
+  html.scenes-pro-editor-active .scenes-app {
+    display: flex; flex-direction: column;
+    height: 100dvh; min-height: 0; overflow: hidden;
+  }
+  html.scenes-pro-editor-active .scenes-header { flex: 0 0 auto; min-height: 0; }
+  html.scenes-pro-editor-active .scenes-editor-view {
+    display: flex; flex-direction: column;
+    flex: 1 1 0; min-height: 0; overflow: hidden;
+  }
+  html.scenes-pro-editor-active .scenes-editor-topbar {
+    flex: 0 0 auto; gap: 4px; padding: 5px 9px;
+  }
+  html.scenes-pro-editor-active .scenes-editor-title-group .scenes-field { margin-bottom: 2px; }
+  html.scenes-pro-editor-active .scenes-workspace {
+    display: flex; flex-direction: column;
+    flex: 1 1 0; height: auto; min-height: 0; overflow: hidden;
+  }
+  html.scenes-pro-editor-active .scenes-stage-section {
+    display: flex; flex-direction: column;
+    order: 1; flex: 1 1 0; min-height: 0; overflow: hidden;
+  }
+  html.scenes-pro-editor-active .scenes-tools {
+    flex: 0 0 auto; flex-wrap: nowrap;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  html.scenes-pro-editor-active .scenes-tools::-webkit-scrollbar { display: none; }
+  html.scenes-pro-editor-active .scenes-pro-toolbar { flex: 0 0 auto; padding: 6px 9px; }
+  html.scenes-pro-editor-active .scenes-pro-head { margin-bottom: 4px; }
+  html.scenes-pro-editor-active .scenes-pro-controls {
+    display: flex; flex-wrap: nowrap; gap: 7px;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; padding-bottom: 3px;
+  }
+  html.scenes-pro-editor-active .scenes-pro-controls > label,
+  html.scenes-pro-editor-active .scenes-pro-buttons { flex: 0 0 auto; }
+
+  /* Este elemento recebe TODO o espaco vertical restante.
+     A cena e dimensionada pelo JS com base em clientWidth/clientHeight reais. */
+  html.scenes-pro-editor-active .scenes-stage-outer {
+    display: flex; flex: 1 1 0;
+    min-width: 0; min-height: 0;
+    overflow: hidden; padding: 8px;
+    align-items: center; justify-content: center;
+    position: relative;
+  }
+  html.scenes-pro-editor-active .scenes-stage,
+  html.scenes-pro-editor-active .scenes-stage.scenes-portrait {
+    box-sizing: border-box;
+    display: block; flex: 0 0 auto;
+    width: var(--scenes-fit-width, 100%);
+    height: var(--scenes-fit-height, auto);
+    min-width: 0; min-height: 0;
+    max-width: 100%; max-height: 100%;
+    margin: auto;
+  }
+  html.scenes-pro-editor-active .scenes-stage:not(.scenes-portrait) { aspect-ratio: 16 / 9; }
+  html.scenes-pro-editor-active .scenes-stage.scenes-portrait { aspect-ratio: 9 / 16; }
+  html.scenes-pro-editor-active .scenes-stage-footer {
+    flex: 0 0 auto; min-height: 38px; padding: 4px 10px;
+  }
+  html.scenes-pro-editor-active .scenes-sidebar {
+    order: 2; flex: 0 0 112px;
+    width: 100%; height: 112px; max-height: 112px;
+    overflow: hidden; padding: 6px 9px;
+    border: 0; border-top: 1px solid var(--scenes-border);
+    background: var(--scenes-panel);
+  }
+  html.scenes-pro-editor-active .scenes-sidebar .scenes-panel-heading { margin-bottom: 5px; }
+  html.scenes-pro-editor-active .scenes-slide-list {
+    display: flex; flex-direction: row; gap: 8px;
+    height: 80px; overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  html.scenes-pro-editor-active .scenes-slide-item { width: 105px; flex: 0 0 105px; padding: 4px; }
+  html.scenes-pro-editor-active .scenes-slide-thumbnail { max-height: 55px; }
+  html.scenes-pro-editor-active .scenes-slide-name { font-size: 10px; margin-top: 3px; }
+  html.scenes-pro-editor-active .scenes-properties {
+    order: 3; flex: 0 0 auto; width: 100%;
+    max-height: 0; overflow: hidden; padding: 0; border: 0;
+  }
+  html.scenes-pro-editor-active.scenes-pro-properties-open .scenes-properties {
+    max-height: 38dvh; overflow-y: auto;
+    padding: 12px; border-top: 1px solid var(--scenes-border);
+  }
+  html.scenes-pro-editor-active .scenes-pro-properties-toggle,
+  html.scenes-pro-editor-active .scenes-pro-focus-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: 0 0 auto; min-height: 36px; padding: 6px 12px;
+    background: var(--scenes-panel-alt); color: var(--scenes-text);
+    border: 1px solid var(--scenes-border); border-radius: 9px; font-size: 12px;
+  }
+  html.scenes-pro-editor-active.scenes-pro-focus .scenes-header,
+  html.scenes-pro-editor-active.scenes-pro-focus .scenes-editor-topbar,
+  html.scenes-pro-editor-active.scenes-pro-focus .scenes-pro-toolbar,
+  html.scenes-pro-editor-active.scenes-pro-focus .scenes-sidebar { display: none !important; }
 }
