@@ -3635,6 +3635,10 @@ body.teleprompter-active
 #lcCascadeMenu .lc-storage-setting { margin: 8px 0 14px; }
 #lcCascadeMenu .lc-storage-setting .lc-settings-note { margin: 3px 8px 12px; line-height: 1.45; }
 #lcCascadeMenu .lc-storage-setting button:disabled { opacity: .58; cursor: not-allowed; }
+
+/* Biologia descontinuada: ocultação segura dos controles antigos.
+   Os IDs permanecem no DOM até a revisão de app.js, evitando regressões. */
+#biologyButton, #biologyPanel { display: none !important; }
 </style>
 
   <link
@@ -5598,8 +5602,14 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
         section.append(button,info);body.appendChild(section);
         return {button,info};
       }
-      addSettingAction('Desbloquear todas as imagens · Em preparação',
-        'O comando será conectado ao bloqueio individual existente na lousa. Nenhuma imagem é alterada por enquanto.',null,false);
+      addSettingAction('Desbloquear todas as imagens',
+        'Executa o desbloqueio das imagens da lousa pelo comando já existente, sem alterar as apresentações salvas em Cenas.',()=>{
+          const original=document.getElementById('unlockImagesButton');
+          if(!original){window.alert('Comando de desbloqueio indisponível nesta versão.');return;}
+          close();
+          // Reutiliza o comando original; não cria um segundo mecanismo de desbloqueio.
+          window.setTimeout(()=>original.click(),220);
+        });
       const usage=addSettingAction('Consultar espaço utilizado',
         'Consulta a estimativa de armazenamento fornecida pelo sistema. Não exclui arquivos.',async()=>{
           usage.info.textContent='Consultando armazenamento…';
