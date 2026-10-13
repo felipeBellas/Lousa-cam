@@ -3689,6 +3689,19 @@ body.teleprompter-active
 @keyframes lcCascadeOut { to { opacity:0;transform:translateY(22px); } }
 #lcCascadeMenu.lc-cascade-dark .lc-cascade-item,#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { background:rgba(246,248,245,.13);border-color:rgba(221,237,229,.3);color:#F6F8F5; }
 #lcCascadeMenu.lc-cascade-dark .lc-cascade-detail { color:#F6F8F5; }
+/* TEMA — contraste de controles internos no modo escuro */
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-close,
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-back,
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail button {
+  color:#F6F8F5;
+  background:rgba(246,248,245,.13);
+  border-color:rgba(221,237,229,.38);
+}
+#lcCascadeMenu.lc-cascade-dark .lc-cascade-detail button[aria-pressed="true"] {
+  background:rgba(168,217,197,.34);
+  border-color:#A8D9C5;
+}
+
 /* ETAPA 2K — menu sempre acima da câmera, com rolagem integral no iPhone */
 #lcCascadeMenu { position:fixed!important; inset:0!important; width:100vw!important; height:100vh!important; height:100dvh!important; max-width:none!important; max-height:none!important; overflow:hidden!important; z-index:2147483000!important; }
 #lcCascadeMenu .lc-cascade-scroll { display:block!important; flex:1 1 auto!important; min-height:0!important; height:100%!important; max-height:100%!important; overflow-x:hidden!important; overflow-y:scroll!important; -webkit-overflow-scrolling:touch; padding-bottom:calc(65px + env(safe-area-inset-bottom))!important; }
@@ -5424,7 +5437,7 @@ body.teleprompter-active
   const pages={
     account:['Sua conta / Login','O login e o cadastro serão integrados em uma etapa futura. Ainda não há uma conta autenticada ou plano verificado nesta interface.'],
     language:['Idioma','A seleção de idioma e a tradução completa do aplicativo estão em preparação. Idioma atual da interface: Português (Brasil).'],
-    theme:['Tema','Prévia do tema deste menu. A aplicação do tema a todas as telas será integrada posteriormente.'],
+    theme:['Tema','Escolha a aparência do menu. A câmera e as ferramentas permanecem com sua aparência atual.'],
     settings:['Configurações','As configurações atuais da câmera continuam disponíveis nos controles existentes do Lousa Cam. A central unificada está em preparação.'],
     beta:['Ferramentas (Beta)','Área reservada para ferramentas experimentais. Nenhum recurso experimental será ativado sem sua escolha.'],
     plans:['Planos e assinatura','Planos previstos: Free, Pro e Pro+. Valores, benefícios, migração e pagamentos ainda não foram implementados. Nenhuma cobrança pode ser realizada por este menu.'],
@@ -5432,6 +5445,23 @@ body.teleprompter-active
     privacy:['Política de privacidade','O documento oficial da política de privacidade será disponibilizado nesta área. Este texto não substitui uma política de privacidade publicada.'],
     about:['Sobre o Lousa Cam','Lousa Cam — câmera, escrita e ferramentas de criação em uma mesma experiência.']
   };
+  // ETAPA TEMA: preferência local, sem alterar câmera ou ferramentas.
+  const THEME_KEY='lousaCam.menuTheme';
+  const themeQuery=window.matchMedia('(prefers-color-scheme: dark)');
+  function getTheme(){
+    try { const value=localStorage.getItem(THEME_KEY); return ['light','dark','system'].includes(value)?value:'system'; }
+    catch (_) { return 'system'; }
+  }
+  let selectedTheme=getTheme();
+  function applyTheme(){
+    const dark=selectedTheme==='dark'||(selectedTheme==='system'&&themeQuery.matches);
+    root.classList.toggle('lc-cascade-dark',dark);
+    root.dataset.theme=selectedTheme;
+  }
+  applyTheme();
+  const onSystemThemeChange=()=>{ if(selectedTheme==='system')applyTheme(); };
+  if(themeQuery.addEventListener)themeQuery.addEventListener('change',onSystemThemeChange);
+  else if(themeQuery.addListener)themeQuery.addListener(onSystemThemeChange);
   let closing=false, returnFocus=null;
   function showHome(){home.hidden=false;detail.hidden=true;title.textContent='Lousa Cam';subtitle.textContent='Sua experiência, suas preferências. · Role para ver todas as opções';}
   function showPage(key){
@@ -5440,12 +5470,13 @@ body.teleprompter-active
     body.replaceChildren();
     const p=document.createElement('p');p.textContent=page[1];body.appendChild(p);
     if(key==='theme'){
-      const saved=root.classList.contains('lc-cascade-dark')?'dark':'light';
+      const saved=selectedTheme;
       [['light','Claro'],['dark','Escuro'],['system','Sistema']].forEach(([value,label])=>{
         const btn=document.createElement('button');btn.type='button';btn.textContent=label;btn.setAttribute('aria-pressed',String(value===saved));
         btn.addEventListener('click',()=>{
-          const dark=value==='dark'||(value==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);
-          root.classList.toggle('lc-cascade-dark',dark);
+          selectedTheme=value;
+          try { localStorage.setItem(THEME_KEY,value); } catch (_) { /* armazenamento indisponível */ }
+          applyTheme();
           body.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));
         });body.appendChild(btn);
       });
