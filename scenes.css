@@ -2868,3 +2868,30 @@ html[data-lc-theme="dark"] .scenes-confirm-dialog h2 {color:#F6F8F5;}
 html[data-lc-theme="dark"] .scenes-confirm-dialog p {color:#B8C8BD;}
 /* A área de edição e a visualização das cenas não recebem recoloração. */
 
+
+
+/* =========================================================
+   TEMA ESCURO — CORREÇÃO DE PRIORIDADE E SUPERFÍCIES
+   Mantém menta como detalhe, não como preenchimento dos botões.
+   Não altera a superfície da cena nem seus elementos.
+   ========================================================= */
+html[data-lc-theme="dark"] .scenes-app,
+html[data-lc-theme="dark"] .scenes-library-view,
+html[data-lc-theme="dark"] .scenes-editor-view { background: #101815; color: #F6F8F5; }
+html[data-lc-theme="dark"] .scenes-stage-section { background: #141E19; }
+html[data-lc-theme="dark"] .scenes-stage-outer { background: radial-gradient(circle at center,#27362E,#131E18); }
+html[data-lc-theme="dark"] .scenes-header { box-shadow: 0 3px 16px rgba(0,0,0,.22); }
+html[data-lc-theme="dark"] .scenes-button-primary,
+html[data-lc-theme="dark"] .scenes-button-primary:disabled { background:#30473B; border-color:#658D77; color:#F6F8F5; }
+html[data-lc-theme="dark"] .scenes-button-primary:hover:not(:disabled) { background:#3A5647; border-color:#A8D9C5; color:#F6F8F5; }
+html[data-lc-theme="dark"] .scenes-button-danger { background:#42282C; border-color:#815056; color:#FFD9DD; }
+html[data-lc-theme="dark"] .scenes-button-danger:hover:not(:disabled) { background:#543037; }
+html[data-lc-theme="dark"] .scenes-tool-button:hover { background:#34473D; }
+html[data-lc-theme="dark"] .scenes-slide-item.active { border-color:#A8D9C5; box-shadow:0 0 0 2px rgba(168,217,197,.20); }
+html[data-lc-theme="dark"] .scenes-toast { background:#30473B; color:#F6F8F5; border-color:#658D77; }
+html[data-lc-theme="dark"] .scenes-presentation-thumbnail,
+html[data-lc-theme="dark"] .scenes-slide-thumbnail {
+ background-color:#223129;
+ background-image:linear-gradient(45deg,#304238 25%,transparent 25%),linear-gradient(-45deg,#304238 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#304238 75%),linear-gradient(-45deg,transparent 75%,#304238 75%);
+}
+/* O editor de conteúdo (.scenes-stage) permanece sem recoloração. */
