@@ -29,7 +29,7 @@
       )
     );
 
-  z-index: 10000; /* Pencil acima da navegação inferior */
+  z-index: 10001 !important;
 
   display: none;
   align-items: center;
