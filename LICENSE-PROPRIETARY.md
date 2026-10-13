@@ -2,7 +2,7 @@ LOUSA CAM — LICENÇA PROPRIETÁRIA DE SOFTWARE
 
 Versão: 1.0 — Desenvolvimento e testes privados
 
-Titular dos direitos: [Nome completo do titular]
+Titular dos direitos: Felipe Belas Cunha dos Santos 
 
 Projeto: Lousa Cam
 
