@@ -5634,6 +5634,23 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
           }catch(error){console.error('Falha no backup:',error);backup.info.textContent='Não foi possível exportar: '+(error?.message||'erro desconhecido');}
           finally{backup.button.disabled=false;}
         });
+      const restore=addSettingAction('Importar backup',
+        'Recupera apresentações e vídeos de um ZIP exportado pelo Lousa Cam. Registros existentes nunca serão substituídos.',()=>{
+          if(!window.LousaCamBackupImport?.importBackup){restore.info.textContent='Módulo de importação indisponível. Confira import-backup.js.';return;}
+          const picker=document.createElement('input');picker.type='file';picker.accept='.zip,application/zip';picker.hidden=true;
+          document.body.appendChild(picker);
+          picker.addEventListener('change',async()=>{
+            const file=picker.files?.[0];picker.remove();if(!file)return;
+            if(!window.confirm('Importar o backup selecionado?\n\nApresentações e vídeos existentes serão preservados. Itens com o mesmo ID serão ignorados.'))return;
+            restore.button.disabled=true;restore.info.textContent='Verificando e importando o backup… Não feche o aplicativo.';
+            try{
+              const result=await window.LousaCamBackupImport.importBackup(file);
+              restore.info.textContent='Importação concluída: '+result.scenes.added+' apresentações e '+result.gallery.added+' vídeos adicionados. '+(result.scenes.skipped+result.gallery.skipped)+' itens já existentes preservados.';
+            }catch(error){console.error('Falha na importação:',error);restore.info.textContent='Não foi possível concluir a importação: '+(error?.message||'erro desconhecido')+'. Confira Cenas e Galeria antes de tentar novamente.';}
+            finally{restore.button.disabled=false;}
+          },{once:true});
+          picker.click();
+        });
       const helpButton=document.createElement('button');helpButton.type='button';helpButton.className='lc-settings-link';
       helpButton.textContent='Ajuda e solução de problemas  ›';helpButton.addEventListener('click',()=>showPage('help'));body.appendChild(helpButton);
     }
@@ -5717,6 +5734,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
 })();
 </script>
 <script src="./backup.js?v=20261013-1"></script>
+<script src="./import-backup.js?v=20261014-1"></script>
 <script src="./splash.js?v=20261012-3A"></script>
   
 </body>
