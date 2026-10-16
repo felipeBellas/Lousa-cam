@@ -4244,6 +4244,15 @@
 
  
 
+  // Abertura de template recém-criado, sem recarregar a câmera.
+  window.addEventListener('message', async event => {
+    if (event.origin !== window.location.origin || event.source !== window.parent) return;
+    const data = event.data;
+    if (!data || data.type !== 'lousa-cam-scenes-edit-template' || typeof data.id !== 'string') return;
+    try { await openPresentation(data.id); }
+    catch (error) { console.error('[Cenas] Falha ao abrir template:', error); }
+  });
+
   if (document.readyState === "loading") {
 
  

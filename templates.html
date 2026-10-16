@@ -47,7 +47,14 @@
     <p id="notice" hidden role="status"></p>
     <section class="models" id="models" aria-label="Biblioteca de 20 templates"></section>
   </main>
-  <script src="./scenes-storage.js"></script>
+  <script>
+  document.querySelector('a.back')?.addEventListener('click', event => {
+    if (window.parent === window) return;
+    event.preventDefault();
+    window.parent.postMessage({type:'lousa-cam-templates-close'}, window.location.origin);
+  });
+</script>
+<script src="./scenes-storage.js"></script>
   <script src="./templates.js"></script>
 </body>
 </html>

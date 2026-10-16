@@ -345,8 +345,12 @@
     button.textContent = 'Criando...';
     try {
       if (!window.ScenesStorage) throw new Error('Armazenamento de Cenas indisponível.');
-      await ScenesStorage.createPresentation(buildPresentation());
-      window.location.assign('./scenes.html');
+      const created = await ScenesStorage.createPresentation(buildPresentation());
+      if (window.parent !== window) {
+        window.parent.postMessage({type:'lousa-cam-template-created', id:created.id}, window.location.origin);
+      } else {
+        window.location.assign('./scenes.html');
+      }
     } catch (error) {
       showNotice('Não foi possível criar o template: ' + error.message);
       button.disabled = false;

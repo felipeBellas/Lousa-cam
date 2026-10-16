@@ -764,7 +764,10 @@ function closeEmbeddedLibrary() {
   libraryFrame.removeAttribute("src");
 }
 
-function openEmbeddedLibrary() {
+let templateToEdit = null;
+
+function openEmbeddedLibrary(templateId = null) {
+  templateToEdit = templateId;
   // Oculta o dock imediatamente, inclusive com Teleprompter ativo.
   // display:none evita transições de visibilidade durante a abertura.
   dock.style.setProperty("display", "none", "important");
@@ -777,6 +780,12 @@ function openEmbeddedLibrary() {
   libraryFrame.addEventListener("load", () => {
     try {
       const doc = libraryFrame.contentDocument;
+      if (templateToEdit && libraryFrame.contentWindow) {
+        libraryFrame.contentWindow.postMessage({
+          type: 'lousa-cam-scenes-edit-template', id: templateToEdit
+        }, window.location.origin);
+        templateToEdit = null;
+      }
       const back = doc && doc.getElementById("scenesBackButton");
       if (back) {
         back.addEventListener("click", event => {
@@ -954,6 +963,7 @@ function openEmbeddedLibrary() {
 
   window.ScenesCamera = Object.freeze({
 
+    openTemplate: id => openEmbeddedLibrary(id),
     openSelector: showDialog,
 
     openEditor: () => {
