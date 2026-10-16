@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+  <meta content="#F6F8F5" name="theme-color"/>
+  <title>
+   Templates — Lousa Cam
+  </title>
+  <link href="templates.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <main>
+   <header>
+    <a class="back" href="./index.html">
+     ← Voltar à câmera
+    </a>
+    <h1>
+     Templates
+    </h1>
+    <p>
+     Modelos editáveis para o Estúdio Criativo
+    </p>
+   </header>
+   <section class="toolbar">
+    <label for="orientation">
+     Formato do template
+    </label>
+    <select id="orientation">
+     <option value="9:16">
+      Vertical · 9:16
+     </option>
+     <option value="16:9">
+      Horizontal · 16:9
+     </option>
+    </select>
+   </section>
+   <p class="explain">
+    1 modelo gratuito disponível para experimentar. Os modelos PRO são prévias e serão liberados após a futura integração da assinatura. Escolha o formato antes de criar sua apresentação.
+   </p>
+   <p hidden="" id="notice" role="status">
+   </p>
+   <section aria-label="Biblioteca de templates" class="models" id="models">
+   </section>
+  </main>
+  <script src="scenes-storage.js">
+  </script>
+  <script src="templates.js">
+  </script>
+ </body>
+</html>

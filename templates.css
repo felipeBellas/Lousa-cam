@@ -1,0 +1,157 @@
+* {
+  box-sizing:border-box}
+
+body {
+  margin:0;
+  background:#F6F8F5;
+  color:#203F36;
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+
+main {
+  max-width:1150px;
+  margin:auto;
+  padding:22px 16px 60px}
+
+header {
+  padding:10px 0 16px}
+
+h1 {
+  font-size:2rem;
+  margin:20px 0 4px}
+
+header p,.explain {
+  color:#5A7268}
+
+.back {
+  color:#315B4B;
+  text-decoration:none;
+  font-weight:650}
+
+.toolbar {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  background:white;
+  padding:15px;
+  border-radius:16px;
+  border:1px solid #DCE8E0}
+
+.toolbar select {
+  font:inherit;
+  padding:9px;
+  border-radius:10px;
+  border:1px solid #B8CDC0;
+  background:#fff;
+  color:#24493C}
+
+.explain {
+  line-height:1.5}
+
+.models {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(225px,1fr));
+  gap:18px}
+
+.template-card {
+  background:#fff;
+  border:1px solid #DDE9E1;
+  border-radius:19px;
+  padding:14px;
+  box-shadow:0 5px 18px #244a3910;
+  display:flex;
+  flex-direction:column}
+
+.preview {
+  margin:auto;
+  max-width:100%;
+  background:linear-gradient(150deg,#DDEDE5,#F6F8F5);
+  border:1px solid #B9D1C4;
+  border-radius:13px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:14px;
+  color:#315B4B}
+
+.preview.portrait {
+  width:132px;
+  aspect-ratio:9/16}
+
+.preview.landscape {
+  width:100%;
+  aspect-ratio:16/9}
+
+.preview-head,.preview-foot {
+  font-size:9px;
+  letter-spacing:1px}
+
+.preview-main {
+  display:grid;
+  gap:8px}
+
+.preview-main strong {
+  font-size:16px;
+  overflow-wrap:anywhere}
+
+.preview-main span {
+  font-size:11px}
+
+.template-info {
+  display:flex;
+  flex-direction:column;
+  flex:1}
+
+.template-meta {
+  display:flex;
+  justify-content:space-between;
+  margin-top:12px;
+  font-size:12px;
+  color:#5C786A}
+
+.template-meta b {
+  padding:3px 8px;
+  border-radius:8px}
+
+.free {
+  background:#E1F4E8;
+  color:#226343}
+
+.pro {
+  background:#EAE7F5;
+  color:#655385}
+
+h2 {
+  font-size:16px;
+  margin:9px 0 2px}
+
+.template-info p {
+  font-size:13px;
+  color:#667A70;
+  line-height:1.45;
+  flex:1}
+
+.template-info button {
+  border:0;
+  border-radius:12px;
+  padding:12px;
+  font-weight:700;
+  background:#376B55;
+  color:white;
+  cursor:pointer}
+
+.template-info button:disabled {
+  background:#E7ECE9;
+  color:#72867B;
+  cursor:default}
+
+#notice {
+  background:#E1F4E8;
+  border-radius:12px;
+  padding:14px}
+
+@media(min-width:700px) {
+  main {
+  padding-top:35px}
+
+}
