@@ -4,6 +4,12 @@
   function initSplash() {
     var splash = document.getElementById('lcSplash');
     if (!splash) return;
+    // Retorno interno de Cenas/Templates: não repetir animação de abertura.
+    // A câmera continua sob controle do fluxo original do app.js.
+    if (new URLSearchParams(window.location.search).get('camera') === '1') {
+      splash.remove();
+      return;
+    }
     var pen = splash.querySelector('#lcMovingPen');
     var name = splash.querySelector('#lcNameReveal');
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -189,6 +189,8 @@
   const gallery = $('models');
   const notice = $('notice');
   let ratio = '9:16';
+  let backgroundMode = 'transparent';
+  let backgroundColor = '#191A29';
 
   const palettes = [
     { name: 'Pop', colors: ['#C6FF42', '#FF65B7', '#21D4E8', '#FFFFFF'] },
@@ -210,8 +212,9 @@
 
   function preview(model, index) {
     const colors = index === 0 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
-    const colorStyle = colors.length ? `style="--accent:${colors[0]};--accent2:${colors[1]};--accent3:${colors[2]}"` : '';
-    return `<div class="preview ${ratio === '9:16' ? 'portrait' : 'landscape'} style-${esc(model.style)}" ${colorStyle}>
+    const bgStyle = index === 0 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
+    const previewClass = index === 0 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
+    return `<div class="preview${previewClass} ${ratio === '9:16' ? 'portrait' : 'landscape'} style-${esc(model.style)}" style="${colors.length ? `--accent:${colors[0]};--accent2:${colors[1]};--accent3:${colors[2]};` : ''}${bgStyle}">
       <div class="preview-decoration decoration-one"></div>
       <div class="preview-decoration decoration-two"></div>
       <div class="preview-decoration decoration-three"></div>
@@ -295,18 +298,30 @@
       text('Segue para mais!', portrait ? 60 : 160,
         portrait ? 590 : 370, portrait ? 600 : 960, 90, portrait ? 42 : 52, white)
     ];
+    const sceneBackground = backgroundMode === 'solid'
+      ? { type: 'solid', color: backgroundColor }
+      : { type: 'transparent' };
     return {
       title: `Bora Criar! — ${ratio}`,
       aspectRatio: ratio,
       templateId: 'bora-criar',
       scenes: [
-        { title: 'Abertura', background: { type: 'transparent' }, elements: opening },
-        { title: 'Conteúdo', background: { type: 'transparent' }, elements: content },
-        { title: 'Encerramento', background: { type: 'transparent' }, elements: ending }
+        { title: 'Abertura', background: { ...sceneBackground }, elements: opening },
+        { title: 'Conteúdo', background: { ...sceneBackground }, elements: content },
+        { title: 'Encerramento', background: { ...sceneBackground }, elements: ending }
       ]
     };
   }
 
+  $('backgroundMode').addEventListener('change', event => {
+    backgroundMode = event.target.value === 'solid' ? 'solid' : 'transparent';
+    $('backgroundColorLabel').hidden = backgroundMode !== 'solid';
+    render();
+  });
+  $('backgroundColor').addEventListener('input', event => {
+    backgroundColor = event.target.value;
+    render();
+  });
   $('orientation').addEventListener('change', event => {
     ratio = event.target.value;
     render();

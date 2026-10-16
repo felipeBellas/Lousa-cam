@@ -10,7 +10,7 @@
 <body>
   <main>
     <header>
-      <a class="back" href="./index.html">← Voltar à câmera</a>
+      <a class="back" href="./index.html?camera=1">← Voltar à câmera</a>
       <h1>Templates</h1>
       <p>20 estilos para criar com personalidade.</p>
     </header>
@@ -30,11 +30,20 @@
           <option value="4">Classic</option>
         </select>
       </label>
+      <label for="backgroundMode">Fundo das cenas
+        <select id="backgroundMode">
+          <option value="transparent">Transparente</option>
+          <option value="solid">Cor sólida</option>
+        </select>
+      </label>
+      <label for="backgroundColor" id="backgroundColorLabel" hidden>Cor do fundo
+        <input id="backgroundColor" type="color" value="#191A29">
+      </label>
       <label for="customColor">Cor principal
         <input id="customColor" type="color" value="#C6FF42">
       </label>
     </section>
-    <p class="explain">O <strong>Bora Criar!</strong> é gratuito, editável e possui três cenas com fundo transparente. Os outros 19 modelos são prévias PRO: sua edição será disponibilizada após o desenvolvimento e a integração de compras.</p>
+    <p class="explain">O <strong>Bora Criar!</strong> é gratuito, editável e possui três cenas com fundo transparente ou cor escolhida por você. Os outros 19 modelos são prévias PRO: sua edição será disponibilizada após o desenvolvimento e a integração de compras.</p>
     <p id="notice" hidden role="status"></p>
     <section class="models" id="models" aria-label="Biblioteca de 20 templates"></section>
   </main>
