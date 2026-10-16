@@ -3639,6 +3639,18 @@ body.teleprompter-active
 /* Biologia descontinuada: ocultação segura dos controles antigos.
    Os IDs permanecem no DOM até a revisão de app.js, evitando regressões. */
 #biologyButton, #biologyPanel { display: none !important; }
+
+/* LOUSA CAM — ESTÚDIO CRIATIVO: SOMENTE INTERFACE DO MENU */
+#lcCascadeMenu .lc-studio-option{width:100%;height:auto;min-height:86px;margin:0 0 12px;padding:14px;display:flex;align-items:center;gap:13px;text-align:left;border:1px solid #C8DED2;border-radius:17px;background:rgba(221,237,229,.48);color:inherit;box-shadow:none;cursor:pointer;}
+#lcCascadeMenu .lc-studio-symbol{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:#DDEDE5;color:#263B32;font-size:23px;}
+#lcCascadeMenu .lc-studio-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+#lcCascadeMenu .lc-studio-copy strong{font-size:15px;}
+#lcCascadeMenu .lc-studio-copy>span:not(.lc-studio-soon){font-size:12px;line-height:1.45;opacity:.78;}
+#lcCascadeMenu .lc-studio-arrow{font-size:24px;opacity:.7;}
+#lcCascadeMenu .lc-studio-soon{align-self:flex-start;margin-top:5px;padding:3px 9px;border-radius:20px;background:rgba(120,140,130,.15);font-size:11px;font-weight:650;}
+#lcCascadeMenu .lc-studio-option:disabled{opacity:.75;cursor:default;}
+#lcCascadeMenu.lc-cascade-dark .lc-studio-option{background:rgba(246,248,245,.09);border-color:rgba(221,237,229,.28);color:#F6F8F5;}
+
 </style>
 
   <link
@@ -4889,7 +4901,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
       <button type="button" class="lc-cascade-close" id="lcCascadeClose" aria-label="Fechar menu">×</button>
     </div>
     <div id="lcCascadeHome">
-      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:35ms" data-lc-page="account"><span class="lc-cascade-symbol">♙</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Sua conta / Login</span><span class="lc-cascade-description">Entrar, cadastrar-se ou gerenciar conta</span><span class="lc-cascade-chip">Plano Free · não verificado</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:35ms" data-lc-page="studio"><span class="lc-cascade-symbol">▣</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Estúdio Criativo</span><span class="lc-cascade-description">Cenas, Templates, Molduras e elementos</span></span><span class="lc-cascade-chevron">›</span></button>
       <div class="lc-cascade-section lc-cascade-animate" style="--lc-delay:75ms">PERSONALIZAÇÃO</div>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:105ms" data-lc-page="language"><span class="lc-cascade-symbol">🌐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Idioma</span><span class="lc-cascade-description">Português, English, Español</span></span><span class="lc-cascade-chevron">›</span></button>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:145ms" data-lc-page="theme"><span class="lc-cascade-symbol">◐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Tema</span><span class="lc-cascade-description">Claro / Escuro / Sistema</span></span><span class="lc-cascade-chevron">›</span></button>
@@ -5495,7 +5507,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   const subtitle=document.getElementById('lcCascadeSubtitle');
   const trigger=document.getElementById('glassMenuButton');
   const pages={
-    account:['Sua conta / Login','O login e o cadastro serão integrados em uma etapa futura. Ainda não há uma conta autenticada ou plano verificado nesta interface.'],
+    studio:['Estúdio Criativo','Crie apresentações e explore os próximos recursos visuais do Lousa Cam.'],
     language:['Idioma','A seleção de idioma e a tradução completa do aplicativo estão em preparação. Idioma atual da interface: Português (Brasil).'],
     theme:['Tema','Escolha a aparência do Lousa Cam: Menu, Galeria e Cenas.'],
     settings:['Configurações','Personalize a experiência do Lousa Cam. Os ajustes de câmera e gravação continuam nos controles da câmera.'],
@@ -5532,6 +5544,41 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
     home.hidden=true;detail.hidden=false;title.textContent=page[0];subtitle.textContent='Menu · Lousa Cam';
     body.replaceChildren();
     const p=document.createElement('p');p.textContent=page[1];body.appendChild(p);
+    if(key==='studio'){
+      body.replaceChildren();
+      const entries=[
+        {name:'Cenas',description:'Criar e editar suas próprias apresentações.',symbol:'▣',ready:true},
+        {name:'Templates',description:'Sequências editáveis para utilizar na câmera.',symbol:'▤',ready:false},
+        {name:'Molduras e elementos',description:'Títulos, faixas, identificações e sobreposições.',symbol:'▧',ready:false}
+      ];
+      entries.forEach(item=>{
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='lc-studio-option';
+        const symbol=document.createElement('span');symbol.className='lc-studio-symbol';symbol.textContent=item.symbol;
+        const copy=document.createElement('span');copy.className='lc-studio-copy';
+        const name=document.createElement('strong');name.textContent=item.name;
+        const description=document.createElement('span');description.textContent=item.description;
+        copy.append(name,description);
+        button.append(symbol,copy);
+        if(item.ready){
+          const arrow=document.createElement('span');arrow.className='lc-studio-arrow';arrow.textContent='›';button.appendChild(arrow);
+          button.addEventListener('click',()=>{
+            const scenesButton=document.getElementById('glassScenesButton');
+            close();
+            window.setTimeout(()=>{
+              if(scenesButton)scenesButton.click();
+            },220);
+          });
+        }else{
+          button.disabled=true;
+          button.setAttribute('aria-label',item.name+' — em desenvolvimento');
+          const chip=document.createElement('span');chip.className='lc-studio-soon';chip.textContent='Em desenvolvimento';
+          copy.appendChild(chip);
+        }
+        body.appendChild(button);
+      });
+    }
     if(key==='theme'){
       [['light','Claro'],['dark','Escuro'],['system','Sistema']].forEach(([value,label])=>{
         const row=document.createElement('button');
