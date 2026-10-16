@@ -1,51 +1,44 @@
 <!doctype html>
 <html lang="pt-BR">
- <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
-  <meta content="#F6F8F5" name="theme-color"/>
-  <title>
-   Templates — Lousa Cam
-  </title>
-  <link href="templates.css" rel="stylesheet"/>
- </head>
- <body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F6F8F5">
+  <title>Templates — Lousa Cam</title>
+  <link rel="stylesheet" href="./templates.css">
+</head>
+<body>
   <main>
-   <header>
-    <a class="back" href="./index.html">
-     ← Voltar à câmera
-    </a>
-    <h1>
-     Templates
-    </h1>
-    <p>
-     Modelos editáveis para o Estúdio Criativo
-    </p>
-   </header>
-   <section class="toolbar">
-    <label for="orientation">
-     Formato do template
-    </label>
-    <select id="orientation">
-     <option value="9:16">
-      Vertical · 9:16
-     </option>
-     <option value="16:9">
-      Horizontal · 16:9
-     </option>
-    </select>
-   </section>
-   <p class="explain">
-    1 modelo gratuito disponível para experimentar. Os modelos PRO são prévias e serão liberados após a futura integração da assinatura. Escolha o formato antes de criar sua apresentação.
-   </p>
-   <p hidden="" id="notice" role="status">
-   </p>
-   <section aria-label="Biblioteca de templates" class="models" id="models">
-   </section>
+    <header>
+      <a class="back" href="./index.html">← Voltar à câmera</a>
+      <h1>Templates</h1>
+      <p>20 estilos para criar com personalidade.</p>
+    </header>
+    <section class="toolbar" aria-label="Personalização do template gratuito">
+      <label for="orientation">Orientação
+        <select id="orientation">
+          <option value="9:16">Vertical · 9:16</option>
+          <option value="16:9">Horizontal · 16:9</option>
+        </select>
+      </label>
+      <label for="palette">Paleta do Bora Criar!
+        <select id="palette">
+          <option value="0">Pop</option>
+          <option value="1">Sunset</option>
+          <option value="2">Ocean</option>
+          <option value="3">Candy</option>
+          <option value="4">Classic</option>
+        </select>
+      </label>
+      <label for="customColor">Cor principal
+        <input id="customColor" type="color" value="#C6FF42">
+      </label>
+    </section>
+    <p class="explain">O <strong>Bora Criar!</strong> é gratuito, editável e possui três cenas com fundo transparente. Os outros 19 modelos são prévias PRO: sua edição será disponibilizada após o desenvolvimento e a integração de compras.</p>
+    <p id="notice" hidden role="status"></p>
+    <section class="models" id="models" aria-label="Biblioteca de 20 templates"></section>
   </main>
-  <script src="scenes-storage.js">
-  </script>
-  <script src="templates.js">
-  </script>
- </body>
+  <script src="./scenes-storage.js"></script>
+  <script src="./templates.js"></script>
+</body>
 </html>
