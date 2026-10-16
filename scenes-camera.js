@@ -232,6 +232,27 @@
       right: max(8px, env(safe-area-inset-right));
     }
 
+    /* Fechar somente a apresentação aplicada, sem apagar o projeto. */
+    #scenesCameraClose {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
+      z-index: 37;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 0 13px;
+      border: 1px solid rgba(255,255,255,.30);
+      border-radius: 13px;
+      background: rgba(20,23,30,.75);
+      color: #fff;
+      font: 600 13px system-ui, sans-serif;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
     #scenesCameraPrev:disabled,
     #scenesCameraNext:disabled {
       opacity: .24;
@@ -432,6 +453,13 @@
   app.appendChild(prev);
   app.appendChild(next);
 
+  const closeScenesButton = document.createElement("button");
+  closeScenesButton.id = "scenesCameraClose";
+  closeScenesButton.type = "button";
+  closeScenesButton.textContent = "✕ Fechar cena";
+  closeScenesButton.setAttribute("aria-label", "Remover apresentação da câmera sem excluir o projeto");
+  app.appendChild(closeScenesButton);
+
   /* =====================================================
      SELETOR DE APRESENTAÇÕES
      ===================================================== */
@@ -537,6 +565,7 @@
     document.getElementById("galleryLayer");
 
   let scenesVisible = false;
+  let activePresentationId = null;
   let opening = false;
   let selectionGeneration = 0;
 
@@ -571,6 +600,9 @@
     next.style.display =
       visible ? "flex" : "none";
 
+    closeScenesButton.style.display =
+      visible ? "flex" : "none";
+
     prev.disabled = !state.hasPrevious;
     next.disabled = !state.hasNext;
 
@@ -599,6 +631,16 @@
 
     dialog.style.display = "none";
   }
+
+  function closeActivePresentation() {
+    scenesVisible = false;
+    activePresentationId = null;
+    hideDialog();
+    Player.closePresentation();
+    syncVisibility();
+  }
+
+  closeScenesButton.addEventListener("click", closeActivePresentation);
 
   function suspendScenes() {
 
@@ -692,6 +734,7 @@
 
       if (loaded) {
 
+        activePresentationId = id;
         scenesVisible = true;
 
         hideDialog();
@@ -802,8 +845,12 @@ function openEmbeddedLibrary(templateId = null) {
     if (event.origin !== window.location.origin ||
         event.source !== libraryFrame.contentWindow) return;
     const data = event.data;
-    if (!data || data.type !== "lousa-cam-scenes-present" ||
-        typeof data.id !== "string") return;
+    if (!data || typeof data.id !== "string") return;
+    if (data.type === "lousa-cam-scenes-deleted") {
+      if (data.id === activePresentationId) closeActivePresentation();
+      return;
+    }
+    if (data.type !== "lousa-cam-scenes-present") return;
     closeEmbeddedLibrary();
     openPresentation(data.id);
   });
@@ -861,6 +908,7 @@ function openEmbeddedLibrary(templateId = null) {
     () => {
 
       scenesVisible = false;
+      activePresentationId = null;
 
       syncVisibility();
     }
@@ -972,16 +1020,7 @@ function openEmbeddedLibrary(templateId = null) {
 
     },
 
-    close: () => {
-
-      scenesVisible = false;
-
-      hideDialog();
-
-      Player.closePresentation();
-
-      syncVisibility();
-    }
+    close: closeActivePresentation
 
   });
 

@@ -1182,6 +1182,16 @@
 
             await Storage.deletePresentation(item.id);
 
+            // Informa à câmera integrada que a apresentação foi excluída.
+            // Só fecha a sobreposição quando o ID excluído é o que está ativo.
+            if (window.parent !== window) {
+              window.parent.postMessage({
+                type: "lousa-cam-scenes-deleted",
+                id: item.id
+              }, window.location.origin);
+            }
+
+
             await renderLibrary();
 
  
