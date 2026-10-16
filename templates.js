@@ -32,7 +32,7 @@ function text(id,text,x,y,width,height,fontSize,color,align='center',weight='bol
 function buildPresentation(m){
  const portrait=ratio==='9:16', w=portrait?720:1280,h=portrait?1280:720;
  const id=()=>ScenesStorage.createId('element');
- const bg='#DDEDE5',ink='#23483C',muted='#4F7264';
+ const ink='#23483C',muted='#4F7264';
  const elements=portrait?[
  text(id(),m[3],55,310,610,135,70,ink),
  text(id(),m[4],65,475,590,115,42,muted),
@@ -42,9 +42,9 @@ function buildPresentation(m){
  text(id(),m[4],90,315,760,100,44,muted,'left'),
  text(id(),'LOUSA CAM',925,590,270,60,25,ink)
  ];
- return {title:`${m[0]} — ${ratio}`,aspectRatio:ratio,scenes:[{title:'Abertura',background:{type:'solid',color:bg},elements},{title:'Conteúdo',background:{type:'solid',color:'#F6F8F5'},elements:portrait?[
+ return {title:`${m[0]} — ${ratio}`,aspectRatio:ratio,scenes:[{title:'Abertura',background:{type:'transparent'},elements},{title:'Conteúdo',background:{type:'transparent'},elements:portrait?[
  text(id(),'SEU CONTEÚDO',50,190,620,120,57,ink),text(id(),'Toque para editar o texto',65,390,590,110,34,muted)
- ]:[text(id(),'SEU CONTEÚDO',80,180,1100,110,68,ink),text(id(),'Toque para editar o texto',90,325,1080,90,37,muted)]},{title:'Encerramento',background:{type:'solid',color:bg},elements:portrait?[text(id(),'OBRIGADO!',60,410,600,120,70,ink),text(id(),'Até a próxima',70,580,580,100,40,muted)]:[text(id(),'OBRIGADO!',100,225,1080,120,85,ink),text(id(),'Até a próxima',110,380,1060,85,44,muted)]}]};
+ ]:[text(id(),'SEU CONTEÚDO',80,180,1100,110,68,ink),text(id(),'Toque para editar o texto',90,325,1080,90,37,muted)]},{title:'Encerramento',background:{type:'transparent'},elements:portrait?[text(id(),'OBRIGADO!',60,410,600,120,70,ink),text(id(),'Até a próxima',70,580,580,100,40,muted)]:[text(id(),'OBRIGADO!',100,225,1080,120,85,ink),text(id(),'Até a próxima',110,380,1060,85,44,muted)]}]};
 }
 $('orientation').addEventListener('change',e=>{ratio=e.target.value;render();});
 gallery.addEventListener('click',async e=>{
