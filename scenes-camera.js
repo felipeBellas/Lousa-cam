@@ -235,7 +235,8 @@
     /* Fechar somente a apresentação aplicada, sem apagar o projeto. */
     #scenesCameraClose {
       position: absolute;
-      top: max(12px, env(safe-area-inset-top));
+      /* Abaixo da barra superior, sem cobrir o botão Aa. */
+      top: calc(env(safe-area-inset-top) + 76px);
       right: max(12px, env(safe-area-inset-right));
       z-index: 37;
       display: none;
@@ -244,10 +245,13 @@
       gap: 6px;
       min-height: 40px;
       padding: 0 13px;
-      border: 1px solid rgba(255,255,255,.30);
+      border: 1px solid rgba(100, 140, 120, .32);
       border-radius: 13px;
-      background: rgba(20,23,30,.75);
-      color: #fff;
+      background: rgba(246, 248, 245, .88);
+      color: #263d33;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       font: 600 13px system-ui, sans-serif;
       cursor: pointer;
       touch-action: manipulation;
