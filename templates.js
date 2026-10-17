@@ -211,9 +211,9 @@
   }
 
   function preview(model, index) {
-    const colors = index <= 4 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
-    const bgStyle = index <= 4 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
-    const previewClass = index <= 4 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
+    const colors = index <= 8 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
+    const bgStyle = index <= 8 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
+    const previewClass = index <= 8 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
     return `<div class="preview${previewClass} ${ratio === '9:16' ? 'portrait' : 'landscape'} style-${esc(model.style)}" style="${colors.length ? `--accent:${colors[0]};--accent2:${colors[1]};--accent3:${colors[2]};` : ''}${bgStyle}">
       <div class="preview-decoration decoration-one"></div>
       <div class="preview-decoration decoration-two"></div>
@@ -230,7 +230,7 @@
       const card = document.createElement('article');
       card.className = 'template-card';
       const free = model.tier === 'free';
-      const testable = index >= 1 && index <= 4;
+      const testable = index >= 1 && index <= 8;
       card.innerHTML = `${preview(model, index)}
         <div class="template-info">
           <div class="template-meta"><span>${esc(model.category)}</span><b class="${free ? 'free' : 'pro'}">${free ? 'FREE' : 'PRO'}</b></div>
@@ -444,6 +444,121 @@
             label('MINIMAL BLACK', white)
           ])
         ]
+      },
+      5: {
+        id: 'podcast-show',
+        scenes: [
+          scene('Podcast · Abertura', [
+            sh('ellipse', 220, 205, 280, 280, accent, .22),
+            sh('rounded', 305, 235, 110, 245, secondary, .92),
+            sh('rounded', 265, 330, 190, 150, tertiary, .9),
+            sh('rounded', 170, 455, 380, 22, accent, .95),
+            t('PODCAST', 55, 565, 610, 145, 88, white),
+            t('CONVERSA DE VERDADE', 65, 705, 590, 90, 35, secondary),
+            label('EPISÓDIO • 01', white)
+          ]),
+          scene('Podcast · Episódio', [
+            sh('rounded', 75, 285, 570, 610, white, .13),
+            sh('rounded', 100, 355, 520, 18, secondary, .9),
+            t('EP. 01', 90, 430, 540, 105, 54, accent),
+            t('UM PAPO\nQUE INSPIRA', 70, 535, 580, 220, 70, white),
+            t('Convidado: seu nome aqui', 90, 775, 540, 90, 32, secondary),
+            label('PODCAST SHOW', white)
+          ]),
+          scene('Podcast · Encerramento', [
+            sh('ellipse', 430, 250, 155, 155, secondary, .8),
+            sh('rounded', 90, 800, 540, 20, accent, .95),
+            t('VALEU POR\nOUVIR!', 60, 435, 600, 240, 86, white),
+            t('Até o próximo episódio', 85, 700, 550, 90, 38, secondary),
+            label('SIGA • COMPARTILHE', white)
+          ])
+        ]
+      },
+      6: {
+        id: 'vlog-diario',
+        scenes: [
+          scene('Vlog · Abertura', [
+            sh('rounded', 90, 260, 540, 610, accent, .18, -4),
+            sh('rounded', 115, 300, 490, 130, secondary, .9, 3),
+            t('MEU DIA', 65, 455, 590, 155, 100, white),
+            t('VEM COMIGO!', 75, 625, 570, 105, 50, accent),
+            label('VLOG DIÁRIO • 01', white)
+          ]),
+          scene('Vlog · Momentos', [
+            sh('rounded', 75, 295, 570, 190, secondary, .75, -3),
+            sh('rounded', 75, 535, 570, 190, tertiary, .7, 3),
+            sh('rounded', 75, 775, 570, 190, accent, .65, -2),
+            t('MANHÃ', 95, 335, 530, 110, 58, white),
+            t('TARDE', 95, 575, 530, 110, 58, white),
+            t('NOITE', 95, 815, 530, 110, 58, white),
+            label('3 MOMENTOS DO MEU DIA', white)
+          ]),
+          scene('Vlog · Encerramento', [
+            sh('ellipse', 465, 235, 140, 140, secondary, .8),
+            sh('rounded', 100, 820, 520, 20, accent, .95),
+            t('ATÉ AMANHÃ!', 50, 455, 620, 165, 78, white),
+            t('Obrigado por acompanhar', 70, 650, 580, 100, 36, secondary),
+            label('VLOG DIÁRIO', white)
+          ])
+        ]
+      },
+      7: {
+        id: 'reels-impacto',
+        scenes: [
+          scene('Reels · Gancho', [
+            sh('rounded', 65, 280, 590, 18, accent, .95, -5),
+            sh('rounded', 65, 875, 590, 18, secondary, .95, 5),
+            sh('ellipse', 465, 190, 135, 135, tertiary, .85),
+            t('OLHA\nISSO!', 45, 420, 630, 280, 128, white),
+            t('VOCÊ PRECISA VER', 65, 710, 590, 100, 42, accent),
+            label('REELS • IMPACTO', white)
+          ]),
+          scene('Reels · Destaque', [
+            sh('rounded', 85, 300, 550, 650, white, .12),
+            sh('rounded', 115, 390, 490, 20, tertiary, .95),
+            t('3 DICAS', 70, 470, 580, 145, 92, accent),
+            t('RÁPIDAS', 70, 615, 580, 145, 88, white),
+            t('Salve para ver depois', 90, 790, 540, 85, 34, secondary),
+            label('CONTEÚDO DIRETO AO PONTO', white)
+          ]),
+          scene('Reels · Chamada', [
+            sh('ellipse', 90, 255, 155, 155, secondary, .85),
+            sh('rounded', 95, 835, 530, 22, accent, .95),
+            t('CURTIU?', 55, 450, 610, 155, 105, white),
+            t('COMENTA AQUI ↓', 60, 625, 600, 115, 48, accent),
+            label('COMPARTILHE • SIGA', white)
+          ])
+        ]
+      },
+      8: {
+        id: 'top-5',
+        scenes: [
+          scene('Top 5 · Abertura', [
+            sh('ellipse', 465, 200, 145, 145, secondary, .85),
+            sh('rounded', 90, 330, 540, 95, accent, .95, -4),
+            t('TOP 5', 55, 455, 610, 185, 145, white),
+            t('MINHAS ESCOLHAS', 65, 650, 590, 100, 42, secondary),
+            label('RANKING • LISTA', white)
+          ]),
+          scene('Top 5 · Ranking', [
+            sh('rounded', 95, 315, 530, 125, accent, .85),
+            sh('rounded', 95, 475, 530, 125, secondary, .85),
+            sh('rounded', 95, 635, 530, 125, tertiary, .85),
+            sh('rounded', 95, 795, 530, 125, white, .18),
+            t('01  PRIMEIRO', 115, 330, 490, 95, 43, white, 'left'),
+            t('02  SEGUNDO', 115, 490, 490, 95, 43, white, 'left'),
+            t('03  TERCEIRO', 115, 650, 490, 95, 43, white, 'left'),
+            t('04  QUARTO', 115, 810, 490, 95, 43, white, 'left'),
+            label('EDITE OS ITENS NO EDITOR', white)
+          ]),
+          scene('Top 5 · Fechamento', [
+            sh('rounded', 90, 345, 540, 100, tertiary, .9),
+            t('E O Nº 1?', 55, 465, 610, 155, 100, white),
+            t('Qual é o seu favorito?', 65, 650, 590, 105, 40, accent),
+            t('Comente sua escolha', 70, 785, 580, 80, 32, secondary),
+            label('TOP 5', white)
+          ])
+        ]
       }
     };
     const selected = configs[modelIndex];
@@ -483,7 +598,7 @@
     const button = event.target.closest('button[data-model]');
     if (!button || button.disabled) return;
     const model = models[Number(button.dataset.model)];
-    if (!model || (model.tier !== 'free' && ![1, 2, 3, 4].includes(Number(button.dataset.model)))) return;
+    if (!model || (model.tier !== 'free' && ![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(button.dataset.model)))) return;
     button.disabled = true;
     button.textContent = 'Criando...';
     try {
