@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  // Catálogo PRO: prévias bloqueadas até a futura integração de compras.
-  // Não conceder acesso PRO somente por um valor armazenado no navegador.
+  // Quatro modelos PRO disponíveis exclusivamente para testes nesta etapa.
+  // Esta interface não comprova assinatura nem concede acesso comercial PRO.
   const models = [
   {
     "name": "Bora Criar!",
@@ -211,9 +211,9 @@
   }
 
   function preview(model, index) {
-    const colors = index === 0 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
-    const bgStyle = index === 0 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
-    const previewClass = index === 0 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
+    const colors = index <= 4 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
+    const bgStyle = index <= 4 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
+    const previewClass = index <= 4 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
     return `<div class="preview${previewClass} ${ratio === '9:16' ? 'portrait' : 'landscape'} style-${esc(model.style)}" style="${colors.length ? `--accent:${colors[0]};--accent2:${colors[1]};--accent3:${colors[2]};` : ''}${bgStyle}">
       <div class="preview-decoration decoration-one"></div>
       <div class="preview-decoration decoration-two"></div>
@@ -230,12 +230,14 @@
       const card = document.createElement('article');
       card.className = 'template-card';
       const free = model.tier === 'free';
+      const testable = index >= 1 && index <= 4;
       card.innerHTML = `${preview(model, index)}
         <div class="template-info">
           <div class="template-meta"><span>${esc(model.category)}</span><b class="${free ? 'free' : 'pro'}">${free ? 'FREE' : 'PRO'}</b></div>
           <h2>${esc(model.name)}</h2>
           <p>${esc(model.desc)}</p>
           ${free ? `<button type="button" data-model="${index}">Usar template</button>`
+            : testable ? `<button type="button" data-model="${index}">Testar modelo PRO</button>`
             : '<button type="button" disabled title="Aguarda integração da assinatura">PRO · Em preparação</button>'}
         </div>`;
       gallery.appendChild(card);
@@ -313,6 +315,147 @@
     };
   }
 
+  // Modelos de teste: elementos nativos do editor, sem imagens externas.
+  // Coordenadas acompanham o sistema de dimensões 720x1280 / 1280x720.
+  function buildProPresentation(modelIndex) {
+    const portrait = ratio === '9:16';
+    const W = portrait ? 720 : 1280;
+    const H = portrait ? 1280 : 720;
+    const sx = W / 720;
+    const sy = H / 1280;
+    const [accent, secondary, tertiary] = [customColor, ...palettes[paletteIndex].colors.slice(1)];
+    const white = '#FFFFFF';
+    const ink = '#11131A';
+    const at = (x, y, w, h) => [Math.round(x * sx), Math.round(y * sy), Math.round(w * sx), Math.round(h * sy)];
+    const t = (value, x, y, w, h, size, color, align = 'center') =>
+      text(value, ...at(x, y, w, h), Math.round(size * Math.min(sx, sy) * (portrait ? 1 : 1.12)), color, align);
+    const sh = (kind, x, y, w, h, color, opacity = 1, rotation = 0) =>
+      shape(kind, ...at(x, y, w, h), color, opacity, rotation);
+    const bg = () => backgroundMode === 'solid'
+      ? { type: 'solid', color: backgroundColor }
+      : { type: 'transparent' };
+    const scene = (title, elements) => ({ title, background: bg(), elements });
+    const label = (value, color = white) => t(value, 90, 1120, 540, 55, 28, color);
+    const configs = {
+      1: {
+        id: 'neon-creator',
+        scenes: [
+          scene('Neon · Abertura', [
+            sh('rounded', 100, 230, 520, 80, tertiary, .85, -8),
+            sh('ellipse', 430, 95, 190, 190, secondary, .85),
+            sh('rounded', 80, 845, 550, 24, accent, .95, 8),
+            t('ON AIR', 55, 405, 610, 170, 112, accent),
+            t('ENERGIA EM CADA VÍDEO', 55, 600, 610, 110, 38, white),
+            label('NEON CREATOR', secondary)
+          ]),
+          scene('Neon · Mensagem', [
+            sh('ellipse', 45, 180, 160, 160, secondary, .85),
+            sh('rounded', 100, 350, 520, 22, tertiary, .9, -5),
+            t('SUA IDEIA', 45, 465, 630, 155, 88, accent),
+            t('BRILHA AQUI', 45, 625, 630, 135, 70, white),
+            label('PERSONALIZE SUA MENSAGEM', secondary)
+          ]),
+          scene('Neon · Encerramento', [
+            sh('ellipse', 430, 250, 185, 185, tertiary, .9),
+            sh('rounded', 100, 825, 520, 22, secondary, .95, 6),
+            t('CURTIU?', 55, 455, 610, 155, 104, accent),
+            t('SIGA PARA MAIS', 50, 640, 620, 110, 48, white),
+            label('ATÉ A PRÓXIMA', secondary)
+          ])
+        ]
+      },
+      2: {
+        id: 'glass-studio',
+        scenes: [
+          scene('Glass · Abertura', [
+            sh('rounded', 72, 310, 576, 500, white, .20),
+            sh('ellipse', 445, 195, 165, 165, tertiary, .60),
+            sh('ellipse', 95, 850, 180, 180, accent, .50),
+            t('GLASS', 85, 435, 550, 120, 88, white),
+            t('STUDIO', 85, 555, 550, 110, 80, accent),
+            t('UM NOVO OLHAR', 100, 695, 520, 70, 35, white),
+            label('LOUSA CAM', white)
+          ]),
+          scene('Glass · Conteúdo', [
+            sh('rounded', 65, 260, 590, 720, white, .16),
+            sh('rounded', 95, 320, 530, 125, tertiary, .36),
+            t('SUA MENSAGEM', 105, 480, 510, 135, 66, white),
+            t('Clareza e criatividade', 100, 640, 520, 110, 40, accent),
+            sh('rounded', 125, 790, 470, 15, white, .48),
+            label('GLASS STUDIO', white)
+          ]),
+          scene('Glass · Encerramento', [
+            sh('rounded', 78, 370, 564, 450, white, .20),
+            sh('ellipse', 430, 225, 175, 175, accent, .65),
+            t('OBRIGADO!', 85, 460, 550, 150, 75, white),
+            t('ATÉ BREVE', 100, 640, 520, 95, 45, accent),
+            label('GLASS STUDIO', white)
+          ])
+        ]
+      },
+      3: {
+        id: 'pop-motion',
+        scenes: [
+          scene('Pop · Abertura', [
+            sh('ellipse', 450, 165, 185, 185, secondary, .95),
+            sh('rounded', 55, 320, 610, 105, tertiary, .95, -8),
+            sh('rounded', 75, 850, 560, 90, accent, .95, 9),
+            t('POP!', 55, 440, 610, 200, 150, accent),
+            t('CRIE SEM LIMITES', 60, 660, 600, 105, 45, white),
+            label('POP MOTION', secondary)
+          ]),
+          scene('Pop · Conteúdo', [
+            sh('rounded', 75, 260, 570, 85, accent, .9, 6),
+            sh('ellipse', 80, 815, 155, 155, tertiary, .95),
+            sh('ellipse', 475, 840, 145, 145, secondary, .95),
+            t('NOVA IDEIA!', 45, 440, 630, 150, 83, white),
+            t('COLOQUE SEU TEXTO', 55, 620, 610, 100, 42, accent),
+            label('COR • ENERGIA • MOVIMENTO', white)
+          ]),
+          scene('Pop · Encerramento', [
+            sh('rounded', 65, 305, 590, 110, secondary, .9, -7),
+            sh('ellipse', 430, 835, 175, 175, tertiary, .95),
+            t('UHU!', 50, 460, 620, 160, 125, accent),
+            t('VEM MAIS POR AÍ', 50, 660, 620, 100, 47, white),
+            label('POP MOTION', secondary)
+          ])
+        ]
+      },
+      4: {
+        id: 'minimal-black',
+        scenes: [
+          scene('Minimal · Abertura', [
+            sh('rounded', 85, 340, 550, 5, accent, .9),
+            t('MENOS', 70, 445, 580, 125, 94, white),
+            t('É MAIS.', 70, 570, 580, 125, 94, white),
+            t('DESIGN ESSENCIAL', 100, 770, 520, 85, 32, accent),
+            label('MINIMAL BLACK', white)
+          ]),
+          scene('Minimal · Conteúdo', [
+            sh('rounded', 95, 320, 530, 5, accent),
+            t('SUA IDEIA.', 70, 450, 580, 155, 82, white),
+            t('Uma mensagem de cada vez.', 100, 635, 520, 130, 34, white),
+            label('FOCO NO ESSENCIAL', accent)
+          ]),
+          scene('Minimal · Encerramento', [
+            sh('rounded', 85, 350, 550, 5, accent),
+            t('OBRIGADO.', 60, 460, 600, 165, 82, white),
+            t('ATÉ A PRÓXIMA', 95, 650, 530, 110, 35, accent),
+            label('MINIMAL BLACK', white)
+          ])
+        ]
+      }
+    };
+    const selected = configs[modelIndex];
+    if (!selected) throw new Error('Modelo PRO ainda não disponível para testes.');
+    return {
+      title: `${models[modelIndex].name} — ${ratio}`,
+      aspectRatio: ratio,
+      templateId: selected.id,
+      scenes: selected.scenes
+    };
+  }
+
   $('backgroundMode').addEventListener('change', event => {
     backgroundMode = event.target.value === 'solid' ? 'solid' : 'transparent';
     $('backgroundColorLabel').hidden = backgroundMode !== 'solid';
@@ -340,12 +483,12 @@
     const button = event.target.closest('button[data-model]');
     if (!button || button.disabled) return;
     const model = models[Number(button.dataset.model)];
-    if (!model || model.tier !== 'free') return;
+    if (!model || (model.tier !== 'free' && ![1, 2, 3, 4].includes(Number(button.dataset.model)))) return;
     button.disabled = true;
     button.textContent = 'Criando...';
     try {
       if (!window.ScenesStorage) throw new Error('Armazenamento de Cenas indisponível.');
-      const created = await ScenesStorage.createPresentation(buildPresentation());
+      const created = await ScenesStorage.createPresentation(model.tier === 'free' ? buildPresentation() : buildProPresentation(Number(button.dataset.model)));
       if (window.parent !== window) {
         window.parent.postMessage({type:'lousa-cam-template-created', id:created.id}, window.location.origin);
       } else {
@@ -354,7 +497,7 @@
     } catch (error) {
       showNotice('Não foi possível criar o template: ' + error.message);
       button.disabled = false;
-      button.textContent = 'Usar template';
+      button.textContent = model.tier === 'free' ? 'Usar template' : 'Testar modelo PRO';
     }
   });
   render();
