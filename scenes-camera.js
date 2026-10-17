@@ -235,26 +235,29 @@
     /* Fechar somente a apresentação aplicada, sem apagar o projeto. */
     #scenesCameraClose {
       position: absolute;
-      /* Abaixo da barra superior, sem cobrir o botão Aa. */
-      top: calc(env(safe-area-inset-top) + 76px);
-      right: max(12px, env(safe-area-inset-right));
+      /* Logo abaixo do Aa; somente o X, sem fundo ou texto. */
+      top: calc(env(safe-area-inset-top) + 82px);
+      right: max(14px, env(safe-area-inset-right));
       z-index: 37;
       display: none;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
       min-height: 40px;
-      padding: 0 13px;
-      border: 1px solid rgba(100, 140, 120, .32);
-      border-radius: 13px;
-      background: rgba(246, 248, 245, .88);
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
       color: #263d33;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, .12);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      font: 600 13px system-ui, sans-serif;
+      box-shadow: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      font: 600 26px/1 system-ui, sans-serif;
       cursor: pointer;
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #scenesCameraPrev:disabled,
@@ -460,7 +463,7 @@
   const closeScenesButton = document.createElement("button");
   closeScenesButton.id = "scenesCameraClose";
   closeScenesButton.type = "button";
-  closeScenesButton.textContent = "✕ Fechar cena";
+  closeScenesButton.textContent = "✕";
   closeScenesButton.setAttribute("aria-label", "Remover apresentação da câmera sem excluir o projeto");
   app.appendChild(closeScenesButton);
 
