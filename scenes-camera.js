@@ -233,28 +233,33 @@
     }
 
     /* Fechar somente a apresentação aplicada, sem apagar o projeto. */
-    #scenesCameraClose {
-      position: absolute;
-      /* Logo abaixo do Aa; somente o X, sem fundo ou texto. */
-      top: calc(env(safe-area-inset-top) + 82px);
-      right: max(14px, env(safe-area-inset-right));
-      z-index: 37;
+    /* X de fechar: visível acima dos elementos e abaixo do botão Aa. */
+    #app #scenesCameraClose {
+      position: fixed !important;
+      top: calc(env(safe-area-inset-top) + 124px) !important;
+      right: max(18px, env(safe-area-inset-right)) !important;
+      z-index: 10020 !important;
       display: none;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      min-height: 40px;
-      padding: 0;
-      border: 0;
-      border-radius: 50%;
-      background: transparent;
-      color: #263d33;
-      box-shadow: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      font: 600 26px/1 system-ui, sans-serif;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 40px !important;
+      height: 40px !important;
+      min-width: 40px !important;
+      min-height: 40px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      font: 700 28px/1 system-ui, sans-serif !important;
       cursor: pointer;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
