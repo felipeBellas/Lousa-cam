@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  // Quatro modelos PRO disponíveis exclusivamente para testes nesta etapa.
+  // Os 19 modelos PRO estão disponíveis exclusivamente para testes nesta etapa.
   // Esta interface não comprova assinatura nem concede acesso comercial PRO.
   const models = [
   {
@@ -211,9 +211,9 @@
   }
 
   function preview(model, index) {
-    const colors = index <= 8 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
-    const bgStyle = index <= 8 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
-    const previewClass = index <= 8 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
+    const colors = index <= 19 ? [customColor, ...palettes[paletteIndex].colors.slice(1)] : [];
+    const bgStyle = index <= 19 && backgroundMode === 'solid' ? `--chosen-bg:${backgroundColor};` : ''; 
+    const previewClass = index <= 19 && backgroundMode === 'transparent' ? ' preview-transparent' : ''; 
     return `<div class="preview${previewClass} ${ratio === '9:16' ? 'portrait' : 'landscape'} style-${esc(model.style)}" style="${colors.length ? `--accent:${colors[0]};--accent2:${colors[1]};--accent3:${colors[2]};` : ''}${bgStyle}">
       <div class="preview-decoration decoration-one"></div>
       <div class="preview-decoration decoration-two"></div>
@@ -230,7 +230,7 @@
       const card = document.createElement('article');
       card.className = 'template-card';
       const free = model.tier === 'free';
-      const testable = index >= 1 && index <= 8;
+      const testable = index >= 1 && index <= 19;
       card.innerHTML = `${preview(model, index)}
         <div class="template-info">
           <div class="template-meta"><span>${esc(model.category)}</span><b class="${free ? 'free' : 'pro'}">${free ? 'FREE' : 'PRO'}</b></div>
@@ -560,6 +560,304 @@
           ])
         ]
       }
+      ,
+      9: {
+        id: 'storytelling',
+        scenes: [
+          scene('Storytelling · Abertura', [
+            sh('rounded',65,235,590,650,tertiary,.24,-3),
+            sh('ellipse',450,140,165,165,secondary,.8),
+            sh('rounded',110,945,500,18,accent,.9),
+            t('ERA UMA VEZ', 45, 465, 630, 165, 91, white),
+            t('Uma história para contar', 60, 665, 600, 115, 39, accent),
+            label('STORYTELLING', secondary)
+          ]),
+          scene('Storytelling · Conteúdo', [
+            sh('rounded',75,235,570,95,accent,.8),
+            sh('ellipse',95,800,170,170,secondary,.8),
+            sh('rounded',230,850,360,55,tertiary,.75,-6),
+            t('O GRANDE MOMENTO', 45, 465, 630, 165, 70, white),
+            t('O que aconteceu depois?', 60, 665, 600, 115, 39, accent),
+            label('STORYTELLING', secondary)
+          ]),
+          scene('Storytelling · Encerramento', [
+            sh('ellipse',240,160,240,240,secondary,.7),
+            sh('rounded',80,880,560,28,accent,.9),
+            t('CONTINUA...', 45, 465, 630, 165, 91, white),
+            t('Sua próxima história começa aqui', 60, 665, 600, 115, 39, accent),
+            label('STORYTELLING', secondary)
+          ])
+        ]
+      },
+      10: {
+        id: 'tutorial-pro',
+        scenes: [
+          scene('Tutorial Pro · Abertura', [
+            sh('rounded',85,230,550,90,accent,.9),
+            sh('rounded',105,830,510,45,secondary,.85),
+            t('COMO FAZER', 45, 465, 630, 165, 91, white),
+            t('Aprenda em poucos passos', 60, 665, 600, 115, 39, accent),
+            label('TUTORIAL PRO', secondary)
+          ]),
+          scene('Tutorial Pro · Conteúdo', [
+            sh('rounded',100,250,520,110,accent,.8),
+            sh('rounded',100,820,520,110,tertiary,.8),
+            sh('ellipse',90,1030,90,90,secondary,.85),
+            t('PASSO 1 • 2 • 3', 45, 465, 630, 165, 70, white),
+            t('Personalize as instruções', 60, 665, 600, 115, 39, accent),
+            label('TUTORIAL PRO', secondary)
+          ]),
+          scene('Tutorial Pro · Encerramento', [
+            sh('ellipse',270,185,180,180,accent,.8),
+            sh('rounded',120,850,480,45,secondary,.85),
+            t('VOCÊ CONSEGUIU!', 45, 465, 630, 165, 70, white),
+            t('Salve e compartilhe', 60, 665, 600, 115, 39, accent),
+            label('TUTORIAL PRO', secondary)
+          ])
+        ]
+      },
+      11: {
+        id: 'tech-future',
+        scenes: [
+          scene('Tech Future · Abertura', [
+            sh('rounded',100,205,520,14,accent,.85),
+            sh('ellipse',455,270,160,160,tertiary,.7),
+            sh('rounded',90,875,540,18,secondary,.9),
+            t('FUTURO', 45, 465, 630, 165, 91, white),
+            t('Ideias que conectam', 60, 665, 600, 115, 39, accent),
+            label('TECH FUTURE', secondary)
+          ]),
+          scene('Tech Future · Conteúdo', [
+            sh('rounded',70,230,580,530,tertiary,.20),
+            sh('ellipse',95,820,160,160,accent,.8),
+            t('NOVA TECNOLOGIA', 45, 465, 630, 165, 70, white),
+            t('Inovação na prática', 60, 665, 600, 115, 39, accent),
+            label('TECH FUTURE', secondary)
+          ]),
+          scene('Tech Future · Encerramento', [
+            sh('ellipse',255,180,210,210,secondary,.75),
+            sh('rounded',85,830,550,28,accent,.9),
+            t('PRÓXIMO NÍVEL', 45, 465, 630, 165, 91, white),
+            t('Explore novas possibilidades', 60, 665, 600, 115, 39, accent),
+            label('TECH FUTURE', secondary)
+          ])
+        ]
+      },
+      12: {
+        id: 'comparativo',
+        scenes: [
+          scene('Comparativo · Abertura', [
+            sh('rounded',70,280,275,580,secondary,.40),
+            sh('rounded',375,280,275,580,accent,.40),
+            t('ANTES / DEPOIS', 45, 465, 630, 165, 91, white),
+            t('Veja a transformação', 60, 665, 600, 115, 39, accent),
+            label('COMPARATIVO', secondary)
+          ]),
+          scene('Comparativo · Conteúdo', [
+            sh('rounded',75,270,265,620,secondary,.30),
+            sh('rounded',380,270,265,620,tertiary,.30),
+            sh('rounded',346,290,26,580,white,.7),
+            t('LADO A LADO', 45, 465, 630, 165, 91, white),
+            t('Compare os resultados', 60, 665, 600, 115, 39, accent),
+            label('COMPARATIVO', secondary)
+          ]),
+          scene('Comparativo · Encerramento', [
+            sh('ellipse',100,220,180,180,secondary,.8),
+            sh('ellipse',440,220,180,180,accent,.8),
+            t('QUAL VOCÊ PREFERE?', 45, 465, 630, 165, 70, white),
+            t('Compartilhe sua escolha', 60, 665, 600, 115, 39, accent),
+            label('COMPARATIVO', secondary)
+          ])
+        ]
+      },
+      13: {
+        id: 'infografico-color',
+        scenes: [
+          scene('Infográfico Color · Abertura', [
+            sh('ellipse',90,260,135,135,accent,.9),
+            sh('ellipse',290,260,135,135,secondary,.9),
+            sh('ellipse',490,260,135,135,tertiary,.9),
+            t('3 IDEIAS', 45, 465, 630, 165, 91, white),
+            t('Informação que se destaca', 60, 665, 600, 115, 39, accent),
+            label('INFOGRÁFICO COLOR', secondary)
+          ]),
+          scene('Infográfico Color · Conteúdo', [
+            sh('rounded',105,260,510,95,accent,.8),
+            sh('rounded',105,425,510,95,secondary,.8),
+            sh('rounded',105,590,510,95,tertiary,.8),
+            t('1 • 2 • 3', 45, 465, 630, 165, 91, white),
+            t('Edite cada etapa', 60, 665, 600, 115, 39, accent),
+            label('INFOGRÁFICO COLOR', secondary)
+          ]),
+          scene('Infográfico Color · Encerramento', [
+            sh('ellipse',100,245,155,155,accent,.8),
+            sh('rounded',100,865,520,45,secondary,.85),
+            t('RESUMO VISUAL', 45, 465, 630, 165, 91, white),
+            t('Aprenda de um jeito novo', 60, 665, 600, 115, 39, accent),
+            label('INFOGRÁFICO COLOR', secondary)
+          ])
+        ]
+      },
+      14: {
+        id: 'quote-art',
+        scenes: [
+          scene('Quote Art · Abertura', [
+            sh('ellipse',55,170,200,200,secondary,.35),
+            sh('rounded',110,870,500,12,accent,.9),
+            t('“INSPIRE”', 45, 465, 630, 165, 91, white),
+            t('Sua frase aqui', 60, 665, 600, 115, 39, accent),
+            label('QUOTE ART', secondary)
+          ]),
+          scene('Quote Art · Conteúdo', [
+            sh('rounded',70,280,580,560,tertiary,.18),
+            sh('ellipse',485,160,140,140,accent,.65),
+            t('“ACREDITE”', 45, 465, 630, 165, 91, white),
+            t('As palavras têm força', 60, 665, 600, 115, 39, accent),
+            label('QUOTE ART', secondary)
+          ]),
+          scene('Quote Art · Encerramento', [
+            sh('ellipse',260,180,200,200,secondary,.4),
+            sh('rounded',110,875,500,14,accent,.9),
+            t('“CRIE”', 45, 465, 630, 165, 91, white),
+            t('Compartilhe sua mensagem', 60, 665, 600, 115, 39, accent),
+            label('QUOTE ART', secondary)
+          ])
+        ]
+      },
+      15: {
+        id: 'aula-dinamica',
+        scenes: [
+          scene('Aula Dinâmica · Abertura', [
+            sh('rounded',65,250,590,75,accent,.85),
+            sh('ellipse',460,840,160,160,secondary,.85),
+            t('VAMOS APRENDER', 45, 465, 630, 165, 91, white),
+            t('Um tema por vez', 60, 665, 600, 115, 39, accent),
+            label('AULA DINÂMICA', secondary)
+          ]),
+          scene('Aula Dinâmica · Conteúdo', [
+            sh('rounded',80,255,560,620,tertiary,.20),
+            sh('rounded',100,875,520,22,accent,.85),
+            t('CONCEITO-CHAVE', 45, 465, 630, 165, 91, white),
+            t('Explique com exemplos', 60, 665, 600, 115, 39, accent),
+            label('AULA DINÂMICA', secondary)
+          ]),
+          scene('Aula Dinâmica · Encerramento', [
+            sh('ellipse',280,170,160,160,accent,.75),
+            sh('rounded',95,840,530,55,secondary,.85),
+            t('HORA DE PRATICAR', 45, 465, 630, 165, 70, white),
+            t('Revise o que aprendeu', 60, 665, 600, 115, 39, accent),
+            label('AULA DINÂMICA', secondary)
+          ])
+        ]
+      },
+      16: {
+        id: 'ciencia-visual',
+        scenes: [
+          scene('Ciência Visual · Abertura', [
+            sh('ellipse',245,145,235,235,tertiary,.30),
+            sh('ellipse',305,200,115,115,accent,.75),
+            sh('rounded',95,850,530,25,secondary,.9),
+            t('CIÊNCIA', 45, 465, 630, 165, 91, white),
+            t('Perguntas que transformam', 60, 665, 600, 115, 39, accent),
+            label('CIÊNCIA VISUAL', secondary)
+          ]),
+          scene('Ciência Visual · Conteúdo', [
+            sh('ellipse',120,240,190,190,secondary,.5),
+            sh('ellipse',380,240,190,190,accent,.5),
+            sh('rounded',85,870,550,20,tertiary,.9),
+            t('OBSERVE • EXPLIQUE', 45, 465, 630, 165, 70, white),
+            t('Da hipótese à descoberta', 60, 665, 600, 115, 39, accent),
+            label('CIÊNCIA VISUAL', secondary)
+          ]),
+          scene('Ciência Visual · Encerramento', [
+            sh('ellipse',270,180,190,190,accent,.65),
+            sh('rounded',105,865,510,20,secondary,.9),
+            t('DESCUBRA MAIS', 45, 465, 630, 165, 91, white),
+            t('A ciência está em tudo', 60, 665, 600, 115, 39, accent),
+            label('CIÊNCIA VISUAL', secondary)
+          ])
+        ]
+      },
+      17: {
+        id: 'business-clean',
+        scenes: [
+          scene('Business Clean · Abertura', [
+            sh('rounded',95,320,530,7,accent,.9),
+            sh('rounded',95,845,530,7,secondary,.75),
+            t('APRESENTAÇÃO', 45, 465, 630, 165, 91, white),
+            t('Sua melhor ideia', 60, 665, 600, 115, 39, accent),
+            label('BUSINESS CLEAN', secondary)
+          ]),
+          scene('Business Clean · Conteúdo', [
+            sh('rounded',80,270,560,570,tertiary,.15),
+            sh('rounded',100,870,520,9,accent,.9),
+            t('NOSSA PROPOSTA', 45, 465, 630, 165, 91, white),
+            t('Estratégia e resultados', 60, 665, 600, 115, 39, accent),
+            label('BUSINESS CLEAN', secondary)
+          ]),
+          scene('Business Clean · Encerramento', [
+            sh('rounded',95,350,530,8,accent,.9),
+            sh('rounded',95,835,530,8,secondary,.8),
+            t('OBRIGADO', 45, 465, 630, 165, 91, white),
+            t('Vamos conversar?', 60, 665, 600, 115, 39, accent),
+            label('BUSINESS CLEAN', secondary)
+          ])
+        ]
+      },
+      18: {
+        id: 'product-spotlight',
+        scenes: [
+          scene('Product Spotlight · Abertura', [
+            sh('rounded',155,210,410,320,tertiary,.30),
+            sh('ellipse',270,245,180,180,accent,.55),
+            t('NOVIDADE', 45, 465, 630, 165, 91, white),
+            t('Conheça o produto', 60, 665, 600, 115, 39, accent),
+            label('PRODUCT SPOTLIGHT', secondary)
+          ]),
+          scene('Product Spotlight · Conteúdo', [
+            sh('rounded',130,250,460,390,tertiary,.22),
+            sh('rounded',120,840,480,55,accent,.75),
+            t('EM DESTAQUE', 45, 465, 630, 165, 91, white),
+            t('Benefícios e diferenciais', 60, 665, 600, 115, 39, accent),
+            label('PRODUCT SPOTLIGHT', secondary)
+          ]),
+          scene('Product Spotlight · Encerramento', [
+            sh('ellipse',245,200,230,230,secondary,.50),
+            sh('rounded',105,855,510,45,accent,.85),
+            t('CONHEÇA AGORA', 45, 465, 630, 165, 91, white),
+            t('Saiba mais', 60, 665, 600, 115, 39, accent),
+            label('PRODUCT SPOTLIGHT', secondary)
+          ])
+        ]
+      },
+      19: {
+        id: 'cinematic-intro',
+        scenes: [
+          scene('Cinematic Intro · Abertura', [
+            sh('rounded',70,230,580,14,accent,.9),
+            sh('rounded',70,890,580,14,accent,.9),
+            sh('ellipse',480,280,120,120,secondary,.6),
+            t('AÇÃO!', 45, 465, 630, 165, 91, white),
+            t('Sua história começa', 60, 665, 600, 115, 39, accent),
+            label('CINEMATIC INTRO', secondary)
+          ]),
+          scene('Cinematic Intro · Conteúdo', [
+            sh('rounded',70,210,580,16,accent,.9),
+            sh('rounded',70,910,580,16,accent,.9),
+            sh('ellipse',110,290,130,130,secondary,.45),
+            t('A HISTÓRIA', 45, 465, 630, 165, 91, white),
+            t('Cada detalhe importa', 60, 665, 600, 115, 39, accent),
+            label('CINEMATIC INTRO', secondary)
+          ]),
+          scene('Cinematic Intro · Encerramento', [
+            sh('rounded',70,240,580,15,accent,.9),
+            sh('rounded',70,870,580,15,accent,.9),
+            t('FIM DE CENA', 45, 465, 630, 165, 91, white),
+            t('Até a próxima produção', 60, 665, 600, 115, 39, accent),
+            label('CINEMATIC INTRO', secondary)
+          ])
+        ]
+      }
     };
     const selected = configs[modelIndex];
     if (!selected) throw new Error('Modelo PRO ainda não disponível para testes.');
@@ -598,7 +896,7 @@
     const button = event.target.closest('button[data-model]');
     if (!button || button.disabled) return;
     const model = models[Number(button.dataset.model)];
-    if (!model || (model.tier !== 'free' && ![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(button.dataset.model)))) return;
+    if (!model || (model.tier !== 'free' && !(Number(button.dataset.model) >= 1 && Number(button.dataset.model) <= 19))) return;
     button.disabled = true;
     button.textContent = 'Criando...';
     try {
