@@ -35,7 +35,25 @@ function art(m,w,h,a,b){
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="${shift%2?1:0}" y1="0" x2="1" y2="1"><stop stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>${shapes}</svg>`;
 }
 function render(){catalog.replaceChildren();const portrait=$('ratio').value==='9:16',w=portrait?720:1280,h=portrait?1280:720,a=$('primary').value,b=$('secondary').value;
- models.forEach(m=>{const card=document.createElement('article');card.className='card';const preview=document.createElement('div');preview.className='preview';preview.innerHTML=art(m,w,h,a,b);const name=document.createElement('div');name.className='name';name.textContent=m.name;const tier=document.createElement('div');tier.className='tier';tier.textContent=m.tier;const button=document.createElement('button');button.textContent=m.tier==='FREE'?'Adicionar às Cenas':'Testar elemento PRO';button.addEventListener('click',()=>create(m,button));card.append(preview,name,tier,button);catalog.appendChild(card);});}
+ models.forEach(m=>{const card=document.createElement('article');card.className='card';const preview=document.createElement('div');preview.className='preview';preview.innerHTML=art(m,w,h,a,b);const name=document.createElement('div');name.className='name';name.textContent=m.name;const tier=document.createElement('div');tier.className='tier';tier.textContent=m.tier;const button=document.createElement('button');button.textContent='Aplicar na câmera';button.addEventListener('click',()=>applyCamera(m,button));const scenesButton=document.createElement('button');scenesButton.textContent='Adicionar às Cenas';scenesButton.addEventListener('click',()=>create(m,scenesButton));card.append(preview,name,tier,button,scenesButton);catalog.appendChild(card);});}
+async function generatePng(m){
+ const portrait=$('ratio').value==='9:16',w=portrait?720:1280,h=portrait?1280:720;
+ const svg=art(m,w,h,$('primary').value,$('secondary').value);
+ const image=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+ try { await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error('Falha ao renderizar moldura.'));image.src=url;}); }
+ finally {URL.revokeObjectURL(url);}
+ const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(image,0,0,w,h);
+ return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Falha ao gerar PNG.')),'image/png'));
+}
+async function applyCamera(m,button){
+ button.disabled=true;button.textContent='Aplicando…';
+ try {const png=await generatePng(m);
+  if(window.parent===window)throw new Error('Abra a biblioteca pela câmera.');
+  const buffer=await png.arrayBuffer();
+  window.parent.postMessage({type:'lousa-cam-frame-apply',mime:'image/png',bytes:buffer},window.location.origin,[buffer]);
+ }catch(error){$('status').textContent='Erro: '+error.message;}
+ finally{button.disabled=false;button.textContent='Aplicar na câmera';}
+}
 async function create(m,button){button.disabled=true;button.textContent='Preparando…';try{
  const ratio=$('ratio').value,portrait=ratio==='9:16',w=portrait?720:1280,h=portrait?1280:720;
  const svg=art(m,w,h,$('primary').value,$('secondary').value);

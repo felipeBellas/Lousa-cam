@@ -14437,6 +14437,13 @@ function renderRecordingFrame() {
 
 
  
+  /* Molduras independentes: composição somente da imagem, sem controles. */
+  if (window.LousaFramesOverlay && typeof window.LousaFramesOverlay.draw === 'function') {
+    renderCtx.save();
+    window.LousaFramesOverlay.draw(renderCtx, offsetX, offsetY, contentWidth, contentHeight);
+    renderCtx.restore();
+  }
+
   /* =====================================================
      CENAS — INTEGRAÇÃO COM A GRAVAÇÃO
 
