@@ -1,66 +1,31 @@
-/* Lousa Cam — catálogo original de stickers desenhados em SVG e exportados como PNG. */
-(() => {
-'use strict';
-const $=id=>document.getElementById(id);
-const catalog=$('catalog');
-const names=['Coração Pop','Estrela Viral','Raio Neon','Fogo Creator','Smile','Surpresa','Coroa','Flor Pastel','Borboleta','Brilho','Play','Like','Gamepad','Troféu','Pixel Heart','Microfone','Câmera','Nota Musical','Planeta','Átomo','Check','Alerta','WOW!','BOOM!','LIVE','LEVEL UP','LOL','NEW','LOVE','REC'];
-const symbols=['♥','★','ϟ','🔥','☺','😮','♛','✿','🦋','✦','▶','👍','🎮','🏆','♥','🎤','📷','♫','🪐','⚛','✓','!','WOW!','BOOM!','LIVE','LEVEL UP','LOL','NEW','LOVE','REC'];
-const models=names.map((name,i)=>({name,symbol:symbols[i],tier:i<12?'FREE':'PRO · TESTE',index:i}));
-function settings(){return {motion:$('motion').value,speed:Number($('speed').value),color:$('color').value};}
-function svgFor(model){
-  const {color}=settings();
-  // Nenhuma entrada textual do usuário é inserida no SVG: valores fixos ou input[type=color].
-  const text=model.symbol;
-  const isWord=text.length>3;
-  const size=isWord?(text.length>5?31:46):104;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"><defs><filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="5" flood-opacity=".26"/></filter></defs><g filter="url(#shadow)"><circle cx="128" cy="128" r="110" fill="${color}" stroke="#fff" stroke-width="11"/><circle cx="102" cy="90" r="80" fill="#fff" opacity=".13"/></g><text x="128" y="143" text-anchor="middle" dominant-baseline="middle" font-family="Arial,Apple Color Emoji,Segoe UI Emoji,sans-serif" font-size="${size}" font-weight="900" fill="white" stroke="${isWord?'#25372c':'none'}" stroke-width="${isWord?1:0}">${text}</text></svg>`;
-}
-async function png(model){
-  const markup=svgFor(model),url=URL.createObjectURL(new Blob([markup],{type:'image/svg+xml'}));
-  const img=new Image();
-  try{await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Falha ao desenhar Sticker'));img.src=url;});}
-  finally{URL.revokeObjectURL(url);}
-  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
-  canvas.getContext('2d').drawImage(img,0,0);
-  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Falha ao gerar PNG')),'image/png'));
-}
-async function apply(model,button){
-  button.disabled=true;
-  try{
-    const blob=await png(model),bytes=await blob.arrayBuffer();
-    if(window.parent===window)throw new Error('Abra a biblioteca pelo Estúdio Criativo.');
-    window.parent.postMessage({type:'lousa-cam-sticker-apply',mime:'image/png',bytes,...settings()},window.location.origin,[bytes]);
-  }catch(error){$('status').textContent=error.message;button.disabled=false;}
-}
-async function scenes(model,button){
-  button.disabled=true;
-  try{
-    const blob=await png(model),opts=settings();
-    if(!window.ScenesStorage)throw new Error('Cenas indisponíveis.');
-    const created=await ScenesStorage.createPresentation({title:`Sticker — ${model.name}`,aspectRatio:'9:16',templateId:`sticker-${model.index+1}`,scenes:[{title:model.name,background:{type:'transparent'},elements:[{id:ScenesStorage.createId('element'),type:'image',blob,x:232,y:472,width:256,height:256,rotation:0,opacity:1,lcStickerMotion:{kind:opts.motion,speed:opts.speed}}]}]});
-    if(window.parent!==window)window.parent.postMessage({type:'lousa-cam-sticker-created',id:created.id},window.location.origin);
-    else window.location.assign('./scenes.html');
-  }catch(error){$('status').textContent=error.message;button.disabled=false;}
-}
-function render(){
-  catalog.replaceChildren();
-  for(const model of models){
-    const card=document.createElement('article');card.className='card';
-    const preview=document.createElement('div');preview.className='preview';preview.dataset.motion=settings().motion;
-    const image=document.createElement('img');image.alt='';image.src=URL.createObjectURL(new Blob([svgFor(model)],{type:'image/svg+xml'}));
-    image.addEventListener('load',()=>URL.revokeObjectURL(image.src),{once:true});preview.appendChild(image);
-    const name=document.createElement('div');name.className='name';name.textContent=model.name;
-    const tier=document.createElement('div');tier.className='tier';tier.textContent=model.tier;
-    const camera=document.createElement('button');camera.textContent='Aplicar na câmera';camera.addEventListener('click',()=>apply(model,camera));
-    const scene=document.createElement('button');scene.textContent='Adicionar às Cenas';scene.addEventListener('click',()=>scenes(model,scene));
-    card.append(preview,name,tier,camera,scene);catalog.appendChild(card);
-  }
-}
-$('back').addEventListener('click',()=>{
-  if(window.parent!==window)window.parent.postMessage({type:'lousa-cam-stickers-close'},window.location.origin);
-  else window.location.assign('./index.html');
-});
-for(const id of ['color','motion'])$(id).addEventListener('input',render);
-$('speed').addEventListener('input',()=>{$('speedText').textContent=settings().speed+'×';});
-render();
+/* LOUSA CAM — Emojis e HOT, desenhos transparentes e loops pré-definidos. */
+(()=>{'use strict';
+const $=id=>document.getElementById(id),catalog=$('catalog');let tab='emoji';
+const emojiSymbols=['😀','😂','😍','🥰','😎','😮','😭','😡','🤩','🥳','😜','🤯','😇','😴','🤔','😱','🤗','😈','🙃','😬','❤️','💖','💔','🔥','✨','⭐','💯','👍','👎','👏','🙌','🙏','💪','👀','👑','🎮','🎧','🎤','📸','🎬','🚀','⚡','🌈','🦋','🌸','🎉','🏆','💎','🍀','🧠'];
+const hotTypes=['cat','heart','spark','fire','star','bolt','eye','ghost','smile','rocket'];
+const hotNames=['Gatinho Surpresa','Coração Vivo','Brilho Pop','Fogo Neon','Estrela Saltitante','Raio Elétrico','Olhos Curiosos','Fantasma Travesso','Smile Maluco','Foguete Turbo'];
+const palette=['#ff6b9d','#6b8dff','#ffb447','#6ed9bf','#c487ff'];
+const models=[...emojiSymbols.map((symbol,i)=>({id:i,kind:'emoji',symbol,name:'Emoji '+symbol,tier:i<20?'FREE':'PRO · TESTE'})),...Array.from({length:50},(_,i)=>({id:i,kind:'hot',type:hotTypes[i%10],name:hotNames[i%10]+(i>=10?' '+(Math.floor(i/10)+1):''),color:palette[Math.floor(i/10)],tier:i<20?'FREE':'PRO · TESTE'}))];
+function xml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
+function svg(model,frame=0){const f=frame%4, c=model.color||'#ff6b9d';let art='';
+if(model.kind==='emoji')art=`<text x="128" y="173" text-anchor="middle" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif" font-size="160">${xml(model.symbol)}</text>`;
+else if(model.type==='cat'){
+const eye=f===1?19:12,tongue=f===2?'<path d="M117 166 Q128 206 140 166Z" fill="#ff5a8c" stroke="#572d38" stroke-width="4"/>':'';
+art=`<path d="M49 106 L49 32 Q49 21 63 34 L93 63 Q128 49 163 63 L195 34 Q207 23 207 42 L207 112 Q218 194 128 213 Q36 194 49 106Z" fill="${c}" stroke="#473346" stroke-width="8" stroke-linejoin="round"/><path d="M61 58 L62 91 L90 72Z M166 72 L194 91 L194 58Z" fill="#ffb8cc"/><ellipse cx="92" cy="123" rx="${eye}" ry="${eye+6}" fill="#fff"/><ellipse cx="164" cy="123" rx="${eye}" ry="${eye+6}" fill="#fff"/><circle cx="94" cy="125" r="7" fill="#2b2d3d"/><circle cx="162" cy="125" r="7" fill="#2b2d3d"/><path d="M118 148 L138 148 L128 159Z" fill="#e95b84"/><path d="M128 159 Q110 175 99 161 M128 159 Q145 175 157 161" stroke="#53323f" fill="none" stroke-width="5" stroke-linecap="round"/>${tongue}<path d="M54 151 L18 143 M55 166 L20 169 M202 151 L239 143 M202 166 L237 169" stroke="#473346" stroke-width="4" stroke-linecap="round"/>`;
+}else if(model.type==='heart')art=`<path d="M128 215 C91 182 25 145 33 91 C40 40 100 35 128 76 C157 35 216 40 223 91 C231 145 165 182 128 215Z" fill="${c}" stroke="#fff" stroke-width="8"/><path d="M67 93 Q72 66 98 71" stroke="#fff" stroke-width="10" stroke-linecap="round" fill="none"/>${f===2?'<path d="M100 131 Q128 159 157 131" fill="none" stroke="#fff" stroke-width="8"/>':''}`;
+else if(model.type==='spark'||model.type==='star')art=`<path d="M128 ${19+f*3} L158 93 L239 109 L176 154 L194 232 L128 187 L62 232 L80 154 L17 109 L98 93Z" fill="${c}" stroke="#fff" stroke-width="9" stroke-linejoin="round"/><circle cx="104" cy="125" r="8"/><circle cx="151" cy="125" r="8"/><path d="M111 149 Q128 ${169+f*3} 146 149" stroke="#252b3a" stroke-width="6" fill="none"/>`;
+else if(model.type==='fire')art=`<path d="M128 237 C39 226 41 147 83 103 Q87 144 109 139 Q81 71 146 15 Q139 85 178 109 Q193 86 190 67 C251 153 221 226 128 237Z" fill="${c}" stroke="#fff" stroke-width="7"/><path d="M128 217 Q87 200 114 150 Q132 172 146 134 Q182 192 128 217Z" fill="#ffef86"/>`;
+else if(model.type==='bolt')art=`<path d="M143 17 L54 139 L113 140 L96 238 L206 104 L142 107Z" fill="${c}" stroke="#fff" stroke-width="10" stroke-linejoin="round"/>`;
+else if(model.type==='eye')art=`<path d="M17 130 Q128 ${10+f*7} 239 130 Q128 ${250-f*7} 17 130Z" fill="white" stroke="${c}" stroke-width="12"/><circle cx="${124+f*5}" cy="130" r="50" fill="${c}"/><circle cx="${124+f*5}" cy="130" r="25" fill="#1e2d3b"/><circle cx="${112+f*5}" cy="115" r="11" fill="white"/>`;
+else if(model.type==='ghost')art=`<path d="M45 220 L45 111 Q45 30 128 30 Q211 30 211 111 L211 220 L181 200 L155 223 L128 200 L101 223 L75 200Z" fill="${c}" stroke="#fff" stroke-width="8"/><ellipse cx="96" cy="117" rx="17" ry="${f===1?24:16}" fill="white"/><ellipse cx="161" cy="117" rx="17" ry="${f===1?24:16}" fill="white"/><circle cx="96" cy="120" r="8"/><circle cx="161" cy="120" r="8"/><ellipse cx="128" cy="165" rx="13" ry="${f===2?25:12}" fill="#3d2e4d"/>`;
+else if(model.type==='smile')art=`<circle cx="128" cy="128" r="101" fill="${c}" stroke="white" stroke-width="9"/><ellipse cx="89" cy="105" rx="13" ry="${f===1?22:14}"/><ellipse cx="165" cy="105" rx="13" ry="${f===1?22:14}"/><path d="M75 150 Q128 ${f===2?225:195} 182 150" stroke="#2a2940" stroke-width="11" fill="none" stroke-linecap="round"/>`;
+else if(model.type==='rocket')art=`<path d="M105 184 Q69 85 167 25 Q225 125 139 190Z" fill="${c}" stroke="#fff" stroke-width="8"/><circle cx="151" cy="97" r="25" fill="#d4faff" stroke="#3c6485" stroke-width="7"/><path d="M101 177 L66 218 L120 197 M146 183 L179 225 L162 163" fill="#7585d4" stroke="#fff" stroke-width="6"/><path d="M114 202 Q123 ${225+f*4} 132 203" stroke="#ffb13b" stroke-width="14" stroke-linecap="round"/>`;
+return `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">${art}</svg>`;}
+async function imageFromSVG(markup){const url=URL.createObjectURL(new Blob([markup],{type:'image/svg+xml'}));const im=new Image();try{await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src=url;});return im;}finally{URL.revokeObjectURL(url);}}
+function toBlob(canvas){return new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(Error('Não foi possível gerar PNG.')),'image/png'));}
+async function images(model){const frames=model.kind==='hot'?4:1;const sheet=document.createElement('canvas');sheet.width=256*frames;sheet.height=256;const ctx=sheet.getContext('2d');for(let i=0;i<frames;i++){const im=await imageFromSVG(svg(model,i));ctx.drawImage(im,i*256,0,256,256);}const first=document.createElement('canvas');first.width=first.height=256;first.getContext('2d').drawImage(sheet,0,0,256,256,0,0,256,256);return {first:await toBlob(first),sheet:frames>1?await toBlob(sheet):null,frames};}
+async function apply(model,button){button.disabled=true;try{const im=await images(model);if(window.parent===window)throw Error('Abra pelo Estúdio Criativo.');const bytes=await im.first.arrayBuffer();const sprite=im.sheet?await im.sheet.arrayBuffer():null;const transfer=sprite?[bytes,sprite]:[bytes];window.parent.postMessage({type:'lousa-cam-sticker-apply',mime:'image/png',bytes,sprite,frames:im.frames,motion:im.frames>1?'frames':'none',speed:1},location.origin,transfer);}catch(e){$('status').textContent=e.message;button.disabled=false;}}
+async function scenes(model,button){button.disabled=true;try{const im=await images(model);if(!window.ScenesStorage)throw Error('Cenas indisponíveis.');const el={id:ScenesStorage.createId('element'),type:'image',blob:im.sheet||im.first,x:232,y:472,width:256,height:256,rotation:0,opacity:1};if(im.frames>1)el.lcStickerMotion={kind:'frames',frames:im.frames,speed:1};const created=await ScenesStorage.createPresentation({title:`Sticker — ${model.name}`,aspectRatio:'9:16',templateId:`sticker-${model.kind}-${model.id}`,scenes:[{title:model.name,background:{type:'transparent'},elements:[el]}]});if(window.parent!==window)window.parent.postMessage({type:'lousa-cam-sticker-created',id:created.id},location.origin);else location.assign('./scenes.html');}catch(e){$('status').textContent=e.message;button.disabled=false;}}
+function render(){catalog.replaceChildren();for(const model of models.filter(m=>m.kind===tab)){const card=document.createElement('article');card.className='card';const preview=document.createElement('div');preview.className='preview'+(model.kind==='hot'?' hot':'');const img=document.createElement('img');img.alt='';const url=URL.createObjectURL(new Blob([svg(model,0)],{type:'image/svg+xml'}));img.onload=()=>URL.revokeObjectURL(url);img.onerror=()=>URL.revokeObjectURL(url);img.src=url;preview.append(img);const name=document.createElement('div');name.className='name';name.textContent=model.name;const tier=document.createElement('div');tier.className='tier';tier.textContent=model.tier;const camera=document.createElement('button');camera.textContent='Aplicar na câmera';camera.onclick=()=>apply(model,camera);const scene=document.createElement('button');scene.textContent='Adicionar às Cenas';scene.onclick=()=>scenes(model,scene);card.append(preview,name,tier,camera,scene);catalog.append(card);}}
+$('tabEmoji').onclick=()=>{tab='emoji';$('tabEmoji').classList.add('active');$('tabHot').classList.remove('active');render();};$('tabHot').onclick=()=>{tab='hot';$('tabHot').classList.add('active');$('tabEmoji').classList.remove('active');render();};$('back').onclick=()=>{if(window.parent!==window)window.parent.postMessage({type:'lousa-cam-stickers-close'},location.origin);else location.assign('./index.html');};render();
 })();

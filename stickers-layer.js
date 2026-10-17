@@ -17,9 +17,9 @@
     if(data?.type==='lousa-cam-stickers-close'){close();window.LousaCascadeMenu?.openStudio();return;}
     if(data?.type==='lousa-cam-sticker-apply'){
       if(data.mime!=='image/png'||!(data.bytes instanceof ArrayBuffer)||data.bytes.byteLength>2*1024*1024)return;
-      if(!['none','pulse','float','bounce','swing','spin'].includes(data.motion)||!Number.isFinite(data.speed)||data.speed<0.2||data.speed>3)return;
+      if(!['none','pulse','float','bounce','swing','spin','frames'].includes(data.motion)||!Number.isFinite(data.speed)||data.speed<0.2||data.speed>3)return;
       try{
-        window.dispatchEvent(new CustomEvent('lousa-cam-sticker-image',{detail:{blob:new Blob([data.bytes],{type:'image/png'}),motion:data.motion,speed:data.speed}}));
+        window.dispatchEvent(new CustomEvent('lousa-cam-sticker-image',{detail:{blob:new Blob([data.bytes],{type:'image/png'}),sprite:(data.sprite instanceof ArrayBuffer && data.sprite.byteLength<2*1024*1024)?new Blob([data.sprite],{type:'image/png'}):null,frames:data.frames,motion:data.motion,speed:data.speed}}));
         close();
       }catch(error){console.error('[Stickers]',error);}
     }

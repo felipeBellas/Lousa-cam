@@ -4789,7 +4789,15 @@ function drawImageObject(
   }
 
   try {
-
+    if (motion?.kind === "frames" && object.lcStickerSpriteImage?.complete && object.lcStickerSpriteImage.naturalWidth) {
+      const frames = Math.max(1, Math.min(8, Number(motion.frames) || 4));
+      const frame = Math.floor(((performance.now() - motion.startedAt) / 1000) * 4 * motion.speed) % frames;
+      const sprite = object.lcStickerSpriteImage;
+      const fw = sprite.naturalWidth / frames;
+      c.drawImage(sprite, frame * fw, 0, fw, sprite.naturalHeight, object.x, object.y, object.width, object.height);
+      c.restore();
+      return;
+    }
     c.drawImage(
 
       object.image,
@@ -6460,17 +6468,25 @@ window.addEventListener("lousa-cam-frame-image", async event => {
 
 /* STICKERS — reutiliza o mesmo motor de imagens da câmera. */
 window.addEventListener("lousa-cam-sticker-image", async event => {
-  const { blob, motion, speed } = event.detail || {};
+  const { blob, sprite, frames, motion, speed } = event.detail || {};
   if (!(blob instanceof Blob) || blob.type !== "image/png" ||
       blob.size < 20 || blob.size > 2 * 1024 * 1024) return;
-  const allowed = ["none", "pulse", "float", "swing", "spin", "bounce"];
+  const allowed = ["none", "pulse", "float", "swing", "spin", "bounce", "frames"];
   if (!allowed.includes(motion) || !Number.isFinite(speed) || speed < 0.2 || speed > 3) return;
   try {
     const item = await createImageFromBlob(blob,
       Math.round(window.innerWidth * 0.30),
       Math.round(window.innerHeight * 0.32));
     if (item) {
-      item.lcStickerMotion = {kind: motion, speed, startedAt: performance.now()};
+      item.lcStickerMotion = {kind: motion, speed, frames: motion === "frames" ? 4 : 1, startedAt: performance.now()};
+      if (motion === "frames" && sprite instanceof Blob && sprite.size < 2 * 1024 * 1024) {
+        const url = URL.createObjectURL(sprite);
+        const spriteImage = new Image();
+        spriteImage.onload = () => { URL.revokeObjectURL(url); redraw(); };
+        spriteImage.onerror = () => URL.revokeObjectURL(url);
+        spriteImage.src = url;
+        item.lcStickerSpriteImage = spriteImage;
+      }
       redraw();
     }
   } catch (error) {

@@ -466,6 +466,15 @@
       return;
     }
 
+    if (element.lcStickerMotion?.kind === "frames") {
+      const frames = Math.max(1, Math.min(8, Number(element.lcStickerMotion.frames) || 4));
+      const frame = Math.floor(performance.now() / 1000 * 4 * (Number(element.lcStickerMotion.speed) || 1)) % frames;
+      const fw = naturalWidth / frames;
+      const fitFrame = Math.min(width / fw, height / naturalHeight);
+      const dw = fw * fitFrame, dh = naturalHeight * fitFrame;
+      ctx.drawImage(image, frame * fw, 0, fw, naturalHeight, (width - dw) / 2, (height - dh) / 2, dw, dh);
+      return;
+    }
     const fit = Math.min(
       width / naturalWidth,
       height / naturalHeight
