@@ -6410,6 +6410,31 @@ function createImageFromBlob(
   );
 
 }
+/* =========================================================
+   MOLDURAS — REUTILIZAR O MOTOR NATIVO DE IMAGENS
+
+   A biblioteca entrega um PNG validado; a imagem entra em
+   objects pelo mesmo createImageFromBlob usado pela colagem.
+   Assim herda pinça, rotação, seleção, fixar e desbloquear.
+   ========================================================= */
+window.addEventListener("lousa-cam-frame-image", async event => {
+  const blob = event.detail?.blob;
+  if (!(blob instanceof Blob) || blob.type !== "image/png" ||
+      blob.size < 20 || blob.size > 6 * 1024 * 1024) {
+    console.warn("[Molduras] PNG rejeitado.");
+    return;
+  }
+  try {
+    const x = Math.max(0, Math.round(window.innerWidth * 0.18));
+    const y = Math.max(0, Math.round(window.innerHeight * 0.20));
+    await createImageFromBlob(blob, x, y);
+    toast("Moldura adicionada como imagem");
+  } catch (error) {
+    console.error("[Molduras] Não foi possível inserir a imagem:", error);
+    toast("Não foi possível aplicar a moldura");
+  }
+});
+
 /* ===================================================
    DUPLO TOQUE — COLAR
    =================================================== */
@@ -14437,13 +14462,6 @@ function renderRecordingFrame() {
 
 
  
-  /* Molduras independentes: composição somente da imagem, sem controles. */
-  if (window.LousaFramesOverlay && typeof window.LousaFramesOverlay.draw === 'function') {
-    renderCtx.save();
-    window.LousaFramesOverlay.draw(renderCtx, offsetX, offsetY, contentWidth, contentHeight);
-    renderCtx.restore();
-  }
-
   /* =====================================================
      CENAS — INTEGRAÇÃO COM A GRAVAÇÃO
 

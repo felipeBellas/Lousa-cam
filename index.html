@@ -5850,7 +5850,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
     if(data?.type==='lousa-cam-frames-close') close();
     if(data?.type==='lousa-cam-frame-apply') {
       if(data.mime!=='image/png'||!(data.bytes instanceof ArrayBuffer)||data.bytes.byteLength>6*1024*1024)return;
-      try {window.LousaFramesOverlay?.add(new Blob([data.bytes],{type:'image/png'}));close();}
+      try {window.dispatchEvent(new CustomEvent('lousa-cam-frame-image', {detail:{blob:new Blob([data.bytes],{type:'image/png'})}}));close();}
       catch(error){console.error('[Frames] Falha ao aplicar:',error);}
     }
     if(data?.type==='lousa-cam-frame-created' && typeof data.id==='string') {
@@ -5861,6 +5861,6 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   });
 })();
 </script>
-<script src="./frames-overlay.js?v=20261017-01"></script>
+<!-- Molduras usam agora o motor de imagens de app.js. -->
 </body>
 </html>
