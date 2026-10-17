@@ -5755,7 +5755,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   }
   function open(){if(!root.hidden)return;closing=false;returnFocus=document.activeElement;showHome();root.classList.remove('lc-cascade-closing');root.hidden=false;trigger?.setAttribute('aria-expanded','true');document.getElementById('menuPanel')?.classList.remove('open');document.getElementById('lcCascadeClose').focus();}
   function close(){if(root.hidden||closing)return;closing=true;root.classList.add('lc-cascade-closing');trigger?.setAttribute('aria-expanded','false');setTimeout(()=>{root.hidden=true;root.classList.remove('lc-cascade-closing');closing=false;(returnFocus?.isConnected?returnFocus:trigger)?.focus();},190);}
-  window.LousaCascadeMenu={open,close,toggle:()=>root.hidden?open():close()};
+  window.LousaCascadeMenu={open,close,openStudio:()=>{open();showPage('studio');},toggle:()=>root.hidden?open():close()};
   root.querySelectorAll('[data-lc-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.lcPage)));
   document.getElementById('lcCascadeClose').addEventListener('click',close);
   document.getElementById('lcCascadeBack').addEventListener('click',showHome);
@@ -5816,7 +5816,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
     if (event.origin !== window.location.origin || event.source !== frame.contentWindow) return;
     const data = event.data;
     if (!data || typeof data.type !== 'string') return;
-    if (data.type === 'lousa-cam-templates-close') { close(); return; }
+    if (data.type === 'lousa-cam-templates-close') { close(); window.LousaCascadeMenu?.openStudio(); return; }
     if (data.type === 'lousa-cam-template-created' && typeof data.id === 'string') {
       close();
       if (window.ScenesCamera && typeof window.ScenesCamera.openTemplate === 'function') {
@@ -5847,7 +5847,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   window.addEventListener('message', event => {
     if(event.origin !== window.location.origin || event.source !== frame.contentWindow) return;
     const data=event.data;
-    if(data?.type==='lousa-cam-frames-close') close();
+    if(data?.type==='lousa-cam-frames-close') { close(); window.LousaCascadeMenu?.openStudio(); return; }
     if(data?.type==='lousa-cam-frame-apply') {
       if(data.mime!=='image/png'||!(data.bytes instanceof ArrayBuffer)||data.bytes.byteLength>6*1024*1024)return;
       try {window.dispatchEvent(new CustomEvent('lousa-cam-frame-image', {detail:{blob:new Blob([data.bytes],{type:'image/png'})}}));close();}
