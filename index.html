@@ -4901,7 +4901,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
       <button type="button" class="lc-cascade-close" id="lcCascadeClose" aria-label="Fechar menu">×</button>
     </div>
     <div id="lcCascadeHome">
-      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:35ms" data-lc-page="studio"><span class="lc-cascade-symbol">▣</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Estúdio Criativo</span><span class="lc-cascade-description">Cenas, Templates, Molduras e elementos</span></span><span class="lc-cascade-chevron">›</span></button>
+      <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:35ms" data-lc-page="studio"><span class="lc-cascade-symbol">▣</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Estúdio Criativo</span><span class="lc-cascade-description">Cenas, Templates, Molduras e Stickers</span></span><span class="lc-cascade-chevron">›</span></button>
       <div class="lc-cascade-section lc-cascade-animate" style="--lc-delay:75ms">PERSONALIZAÇÃO</div>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:105ms" data-lc-page="language"><span class="lc-cascade-symbol">🌐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Idioma</span><span class="lc-cascade-description">Português, English, Español</span></span><span class="lc-cascade-chevron">›</span></button>
       <button type="button" class="lc-cascade-item lc-cascade-animate" style="--lc-delay:145ms" data-lc-page="theme"><span class="lc-cascade-symbol">◐</span><span class="lc-cascade-copy"><span class="lc-cascade-name">Tema</span><span class="lc-cascade-description">Claro / Escuro / Sistema</span></span><span class="lc-cascade-chevron">›</span></button>
@@ -5549,7 +5549,8 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
       const entries=[
         {name:'Cenas',description:'Criar e editar suas próprias apresentações.',symbol:'▣',ready:true},
         {name:'Templates',description:'Sequências editáveis para utilizar na câmera.',symbol:'▤',ready:true,templates:true},
-        {name:'Molduras e elementos',description:'Molduras e adesivos modernos para suas cenas.',symbol:'▧',ready:true,frames:true}
+        {name:'Molduras e elementos',description:'Molduras e adesivos modernos para suas cenas.',symbol:'▧',ready:true,frames:true},
+        {name:'Stickers animados',description:'Reações e efeitos em movimento.',symbol:'✦',ready:true,stickers:true}
       ];
       entries.forEach(item=>{
         const button=document.createElement('button');
@@ -5566,6 +5567,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
           button.addEventListener('click',()=>{
             if(item.templates){close();window.LousaTemplatesLayer.open();return;}
             if(item.frames){close();window.LousaFramesLayer.open();return;}
+            if(item.stickers){close();window.LousaStickersLayer.open();return;}
             const scenesButton=document.getElementById('glassScenesButton');
             close();
             window.setTimeout(()=>{
@@ -5861,6 +5863,7 @@ html[data-lc-theme="light"] #galleryLayer {background:#F6F8F5!important;color:#2
   });
 })();
 </script>
+<script src="./stickers-layer.js"></script>
 <!-- Molduras usam agora o motor de imagens de app.js. -->
 </body>
 </html>

@@ -666,6 +666,24 @@
 
     ctx.rotate(rotation);
 
+    const sticker = element.lcStickerMotion;
+    if (element.type === "image" && sticker && sticker.kind !== "none") {
+      const speed = Math.max(0.2, Math.min(3, Number(sticker.speed) || 1));
+      const phase = performance.now() / 1000 * Math.PI * 2 * speed;
+      if (sticker.kind === "pulse") {
+        const size = 1 + 0.14 * Math.sin(phase);
+        ctx.scale(size, size);
+      } else if (sticker.kind === "float") {
+        ctx.translate(0, -height * 0.10 * Math.sin(phase));
+      } else if (sticker.kind === "swing") {
+        ctx.rotate(0.17 * Math.sin(phase));
+      } else if (sticker.kind === "spin") {
+        ctx.rotate(phase);
+      } else if (sticker.kind === "bounce") {
+        ctx.translate(0, -height * 0.16 * Math.abs(Math.sin(phase)));
+      }
+    }
+
     ctx.translate(
       -width / 2,
       -height / 2

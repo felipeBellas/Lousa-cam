@@ -4764,6 +4764,29 @@ function drawImageObject(
 
   c.save();
 
+  // Stickers: a animação é visual; x/y/width/height continuam sob
+  // controle dos gestos e o cadeado não interrompe o movimento.
+  const motion = object.lcStickerMotion;
+  if (motion && motion.kind !== "none") {
+    const seconds = (performance.now() - motion.startedAt) / 1000;
+    const phase = seconds * Math.PI * 2 * motion.speed;
+    const centerX = object.x + object.width / 2;
+    const centerY = object.y + object.height / 2;
+    c.translate(centerX, centerY);
+    if (motion.kind === "pulse") {
+      const size = 1 + 0.14 * Math.sin(phase);
+      c.scale(size, size);
+    } else if (motion.kind === "float") {
+      c.translate(0, -object.height * 0.10 * Math.sin(phase));
+    } else if (motion.kind === "swing") {
+      c.rotate(0.17 * Math.sin(phase));
+    } else if (motion.kind === "spin") {
+      c.rotate(phase);
+    } else if (motion.kind === "bounce") {
+      c.translate(0, -object.height * 0.16 * Math.abs(Math.sin(phase)));
+    }
+    c.translate(-centerX, -centerY);
+  }
 
   try {
 
@@ -6434,6 +6457,41 @@ window.addEventListener("lousa-cam-frame-image", async event => {
     toast("Não foi possível aplicar a moldura");
   }
 });
+
+/* STICKERS — reutiliza o mesmo motor de imagens da câmera. */
+window.addEventListener("lousa-cam-sticker-image", async event => {
+  const { blob, motion, speed } = event.detail || {};
+  if (!(blob instanceof Blob) || blob.type !== "image/png" ||
+      blob.size < 20 || blob.size > 2 * 1024 * 1024) return;
+  const allowed = ["none", "pulse", "float", "swing", "spin", "bounce"];
+  if (!allowed.includes(motion) || !Number.isFinite(speed) || speed < 0.2 || speed > 3) return;
+  try {
+    const item = await createImageFromBlob(blob,
+      Math.round(window.innerWidth * 0.30),
+      Math.round(window.innerHeight * 0.32));
+    if (item) {
+      item.lcStickerMotion = {kind: motion, speed, startedAt: performance.now()};
+      redraw();
+    }
+  } catch (error) {
+    console.error("[Stickers] Falha ao inserir", error);
+    toast("Não foi possível adicionar o Sticker");
+  }
+});
+
+// Atualiza somente enquanto há stickers animados; a gravação usa
+// drawObject() e recebe os mesmos quadros que a câmera.
+let lcStickerLastFrame = 0;
+function lcStickerAnimationLoop(now) {
+  if (now - lcStickerLastFrame >= 33 &&
+      objects.some(item => item.type === "image" &&
+        item.lcStickerMotion?.kind !== "none" && item.lcStickerMotion)) {
+    lcStickerLastFrame = now;
+    if (!document.hidden && !document.getElementById("galleryLayer")?.classList.contains("show")) redraw();
+  }
+  requestAnimationFrame(lcStickerAnimationLoop);
+}
+requestAnimationFrame(lcStickerAnimationLoop);
 
 /* ===================================================
    DUPLO TOQUE — COLAR

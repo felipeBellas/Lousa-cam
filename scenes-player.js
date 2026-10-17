@@ -148,6 +148,18 @@
     return true;
   }
 
+  let stickerAnimationFrame = 0;
+  let stickerLastFrame = 0;
+  function animateStickerScenes(now) {
+    stickerAnimationFrame = requestAnimationFrame(animateStickerScenes);
+    if (!state.active || !state.canvas || document.hidden || now - stickerLastFrame < 33) return;
+    const scene = getCurrentScene();
+    if (!scene?.elements?.some(item => item.lcStickerMotion?.kind !== "none" && item.lcStickerMotion)) return;
+    stickerLastFrame = now;
+    render();
+  }
+  stickerAnimationFrame = requestAnimationFrame(animateStickerScenes);
+
   async function loadPresentation(id) {
     if (!Storage || !Renderer) {
       throw new Error(
