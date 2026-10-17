@@ -15144,6 +15144,12 @@ function showObjectCancel(
   }
 
 
+  // Não exibir comandos de imagens sobre a Galeria.
+  if (document.getElementById("galleryLayer")?.classList.contains("show")) {
+    hideObjectCancel();
+    return;
+  }
+
   objectCancel.classList.add(
     "show"
   );
@@ -15225,6 +15231,20 @@ function hideObjectCancel() {
   );
 
 }
+
+// Esconde os botões Cancelar e Fixar sempre que a Galeria abrir.
+const galleryLayerForImageControls = document.getElementById("galleryLayer");
+if (galleryLayerForImageControls && typeof MutationObserver !== "undefined") {
+  new MutationObserver(() => {
+    if (galleryLayerForImageControls.classList.contains("show")) {
+      hideObjectCancel();
+    }
+  }).observe(galleryLayerForImageControls, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
+}
+
 
 /* =========================================================
    EXCLUIR OBJETO
